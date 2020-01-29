@@ -46,13 +46,14 @@
             this.UpdateButton = new System.Windows.Forms.Button();
             this.StartDatePicker = new System.Windows.Forms.Button();
             this.EndDatePicker = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
             this.listReferences = new System.Windows.Forms.ListView();
             this.label5 = new System.Windows.Forms.Label();
             this.TxtScheduleDefault = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.ScheduleDataType = new System.Windows.Forms.ComboBox();
             this.label7 = new System.Windows.Forms.Label();
+            this.exceptionSchedules = new CodersLab.Windows.Controls.TreeView();
+            this.label8 = new System.Windows.Forms.Label();
             this.contextMenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -180,7 +181,7 @@
             // UpdateButton
             // 
             this.UpdateButton.AutoSize = true;
-            this.UpdateButton.Location = new System.Drawing.Point(233, 546);
+            this.UpdateButton.Location = new System.Drawing.Point(394, 454);
             this.UpdateButton.Name = "UpdateButton";
             this.UpdateButton.Size = new System.Drawing.Size(128, 28);
             this.UpdateButton.TabIndex = 8;
@@ -210,18 +211,10 @@
             this.EndDatePicker.UseVisualStyleBackColor = true;
             this.EndDatePicker.Click += new System.EventHandler(this.EndDatePicker_Click);
             // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(-1, 582);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(224, 13);
-            this.label4.TabIndex = 11;
-            this.label4.Text = "Optional Exception Schedule not implemented";
-            // 
             // listReferences
             // 
             this.listReferences.ContextMenuStrip = this.contextMenuStrip;
+            this.listReferences.HideSelection = false;
             this.listReferences.Location = new System.Drawing.Point(21, 454);
             this.listReferences.Name = "listReferences";
             this.listReferences.Size = new System.Drawing.Size(340, 75);
@@ -274,18 +267,41 @@
             this.label7.TabIndex = 17;
             this.label7.Text = "Data Type";
             // 
+            // exceptionSchedules
+            // 
+            this.exceptionSchedules.ContextMenuStrip = this.contextMenuStrip;
+            this.exceptionSchedules.ImageIndex = 0;
+            this.exceptionSchedules.ImageList = this.imageList;
+            this.exceptionSchedules.Location = new System.Drawing.Point(394, 148);
+            this.exceptionSchedules.Name = "exceptionSchedules";
+            this.exceptionSchedules.SelectedImageIndex = 0;
+            this.exceptionSchedules.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            this.exceptionSchedules.SelectionMode = CodersLab.Windows.Controls.TreeViewSelectionMode.MultiSelect;
+            this.exceptionSchedules.Size = new System.Drawing.Size(340, 269);
+            this.exceptionSchedules.TabIndex = 18;
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(391, 132);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(107, 13);
+            this.label8.TabIndex = 19;
+            this.label8.Text = "Exception Schedules";
+            // 
             // ScheduleDisplay
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(386, 604);
+            this.ClientSize = new System.Drawing.Size(755, 546);
+            this.Controls.Add(this.label8);
+            this.Controls.Add(this.exceptionSchedules);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.ScheduleDataType);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.TxtScheduleDefault);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.listReferences);
-            this.Controls.Add(this.label4);
             this.Controls.Add(this.EndDatePicker);
             this.Controls.Add(this.StartDatePicker);
             this.Controls.Add(this.UpdateButton);
@@ -319,7 +335,6 @@
         private System.Windows.Forms.ToolStripMenuItem addToolStripMenuItem;
         private System.Windows.Forms.Button StartDatePicker;
         private System.Windows.Forms.Button EndDatePicker;
-        private System.Windows.Forms.Label label4;
         private System.Windows.Forms.ImageList imageList;
         private System.Windows.Forms.ListView listReferences;
         private System.Windows.Forms.Label label5;
@@ -329,5 +344,7 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.ToolStripMenuItem copyToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pasteToolStripMenuItem;
+        private CodersLab.Windows.Controls.TreeView exceptionSchedules;
+        private System.Windows.Forms.Label label8;
     }
 }

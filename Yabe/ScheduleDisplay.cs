@@ -72,6 +72,7 @@ namespace Yabe
 
             ReadEffectivePeriod();
             ReadEffectiveWeeklySchedule();
+            ReadExceptionSchedule();
             ReadObjectsPropertiesReferences();
 
             ToolTip t1=new ToolTip();
@@ -87,6 +88,73 @@ namespace Yabe
             ScheduleDataType.Text = GetNiceName(ScheduleType);
 
         }
+
+        private void ReadExceptionSchedule()
+        {
+            byte[] InOutBuffer = null;
+            try
+            {
+                if (comm.RawEncodedDecodedPropertyConfirmedRequest(adr, schedule_id,
+                    BacnetPropertyIds.PROP_EXCEPTION_SCHEDULE, BacnetConfirmedServices.SERVICE_CONFIRMED_READ_PROPERTY,
+                    ref InOutBuffer))
+                {
+                    int offset = 0;
+                    byte tag_number;
+
+                    // Tag 3
+                    offset += ASN1.decode_tag_number(InOutBuffer, offset, out tag_number);
+                    if (tag_number != 3) return;
+
+                    int i = 1;
+                    while(!ASN1.IS_CLOSING_TAG(InOutBuffer[offset]))
+                    {
+                        TreeNode tday = null;
+                        var bse = new BACnetSpecialEvent();
+                        offset += bse.ASN1decode(InOutBuffer, offset);
+                        tday = new TreeNode(string.Format("[{0}] {1}", i++, bse.period.ToString()));
+                        tday.Nodes.Add(new TreeNode(String.Format("priority: {0}", bse.eventPriority),1,1));
+
+                        exceptionSchedules.Nodes.Add(tday);
+                        foreach (var tv in bse.Values)
+                        {
+                            var value = tv.value;
+                            var dt = tv.dt;
+                            string s;
+                            if (value.Tag != BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL)
+                            {
+                                s = dt.ToString("T") + " = " +
+                                    Property.SerializeValue(value,
+                                        value.Tag); // Second value is the ... value (Bool, Int, Uint, Float, double or null)
+                                ScheduleType =
+                                    value.Tag; // all type must be the same for a valid schedule (maybe, not sure !), so remember it
+                            }
+                            else
+                                s = dt.ToString("T") + " = null";
+
+                            tday.Nodes.Add(new TreeNode(s, 1, 1));
+                        }
+
+                    }
+                    offset += ASN1.decode_tag_number(InOutBuffer, offset, out tag_number);
+                    if (tag_number != 3)
+                        exceptionSchedules.Nodes.Clear();
+                    exceptionSchedules.ExpandAll();
+                }
+            }
+            catch
+            {
+            }
+            finally
+            {
+                exceptionSchedules.EndUpdate();
+
+                exceptionSchedules.Sort(); // Time entries are not necesserary sorted, so do it (that's also why days are assign to [0], .. [6])
+                exceptionSchedules.ExpandAll();
+                exceptionSchedules.LabelEdit = true;
+
+            }
+        }
+
 
         // Read start and stop dates validity for the schedule
         private void ReadEffectivePeriod()
@@ -274,7 +342,7 @@ namespace Yabe
                 if ((valuedefault != null) && (valuedefault.Count != 0) && (valuedefault[0].Tag != BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL))
                 {
                     ScheduleType = valuedefault[0].Tag;
-                    TxtScheduleDefault.Text = valuedefault[0].Value.ToString();
+                    TxtScheduleDefault.Text = valuedefault[0].ToString(); //CultureInfo.InvariantCulture);
                 }
 
 
@@ -292,7 +360,7 @@ namespace Yabe
                     {
                         TreeNode tday = null;
 
-                        tday = new TreeNode("[" + (i-1).ToString() + "] : " + System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.DayNames[i % 7],0,0);
+                        tday = new TreeNode("[" + (i).ToString() + "] : " + System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.DayNames[i % 7],0,0);
  
                         Schedule.Nodes.Add(tday);
 
@@ -335,7 +403,7 @@ namespace Yabe
             {
                 Schedule.EndUpdate();
 
-                Schedule.Sort(); // Time entries are not necesserary sorted, so do it (that's also why days are assign to [0], .. [6])
+                Schedule.Sort(); // Time entries are not necessary sorted, so do it (that's also why days are assign to [0], .. [6])
                 Schedule.ExpandAll();
                 Schedule.LabelEdit = true;
 
@@ -421,7 +489,11 @@ namespace Yabe
                 else
                     Schedule.LabelEdit = false;
             }
-            else
+            else if (this.ActiveControl == exceptionSchedules)
+            {
+
+            }
+            else if(this.ActiveControl == listReferences)
             {
                 try
                 {
@@ -630,6 +702,7 @@ namespace Yabe
         }
 
     }
+
 
     /*******************************************************/
 

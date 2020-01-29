@@ -1720,38 +1720,36 @@ namespace System.IO.BACnet
         {
             String ret;
 
-            if (wday != 255)
-                ret = GetDayName(wday) + " ";
+            if (year != 255)
+                ret = (year + 1900).ToString() + "-";
             else
-                ret = "";
+                ret = "****-";
 
-            if (day != 255)
-                ret = ret + day.ToString() + "/";
-            else
-                ret = ret + "**/";
 
             switch (month)
             {
                 case 13:
-                    ret = ret + "odd/";
+                    ret = ret + "odd-";
                     break;
                 case 14:
-                    ret = ret + "even/";
+                    ret = ret + "even-";
                     break;
                 case 255:
-                    ret = ret + "**/";
+                    ret = ret + "**-";
                     break;
                 default:
-                    ret = ret + month.ToString() + "/";
+                    ret = ret + month.ToString() + "-";
                     break;
             }
-
-
-            if (year != 255)
-                ret = ret + (year + 1900).ToString();
+            if (day != 255)
+                ret = ret + day.ToString();
             else
-                ret = ret + "****";
+                ret = ret + "**";
 
+
+
+            if (wday != 255)
+                ret = ret + " " + GetDayName(wday);
             return ret;
         }
     }
@@ -1801,12 +1799,12 @@ namespace System.IO.BACnet
             if (startDate.day != 255)
                 ret = "From " + startDate.ToString();
             else
-                ret = "From **/**/**";
+                ret = "From ****-**-**";
 
             if (endDate.day != 255)
                 ret = ret + " to " + endDate.ToString();
             else
-                ret = ret + " to **/**/**";
+                ret = ret + " to ****-**-**";
 
             return ret;
         }
@@ -7341,6 +7339,117 @@ namespace System.IO.BACnet
 
     }
 
+    public struct BACnetTimeValue : ASN1.IASN1encode
+    {
+        public DateTime dt;
+        public BacnetValue value;
+
+
+        public void ASN1encode(EncodeBuffer buffer)
+        {
+            ASN1.encode_application_time(buffer, dt);
+            ASN1.bacapp_encode_application_data(buffer, value);
+        }
+
+        public int ASN1decode(byte[] buffer, int offset, uint len_value)
+        {
+            var len = ASN1.decode_application_time(buffer, offset, out dt);
+            if (len < 0)
+                return len;
+            len += 1 + ASN1.bacapp_decode_data(buffer, offset + len + 1, 100, (BacnetApplicationTags)(buffer[offset + len] >> 4), len_value, out value);
+            return len;
+        }
+    }
+
+    public struct BACnetSpecialEvent: ASN1.IASN1encode
+    {
+        public object period; // BacnetDate or BacnetDateRange or BacnetweekNDay or ObjectIdentifier
+        public List<BACnetTimeValue> Values;
+        public byte eventPriority;
+        public void ASN1encode(EncodeBuffer buffer)
+        {
+            if (Values != null)
+            {
+                if (period is BacnetObjectId ob)
+                {
+                    ASN1.encode_context_object_id(buffer, 1, ob.type, ob.instance);
+                }
+                else
+                {
+                    ASN1.encode_opening_tag(buffer, 0);
+                    ((BACnetCalendarEntry)period).ASN1encode(buffer);
+                    ASN1.encode_closing_tag(buffer, 0);
+                }
+                ASN1.encode_opening_tag(buffer, 2);
+                foreach (ASN1.IASN1encode entry in Values)
+                {
+                    entry.ASN1encode(buffer);
+                }
+                ASN1.encode_closing_tag(buffer, 2);
+                
+                ASN1.encode_context_unsigned(buffer, 3, eventPriority);
+            }
+        }
+
+        public override string ToString()
+        {
+            return period.ToString();
+            /*
+            if (period is BacnetObjectId ob)
+            {
+                return ob.ToString();
+            }
+
+            if (period is BacnetDate bd)
+            {
+                return String.Format("date: {0}", bd.ToString());
+            }
+            if (period is BacnetDateRange bdr)
+            {
+                return String.Format("date: {0}", bdr.ToString());
+            }
+            */
+        }
+
+        public int ASN1decode(byte[] buffer, int offset)
+        {
+            int len = 0;
+            byte tag_number;
+
+            Values = new List<BACnetTimeValue>();
+
+            len += ASN1.decode_tag_number(buffer, offset + len, out tag_number);
+            if (tag_number == 0)
+            {
+                var p = new BACnetCalendarEntry();
+                len += p.decode_one(buffer, offset + len) + 1;
+                period = p;
+            }
+            else
+            {
+                ushort type;
+                uint instance;
+                len += ASN1.decode_context_object_id(buffer, offset + len, 1, out type, out instance);
+                period = new BacnetObjectId((BacnetObjectTypes)type, instance);
+            }
+
+            len += 1; // time-values opening tag;
+            while (!ASN1.decode_is_closing_tag_number(buffer, offset + len, 2))
+            {
+                var v = new BACnetTimeValue();
+                len += v.ASN1decode(buffer, offset + len, 4);
+                Values.Add(v);
+            }
+            len += 1; // time-values closing tag;
+            if (!ASN1.decode_is_context_tag(buffer, offset + len, 3))
+                return -1;
+            len += 1;
+            ASN1.decode_unsigned8(buffer, offset + len, out eventPriority);
+            return len + 1;
+        }
+
+    }
+
     public struct BACnetCalendarEntry : ASN1.IASN1encode
     {
         public List<object> Entries; // BacnetDate or BacnetDateRange or BacnetweekNDay
@@ -7355,12 +7464,14 @@ namespace System.IO.BACnet
                         ASN1.encode_tag(buffer, 0, true, 4);
                         entry.ASN1encode(buffer);
                     }
+
                     if (entry is BacnetDateRange)
                     {
                         ASN1.encode_opening_tag(buffer, 1);
                         entry.ASN1encode(buffer);
                         ASN1.encode_closing_tag(buffer, 1);
                     }
+
                     if (entry is BacnetweekNDay)
                     {
                         ASN1.encode_tag(buffer, 2, true, 3);
@@ -7369,43 +7480,55 @@ namespace System.IO.BACnet
                 }
         }
 
-
         public int ASN1decode(byte[] buffer, int offset, uint len_value)
         {
             int len = 0;
-            byte tag_number;
 
             Entries = new List<object>();
 
-            for (; ; )
+            for (;;)
             {
-
-                byte b = buffer[offset + len];
-                len += ASN1.decode_tag_number(buffer, offset + len, out tag_number);
-
-                switch (tag_number)
-                {
-                    case 0:
-                        BacnetDate bdt = new BacnetDate();
-                        len += bdt.ASN1decode(buffer, offset + len, len_value);
-                        Entries.Add(bdt);
-                        break;
-                    case 1:
-                        BacnetDateRange bdr = new BacnetDateRange();
-                        len += bdr.ASN1decode(buffer, offset + len, len_value);
-                        Entries.Add(bdr);
-                        len++; // closing tag
-                        break;
-                    case 2:
-                        BacnetweekNDay bwd = new BacnetweekNDay();
-                        len += bwd.ASN1decode(buffer, offset + len, len_value);
-                        Entries.Add(bwd);
-                        break;
-                    default:
-                        return len - 1; // closing Tag
-                }
+                var len1 = decode_one(buffer, offset + len);
+                if (len1 < 0)
+                    return len;
+                len += len1;
             }
 
+        }
+
+        public int decode_one(byte[] buffer, int offset)
+        {
+            if( Entries == null)
+                Entries = new List<object>();
+
+            byte tag_number;
+            var len = ASN1.decode_tag_number(buffer, offset, out tag_number);
+
+            switch (tag_number)
+            {
+                case 0:
+                    BacnetDate bdt = new BacnetDate();
+                    len += bdt.ASN1decode(buffer, offset + len, 0);
+                    Entries.Add(bdt);
+                    return len;
+                case 1:
+                    BacnetDateRange bdr = new BacnetDateRange();
+                    len += bdr.ASN1decode(buffer, offset + len, 0);
+                    Entries.Add(bdr);
+                    len++; // closing tag
+                    return len;
+                case 2:
+                    BacnetweekNDay bwd = new BacnetweekNDay();
+                    len += bwd.ASN1decode(buffer, offset + len, 0);
+                    Entries.Add(bwd);
+                    return len;
+                default:
+                    return len - 1; // closing Tag
+            }
+        }
+        public override string ToString()
+        {
+            return Entries[0].ToString();
         }
     }
 
