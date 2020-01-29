@@ -28,13 +28,11 @@
  * Ported from project at http://bacnet.sourceforge.net/
  */
 
-using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO.BACnet.Serialize;
 using System.Net;
 using System.Globalization;
-using System.Text.RegularExpressions;
 
 namespace System.IO.BACnet
 {

@@ -24,11 +24,8 @@
 *
 *********************************************************************/
 
-using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Linq;
-using System.IO.BACnet.Serialize;
 using System.Diagnostics;
 using System.Net;
 using System.Text.RegularExpressions;

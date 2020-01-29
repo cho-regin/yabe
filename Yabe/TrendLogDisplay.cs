@@ -25,18 +25,14 @@
 *********************************************************************/
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
-using System.Text;
+using System.IO;
 using System.Windows.Forms;
 using System.IO.BACnet;
 using System.IO.BACnet.Serialize;
 using System.Threading;
 using ZedGraph;
-using System.IO;
-using System.Diagnostics;
 
 namespace Yabe
 {
