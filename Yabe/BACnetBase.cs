@@ -920,6 +920,7 @@ namespace System.IO.BACnet
         OBJECT_ESCALATOR = 58,
         OBJECT_LIFT = 59,
         OBJECT_STAGING = 60, //Addendum 135-2016bd
+        OBJECT_STANDARD_MAX,
         /* Enumerated values 0-127 are reserved for definition by ASHRAE. */
         /* Enumerated values 128-1023 may be used by others subject to  */
         /* the procedures and constraints described in Clause 23. */

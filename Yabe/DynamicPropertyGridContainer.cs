@@ -1649,7 +1649,15 @@ namespace Utilities
             }
             if (this.editorService != null)
             {
-                int InitialIdx = (int)(uint)value;
+                int InitialIdx;
+                if(value is uint) 
+                {
+                    InitialIdx = (int)(uint)value;
+                }
+                else
+                {
+                    InitialIdx = (int)(ulong)value;
+                }
 
                 if (EnumList == null)
                 {
@@ -1660,7 +1668,7 @@ namespace Utilities
                     for (int i = 0; i < sl.Length; i++)
                     {
                         if ((currentPropertyEnum.GetType() == typeof(BacnetObjectTypes)) && (i >= (int)BacnetObjectTypes.MAX_ASHRAE_OBJECT_TYPE))
-                            break; // One property with some content not usefull
+                            break; // One property with some content not useful
                         EnumList.Items.Add(i.ToString() + " : " + GetNiceName(sl[i])); // add to the list
                     }
                     if (InitialIdx<EnumList.Items.Count)

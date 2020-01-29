@@ -45,7 +45,7 @@ namespace Yabe
         
         private void CreateObject_Load(object sender, EventArgs e)
         {
-            for (int i=0;i<=(int)BacnetObjectTypes.OBJECT_BINARY_LIGHTING_OUTPUT;i++)
+            for (int i = 0; i < (int)BacnetObjectTypes.OBJECT_STANDARD_MAX; i++)
                 ObjectType.Items.Add(Enum.GetName(typeof(BacnetObjectTypes),i));
 
             ObjectType.SelectedIndex = 0;

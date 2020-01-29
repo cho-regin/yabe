@@ -571,11 +571,14 @@ namespace Yabe
         void OnIam(BacnetClient sender, BacnetAddress adr, uint device_id, uint max_apdu, BacnetSegmentations segmentation, ushort vendor_id)
         {
             KeyValuePair<BacnetAddress, uint> new_entry = new KeyValuePair<BacnetAddress, uint>(adr, device_id);
-            if (!m_devices.ContainsKey(sender)) return;
-            if (!m_devices[sender].Devices.Contains(new_entry))
-                m_devices[sender].Devices.Add(new_entry);
-            else
-                return;
+            lock (m_devices)
+            {
+                if (!m_devices.ContainsKey(sender)) return;
+                if (!m_devices[sender].Devices.Contains(new_entry))
+                    m_devices[sender].Devices.Add(new_entry);
+                else
+                    return;
+            }
 
             //update GUI
             this.BeginInvoke((MethodInvoker)delegate
@@ -1569,6 +1572,7 @@ namespace Yabe
                         }
                     }
                     m_DataGrid.SelectedObject = bag;
+                    m_DataGrid.SelectedGridItem = m_DataGrid.SelectedGridItem.Parent;
                 }
             }
             finally
