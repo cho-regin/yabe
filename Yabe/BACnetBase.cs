@@ -10528,13 +10528,7 @@ namespace System.IO.BACnet.Serialize
 
         public static int decode_unsigned24(byte[] buffer, int offset, out uint value)
         {
-            /* negative - bit 7 is set */
-            if ((buffer[offset + 0] & 0x80)!=0)
-                value = 0xff000000;
-            else
-                value = 0;
-
-            value |= ((uint)((((uint)buffer[offset + 0]) << 16) & 0x00ff0000));
+            value = ((uint)((((uint)buffer[offset + 0]) << 16) & 0x00ff0000));
             value |= ((uint)((((uint)buffer[offset + 1]) << 8) & 0x0000ff00));
             value |= ((uint)(((uint)buffer[offset + 2]) & 0x000000ff));
             return 3;
@@ -10588,10 +10582,14 @@ namespace System.IO.BACnet.Serialize
 
         public static int decode_signed24(byte[] buffer, int offset, out int value)
         {
-            value = ((int)((((int)buffer[offset + 0]) << 16) & 0x00ff0000));
-            if ((value & 0x800000) != 0) value =  value | (0xff << 24); // signe is 1, so puts all high bits in the int32 to 1
-            value |= ((int)((((int)buffer[offset + 1]) << 8) & 0x0000ff00));
-            value |= ((int)(((int)buffer[offset + 2]) & 0x000000ff));
+            /* negative - bit 7 is set */
+            if ((buffer[offset + 0] & 0x80) != 0)
+                value = ~0x00FFFFFF;
+            else
+                value = 0;
+            value |= buffer[offset + 0] << 16;
+            value |= buffer[offset + 1] << 8;
+            value |= buffer[offset + 2];
             return 3;
         }
 
