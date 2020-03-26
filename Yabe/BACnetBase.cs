@@ -1219,6 +1219,12 @@ namespace System.IO.BACnet
         }
 
     };
+    public enum BacnetLoggingTypes
+    {
+        LOGGING_POLLED = 0,
+        LOGGING_COV = 1,
+        LOGGING_TRIGGERED = 2
+    };
 
     public struct BacnetEventNotificationData
     {

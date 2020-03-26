@@ -1927,6 +1927,8 @@ namespace Utilities
                         return new BacnetEnumValueConverter(new BacnetObjectTypes());
                     case BacnetPropertyIds.PROP_NOTIFY_TYPE:
                         return new BacnetEnumValueConverter(new BacnetEventNotificationData.BacnetNotifyTypes());
+                    case BacnetPropertyIds.PROP_LOGGING_TYPE:
+                        return new BacnetEnumValueConverter(new BacnetLoggingTypes());
                     case BacnetPropertyIds.PROP_EVENT_TYPE:
                         return new BacnetEnumValueConverter(new BacnetEventNotificationData.BacnetEventTypes());
                     case BacnetPropertyIds.PROP_EVENT_STATE:
@@ -2052,6 +2054,8 @@ namespace Utilities
 
                 case BacnetPropertyIds.PROP_OBJECT_TYPE:
                     return new BacnetEnumValueDisplay(new BacnetObjectTypes());
+                case BacnetPropertyIds.PROP_LOGGING_TYPE:
+                    return new BacnetEnumValueDisplay(new BACnetLoggingType());
                 case BacnetPropertyIds.PROP_NOTIFY_TYPE:
                     return new BacnetEnumValueDisplay(new BacnetEventNotificationData.BacnetNotifyTypes());
                 case BacnetPropertyIds.PROP_EVENT_TYPE:
