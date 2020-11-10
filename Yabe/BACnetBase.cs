@@ -7493,7 +7493,7 @@ namespace System.IO.BACnet
             for (;;)
             {
                 var len1 = decode_one(buffer, offset + len);
-                if (len1 < 0)
+                if (len1 <= 0)
                     return len;
                 len += len1;
             }
@@ -7505,6 +7505,8 @@ namespace System.IO.BACnet
             if( Entries == null)
                 Entries = new List<object>();
 
+            if (!ASN1.IS_CONTEXT_SPECIFIC(buffer[offset]) || ASN1.IS_CLOSING_TAG(buffer[offset]))
+                return -1;
             byte tag_number;
             var len = ASN1.decode_tag_number(buffer, offset, out tag_number);
 
