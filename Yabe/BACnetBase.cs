@@ -7355,12 +7355,15 @@ namespace System.IO.BACnet
             ASN1.bacapp_encode_application_data(buffer, value);
         }
 
-        public int ASN1decode(byte[] buffer, int offset, uint len_value)
+        public int ASN1decode(byte[] buffer, int offset)
         {
             var len = ASN1.decode_application_time(buffer, offset, out dt);
             if (len < 0)
                 return len;
-            len += 1 + ASN1.bacapp_decode_data(buffer, offset + len + 1, 100, (BacnetApplicationTags)(buffer[offset + len] >> 4), len_value, out value);
+            byte app_tag;
+            uint len_value;
+            len += ASN1.decode_tag_number_and_value(buffer, offset + len, out app_tag, out len_value);
+            len += ASN1.bacapp_decode_data(buffer, offset + len, 100, (BacnetApplicationTags)(app_tag), len_value, out value);
             return len;
         }
     }
@@ -7441,7 +7444,7 @@ namespace System.IO.BACnet
             while (!ASN1.decode_is_closing_tag_number(buffer, offset + len, 2))
             {
                 var v = new BACnetTimeValue();
-                len += v.ASN1decode(buffer, offset + len, 4);
+                len += v.ASN1decode(buffer, offset + len);
                 Values.Add(v);
             }
             len += 1; // time-values closing tag;
