@@ -1,0 +1,3 @@
+[svn-remote "svn"]
+	url = https://svn.code.sf.net/p/yetanotherbacnetexplorer/code/trunk
+	fetch = :refs/remotes/git-svn
