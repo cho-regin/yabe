@@ -77,6 +77,10 @@ namespace System.IO.BACnet
             return "Ethernet";
         }
 
+        public string GetMac()
+        {
+            return "";
+        }
         private LibPcapLiveDevice Open()
         {
 

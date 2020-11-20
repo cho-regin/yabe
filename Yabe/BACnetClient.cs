@@ -2665,6 +2665,11 @@ namespace System.IO.BACnet
             m_client.Dispose();
             m_client = null;
         }
+
+        public string GetMac()
+        {
+            return m_client.GetMac();
+        }
     }
 
     #region BacnetAsyncResult

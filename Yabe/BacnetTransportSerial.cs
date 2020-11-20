@@ -433,6 +433,11 @@ namespace System.IO.BACnet
             return m_port.GetHashCode();
         }
 
+        public string GetMac()
+        {
+            return "";
+        }
+
         public override string ToString()
         {
             return m_port.ToString();
@@ -1037,6 +1042,10 @@ namespace System.IO.BACnet
         public byte MaxInfoFrames { get { return m_max_info_frames; } set { m_max_info_frames = value; } }
         public bool StateLogging { get; set; }
 
+        public string GetMac()
+        {
+            return "";
+        }
         public bool IsRunning { get { return m_is_running; } }
 
         public int HeaderLength { get { return MSTP.MSTP_HEADER_LENGTH; } }

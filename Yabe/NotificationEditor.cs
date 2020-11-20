@@ -187,6 +187,9 @@ namespace Yabe
             RecipientsTab.SelectTab("Not Set");
 
             labelEmpty.Visible = false;
+
+            content.Device.Text = comm.GetMac();
+            content.Device.ForeColor = Color.Gray;
         }
 
         private void btReadWrite_Click(object sender, EventArgs e)
@@ -207,12 +210,19 @@ namespace Yabe
         public BacnetBitString WeekOfDay; // Updated by the related 7 Chekcbox
         public BacnetAddress adr;
         public uint deviceid;
-
         public RecipientUserCtrl(TabPage myTab, DeviceReportingRecipient? recipient = null)
         {
             InitializeComponent();
             this.myTab = myTab;
-
+            this.Device.Enter += (object sender, EventArgs e) =>
+            {
+                if (Device.ForeColor == Color.Gray)
+                    Device.Text = "";
+            };
+            this.Device.TextChanged += (object sender, EventArgs e) =>
+            {
+                Device.ForeColor = Color.Black;
+            };
             if (recipient == null)
             {
                 for (byte i = 0; i < 7;i++ ) WeekOfDay.SetBit(i, true);

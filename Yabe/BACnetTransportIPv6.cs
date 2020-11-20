@@ -66,6 +66,10 @@ namespace System.IO.BACnet
         public byte MaxInfoFrames { get { return 0xff; } set { /* ignore */ } }     //the udp doesn't have max info frames
         public int MaxBufferLength { get { return m_max_payload; } }
 
+        public string GetMac()
+        {
+            return "";
+        }
         public BacnetIpV6UdpProtocolTransport(int port, int VMac=-1, bool use_exclusive_port = false, bool dont_fragment = false, int max_payload = 1472, string local_endpoint_ip = "")
         {
             m_port = port;
