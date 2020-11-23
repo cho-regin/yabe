@@ -589,8 +589,10 @@ namespace Yabe
                 bool Prop_Object_NameOK = false;
                 String Identifier=null;
 
+                var key = new Tuple<String, BacnetObjectId>(adr.FullHashString(),
+                    new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id));
                 lock (DevicesObjectsName)
-                    Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id)), out Identifier);
+                    Prop_Object_NameOK = DevicesObjectsName.TryGetValue(key, out Identifier);
 
                 //update existing (this can happen in MSTP)
                 foreach (TreeNode s in parent.Nodes)
@@ -624,6 +626,10 @@ namespace Yabe
                             node.ToolTipText = node.Text;
                             node.Text = Identifier + " [" + device_id.ToString() + "] ";
                         }
+                        else
+                        {
+                            AsyncGetObjectName(sender, adr, key, node);
+                        }
                         s.Nodes.Add(node);
                         m_DeviceTree.ExpandAll();
                         return;
@@ -640,8 +646,42 @@ namespace Yabe
                     basicnode.ToolTipText = basicnode.Text;
                     basicnode.Text = Identifier + " [" + device_id.ToString() + "] ";
                 }
+                else
+                {
+                    AsyncGetObjectName(sender, adr, key, basicnode);
+                }
                 parent.Nodes.Add(basicnode);
                 m_DeviceTree.ExpandAll();
+            });
+        }
+
+        private void AsyncGetObjectName(BacnetClient sender, BacnetAddress adr, Tuple<String,BacnetObjectId> key, TreeNode t)
+        {
+            System.Threading.ThreadPool.QueueUserWorkItem((o) =>
+            {
+                String objectName;
+                try
+                {
+                    IList<BacnetValue> value;
+                    if (!sender.ReadPropertyRequest(adr, key.Item2, BacnetPropertyIds.PROP_OBJECT_NAME, out value))
+                        return;
+                    if (value == null || value.Count == 0)
+                        return;
+                    else
+                        objectName = value[0].Value.ToString();
+                }
+                catch (Exception ex)
+                {
+                    return;
+                }
+                lock (DevicesObjectsName)
+                    DevicesObjectsName.Add(key, objectName);
+
+                this.Invoke((MethodInvoker)delegate
+                {
+                    if (AsynchRequestId != this.AsynchRequestId) return;  // another test in the GUI thread
+                    ChangeTreeNodePropertyName(t, objectName);
+                });
             });
         }
 
