@@ -2666,9 +2666,9 @@ namespace System.IO.BACnet
             m_client = null;
         }
 
-        public string GetMac()
+        public string GetStringMac()
         {
-            return m_client.GetMac();
+            return m_client.GetMacString();
         }
     }
 

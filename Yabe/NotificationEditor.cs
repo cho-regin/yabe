@@ -188,7 +188,7 @@ namespace Yabe
 
             labelEmpty.Visible = false;
 
-            content.Device.Text = comm.GetMac();
+            content.Device.Text = comm.GetStringMac();
             content.Device.ForeColor = Color.Gray;
         }
 

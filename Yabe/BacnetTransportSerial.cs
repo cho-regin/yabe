@@ -433,7 +433,7 @@ namespace System.IO.BACnet
             return m_port.GetHashCode();
         }
 
-        public string GetMac()
+        public string GetMacString()
         {
             return "";
         }
@@ -1042,7 +1042,7 @@ namespace System.IO.BACnet
         public byte MaxInfoFrames { get { return m_max_info_frames; } set { m_max_info_frames = value; } }
         public bool StateLogging { get; set; }
 
-        public string GetMac()
+        public string GetMacString()
         {
             return "";
         }

@@ -77,7 +77,7 @@ namespace System.IO.BACnet
             return "Ethernet";
         }
 
-        public string GetMac()
+        public string GetMacString()
         {
             return "";
         }

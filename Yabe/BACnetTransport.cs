@@ -48,7 +48,7 @@ namespace System.IO.BACnet
 
         bool WaitForAllTransmits(int timeout);
         byte MaxInfoFrames { get; set; }
-        string GetMac();
+        string GetMacString();
     }
 
     /// <summary>
@@ -106,7 +106,7 @@ namespace System.IO.BACnet
             return "Udp:" + m_port;
         }
 
-        public string GetMac()
+        public string GetMacString()
         {
             return m_local_endpoint + ":" + m_port;
         }

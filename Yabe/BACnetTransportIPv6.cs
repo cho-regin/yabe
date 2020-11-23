@@ -66,7 +66,7 @@ namespace System.IO.BACnet
         public byte MaxInfoFrames { get { return 0xff; } set { /* ignore */ } }     //the udp doesn't have max info frames
         public int MaxBufferLength { get { return m_max_payload; } }
 
-        public string GetMac()
+        public string GetMacString()
         {
             return "";
         }
