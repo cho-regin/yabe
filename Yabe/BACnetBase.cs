@@ -338,8 +338,10 @@ namespace System.IO.BACnet
         ERROR_CODE_VALUE_TOO_LONG = 134,
         ERROR_CODE_ABORT_INSUFFICIENT_SECURITY = 135,
         ERROR_CODE_ABORT_SECURITY_ERROR = 136,
+        ERROR_CODE_DUPLICATE_ENTRY = 137,
+        ERROR_CODE_INVALID_VALUE_IN_THIS_STATE = 138,
 
-        MAX_BACNET_ERROR_CODE = 137,
+        MAX_BACNET_ERROR_CODE,
 
         /* Enumerated values 0-255 are reserved for definition by ASHRAE. */
         /* Enumerated values 256-65535 may be used by others subject to */
