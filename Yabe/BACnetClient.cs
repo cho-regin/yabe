@@ -30,6 +30,40 @@ using System.Diagnostics;
 
 namespace System.IO.BACnet
 {
+
+    public class BacnetBaseErrorException : Exception
+    {}
+
+    public class BacnetErrorException : BacnetBaseErrorException
+    {
+        BacnetErrorClasses errorClass;
+        BacnetErrorCodes errorCode;
+        public BacnetErrorException(BacnetErrorClasses errorClass, BacnetErrorCodes errorCode)
+        {
+            this.errorClass = errorClass;
+            this.errorCode = errorCode;
+        }
+
+        public override string ToString()
+        {
+            return "Error from device: " + errorClass + " - " + errorCode;
+        }
+    }
+
+    public class BacnetAbortException : BacnetBaseErrorException
+    {
+        byte reason;
+        public BacnetAbortException(byte reason)
+        {
+            this.reason = reason;
+        }
+
+        public override string ToString()
+        {
+            return "Abort from device: " + reason;
+        }
+    }
+
     /// <summary>
     /// This can be both client and server
     /// </summary>
@@ -2757,7 +2791,7 @@ namespace System.IO.BACnet
         {
             if (invoke_id == m_wait_invoke_id)
             {
-                Error = new Exception("Abort from device: " + reason);
+                Error = new BacnetAbortException(reason);
             }
         }
 
@@ -2765,7 +2799,7 @@ namespace System.IO.BACnet
         {
             if (invoke_id == m_wait_invoke_id)
             {
-                Error = new Exception("Error from device: " + error_class + " - " + error_code);
+                Error = new BacnetErrorException(error_class, error_code);
             }
         }
 
