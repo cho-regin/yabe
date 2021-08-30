@@ -890,7 +890,7 @@ namespace System.IO.BACnet
 
                         for (int i = 0; i < NbEntries; i++)
                         {
-                            long add = BitConverter.ToInt32(buffer, 4 + i * 10);
+                            long add = BitConverter.ToUInt32(buffer, 4 + i * 10);
 
                             Array.Reverse(buffer, 8 + i * 10, 2);
                             ushort port = BitConverter.ToUInt16(buffer, 8 + i * 10);
