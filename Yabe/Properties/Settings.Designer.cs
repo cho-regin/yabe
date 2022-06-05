@@ -169,7 +169,7 @@ namespace Yabe.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("128")]
+        [global::System.Configuration.DefaultSettingValueAttribute("-1")]
         public decimal DefaultSourceAddress {
             get {
                 return ((decimal)(this["DefaultSourceAddress"]));
@@ -313,7 +313,7 @@ namespace Yabe.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Structured")]
+        [global::System.Configuration.DefaultSettingValueAttribute("List")]
         public global::Yabe.AddressTreeViewType Address_Space_Structured_View {
             get {
                 return ((global::Yabe.AddressTreeViewType)(this["Address_Space_Structured_View"]));

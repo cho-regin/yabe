@@ -75,7 +75,7 @@
       <Value Profile="(Default)">1472</Value>
     </Setting>
     <Setting Name="Address_Space_Structured_View" Type="Yabe.AddressTreeViewType" Scope="User">
-      <Value Profile="(Default)">Structured</Value>
+      <Value Profile="(Default)">List</Value>
     </Setting>
     <Setting Name="DefaultUdpIp" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
