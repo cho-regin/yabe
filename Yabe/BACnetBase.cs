@@ -12492,8 +12492,9 @@ namespace System.IO.BACnet.Serialize
                     ASN1.encode_context_enumerated(buffer, 0, p_value.property.propertyIdentifier);
 
 
-                    if (p_value.property.propertyArrayIndex != ASN1.BACNET_ARRAY_ALL)
-                        ASN1.encode_context_unsigned(buffer, 1, p_value.property.propertyArrayIndex);
+// frankschubert: These lines need to be removed, caused an error in CreateObject service
+//                    if (p_value.property.propertyArrayIndex != ASN1.BACNET_ARRAY_ALL)
+//                        ASN1.encode_context_unsigned(buffer, 1, p_value.property.propertyArrayIndex);
 
 
                     ASN1.encode_opening_tag(buffer, 2);
