@@ -4128,6 +4128,7 @@ namespace Yabe
                         initialvalues = new BacnetPropertyValue[1];
                         initialvalues[0] = new BacnetPropertyValue();
                         initialvalues[0].property.propertyIdentifier = (uint)BacnetPropertyIds.PROP_OBJECT_NAME;
+                        initialvalues[0].property.propertyArrayIndex = System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL;
                         initialvalues[0].value = new BacnetValue[1];
                         initialvalues[0].value[0] = new BacnetValue(F.ObjectName.Text);
                     }
