@@ -309,7 +309,7 @@
     <Object Type="OBJECT_CHARACTERSTRING_VALUE" Instance="1">
       <Properties>
         <Property Id="PROP_DESCRIPTION" Tag="BACNET_APPLICATION_TAG_CHARACTER_STRING">
-          <Value>Text for Setpoint 1</Value>
+          <Value>CSV SetpPoint Texts</Value>
         </Property>
         <Property Id="PROP_EVENT_STATE" Tag="BACNET_APPLICATION_TAG_ENUMERATED">
           <Value>0</Value>
@@ -318,7 +318,7 @@
           <Value>OBJECT_CHARACTERSTRING_VALUE:1</Value>
         </Property>
         <Property Id="PROP_OBJECT_NAME" Tag="BACNET_APPLICATION_TAG_CHARACTER_STRING">
-          <Value>TextSetpoint.1</Value>
+          <Value>TextsSetpointsCSV</Value>
         </Property>
         <Property Id="PROP_OBJECT_TYPE" Tag="BACNET_APPLICATION_TAG_ENUMERATED">
           <Value>40</Value>
@@ -327,69 +327,7 @@
           <Value>False</Value>
         </Property>
         <Property Id="PROP_PRESENT_VALUE" Tag="BACNET_APPLICATION_TAG_CHARACTER_STRING">
-          <Value>Comfort</Value>
-        </Property>
-        <Property Id="PROP_RELIABILITY" Tag="BACNET_APPLICATION_TAG_ENUMERATED">
-          <Value>0</Value>
-        </Property>
-        <Property Id="PROP_STATUS_FLAGS" Tag="BACNET_APPLICATION_TAG_BIT_STRING">
-          <Value>0000</Value>
-        </Property>
-      </Properties>
-    </Object>
-    <Object Type="OBJECT_CHARACTERSTRING_VALUE" Instance="2">
-      <Properties>
-        <Property Id="PROP_DESCRIPTION" Tag="BACNET_APPLICATION_TAG_CHARACTER_STRING">
-          <Value>Text for Setpoint 2</Value>
-        </Property>
-        <Property Id="PROP_EVENT_STATE" Tag="BACNET_APPLICATION_TAG_ENUMERATED">
-          <Value>0</Value>
-        </Property>
-        <Property Id="PROP_OBJECT_IDENTIFIER" Tag="BACNET_APPLICATION_TAG_OBJECT_ID">
-          <Value>OBJECT_CHARACTERSTRING_VALUE:2</Value>
-        </Property>
-        <Property Id="PROP_OBJECT_NAME" Tag="BACNET_APPLICATION_TAG_CHARACTER_STRING">
-          <Value>TextSetpoint.2</Value>
-        </Property>
-        <Property Id="PROP_OBJECT_TYPE" Tag="BACNET_APPLICATION_TAG_ENUMERATED">
-          <Value>40</Value>
-        </Property>
-        <Property Id="PROP_OUT_OF_SERVICE" Tag="BACNET_APPLICATION_TAG_BOOLEAN">
-          <Value>False</Value>
-        </Property>
-        <Property Id="PROP_PRESENT_VALUE" Tag="BACNET_APPLICATION_TAG_CHARACTER_STRING">
-          <Value>Eco+</Value>
-        </Property>
-        <Property Id="PROP_RELIABILITY" Tag="BACNET_APPLICATION_TAG_ENUMERATED">
-          <Value>0</Value>
-        </Property>
-        <Property Id="PROP_STATUS_FLAGS" Tag="BACNET_APPLICATION_TAG_BIT_STRING">
-          <Value>0000</Value>
-        </Property>
-      </Properties>
-    </Object>
-    <Object Type="OBJECT_CHARACTERSTRING_VALUE" Instance="3">
-      <Properties>
-        <Property Id="PROP_DESCRIPTION" Tag="BACNET_APPLICATION_TAG_CHARACTER_STRING">
-          <Value>Text for Setpoint 3</Value>
-        </Property>
-        <Property Id="PROP_EVENT_STATE" Tag="BACNET_APPLICATION_TAG_ENUMERATED">
-          <Value>0</Value>
-        </Property>
-        <Property Id="PROP_OBJECT_IDENTIFIER" Tag="BACNET_APPLICATION_TAG_OBJECT_ID">
-          <Value>OBJECT_CHARACTERSTRING_VALUE:3</Value>
-        </Property>
-        <Property Id="PROP_OBJECT_NAME" Tag="BACNET_APPLICATION_TAG_CHARACTER_STRING">
-          <Value>TextSetpoint.3</Value>
-        </Property>
-        <Property Id="PROP_OBJECT_TYPE" Tag="BACNET_APPLICATION_TAG_ENUMERATED">
-          <Value>40</Value>
-        </Property>
-        <Property Id="PROP_OUT_OF_SERVICE" Tag="BACNET_APPLICATION_TAG_BOOLEAN">
-          <Value>False</Value>
-        </Property>
-        <Property Id="PROP_PRESENT_VALUE" Tag="BACNET_APPLICATION_TAG_CHARACTER_STRING">
-          <Value>Vacancy</Value>
+          <Value>Comfort;Eco+;Vacancy</Value>
         </Property>
         <Property Id="PROP_RELIABILITY" Tag="BACNET_APPLICATION_TAG_ENUMERATED">
           <Value>0</Value>

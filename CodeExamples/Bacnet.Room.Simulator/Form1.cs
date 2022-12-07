@@ -259,15 +259,16 @@ namespace Bacnet.Room.Simulator
 
             // Les labels associés aux Bp pour choisir la temperature
             b = new BacnetObjectId(BacnetObjectTypes.OBJECT_CHARACTERSTRING_VALUE, 1);
-            bv=BacnetActivity.GetBacObjectPresentValue(b);
-            Set1Label.Text = (string)bv.Value;
-            b = new BacnetObjectId(BacnetObjectTypes.OBJECT_CHARACTERSTRING_VALUE, 2);
-            bv = BacnetActivity.GetBacObjectPresentValue(b);
-            Set2Label.Text = (string)bv.Value;
-            b = new BacnetObjectId(BacnetObjectTypes.OBJECT_CHARACTERSTRING_VALUE, 3);
-            bv = BacnetActivity.GetBacObjectPresentValue(b);
-            Set3Label.Text = (string)bv.Value;
+            String Txt = (string)BacnetActivity.GetBacObjectPresentValue(b).Value;
 
+            String[] Messages=Txt.Split(';');
+            if (Messages.Length == 3)
+            {
+                Set1Label.Text = Messages[0];
+                Set2Label.Text = Messages[1];
+                Set3Label.Text = Messages[2];
+            }
+           
             // Les temperatures
 
             bv = BacnetActivity.GetBacObjectPresentValue(Bac_TempInt);

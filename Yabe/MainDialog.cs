@@ -523,24 +523,25 @@ namespace Yabe
 
             string[] listPlugins = Properties.Settings.Default.Plugins.Split(new char[] { ',', ';' });
 
-            foreach (string pluginname in listPlugins)
-            {
-                try
+            if (Environment.OSVersion.Platform.ToString().Contains("Win"))
+                foreach (string pluginname in listPlugins)
                 {
-                    // string path = Path.GetDirectoryName(Application.ExecutablePath);
-                    string name = pluginname.Replace(" ", String.Empty);
-                    // Assembly myDll = Assembly.LoadFrom(path + "\\" + name + ".dll");
-                    Assembly myDll = Assembly.LoadFrom(name + ".dll");
-                    Trace.WriteLine(String.Format("Loaded plugin \"{0}\".", pluginname));
-                    Type[] types = myDll.GetExportedTypes();
-                    IYabePlugin plugin = (IYabePlugin)myDll.CreateInstance(name + ".Plugin", true);
-                    plugin.Init(this);
+                    try
+                    {
+                        // string path = Path.GetDirectoryName(Application.ExecutablePath);
+                        string name = pluginname.Replace(" ", String.Empty);
+                        // Assembly myDll = Assembly.LoadFrom(path + "\\" + name + ".dll");
+                        Assembly myDll = Assembly.LoadFrom(name + ".dll");
+                        Trace.WriteLine(String.Format("Loaded plugin \"{0}\".", pluginname));
+                        Type[] types = myDll.GetExportedTypes();
+                        IYabePlugin plugin = (IYabePlugin)myDll.CreateInstance(name + ".Plugin", true);
+                        plugin.Init(this);
+                    }
+                    catch(Exception ex)
+                    {
+                        Trace.WriteLine(String.Format("Error loading plugin \"{0}\". {1}",pluginname,ex.Message));
+                    }
                 }
-                catch(Exception ex)
-                {
-                    Trace.WriteLine(String.Format("Error loading plugin \"{0}\". {1}",pluginname,ex.Message));
-                }
-            }
 
             if (pluginsToolStripMenuItem.DropDownItems.Count == 0) pluginsToolStripMenuItem.Visible = false;
 

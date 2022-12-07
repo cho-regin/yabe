@@ -517,7 +517,7 @@ namespace DemoServer
                 subs = m_subscriptions[monitoredObjectIdentifier];
                 foreach (Subscription s in subs)
                 {
-                    if (s.reciever == sender && s.reciever_address == adr && s.subscriberProcessIdentifier == subscriberProcessIdentifier && s.monitoredObjectIdentifier.Equals(monitoredObjectIdentifier) && s.monitoredProperty.propertyIdentifier == property_id)
+                    if (s.reciever == sender && s.reciever_address.Equals(adr) && s.subscriberProcessIdentifier == subscriberProcessIdentifier && s.monitoredObjectIdentifier.Equals(monitoredObjectIdentifier) && s.monitoredProperty.propertyIdentifier == property_id)
                     {
                         sub = s;
                         break;
