@@ -7837,14 +7837,15 @@ namespace System.IO.BACnet
         ArcNet,
         LonTalk,
         PTP,
-        IPV6
+        IPV6,
+        SC
     }
 
     public class BacnetAddress : ASN1.IASN1encode
     {
         public UInt16 net;
         public byte[] adr;
-        public byte[] VMac=new byte[3]; // for IP V6, could be integrated also as 3 additional bytes in adr
+        public byte[] VMac=new byte[6]; // 3for IP V6, 6 for BACnetSC
         public BacnetAddressTypes type;
 
         // Modif FC
@@ -7938,6 +7939,9 @@ namespace System.IO.BACnet
                     Array.Copy(adr, Ipv6, 16);
                     IPEndPoint ep = new System.Net.IPEndPoint(new IPAddress(Ipv6), (int)port);
                     return ep.ToString();
+
+                case BacnetAddressTypes.SC:
+                    return "SC";
 
                 default: // Routed @ are always like this, NPDU do not contains the MAC type, only the lenght
                     if (adr == null) return "?";
