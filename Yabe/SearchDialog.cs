@@ -34,6 +34,9 @@ using System.Linq;
 using System.Windows.Forms;
 using System.IO.BACnet;
 using SharpPcap.LibPcap;
+using System.IO;
+using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Yabe
 {
@@ -46,6 +49,8 @@ namespace Yabe
         public SearchDialog()
         {
             InitializeComponent();
+
+            m_SC_Config.Text=Properties.Settings.Default.BACnetSCConfigFile;
 
             //find all serial ports
             string[] ports = System.IO.Ports.SerialPort.GetPortNames();
@@ -95,6 +100,25 @@ namespace Yabe
             this.Close();
         }
 
+        private void m_AddScButton_Click(object sender, EventArgs e)
+        {
+            
+            Properties.Settings.Default.BACnetSCConfigFile = m_SC_Config.Text;
+
+            if (!File.Exists(Properties.Settings.Default.BACnetSCConfigFile))
+            {
+                Trace.TraceError("BACnet/SC Configuration file not found");
+                return; 
+            }
+            try
+            {
+                m_result = new BacnetClient(new BACnetTransportSecureConnect(new StreamReader(Properties.Settings.Default.BACnetSCConfigFile).BaseStream));
+                this.DialogResult = System.Windows.Forms.DialogResult.OK;
+            }
+            catch { }
+
+            this.Close();
+        }
         private void m_AddSerialButton_Click(object sender, EventArgs e)
         {
             try
@@ -194,5 +218,19 @@ namespace Yabe
             return ips.ToArray();
         }
 
+        private void m_EditSC_Click(object sender, EventArgs e)
+        {
+            new SCEditor(Properties.Settings.Default.BACnetSCConfigFile).ShowDialog();
+        }
+
+        private void m_SelectSC_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.InitialDirectory = Path.GetDirectoryName(Properties.Settings.Default.Auto_Store_Object_Names_File);
+            dlg.DefaultExt = "Config";
+            dlg.Filter = "XML Configuration Files (*.Config)|*.Config|All files (*.*)|*.*";
+            if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
+            m_SC_Config.Text=Properties.Settings.Default.BACnetSCConfigFile = dlg.FileName;
+        }
     }
 }

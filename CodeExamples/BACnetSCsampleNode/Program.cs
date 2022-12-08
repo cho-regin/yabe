@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.IO.BACnet;
 using System.Threading;
 using System.Diagnostics;
+using System.IO;
 
 namespace BACnetSCsampleNode
 {
@@ -70,7 +71,7 @@ namespace BACnetSCsampleNode
             // Bacnet SC unSecure Channel with the Hub ws://127.0.0.1:47808
             // Only with Testhub from https://sourceforge.net/projects/bacnet-sc-reference-stack/
             // in unsecure mode
-            bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(null));
+            bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(null);
 
             bacnet_client.Start();    // go
 

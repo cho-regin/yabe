@@ -76,6 +76,10 @@ Source: "..\..\CodeExamples\Wheather2_to_Bacnet\Wheather2config.reg"; DestDir: "
 
 Source: "..\..\Mstp.BacnetCapture\bin\Debug\Mstp.BacnetCapture.exe"; DestDir: "{app}\AddOn"; Flags: ignoreversion
 
+Source: "..\..\Yabe\bin\Debug\Yabe.p12"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\TestHub.crt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\BACnetSCConfig.config"; DestDir: "{app}"; Flags: ignoreversion
+
 [Icons]
 Name: "{group}\Yabe"; Filename: "{app}\Yabe.Exe"
 

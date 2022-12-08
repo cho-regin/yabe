@@ -7844,8 +7844,8 @@ namespace System.IO.BACnet
     public class BacnetAddress : ASN1.IASN1encode
     {
         public UInt16 net;
-        public byte[] adr;
-        public byte[] VMac=new byte[6]; // 3for IP V6, 6 for BACnetSC
+        public byte[] adr;              // Variable size. Used MSTP, Ethernet, UDP and also for BACnet/SC VMAC (duplicated)
+        public byte[] VMac=new byte[6]; // 3 bytes for IP V6, 6 for BACnetSC
         public BacnetAddressTypes type;
 
         // Modif FC
@@ -7941,9 +7941,12 @@ namespace System.IO.BACnet
                     return ep.ToString();
 
                 case BacnetAddressTypes.SC:
-                    return "SC";
+                    StringBuilder sb = new StringBuilder("Vmac ");
+                    for (int i = 0; i < 6; i++)
+                        sb.Append(VMac[i].ToString("X2"));
+                    return sb.ToString();
 
-                default: // Routed @ are always like this, NPDU do not contains the MAC type, only the lenght
+                 default: // Routed @ are always like this, NPDU do not contains the MAC type, only the lenght
                     if (adr == null) return "?";
 
                     if (adr.Length == 6) // certainly IP, but not sure (Newron System send it for internal usage with 4*0 bytes)

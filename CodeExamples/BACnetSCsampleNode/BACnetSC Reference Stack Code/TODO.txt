@@ -1,0 +1,5 @@
+Configurations Files for the application coming from
+
+	BACnet/SC Reference Stack Code
+
+Used to run TestHub, TestNodes and DemoIPSC without TLS

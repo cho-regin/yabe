@@ -202,6 +202,7 @@
             m_ImageList.Images.SetKeyName(14, "calendar.png");
             m_ImageList.Images.SetKeyName(15, "date.png");
             m_ImageList.Images.SetKeyName(16, "error.png");
+            m_ImageList.Images.SetKeyName(17, "lock.png");
             // 
             // toolStrip1
             // 

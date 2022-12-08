@@ -848,6 +848,9 @@ namespace Yabe
                     case BacnetAddressTypes.MSTP:
                         node.ImageIndex = 1;
                         break;
+                    case BacnetAddressTypes.SC:
+                        node.ImageIndex = 17;
+                        break;
                     default:
                         node.ImageIndex = 8;
                         break;
@@ -898,9 +901,12 @@ namespace Yabe
                     if ((IdMin!=-1)&&(IdMax==-1)) IdMax=0x3FFFFF;
                     if ((IdMax != -1) && (IdMin == -1)) IdMin = 0;
 
+                    if (comm.Transport.Type == BacnetAddressTypes.SC) comm.Retries = 1; // Not required devices are connected to the Hub
+
                     //start search
                     if (comm.Transport.Type == BacnetAddressTypes.IP || comm.Transport.Type == BacnetAddressTypes.Ethernet 
-                        || comm.Transport.Type == BacnetAddressTypes.IPV6 
+                        || comm.Transport.Type == BacnetAddressTypes.IPV6
+                        || comm.Transport.Type == BacnetAddressTypes.SC
                         || (comm.Transport is BacnetMstpProtocolTransport && ((BacnetMstpProtocolTransport)comm.Transport).SourceAddress != -1) 
                         || comm.Transport.Type == BacnetAddressTypes.PTP)
                     {
