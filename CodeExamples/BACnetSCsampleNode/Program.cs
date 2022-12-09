@@ -30,6 +30,7 @@ using System.IO.BACnet;
 using System.Threading;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 
 namespace BACnetSCsampleNode
 {
@@ -66,12 +67,20 @@ namespace BACnetSCsampleNode
         /*****************************************************************************************************/
         static void StartActivity()
         {
-            byte[] UUID = new byte[16];
-
             // Bacnet SC unSecure Channel with the Hub ws://127.0.0.1:47808
-            // Only with Testhub from https://sourceforge.net/projects/bacnet-sc-reference-stack/
-            // in unsecure mode
-            bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(null);
+            // work well with Testhub from https://sourceforge.net/projects/bacnet-sc-reference-stack/
+
+            String Config = 
+                "<BACnetSCConfigChannel>" +
+                    "<primaryHubURI>ws://127.0.0.1:47808</primaryHubURI>" +
+                    "<UUID>ASCIISTRING_UUID_VALUE</UUID>" +
+                "</BACnetSCConfigChannel>";
+            MemoryStream ms = new MemoryStream(Encoding.ASCII.GetBytes(Config));
+            bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(ms));
+
+            // Configuration could also be done with a File side the .exe
+            // StreamReader sr = new StreamReader("BACnetSCConfig.config");
+            // bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(sr.BaseStream));
 
             bacnet_client.Start();    // go
 
@@ -80,9 +89,7 @@ namespace BACnetSCsampleNode
             bacnet_client.OnWhoIs += new BacnetClient.WhoIsHandler(handler_OnWhoIs);
 
             bacnet_client.WhoIs();
-
         }
-
         /*****************************************************************************************************/
         static void ReadExample()
         {

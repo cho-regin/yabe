@@ -30,6 +30,7 @@ using System.Text;
 using System.IO.BACnet.Serialize;
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Reflection;
 
 namespace System.IO.BACnet
 {
@@ -874,11 +875,9 @@ namespace System.IO.BACnet
             {
                 System.Net.IPEndPoint ep = new Net.IPEndPoint(Net.IPAddress.Parse(BBMD_IP), Port);
 
-                // dynamic avoid reference to BacnetIpUdpProtocolTransport or BacnetIpV6UdpProtocolTransport classes
-                if (m_client is BacnetIpUdpProtocolTransport)
-                    sent = (m_client as BacnetIpUdpProtocolTransport).SendRegisterAsForeignDevice(ep, TTL);
-                else
-                    sent = (m_client as BacnetIpV6UdpProtocolTransport).SendRegisterAsForeignDevice(ep, TTL);
+                // to avoid reference to BacnetIpUdpProtocolTransport or BacnetIpV6UdpProtocolTransport classes
+                MethodInfo method = m_client.GetType().GetMethod("SendRegisterAsForeignDevice");
+                if (method != null) { method.Invoke(m_client, new object[] { ep, TTL }); }
 
                 if (sent==false)
                     Trace.TraceWarning("The given address do not match with the IP version");
@@ -906,12 +905,10 @@ namespace System.IO.BACnet
                
                 bool sent = false;
 
-                // dynamic avoid reference to BacnetIpUdpProtocolTransport or BacnetIpV6UdpProtocolTransport classes
-                if (m_client is BacnetIpUdpProtocolTransport)
-                    sent = (m_client as BacnetIpUdpProtocolTransport).SendRemoteWhois(b.buffer, ep, b.offset);
-                else
-                    sent = (m_client as BacnetIpV6UdpProtocolTransport).SendRemoteWhois(b.buffer, ep, b.offset);
-
+                // to avoid reference to BacnetIpUdpProtocolTransport or BacnetIpV6UdpProtocolTransport classes
+                MethodInfo method = m_client.GetType().GetMethod("SendRemoteWhois");
+                if (method != null) { method.Invoke(m_client, new object[] { b.buffer, ep, b.offset }); }
+                
                 if (sent == false)
                     Trace.TraceWarning("The given address do not match with the IP version");
                 else

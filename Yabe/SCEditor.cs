@@ -76,8 +76,6 @@ namespace Yabe
             {
                 Trace.TraceError("Error with certificate file");
             }
-
-
         }
 
         private void SelCert_Click(object sender, EventArgs e)
@@ -100,7 +98,7 @@ namespace Yabe
                 if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
                 HubCert.Text = dlg.FileName;
             }
-
         }
+
     }
 }

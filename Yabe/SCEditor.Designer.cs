@@ -34,21 +34,23 @@
             this.label2 = new System.Windows.Forms.Label();
             this.UUID = new System.Windows.Forms.TextBox();
             this.HubURI = new System.Windows.Forms.TextBox();
-            this.label3 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
-            this.SelYabeCert = new System.Windows.Forms.Button();
-            this.viewYabeCert = new System.Windows.Forms.Button();
             this.btSave = new System.Windows.Forms.Button();
-            this.YabeCert = new System.Windows.Forms.TextBox();
-            this.HubCert = new System.Windows.Forms.TextBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.viewHubCert = new System.Windows.Forms.Button();
             this.SelHubCert = new System.Windows.Forms.Button();
+            this.HubCert = new System.Windows.Forms.TextBox();
+            this.YabeCert = new System.Windows.Forms.TextBox();
+            this.viewYabeCert = new System.Windows.Forms.Button();
+            this.SelYabeCert = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // chk_VerifyHubCert
             // 
             this.chk_VerifyHubCert.AutoSize = true;
-            this.chk_VerifyHubCert.Location = new System.Drawing.Point(23, 255);
+            this.chk_VerifyHubCert.Location = new System.Drawing.Point(6, 152);
             this.chk_VerifyHubCert.Name = "chk_VerifyHubCert";
             this.chk_VerifyHubCert.Size = new System.Drawing.Size(125, 17);
             this.chk_VerifyHubCert.TabIndex = 0;
@@ -87,47 +89,9 @@
             this.HubURI.Size = new System.Drawing.Size(210, 20);
             this.HubURI.TabIndex = 4;
             // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(20, 136);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(181, 13);
-            this.label3.TabIndex = 5;
-            this.label3.Text = "Yabe Certificate File, with private key";
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(20, 188);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(99, 13);
-            this.label4.TabIndex = 6;
-            this.label4.Text = "HUB Certificate File";
-            // 
-            // SelYabeCert
-            // 
-            this.SelYabeCert.Location = new System.Drawing.Point(210, 125);
-            this.SelYabeCert.Name = "SelYabeCert";
-            this.SelYabeCert.Size = new System.Drawing.Size(52, 22);
-            this.SelYabeCert.TabIndex = 9;
-            this.SelYabeCert.Text = "Select";
-            this.SelYabeCert.UseVisualStyleBackColor = true;
-            this.SelYabeCert.Click += new System.EventHandler(this.SelCert_Click);
-            // 
-            // viewYabeCert
-            // 
-            this.viewYabeCert.Location = new System.Drawing.Point(270, 125);
-            this.viewYabeCert.Name = "viewYabeCert";
-            this.viewYabeCert.Size = new System.Drawing.Size(51, 22);
-            this.viewYabeCert.TabIndex = 10;
-            this.viewYabeCert.Text = "View";
-            this.viewYabeCert.UseVisualStyleBackColor = true;
-            this.viewYabeCert.Click += new System.EventHandler(this.viewCert_Click);
-            // 
             // btSave
             // 
-            this.btSave.Location = new System.Drawing.Point(124, 299);
+            this.btSave.Location = new System.Drawing.Point(120, 316);
             this.btSave.Name = "btSave";
             this.btSave.Size = new System.Drawing.Size(77, 22);
             this.btSave.TabIndex = 13;
@@ -135,61 +99,110 @@
             this.btSave.UseVisualStyleBackColor = true;
             this.btSave.Click += new System.EventHandler(this.btSave_Click);
             // 
-            // YabeCert
+            // groupBox1
             // 
-            this.YabeCert.Location = new System.Drawing.Point(23, 152);
-            this.YabeCert.Name = "YabeCert";
-            this.YabeCert.ReadOnly = true;
-            this.YabeCert.Size = new System.Drawing.Size(298, 20);
-            this.YabeCert.TabIndex = 14;
-            // 
-            // HubCert
-            // 
-            this.HubCert.Location = new System.Drawing.Point(23, 206);
-            this.HubCert.Name = "HubCert";
-            this.HubCert.ReadOnly = true;
-            this.HubCert.Size = new System.Drawing.Size(298, 20);
-            this.HubCert.TabIndex = 15;
+            this.groupBox1.Controls.Add(this.viewHubCert);
+            this.groupBox1.Controls.Add(this.SelHubCert);
+            this.groupBox1.Controls.Add(this.HubCert);
+            this.groupBox1.Controls.Add(this.YabeCert);
+            this.groupBox1.Controls.Add(this.viewYabeCert);
+            this.groupBox1.Controls.Add(this.SelYabeCert);
+            this.groupBox1.Controls.Add(this.label4);
+            this.groupBox1.Controls.Add(this.label3);
+            this.groupBox1.Controls.Add(this.chk_VerifyHubCert);
+            this.groupBox1.Location = new System.Drawing.Point(12, 114);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(309, 184);
+            this.groupBox1.TabIndex = 18;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Security ... required only with wss://";
             // 
             // viewHubCert
             // 
-            this.viewHubCert.Location = new System.Drawing.Point(270, 183);
+            this.viewHubCert.Location = new System.Drawing.Point(252, 87);
             this.viewHubCert.Name = "viewHubCert";
             this.viewHubCert.Size = new System.Drawing.Size(51, 22);
-            this.viewHubCert.TabIndex = 17;
+            this.viewHubCert.TabIndex = 25;
             this.viewHubCert.Text = "View";
             this.viewHubCert.UseVisualStyleBackColor = true;
             this.viewHubCert.Click += new System.EventHandler(this.viewCert_Click);
             // 
             // SelHubCert
             // 
-            this.SelHubCert.Location = new System.Drawing.Point(210, 183);
+            this.SelHubCert.Location = new System.Drawing.Point(192, 87);
             this.SelHubCert.Name = "SelHubCert";
             this.SelHubCert.Size = new System.Drawing.Size(52, 22);
-            this.SelHubCert.TabIndex = 16;
+            this.SelHubCert.TabIndex = 24;
             this.SelHubCert.Text = "Select";
             this.SelHubCert.UseVisualStyleBackColor = true;
             this.SelHubCert.Click += new System.EventHandler(this.SelCert_Click);
+            // 
+            // HubCert
+            // 
+            this.HubCert.Location = new System.Drawing.Point(5, 109);
+            this.HubCert.Name = "HubCert";
+            this.HubCert.ReadOnly = true;
+            this.HubCert.Size = new System.Drawing.Size(298, 20);
+            this.HubCert.TabIndex = 23;
+            // 
+            // YabeCert
+            // 
+            this.YabeCert.Location = new System.Drawing.Point(5, 55);
+            this.YabeCert.Name = "YabeCert";
+            this.YabeCert.ReadOnly = true;
+            this.YabeCert.Size = new System.Drawing.Size(298, 20);
+            this.YabeCert.TabIndex = 22;
+            // 
+            // viewYabeCert
+            // 
+            this.viewYabeCert.Location = new System.Drawing.Point(250, 33);
+            this.viewYabeCert.Name = "viewYabeCert";
+            this.viewYabeCert.Size = new System.Drawing.Size(51, 22);
+            this.viewYabeCert.TabIndex = 21;
+            this.viewYabeCert.Text = "View";
+            this.viewYabeCert.UseVisualStyleBackColor = true;
+            this.viewYabeCert.Click += new System.EventHandler(this.viewCert_Click);
+            // 
+            // SelYabeCert
+            // 
+            this.SelYabeCert.Location = new System.Drawing.Point(192, 33);
+            this.SelYabeCert.Name = "SelYabeCert";
+            this.SelYabeCert.Size = new System.Drawing.Size(52, 22);
+            this.SelYabeCert.TabIndex = 20;
+            this.SelYabeCert.Text = "Select";
+            this.SelYabeCert.UseVisualStyleBackColor = true;
+            this.SelYabeCert.Click += new System.EventHandler(this.SelCert_Click);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(2, 91);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(99, 13);
+            this.label4.TabIndex = 19;
+            this.label4.Text = "HUB Certificate File";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.Location = new System.Drawing.Point(2, 39);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(181, 13);
+            this.label3.TabIndex = 18;
+            this.label3.Text = "Yabe Certificate File, with private key";
             // 
             // SCEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(333, 343);
-            this.Controls.Add(this.viewHubCert);
-            this.Controls.Add(this.SelHubCert);
-            this.Controls.Add(this.HubCert);
-            this.Controls.Add(this.YabeCert);
-            this.Controls.Add(this.btSave);
-            this.Controls.Add(this.viewYabeCert);
-            this.Controls.Add(this.SelYabeCert);
-            this.Controls.Add(this.label4);
-            this.Controls.Add(this.label3);
+            this.ClientSize = new System.Drawing.Size(333, 356);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.HubURI);
             this.Controls.Add(this.UUID);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.chk_VerifyHubCert);
+            this.Controls.Add(this.btSave);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
@@ -197,6 +210,8 @@
             this.Name = "SCEditor";
             this.ShowIcon = false;
             this.Text = "BACnet/SC Channel Configuration";
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -209,14 +224,15 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox UUID;
         private System.Windows.Forms.TextBox HubURI;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Button SelYabeCert;
-        private System.Windows.Forms.Button viewYabeCert;
         private System.Windows.Forms.Button btSave;
-        private System.Windows.Forms.TextBox YabeCert;
-        private System.Windows.Forms.TextBox HubCert;
+        private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Button viewHubCert;
         private System.Windows.Forms.Button SelHubCert;
+        private System.Windows.Forms.TextBox HubCert;
+        private System.Windows.Forms.TextBox YabeCert;
+        private System.Windows.Forms.Button viewYabeCert;
+        private System.Windows.Forms.Button SelYabeCert;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label label3;
     }
 }
