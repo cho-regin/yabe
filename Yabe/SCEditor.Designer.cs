@@ -30,7 +30,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SCEditor));
             this.chk_VerifyHubCert = new System.Windows.Forms.CheckBox();
-            this.label1 = new System.Windows.Forms.Label();
+            this.lblUri = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.UUID = new System.Windows.Forms.TextBox();
             this.HubURI = new System.Windows.Forms.TextBox();
@@ -42,34 +42,35 @@
             this.YabeCert = new System.Windows.Forms.TextBox();
             this.viewYabeCert = new System.Windows.Forms.Button();
             this.SelYabeCert = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
+            this.lblRemoteCertificate = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
+            this.chk_DirectConnect = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // chk_VerifyHubCert
             // 
             this.chk_VerifyHubCert.AutoSize = true;
-            this.chk_VerifyHubCert.Location = new System.Drawing.Point(6, 152);
+            this.chk_VerifyHubCert.Location = new System.Drawing.Point(6, 149);
             this.chk_VerifyHubCert.Name = "chk_VerifyHubCert";
-            this.chk_VerifyHubCert.Size = new System.Drawing.Size(125, 17);
+            this.chk_VerifyHubCert.Size = new System.Drawing.Size(142, 17);
             this.chk_VerifyHubCert.TabIndex = 0;
-            this.chk_VerifyHubCert.Text = "Verify Hub Certificate";
+            this.chk_VerifyHubCert.Text = "Verify Remote Certificate";
             this.chk_VerifyHubCert.UseVisualStyleBackColor = true;
             // 
-            // label1
+            // lblUri
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(20, 36);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(49, 13);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Hub URI";
+            this.lblUri.AutoSize = true;
+            this.lblUri.Location = new System.Drawing.Point(20, 28);
+            this.lblUri.Name = "lblUri";
+            this.lblUri.Size = new System.Drawing.Size(49, 13);
+            this.lblUri.TabIndex = 1;
+            this.lblUri.Text = "Hub URI";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(20, 77);
+            this.label2.Location = new System.Drawing.Point(20, 69);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(62, 13);
             this.label2.TabIndex = 2;
@@ -77,21 +78,21 @@
             // 
             // UUID
             // 
-            this.UUID.Location = new System.Drawing.Point(111, 74);
+            this.UUID.Location = new System.Drawing.Point(111, 66);
             this.UUID.Name = "UUID";
             this.UUID.Size = new System.Drawing.Size(210, 20);
             this.UUID.TabIndex = 3;
             // 
             // HubURI
             // 
-            this.HubURI.Location = new System.Drawing.Point(111, 33);
+            this.HubURI.Location = new System.Drawing.Point(111, 25);
             this.HubURI.Name = "HubURI";
             this.HubURI.Size = new System.Drawing.Size(210, 20);
             this.HubURI.TabIndex = 4;
             // 
             // btSave
             // 
-            this.btSave.Location = new System.Drawing.Point(120, 316);
+            this.btSave.Location = new System.Drawing.Point(118, 343);
             this.btSave.Name = "btSave";
             this.btSave.Size = new System.Drawing.Size(77, 22);
             this.btSave.TabIndex = 13;
@@ -107,10 +108,10 @@
             this.groupBox1.Controls.Add(this.YabeCert);
             this.groupBox1.Controls.Add(this.viewYabeCert);
             this.groupBox1.Controls.Add(this.SelYabeCert);
-            this.groupBox1.Controls.Add(this.label4);
+            this.groupBox1.Controls.Add(this.lblRemoteCertificate);
             this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.Controls.Add(this.chk_VerifyHubCert);
-            this.groupBox1.Location = new System.Drawing.Point(12, 114);
+            this.groupBox1.Location = new System.Drawing.Point(12, 143);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(309, 184);
             this.groupBox1.TabIndex = 18;
@@ -173,14 +174,14 @@
             this.SelYabeCert.UseVisualStyleBackColor = true;
             this.SelYabeCert.Click += new System.EventHandler(this.SelCert_Click);
             // 
-            // label4
+            // lblRemoteCertificate
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(2, 91);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(99, 13);
-            this.label4.TabIndex = 19;
-            this.label4.Text = "HUB Certificate File";
+            this.lblRemoteCertificate.AutoSize = true;
+            this.lblRemoteCertificate.Location = new System.Drawing.Point(2, 91);
+            this.lblRemoteCertificate.Name = "lblRemoteCertificate";
+            this.lblRemoteCertificate.Size = new System.Drawing.Size(128, 13);
+            this.lblRemoteCertificate.TabIndex = 19;
+            this.lblRemoteCertificate.Text = "HUB or CA Certificate File";
             // 
             // label3
             // 
@@ -192,16 +193,28 @@
             this.label3.TabIndex = 18;
             this.label3.Text = "Yabe Certificate File, with private key";
             // 
+            // chk_DirectConnect
+            // 
+            this.chk_DirectConnect.AutoSize = true;
+            this.chk_DirectConnect.Location = new System.Drawing.Point(18, 105);
+            this.chk_DirectConnect.Name = "chk_DirectConnect";
+            this.chk_DirectConnect.Size = new System.Drawing.Size(97, 17);
+            this.chk_DirectConnect.TabIndex = 26;
+            this.chk_DirectConnect.Text = "Direct Connect";
+            this.chk_DirectConnect.UseVisualStyleBackColor = true;
+            this.chk_DirectConnect.CheckedChanged += new System.EventHandler(this.chk_DirectConnect_CheckedChanged);
+            // 
             // SCEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(333, 356);
+            this.ClientSize = new System.Drawing.Size(333, 385);
+            this.Controls.Add(this.chk_DirectConnect);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.HubURI);
             this.Controls.Add(this.UUID);
             this.Controls.Add(this.label2);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.lblUri);
             this.Controls.Add(this.btSave);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -220,7 +233,7 @@
         #endregion
 
         private System.Windows.Forms.CheckBox chk_VerifyHubCert;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label lblUri;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox UUID;
         private System.Windows.Forms.TextBox HubURI;
@@ -232,7 +245,8 @@
         private System.Windows.Forms.TextBox YabeCert;
         private System.Windows.Forms.Button viewYabeCert;
         private System.Windows.Forms.Button SelYabeCert;
-        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label lblRemoteCertificate;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.CheckBox chk_DirectConnect;
     }
 }

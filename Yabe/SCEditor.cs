@@ -36,6 +36,7 @@ namespace Yabe
                 HubCert.Text = config.HubCertificateFile;
                 YabeCert.Text = config.OwnCertificateFile;
                 chk_VerifyHubCert.Checked = config.ValidateHubCertificate;
+                chk_DirectConnect.Checked = config.DirectConnect;
 
             }
             catch
@@ -52,6 +53,7 @@ namespace Yabe
 
             config.OwnCertificateFile = YabeCert.Text;
             config.ValidateHubCertificate = chk_VerifyHubCert.Checked;
+            config.DirectConnect = chk_DirectConnect.Checked;
 
             try
             {
@@ -97,6 +99,20 @@ namespace Yabe
                 dlg.Filter = "PEM (*.crt)|*.crt|DER (*.der)|*.der|PEM (*.pem)|*.pem|All files (*.*)|*.*";
                 if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
                 HubCert.Text = dlg.FileName;
+            }
+        }
+
+        private void chk_DirectConnect_CheckedChanged(object sender, EventArgs e)
+        {
+            if (chk_DirectConnect.Checked)
+            {
+                lblRemoteCertificate.Text = "Device or CA Certificate File";
+                lblUri.Text = "Device URI";
+            }
+            else
+            {
+                lblRemoteCertificate.Text = "Hub or CA Certificate File";
+                lblUri.Text = "Hub URI";
             }
         }
 
