@@ -45,6 +45,7 @@
             this.lblRemoteCertificate = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.chk_DirectConnect = new System.Windows.Forms.CheckBox();
+            this.bpGetX509 = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -61,7 +62,7 @@
             // lblUri
             // 
             this.lblUri.AutoSize = true;
-            this.lblUri.Location = new System.Drawing.Point(20, 28);
+            this.lblUri.Location = new System.Drawing.Point(20, 69);
             this.lblUri.Name = "lblUri";
             this.lblUri.Size = new System.Drawing.Size(49, 13);
             this.lblUri.TabIndex = 1;
@@ -70,7 +71,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(20, 69);
+            this.label2.Location = new System.Drawing.Point(20, 26);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(62, 13);
             this.label2.TabIndex = 2;
@@ -78,14 +79,14 @@
             // 
             // UUID
             // 
-            this.UUID.Location = new System.Drawing.Point(111, 66);
+            this.UUID.Location = new System.Drawing.Point(111, 23);
             this.UUID.Name = "UUID";
             this.UUID.Size = new System.Drawing.Size(210, 20);
             this.UUID.TabIndex = 3;
             // 
             // HubURI
             // 
-            this.HubURI.Location = new System.Drawing.Point(111, 25);
+            this.HubURI.Location = new System.Drawing.Point(111, 66);
             this.HubURI.Name = "HubURI";
             this.HubURI.Size = new System.Drawing.Size(210, 20);
             this.HubURI.TabIndex = 4;
@@ -204,11 +205,22 @@
             this.chk_DirectConnect.UseVisualStyleBackColor = true;
             this.chk_DirectConnect.CheckedChanged += new System.EventHandler(this.chk_DirectConnect_CheckedChanged);
             // 
+            // bpGetX509
+            // 
+            this.bpGetX509.Location = new System.Drawing.Point(238, 92);
+            this.bpGetX509.Name = "bpGetX509";
+            this.bpGetX509.Size = new System.Drawing.Size(79, 23);
+            this.bpGetX509.TabIndex = 27;
+            this.bpGetX509.Text = "Try Get X509";
+            this.bpGetX509.UseVisualStyleBackColor = true;
+            this.bpGetX509.Click += new System.EventHandler(this.GetRemoteCertificate_Click);
+            // 
             // SCEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(333, 385);
+            this.Controls.Add(this.bpGetX509);
             this.Controls.Add(this.chk_DirectConnect);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.HubURI);
@@ -223,6 +235,7 @@
             this.Name = "SCEditor";
             this.ShowIcon = false;
             this.Text = "BACnet/SC Channel Configuration";
+            this.Load += new System.EventHandler(this.SCEditor_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
@@ -248,5 +261,6 @@
         private System.Windows.Forms.Label lblRemoteCertificate;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.CheckBox chk_DirectConnect;
+        private System.Windows.Forms.Button bpGetX509;
     }
 }

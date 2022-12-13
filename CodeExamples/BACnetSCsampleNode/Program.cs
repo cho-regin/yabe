@@ -67,18 +67,21 @@ namespace BACnetSCsampleNode
         /*****************************************************************************************************/
         static void StartActivity()
         {
-            // Bacnet SC unSecure Channel with the Hub ws://127.0.0.1:47808
+            // Bacnet SC unSecure Channel with the Hub ws://127.0.0.1:4443
             // work well with Testhub from https://sourceforge.net/projects/bacnet-sc-reference-stack/
+           
+            BACnetSCConfigChannel config = new BACnetSCConfigChannel()
+            {
+                primaryHubURI = "ws://127.0.0.1:4443",
+                UUID = "{92fb9be8-bac0-0000-0cab-171d5ec08e6c}",
+                // For certificates Files reference or X509 can be set here
+            };
+            Guid g;
+            Guid.TryParse(config.UUID, out g);
 
-            String Config = 
-                "<BACnetSCConfigChannel>" +
-                    "<primaryHubURI>ws://127.0.0.1:47808</primaryHubURI>" +
-                    "<UUID>ASCIISTRING_UUID_VALUE</UUID>" +
-                "</BACnetSCConfigChannel>";
-            MemoryStream ms = new MemoryStream(Encoding.ASCII.GetBytes(Config));
-            bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(ms));
+            bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(config));
 
-            // Configuration could also be done with a File side the .exe
+            // Configuration could also be done with a File side the .exe, see BACnetSCConfig.config in Yabe directory
             // StreamReader sr = new StreamReader("BACnetSCConfig.config");
             // bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(sr.BaseStream));
 

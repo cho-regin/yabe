@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Yabe"
-#define MyAppVersion "1.3.0"
+#define MyAppVersion "1.3.1"
 #define MyAppPublisher "Yabe Authors"
 #define MyAppURL "http://sourceforge.net/projects/yetanotherbacnetexplorer"
 #define MyAppExeName "Yabe.exe"
@@ -77,9 +77,9 @@ Source: "..\..\CodeExamples\Wheather2_to_Bacnet\Wheather2config.reg"; DestDir: "
 
 Source: "..\..\Mstp.BacnetCapture\bin\Debug\Mstp.BacnetCapture.exe"; DestDir: "{app}\AddOn"; Flags: ignoreversion
 
-Source: "..\..\Yabe\bin\Debug\Yabe.p12"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\TestHub.crt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\BACnetSCConfig.config"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\Yabe.p12"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\TestHub.crt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\BACnetSCConfig.config"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\Yabe"; Filename: "{app}\Yabe.Exe"

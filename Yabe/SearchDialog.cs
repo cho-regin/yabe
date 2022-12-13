@@ -37,6 +37,7 @@ using SharpPcap.LibPcap;
 using System.IO;
 using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
+using System.Xml.Serialization;
 
 namespace Yabe
 {
@@ -105,19 +106,27 @@ namespace Yabe
             
             Properties.Settings.Default.BACnetSCConfigFile = m_SC_Config.Text;
 
-            if (!File.Exists(Properties.Settings.Default.BACnetSCConfigFile))
+            XmlSerializer ser = new XmlSerializer(typeof(BACnetSCConfigChannel));
+            BACnetSCConfigChannel configuration;
+            try
             {
-                Trace.TraceError("BACnet/SC Configuration file not found");
-                return; 
+                using (StreamReader sr = new StreamReader(Properties.Settings.Default.BACnetSCConfigFile))
+                    configuration = (BACnetSCConfigChannel)ser.Deserialize(sr);
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("Error with BACnet/SC XML configuration file : " + ex.Message);
+                return;
             }
             try
             {
-                m_result = new BacnetClient(new BACnetTransportSecureConnect(new StreamReader(Properties.Settings.Default.BACnetSCConfigFile).BaseStream));
+                m_result = new BacnetClient(new BACnetTransportSecureConnect(configuration));
                 this.DialogResult = System.Windows.Forms.DialogResult.OK;
+
+                this.Close();
             }
             catch { }
 
-            this.Close();
         }
         private void m_AddSerialButton_Click(object sender, EventArgs e)
         {

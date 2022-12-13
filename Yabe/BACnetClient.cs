@@ -837,7 +837,6 @@ namespace System.IO.BACnet
                     ushort vendor_id;
                     int npdu_len = NPDU.Decode(buffer, offset, out npdu_function, out destination, out source, out hop_count, out nmt, out vendor_id);
 
-                    // Modif FC
                     remote_address.RoutedSource = source;
 
                     if ((npdu_function & BacnetNpduControls.NetworkLayerMessage) == BacnetNpduControls.NetworkLayerMessage)

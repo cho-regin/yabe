@@ -43,7 +43,8 @@ namespace System.IO.BACnet
 {
     public enum BACnetSCState { IDLE, AWAITING_WEBSOCKET, AWAITING_REQUEST, AWAITING_ACCEPT, CONNECTED, DISCONNECTING }
 
-    // MIT License Copyright (C) 2022 Frederic Chaxel <fchaxel@free.fr> 
+    // MIT License Copyright (C) 2022 Frederic Chaxel <fchaxel@free.fr>
+    // Copyright (C) https://sourceforge.net/projects/yetanotherbacnetexplorer/
     public class BACnetTransportSecureConnect : IBacnetTransport, IDisposable
     {
         private BACnetSCState state = BACnetSCState.IDLE;
@@ -55,12 +56,12 @@ namespace System.IO.BACnet
 
         private BACnetSCConfigChannel configuration;
 
-        private byte[] VMAC = new byte[6];          // my random VMAC
+        private byte[] myVMAC = new byte[6];          // my random VMAC
         private byte[] RemoteVMAC = new byte[6];    // HUB or Direct connected device VMAC 
 
         // Several frames type
         // resize will be done after, if needed
-        // by default this is the value used by NPDU with 2 VMAC : 16
+        // by default this is the value used by NPDU with 1 VMAC : 10
         public int HeaderLength { get { return BVLC_HEADER_LENGTH; } }
 
         public const byte BVLC_HEADER_LENGTH = 10; // Not all the time (from 4 to a lot), but 10 for all NPDUs sent
@@ -74,53 +75,45 @@ namespace System.IO.BACnet
         private int m_max_payload = 1500;
 
         public event MessageRecievedHandler MessageRecieved;
+        public event EventHandler OnChannelConnected;
+        public event EventHandler OnChannelDisconnected;
 
         private List<byte[]> AwaitingFrames = new List<byte[]>();
 
         private bool ConfigOK = false;
-        public BACnetTransportSecureConnect(Stream ConfigurationFile)
+
+        public BACnetTransportSecureConnect(BACnetSCConfigChannel config)
         {
-  
-            XmlSerializer ser = new XmlSerializer(typeof(BACnetSCConfigChannel));
+            configuration = config;
 
-            try
+            if (configuration.UseTLS)
             {
-                configuration = (BACnetSCConfigChannel) ser.Deserialize(ConfigurationFile);
-                configuration.bUUID = Encoding.ASCII.GetBytes(configuration.UUID);
-                Array.Resize(ref configuration.bUUID, 16);
-                ConfigurationFile.Close();
-            }
-            catch (Exception e)
-            { 
-                Trace.TraceError("Error with BACnet/SC XML configuration file : "+e.Message);
-                return;
-            }
-
-            if (configuration.primaryHubURI.Contains("wss://"))
-            { 
-                configuration.UseTLS = true;
-                try
-                {
-                    // could be not given or with error if the remote device do not verify it (wrong idea)
-                    configuration.OwnCertificate=new X509Certificate2(configuration.OwnCertificateFile);
-                    if (!configuration.OwnCertificate.HasPrivateKey) 
-                    { 
-                        Trace.TraceWarning("BACnet/SC : Warning the App own certificate is without a private key"); 
+                if ((configuration.OwnCertificate!=null)&&(configuration.OwnCertificate==null))
+                    try
+                    {
+                        // could be not given or with error if the remote device do not verify it (wrong idea)
+                        configuration.OwnCertificate = new X509Certificate2(configuration.OwnCertificateFile);
                     }
-                }
-                catch (Exception e)
-                {
-                    Trace.TraceError("Error with App own certificate file : " + e.Message);
-                }
-                if (configuration.ValidateHubCertificate)
-                    try 
-                    { 
+                    catch (Exception e)
+                    {
+                        Trace.TraceError("Error with App own certificate file : " + e.Message);
+                    }
+
+                if (configuration.OwnCertificate == null)
+                    Trace.TraceWarning("BACnet/SC : Warning App without certificate ");
+
+                if ((configuration.OwnCertificate!=null)&&(!configuration.OwnCertificate.HasPrivateKey))
+                    Trace.TraceWarning("BACnet/SC : Warning the App own certificate is without a private key");
+
+                if ((configuration.ValidateHubCertificate)&&(configuration.HubCertificate == null))
+                    try
+                    {
                         // could be not given if the root CA is in the default computer store
                         configuration.HubCertificate = new X509Certificate2(configuration.HubCertificateFile);
                     }
                     catch
                     {
-                        // Error maybe later during connection
+                        // Error may or not occur later during connection
                         return;
                     }
             }
@@ -174,7 +167,7 @@ namespace System.IO.BACnet
             if (configuration.ValidateHubCertificate==false)
                 return true;    // No verification requested : always OK
 
-            // The root CA certificate is in the default computer store and all the X509Chain is given
+            // The certificate or the root CA certificate is in the default computer store and all the X509Chain is given
             if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
                 return true;
 
@@ -211,6 +204,7 @@ namespace System.IO.BACnet
         {
             Trace.TraceInformation("BACnet/SC Close : "+ e.Reason);
             state = BACnetSCState.IDLE;
+            OnChannelDisconnected?.Invoke(this, e);
         }
         private void Websocket_OnLog(LogData log, String Logmessage) 
         {
@@ -251,19 +245,13 @@ namespace System.IO.BACnet
                 {
                     //verify message : BVLC decoding and get the VMAC back
                     BacnetAddress remote_address = new BacnetAddress(BacnetAddressTypes.SC, null);
-                    BacnetBvlcSCMessage function;
-                    int msg_length;
-                    int HEADER_LENGTH = BVLC_SC_Decode(local_buffer, 0, out function, out msg_length, remote_address);
-                    if (configuration.DirectConnect) // We need the VMAC, not given in the BVLC on a direct connection
-                    {
-                        Array.Copy(RemoteVMAC, remote_address.VMac, 6);
-                        remote_address.adr = remote_address.VMac;
-                    }
+                    int HEADER_LENGTH = BVLC_SC_Decode(local_buffer, 0, out BacnetBvlcSCMessage function, out int msg_length, remote_address);
 
                     if (function == BacnetBvlcSCMessage.BVLC_CONNECT_ACCEPT)
                     {
                         Trace.TraceInformation("BACnet/SC connected");
                         state = BACnetSCState.CONNECTED;
+                        OnChannelConnected?.Invoke(this, new EventArgs());
                     }
 
                     if (HEADER_LENGTH == 0) // return value when no payload is on the frame
@@ -276,8 +264,15 @@ namespace System.IO.BACnet
                     }
 
                     if (function == BacnetBvlcSCMessage.BVLC_ENCASULATED_NPDU) // Normaly the only function code with NPDU content
+                    {
+                        if (configuration.DirectConnect)
+                        {
+                            // We need the VMAC, not given in the BVLC on a direct connection because it's a known value
+                            Array.Copy(RemoteVMAC, remote_address.VMac, 6);
+                            remote_address.adr = remote_address.VMac;
+                        }
                         if ((MessageRecieved != null) && (rx > HEADER_LENGTH)) MessageRecieved(this, local_buffer, HEADER_LENGTH, rx - HEADER_LENGTH, remote_address);
-
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -293,7 +288,7 @@ namespace System.IO.BACnet
 
         public bool WaitForAllTransmits(int timeout)
         {
-            //we got no sending queue in WebSocket, so just return true
+            // we got no sending queue in WebSocket, so just return true
             return true;
         }
         private int Send(byte[] buffer)
@@ -313,7 +308,7 @@ namespace System.IO.BACnet
 
             if ((state == BACnetSCState.IDLE) || (state == BACnetSCState.DISCONNECTING)) return -1; // nothing to do more
 
-            //add header
+            // add header
             int full_length = data_length + HeaderLength;
             BVLC_SC_Encode(buffer, offset - BVLC_HEADER_LENGTH, BacnetBvlcSCMessage.BVLC_ENCASULATED_NPDU, ref full_length, address);
 
@@ -335,7 +330,6 @@ namespace System.IO.BACnet
                     if (AwaitingFrames.Count == 1)
                         ThreadPool.QueueUserWorkItem(SendLaterAwaitingFrames); // Delayed sent
                 }
-
             }
 
             return 0;
@@ -365,8 +359,8 @@ namespace System.IO.BACnet
         {
             // Random VMAC creation
             // ensure xxxx0010, § H.7.X EUI - 48 and Random-48 VMAC Address
-            new Random().NextBytes(this.VMAC);
-            this.VMAC[0] = (byte)((this.VMAC[0] & 0xF0) | 0x02); // xxxx0010
+            new Random().NextBytes(myVMAC);
+            myVMAC[0] = (byte)((myVMAC[0] & 0xF0) | 0x02); // xxxx0010
 
             byte[] b = new byte[4 + 6 + 16 + 2 + 2];
             b[0] = (byte)BacnetBvlcSCMessage.BVLC_CONNECT_REQUEST;
@@ -374,9 +368,17 @@ namespace System.IO.BACnet
             b[2] = 0;           // Initial Message ID
             b[3] = 0;
             // Originating Virtual Address
-            Array.Copy(VMAC, 0, b, 4, 6);
-
-            Array.Copy(configuration.bUUID, 0, b, 10, 16);
+            Array.Copy(myVMAC, 0, b, 4, 6);
+            // UUID
+            byte[] bUUID;
+            if (Guid.TryParse(configuration.UUID, out Guid uuid)==true)
+                bUUID = uuid.ToByteArray();
+            else
+            { 
+                bUUID = Encoding.ASCII.GetBytes(configuration.UUID);
+                Array.Resize(ref bUUID, 16);
+            }
+            Array.Copy(bUUID, 0, b, 10, 16);
 
             // Max BVLC size 1600
             b[26] = 0x06;
@@ -389,40 +391,29 @@ namespace System.IO.BACnet
             Send(b);
         }
 
-        private void BVLC_SC_SendUnknowBvlcMessage(byte[] DestVmac, byte MsgId1, byte MsgId2)
+        private void BVLC_SC_SendBvlcError(byte[] DestVmac, byte MsgId1, byte MsgId2, BacnetErrorClasses classe, BacnetErrorCodes code)
         {
-            byte[] b;
+            byte[] b=new byte[10 + (configuration.DirectConnect==true?0:6)];
 
-            if (!configuration.DirectConnect)
-            { 
-                b = new byte[4 + 6  + 6];
-                b[0] = (byte)BacnetBvlcSCMessage.BVLC_RESULT;
-                b[1] = 4;               // Destination Vmac only, no source VMAC on a connected channel, without optional fields
-                b[2] = MsgId1;          // Initial Message ID
-                b[3] = MsgId2;
+            b[0] = (byte)BacnetBvlcSCMessage.BVLC_RESULT;
+            b[1] = (byte)(configuration.DirectConnect == true ? 0 : 4);// Destination Vmac 4 only or not 0
+            b[2] = MsgId1;          // Initial Message ID
+            b[3] = MsgId2;
+
+            int offset = 0;
+            if (configuration.DirectConnect==false)
+            {
                 // Destination Virtual Address
                 Array.Copy(DestVmac, 0, b, 4, 6);
-                b[10] = 0;              // No data option
-                b[11] = 0x01;           // NAK
-                b[12] = 0;
-                b[13] = (byte)BacnetErrorClasses.ERROR_CLASS_SERVICES;
-                b[14] = 0;
-                b[15] = (byte)BacnetErrorCodes.ERROR_CODE_BVLC_FUNCTION_UNKNOWN;
+                offset = 6;
             }
-            else
-            {
-                b = new byte[4 + 6];
-                b[0] = (byte)BacnetBvlcSCMessage.BVLC_RESULT;
-                b[1] = 0;               // no VMAC on a direct connected channel, without optional fields
-                b[2] = MsgId1;          // Initial Message ID
-                b[3] = MsgId2;
-                b[4] = 0;              // No data option
-                b[5] = 0x01;           // NAK
-                b[6] = 0;
-                b[7] = (byte)BacnetErrorClasses.ERROR_CLASS_SERVICES;
-                b[8] = 0;
-                b[9] = (byte)BacnetErrorCodes.ERROR_CODE_BVLC_FUNCTION_UNKNOWN;
-            }
+
+            b[4 + offset] = 0;              // No data option
+            b[5 + offset] = 0x01;           // NAK
+            b[6 + offset] = 0;
+            b[7 + offset] = (byte)BacnetErrorClasses.ERROR_CLASS_SERVICES;
+            b[8 + offset] = 0;
+            b[9 + offset] = (byte)BacnetErrorCodes.ERROR_CODE_BVLC_FUNCTION_UNKNOWN;
 
             Send(b);
         }
@@ -458,7 +449,7 @@ namespace System.IO.BACnet
             {
                 Array.Copy(buffer, 10, buffer, 4, msg_length - 6); // Shift left, BVLC HEADER is 6 bytes less than the given one
                 buffer[0] = (byte)function;
-                buffer[1] = 0;              //  VMACs on a direct connected channel, without optional fields
+                buffer[1] = 0;              //  no VMACs on a direct connected channel, without optional fields
                 buffer[2] = 0xBA;           // Message Id
                 buffer[3] = 0xC0;
 
@@ -533,15 +524,16 @@ namespace System.IO.BACnet
                     {
                         UInt16 ErrorClass = (UInt16)((buffer[offset + 3] << 8) | (buffer[offset + 4]));
                         UInt16 ErrorCode = (UInt16)((buffer[offset + 5] << 8) | (buffer[offset + 6]));
-                        // Normaly duplicate VMAC should never occur. Redo wiht another random number
-                        if (ErrorCode == (byte)BacnetErrorCodes.ERROR_CODE_NODE_DUPLICATE_VMAC)
+                        // Normaly duplicate VMAC should never occur 1.7^13 values. Redo with another random number
+                        // ... a good way to spend time to think, code and discuss for nothing
+                        if ((ErrorClass == (byte)BacnetErrorClasses.ERROR_CLASS_COMMUNICATION)&&(ErrorCode == (byte)BacnetErrorCodes.ERROR_CODE_NODE_DUPLICATE_VMAC))
                             BVLC_SC_SendConnectRequest();
                     }
                     return 0;
                 case BacnetBvlcSCMessage.BVLC_ENCASULATED_NPDU:
                     return offset;  // all bytes for the upper layers
                 case BacnetBvlcSCMessage.BVLC_CONNECT_ACCEPT:
-                    Array.Copy(buffer, 4, RemoteVMAC, 0, 6); // Hub or remote device VMAC got it ... used later
+                    Array.Copy(buffer, 4, RemoteVMAC, 0, 6); // Hub or remote device VMAC ... used later for Direct Connect mode
                     return 0;       // Only for BVLC 
                 case BacnetBvlcSCMessage.BVLC_DISCONNECT_REQUEST:
                     BVLC_SC_SendSimpleACK(BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK, buffer[2], buffer[3]);
@@ -550,12 +542,16 @@ namespace System.IO.BACnet
                 case BacnetBvlcSCMessage.BVLC_HEARTBEAT_REQUEST:
                     BVLC_SC_SendSimpleACK(BacnetBvlcSCMessage.BVLC_HEARTBEAT_ACK, buffer[2], buffer[3]);
                     return 0;       // Only for BVLC 
-                case BacnetBvlcSCMessage.BVLC_ADVERTISEMENT:
                 case BacnetBvlcSCMessage.BVLC_ADDRESS_RESOLUTION:
+                    BVLC_SC_SendBvlcError(remote_address.VMac, buffer[2], buffer[3], BacnetErrorClasses.ERROR_CLASS_COMMUNICATION, BacnetErrorCodes.ERROR_CODE_OPTIONAL_FUNCTIONALITY_NOT_SUPPORTED);
+                    return 0;       // Only for BVLC
                 case BacnetBvlcSCMessage.BVLC_PROPRIETARY_MESSAGE:
+                    BVLC_SC_SendBvlcError(remote_address.VMac, buffer[2], buffer[3], BacnetErrorClasses.ERROR_CLASS_COMMUNICATION, BacnetErrorCodes.ERROR_CODE_BVLC_PROPRIETARY_FUNCTION_UNKNOWN);
+                    return 0;       // Only for BVLC
+                case BacnetBvlcSCMessage.BVLC_ADVERTISEMENT:
                 default:
-                    BVLC_SC_SendUnknowBvlcMessage(remote_address.VMac, buffer[2], buffer[3]);
-                    return 0;
+                    BVLC_SC_SendBvlcError(remote_address.VMac, buffer[2], buffer[3], BacnetErrorClasses.ERROR_CLASS_COMMUNICATION, BacnetErrorCodes.ERROR_CODE_BVLC_FUNCTION_UNKNOWN);
+                    return 0;       // Only for BVLC
             }
         }
         public BacnetAddress GetBroadcastAddress()
@@ -563,9 +559,10 @@ namespace System.IO.BACnet
             BacnetAddress ret = new BacnetAddress()
             {
                 VMac = new byte[] { 255, 255, 255, 255, 255, 255 },
-                adr = VMAC,
                 net = 0xFFFF,
             };
+
+            ret.adr = ret.VMac; // normaly not used
 
             return ret;
         }
@@ -598,28 +595,22 @@ namespace System.IO.BACnet
 
     public class BACnetSCConfigChannel
     {
-
-        public String primaryHubURI;
+        public String primaryHubURI="";
         public String failoverHubURI;
 
-        public String UUID;
-
-        [XmlIgnore]
-        public byte[] bUUID;
+        public String UUID="If Forgot !";
 
         public String OwnCertificateFile;
+        public String HubCertificateFile;
+
+        public bool ValidateHubCertificate=false;
+        public bool DirectConnect=false;
+        public bool UseTLS { get { return primaryHubURI.Contains("wss://"); } }
 
         [XmlIgnore]
         public X509Certificate2 OwnCertificate; // with private key
-
-        public String HubCertificateFile;
         [XmlIgnore]
         public X509Certificate2 HubCertificate;
 
-        [XmlIgnore]
-        public bool UseTLS = false;
-
-        public bool ValidateHubCertificate;
-        public bool DirectConnect=false;
     }
 }

@@ -1,15 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+﻿/**************************************************************************
+*                           MIT License
+* 
+* Copyright (C) 2022 Frederic Chaxel <fchaxel@free.fr>
+* Yabe SourceForge Explorer and Full Open source BACnet stack
+*
+* Permission is hereby granted, free of charge, to any person obtaining
+* a copy of this software and associated documentation files (the
+* "Software"), to deal in the Software without restriction, including
+* without limitation the rights to use, copy, modify, merge, publish,
+* distribute, sublicense, and/or sell copies of the Software, and to
+* permit persons to whom the Software is furnished to do so, subject to
+* the following conditions:
+*
+* The above copyright notice and this permission notice shall be included
+* in all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*
+*********************************************************************/
+using System;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.IO.BACnet;
-using System.Linq;
+using System.Net.Security;
+using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Serialization;
 
@@ -24,7 +46,7 @@ namespace Yabe
         {
             InitializeComponent();
 
-            this.FileName = FileName;          
+            this.FileName = FileName;
 
             try
             {
@@ -86,8 +108,8 @@ namespace Yabe
             OpenFileDialog dlg = new OpenFileDialog();
             dlg.InitialDirectory = Path.GetDirectoryName(Properties.Settings.Default.Auto_Store_Object_Names_File);
 
-            if (sender==SelYabeCert)
-            { 
+            if (sender == SelYabeCert)
+            {
                 dlg.DefaultExt = "p12";
                 dlg.Filter = "PKCS#12 (*.p12)|*.p12|PEM + key (*.pem)|*.pem|All files (*.*)|*.*";
                 if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
@@ -116,5 +138,56 @@ namespace Yabe
             }
         }
 
+        private void GetRemoteCertificate_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                String endpoint = HubURI.Text.Split(new String[] { "://" }, StringSplitOptions.None)[1];
+                String host = endpoint.Split(':')[0];
+                Int32.TryParse(endpoint.Split(':')[1], out int port);
+
+                cli = new TcpClient();
+                cli.BeginConnect(host, port, ConnectCallback, null);
+            }
+            catch { }
+
+        }
+
+        TcpClient cli;
+        private void ConnectCallback(IAsyncResult ar)
+        {
+            try
+            {
+                SslStream sslStream = new SslStream(
+                    cli.GetStream(),
+                    false,
+                    new RemoteCertificateValidationCallback(ValidateServerCertificate)
+                );
+
+                sslStream.BeginAuthenticateAsClient("null", null, SslProtocols.Tls13, false, SSlCallback, null);
+            }
+            catch { }
+        }
+        private void SSlCallback(IAsyncResult ar)
+        {
+            try
+            {
+                cli.GetStream().Close();
+            }
+            catch { }
+
+        }
+        public bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            // Only here to get and Display the certificate
+            X509Certificate2UI.DisplayCertificate((X509Certificate2)certificate);
+            return false;
+        }
+
+        private void SCEditor_Load(object sender, EventArgs e)
+        {
+
+        }
     }
+
 }

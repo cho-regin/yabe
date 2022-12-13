@@ -813,7 +813,8 @@ namespace Yabe
                 "\nhttp://sourceforge.net/projects/zedgraph/"+
                 "\nhttp://www.codeproject.com/Articles/38699/A-Professional-Calendar-Agenda-View-That-You-Will"+
                 "\nhttps://github.com/chmorgan/sharppcap"+
-                "\nhttps://sourceforge.net/projects/mstreeview"
+                "\nhttps://sourceforge.net/projects/mstreeview" + 
+                "\nhttps://github.com/sta/websocket-sharp"
                 
                 , "About", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
