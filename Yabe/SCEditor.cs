@@ -29,7 +29,6 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.BACnet;
 using System.Net.Security;
-using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Windows.Forms;
@@ -142,52 +141,22 @@ namespace Yabe
         {
             try
             {
-                String endpoint = HubURI.Text.Split(new String[] { "://" }, StringSplitOptions.None)[1];
-                String host = endpoint.Split(':')[0];
-                Int32.TryParse(endpoint.Split(':')[1], out int port);
+                WebSocketSharp.WebSocket Websocket = new WebSocketSharp.WebSocket(HubURI.Text);
+                Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13;
+                Websocket.SslConfiguration.ServerCertificateValidationCallback = GetServerCertificate;
 
-                cli = new TcpClient();
-                cli.BeginConnect(host, port, ConnectCallback, null);
+                Websocket.ConnectAsync();
             }
-            catch { }
+            catch{}
 
         }
-
-        TcpClient cli;
-        private void ConnectCallback(IAsyncResult ar)
-        {
-            try
-            {
-                SslStream sslStream = new SslStream(
-                    cli.GetStream(),
-                    false,
-                    new RemoteCertificateValidationCallback(ValidateServerCertificate)
-                );
-
-                sslStream.BeginAuthenticateAsClient("null", null, SslProtocols.Tls13, false, SSlCallback, null);
-            }
-            catch { }
-        }
-        private void SSlCallback(IAsyncResult ar)
-        {
-            try
-            {
-                cli.GetStream().Close();
-            }
-            catch { }
-
-        }
-        public bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        public bool GetServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             // Only here to get and Display the certificate
             X509Certificate2UI.DisplayCertificate((X509Certificate2)certificate);
-            return false;
+            return false; // reject, so close the connection
         }
 
-        private void SCEditor_Load(object sender, EventArgs e)
-        {
-
-        }
     }
 
 }

@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using Yabe;
 using System.IO.BACnet;
+using Newtonsoft.Json;
 
 namespace GlobalCommander
 {
@@ -25,7 +26,7 @@ namespace GlobalCommander
 
         private List<BacnetPointExport> _selectedPoints;
         private List<BacnetPointExport> _allSelectedPoints;
-        private List<BacnetPointExport> _commonPoints;
+        private List<BacnetPointExport> _pointListForDisplay;
 
         private BacnetPropertyExport _selectedProperty;
         private List<BacnetPropertyExport> _allSelectedProperties;
@@ -82,7 +83,7 @@ namespace GlobalCommander
             return writePriority;
         }
 
-        private bool SelectAllPointsAndProperties(bool doProgBar = false)
+        private bool SelectAllPointsAndProperties(bool selectObjInsFromAllDevices, bool doProgBar = false)
         {
             _selectedPoints = new List<BacnetPointExport>();
             if (PointList.SelectedItem != null)
@@ -139,23 +140,51 @@ namespace GlobalCommander
                 Application.DoEvents();
             }
             
-            foreach(BacnetDeviceExport device in _selectedDevices)
+            if(selectObjInsFromAllDevices)
             {
-                foreach (BacnetPointExport point in _selectedPoints)
+                // Used for the "Common Objects between Devices" setting
+                foreach (BacnetDeviceExport device in _selectedDevices)
                 {
-                    BacnetPointExport actualPoint = device.Points.Find(x=>x.ObjectID.Equals(point.ObjectID));
-                    if(actualPoint!=null)
+                    foreach (BacnetPointExport point in _selectedPoints)
                     {
-                        _allSelectedPoints.Add(actualPoint);
-                        if (propertiesSelected)
+                        BacnetPointExport actualPoint = device.Points.Find(x => x.ObjectID.Equals(point.ObjectID));
+                        if (actualPoint != null)
                         {
-                            BacnetPropertyExport match = actualPoint.Properties.Find(x => x.PropertyID == _selectedProperty.PropertyID);
-                            if (match != null)
+                            _allSelectedPoints.Add(actualPoint);
+                            if (propertiesSelected)
                             {
-                                _allSelectedProperties.Add(match);
+                                BacnetPropertyExport match = actualPoint.Properties.Find(x => x.PropertyID == _selectedProperty.PropertyID);
+                                if (match != null)
+                                {
+                                    _allSelectedProperties.Add(match);
+                                }
                             }
                         }
+
+                        if (doProgBar)
+                        {
+                            prog++;
+                            progBar.Value = (int)(100 * prog / progTotal);
+                            Application.DoEvents();
+                        }
                     }
+                }
+            }
+            else
+            {
+                // Used for the "Join All Objects" setting
+                foreach (BacnetPointExport point in _selectedPoints)
+                {
+                    _allSelectedPoints.Add(point);
+                    if (propertiesSelected)
+                    {
+                        BacnetPropertyExport match = point.Properties.Find(x => x.PropertyID == _selectedProperty.PropertyID);
+                        if (match != null)
+                        {
+                            _allSelectedProperties.Add(match);
+                        }
+                    }
+                    
 
                     if (doProgBar)
                     {
@@ -165,6 +194,7 @@ namespace GlobalCommander
                     }
                 }
             }
+            
             return true;
         }
 
@@ -237,7 +267,8 @@ namespace GlobalCommander
 
         private string GetNameWithOnlyLastPartShown(string input)
         {
-            char[] delims = new char[] {'\'',':','.' };
+            //char[] delims = new char[] {'\'',':','.' };
+            char[] delims = GetDelims();
             string output = string.Empty;
             bool containedDelim = false;
 
@@ -282,7 +313,8 @@ namespace GlobalCommander
                 return true;
             }
 
-            char[] delims = new char[] { '\'', ':', '.' };
+            //char[] delims = new char[] { '\'', ':', '.' };
+            char[] delims = GetDelims();
             string output = string.Empty;
 
             for (int delimIndex = 0; delimIndex < delims.Length; delimIndex++)
@@ -305,7 +337,7 @@ namespace GlobalCommander
             return false;
         }
 
-        private void cmdPopulatePoints_Click(object sender, EventArgs e)
+        private void ResetFromObjectsList()
         {
             _selectedProperty = null;
             _allSelectedProperties = null;
@@ -316,6 +348,16 @@ namespace GlobalCommander
             _allSelectedPoints = null;
             PointList.SelectedItem = null;
             PointList.Items.Clear();
+
+            cmdCommand.Enabled = false;
+            cmdViewProps.Enabled = false;
+            txtPointFilter.Enabled = false;
+            txtPointFilter.Text = "";
+        }
+
+        private void cmdPopulatePoints_Click(object sender, EventArgs e)
+        {
+            ResetFromObjectsList();
 
             _selectedDevices = new List<BacnetDeviceExport>();
 
@@ -337,7 +379,7 @@ namespace GlobalCommander
             progBar.Value = 0;
             Application.DoEvents();
 
-            _commonPoints = new List<BacnetPointExport>();
+            _pointListForDisplay = new List<BacnetPointExport>();
             
 
             if (_selectedDevices != null && _selectedDevices.Count > 0)
@@ -345,32 +387,54 @@ namespace GlobalCommander
                 bool result = PopulatePointsForDevices(_selectedDevices, true);
                 if (result)
                 {
-                    _commonPoints = new List<BacnetPointExport>();
-                    foreach (BacnetPointExport point in _selectedDevices[0].Points)
+                    _pointListForDisplay = new List<BacnetPointExport>();
+                    if(radComObj.Checked)
                     {
-                        _commonPoints.Add(point);
-                    }
+                        // Display only the points that are common to all controllers.
+                        // To determine if the point name is the same, we only compare the part of the name after the LAST delimeter specified.
+                        foreach (BacnetPointExport point in _selectedDevices[0].Points)
+                        {
+                            _pointListForDisplay.Add(point);
+                        }
 
-                    for (int i = 0; i < _commonPoints.Count; i++)
+                        for (int i = 0; i < _pointListForDisplay.Count; i++)
+                        {
+                            foreach (BacnetDeviceExport device in _selectedDevices)
+                            {
+                                BacnetPointExport match = device.Points.Find(x => x.ObjectID.Equals(_pointListForDisplay[i].ObjectID) && CheckLastPartOfNameMatch(x.ObjectName, _pointListForDisplay[i].ObjectName));
+                                if (match == null)
+                                {
+                                    _pointListForDisplay.RemoveAt(i--);
+                                    break;
+                                }
+                            }
+                        }
+
+                    }
+                    else if(radJoinObj.Checked)
                     {
+                        // Display a big exhaustive list of every object from every selected controller.
+
                         foreach (BacnetDeviceExport device in _selectedDevices)
                         {
-                            BacnetPointExport match = device.Points.Find(x => x.ObjectID.Equals(_commonPoints[i].ObjectID) && CheckLastPartOfNameMatch(x.ObjectName, _commonPoints[i].ObjectName));
-                            if (match == null)
+                            foreach (BacnetPointExport point in device.Points)
                             {
-                                _commonPoints.RemoveAt(i--);
-                                break;
+                                _pointListForDisplay.Add(point);
                             }
                         }
                     }
                 }
+                else
+                {
+                    return;
+                }
             }
 
             PointList.Items.Clear();
-            foreach (BacnetPointExport point in _commonPoints)
+            foreach (BacnetPointExport point in _pointListForDisplay)
             {
                 ListViewItemBetterString item = new ListViewItemBetterString();
-                if(_selectedDevices.Count>1)
+                if(_selectedDevices.Count>1 && radComObj.Checked)
                 { 
                     item.Text = GetNameWithOnlyLastPartShown(point.ObjectName) + " [" + point.ObjectID.ToString() + "] ";
                 }
@@ -400,7 +464,7 @@ namespace GlobalCommander
             PropertyList.SelectedItem = null;
             PropertyList.Items.Clear();
 
-            if (!SelectAllPointsAndProperties(false))
+            if (!SelectAllPointsAndProperties(radComObj.Checked, false))
             {
                 progBar.Value = 0;
                 Application.DoEvents();
@@ -572,7 +636,7 @@ namespace GlobalCommander
             progBar.Value = (int)(100 * prog / progTotal);
             Application.DoEvents();
 
-            if (!SelectAllPointsAndProperties(false))
+            if (!SelectAllPointsAndProperties(radComObj.Checked, false))
             {
                 progBar.Value = 0;
                 Application.DoEvents();
@@ -677,7 +741,7 @@ namespace GlobalCommander
             Application.DoEvents();
 
             // Once, to get the right points:
-            if (!SelectAllPointsAndProperties(false))
+            if (!SelectAllPointsAndProperties(radComObj.Checked, false))
             {
                 progBar.Value = 0;
                 Application.DoEvents();
@@ -689,7 +753,7 @@ namespace GlobalCommander
             bool result = PopulatePropertyRefsForPoints(_allSelectedPoints, true);
 
             // Repeat, to get the updated point values (properties):
-            if (!SelectAllPointsAndProperties(false))
+            if (!SelectAllPointsAndProperties(radComObj.Checked, false))
             {
                 progBar.Value = 0;
                 Application.DoEvents();
@@ -940,10 +1004,11 @@ namespace GlobalCommander
             //fetch list one-by-one
             if (value_list == null)
             {
+                IList<BacnetValue> temp_value_list;
                 try
                 {
                     //fetch object list count
-                    if (!comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list, 0, 0))
+                    if (!comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out temp_value_list, 0, 0))
                     {
                         ResetPatience();
                         MessageBox.Show(this, String.Format("Couldn't fetch objects for device {0}.", device.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -957,15 +1022,25 @@ namespace GlobalCommander
                     return false;
                 }
 
-                if (value_list != null && value_list.Count == 1 && value_list[0].Value is ulong)
+                if (temp_value_list != null && temp_value_list.Count == 1 && temp_value_list[0].Value is ulong)
                 {
-                    uint list_count = (uint)(ulong)value_list[0].Value;
+                    uint list_count = (uint)(ulong)temp_value_list[0].Value;
+                    value_list = temp_value_list;
+                    value_list.Clear();
                     try
                     {
                         for (int i = 1; i <= list_count; i++)
                         {
-                            value_list = null;
-                            if (!comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list, 0, (uint)i))
+                            temp_value_list = null;
+                            if (comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out temp_value_list, 0, (uint)i))
+                            {
+                                //add to actual list for returning
+                                foreach (BacnetValue value in temp_value_list)
+                                {
+                                    value_list.Add(value);
+                                }
+                            }
+                            else
                             {
                                 ResetPatience();
                                 MessageBox.Show(this, String.Format("Couldn't fetch object list index {1} for device {0}.", device.Name, i), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -992,7 +1067,7 @@ namespace GlobalCommander
             device.Points.Clear();
             foreach (BacnetObjectId bobj_id in objectList)
             {
-                if (bobj_id.type != BacnetObjectTypes.OBJECT_DEVICE || bobj_id.instance != device.DeviceID)
+                if(true) // if (bobj_id.type != BacnetObjectTypes.OBJECT_DEVICE || bobj_id.instance != device.DeviceID)
                 {
 
                     BacnetPointExport point = new BacnetPointExport(device, bobj_id);
@@ -1236,7 +1311,7 @@ namespace GlobalCommander
                 for (int i = 0; i < arrayObj.Length; i++)
                 {
                     if(arrayObj[i]!=null)
-                    {
+                     {
                         sb.Append(arrayObj[i].ToString());
                     }
                     else
@@ -1261,6 +1336,45 @@ namespace GlobalCommander
             public string Name { get { return _name; } set { _nameIsSet = true; _name = value; } }
             private bool _nameIsSet;
             public bool NameIsSet { get { return _nameIsSet; } }
+            public bool IsPrintableValue(BacnetValue bv)
+            {
+                object t = bv.Value;
+
+                if (t == null)
+                    return true;
+                else if (t is string)
+                    return true;
+                else if (t is long || t is int || t is short || t is sbyte)
+                    return true;
+                else if (t is ulong || t is uint || t is ushort || t is byte)
+                    return true;
+                else if (t is bool)
+                    return true;
+                else if (t is float || t is double)
+                    return true;
+                else if (t is BacnetBitString)
+                    return true;
+                else if (t is BacnetObjectId)
+                    return true;
+                else
+                    return false;
+                    
+            }
+            public bool ExportAsJSON
+            {
+                get
+                {
+                    foreach(BacnetValue bv in Values)
+                    {
+                        if(!IsPrintableValue(bv))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+            }
             public List<BacnetValue> Values { get; private set; }
             public object ValueObject
             {
@@ -1287,15 +1401,24 @@ namespace GlobalCommander
             {
                 get
                 {
-                    if (ValueObject != null)
+                    object ValueObjectCopy = ValueObject;
+                    if (ValueObjectCopy != null)
                     {
-                        if(ValueObject.GetType().IsArray)
+                        if(ExportAsJSON)
                         {
-                            return ArrayToString((object[])ValueObject);
+                            return "JSON (NOT EDITABLE): " + JsonConvert.SerializeObject(ValueObjectCopy);
                         }
                         else
                         {
-                            return ValueObject.ToString();
+                            if (Values.Count > 1)
+                            {
+                                return ArrayToString((object[])ValueObjectCopy);
+                            }
+                            else
+                            {
+                                return ValueObjectCopy.ToString();
+
+                            }
                         }
                         
                     }
@@ -1310,175 +1433,236 @@ namespace GlobalCommander
                     BacnetAddress adr = ParentPoint.ParentDevice.DeviceAddress;
                     BacnetObjectId object_id = ParentPoint.ObjectID;
 
-                    uint writePriority = (uint)8;
-                    writePriority = ParentPoint.ParentDevice.ParentWindow.DetermineWritePriority();
-
-                    if (Values.Count < 1)
+                    if (ExportAsJSON)
                     {
-                        MessageBox.Show(String.Format("Couldn't write property {0} of device {1}, object {2}.", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-                    Cursor.Current = Cursors.WaitCursor;
-
-                    string enteredValue = null;
-                    if (value != null)
-                    {
-                        enteredValue = value.Trim();
-                    }
-
-                    string[] enteredValues;
-                    string[] existingStringValues;
-
-                    if (Values.Count > 1)
-                    {
-                        if(!(enteredValue.StartsWith("{") && enteredValue.EndsWith("}")))
-                        {
-                            MessageBox.Show(String.Format("Couldn't write property {0} of device {1}, object {2}. The array format was not correct.", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-                        string enteredValueWithoutBrackets = enteredValue.Replace("{","").Replace("}","");
-                        enteredValues = enteredValueWithoutBrackets.Split(',');
-                        if(enteredValues.Length!=Values.Count)
-                        {
-                            MessageBox.Show(String.Format("Couldn't write property {0} of device {1}, object {2}. The array format was not correct (incorrect number of elements).", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        }
-
-                        for (int i = 0; i < enteredValues.Length; i++)
-                        {
-                            enteredValues[i] = enteredValues[i].Trim();
-                        }
-
-                        string existingPriorityArray = ArrayToString((object[])ValueObject);
-                        string existingPriorityArrayWithoutBrackets = existingPriorityArray.Replace("{", "").Replace("}", "");
-                        existingStringValues = existingPriorityArrayWithoutBrackets.Split(',');
-                        for(int i=0;i< existingStringValues.Length;i++)
-                        {
-                            existingStringValues[i] = existingStringValues[i].Trim();
-                        }
+                        MessageBox.Show(String.Format("Unfortunately, JSON is not editable at this point in time."), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                     else
                     {
-                        enteredValues = new string[1] { enteredValue };
-                        // Not needed for anything other than the priority array really, just to avoid sending 16 commands every time.
-                        existingStringValues = null;
-                    }
+                        uint writePriority = (uint)8;
+                        writePriority = ParentPoint.ParentDevice.ParentWindow.DetermineWritePriority();
 
-
-                    BacnetValue[] new_b_vals = new BacnetValue[enteredValues.Length];
-
-                    for (int i = 0; i < enteredValues.Length; i++)
-                    {
-                        BacnetValue b_value = Values[i];
-                        BacnetApplicationTags dataType = b_value.Tag;
-
-                        if (string.IsNullOrWhiteSpace(enteredValues[i]) || enteredValues[i].Equals("null", StringComparison.OrdinalIgnoreCase))
+                        if (Values.Count < 1)
                         {
-                            new_b_vals[i] = new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL, null);
+                            MessageBox.Show(String.Format("Couldn't write property {0} of device {1}, object {2}.", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            Cursor.Current = Cursors.Default;
+                            return;
                         }
-                        else
+                        Cursor.Current = Cursors.WaitCursor;
+
+                        string enteredValue = null;
+                        if (value != null)
                         {
-                            bool gotDatatype = false;
-
-                            if (dataType != BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL)
-                            {
-                                gotDatatype = true;
-                                new_b_vals[i] = ConvertVal(enteredValues[i], dataType);
-                            }
-
-                            if (!gotDatatype)
-                            {
-                                try
-                                {
-                                    if (!comm.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, out IList<BacnetValue> presentValueList))
-                                    {
-                                        Trace.TraceError(String.Format("Couldn't read the data type of the present value of device {0}, object {1}", ParentPoint.ParentDevice.Name, ParentPoint.Name));
-                                    }
-                                    else
-                                    {
-                                        dataType = presentValueList[0].Tag;
-                                        if(dataType!=BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL)
-                                        {
-                                            gotDatatype = true;
-                                            new_b_vals[i] = ConvertVal(enteredValues[i], dataType);
-                                        }
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    Trace.TraceError(String.Format("Couldn't read the data type of the present value of device {0}, object {1}. Exception: {2}.", ParentPoint.ParentDevice.Name, ParentPoint.Name, ex.GetType().ToString() + " - " + ex.Message));
-                                    gotDatatype = false;
-                                }
-                            }
-
-                            if (!gotDatatype)
-                            {
-                                object o = null;
-                                TypeConverter t = new TypeConverter();
-                                // try to convert to the simplest type
-                                String[] typelist = { "Boolean", "UInt32", "Int32", "Single", "Double" };
-
-                                foreach (String typename in typelist)
-                                {
-                                    try
-                                    {
-                                        o = Convert.ChangeType(enteredValues[i], Type.GetType("System." + typename));
-                                        gotDatatype = true;
-                                        break;
-                                    }
-                                    catch { }
-                                }
-
-                                if (o == null)
-                                    new_b_vals[i] = new BacnetValue(enteredValue);
-                                else
-                                    new_b_vals[i] = new BacnetValue(o);
-                            }
+                            enteredValue = value.Trim();
                         }
-                    }
 
-                    try
-                    {
-                        if (PropertyID==BacnetPropertyIds.PROP_PRIORITY_ARRAY)
-                        {
-                            for (int i = 0; i < enteredValues.Length; i++)
-                            {
-                                uint priority = (uint)i + 1;
-                                if(enteredValues[i].Equals(existingStringValues[i]))
-                                {
-                                    continue;
-                                }
-                                try
-                                {
-                                    comm.WritePriority = priority;
-                                    if (!comm.WritePropertyRequest(adr, object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, new BacnetValue[1] { new_b_vals[i] }))
-                                    {
-                                        MessageBox.Show(String.Format("Couldn't write property {0} at priority {1} of device {2}, object {3}", PropertyID.ToString(), priority, ParentPoint.ParentDevice.Name, ParentPoint.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                    }
+                        string[] enteredValues = null;
+                        string[] existingStringValues = null;
 
-                                }
-                                catch(Exception ex)
-                                {
-                                    MessageBox.Show(String.Format("Error writing property {0} at priority {1} to device {2}, object {3}. Exception: {4}.", PropertyID.ToString(), priority, ParentPoint.ParentDevice.Name, ParentPoint.Name, ex.GetType().ToString() + " - " + ex.Message), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                }
-                            }
-                        }
-                        else
+                        bool valueTypesDeterminedByJSON = false;
+                        int dataLength = 0;
+
+                        BacnetValue[] new_b_vals = null;
+
+                        if (Values.Count > 1)
                         {
-                            comm.WritePriority = writePriority;
-                            if (!comm.WritePropertyRequest(adr, object_id, PropertyID, new_b_vals))
+                            //if (PropertyID == BacnetPropertyIds.PROP_PRIORITY_ARRAY)
+                            //{
+                            if (!(enteredValue.StartsWith("{") && enteredValue.EndsWith("}")))
                             {
-                                MessageBox.Show(String.Format("Couldn't write property {0} of device {1}, object {2}", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                MessageBox.Show(String.Format("Couldn't write property {0} of device {1}, object {2}. The array format was not correct. Please enter the array as follows: {x1,x2,x3,x4,...}", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                 Cursor.Current = Cursors.Default;
                                 return;
                             }
+                            string enteredValueWithoutBrackets = enteredValue.Replace("{", "").Replace("}", "");
+                            enteredValues = enteredValueWithoutBrackets.Split(',');
+                            dataLength = enteredValues.Length;
+                            if (dataLength != Values.Count)
+                            {
+                                MessageBox.Show(String.Format("Couldn't write property {0} of device {1}, object {2}. The array format was not correct (incorrect number of elements).", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                Cursor.Current = Cursors.Default;
+                                return;
+                            }
+
+                            for (int i = 0; i < dataLength; i++)
+                            {
+                                enteredValues[i] = enteredValues[i].Trim();
+                            }
+
+                            string existingPriorityArray = ArrayToString((object[])ValueObject);
+                            string existingPriorityArrayWithoutBrackets = existingPriorityArray.Replace("{", "").Replace("}", "");
+                            existingStringValues = existingPriorityArrayWithoutBrackets.Split(',');
+                            for (int i = 0; i < existingStringValues.Length; i++)
+                            {
+                                existingStringValues[i] = existingStringValues[i].Trim();
+                            }
+                            //}
+                            /*else
+                            {
+                                // BROKEN and doesn't work, how naive of me...
+                                try
+                                {
+                                    List<BacnetValue> enteredParsed = JsonConvert.DeserializeObject<List<BacnetValue>>(enteredValue);
+                                    valueTypesDeterminedByJSON = true;
+
+                                    if (Values.Count == 1)
+                                    {
+                                        new_b_vals = new BacnetValue[1];
+                                        new_b_vals[0] = new BacnetValue();
+
+                                        new_b_vals[0].Value = enteredParsed.ToArray();
+                                        // Never gonna work...
+                                    }
+                                    else
+                                    {
+                                        new_b_vals = enteredParsed.ToArray();
+                                    }
+
+                                    dataLength = enteredParsed.Count;
+                                
+                                }
+                                catch(Exception ex)
+                                {
+                                    MessageBox.Show(String.Format("Couldn't write property {0} of device {1}, object {2}. The JSON format was not correct: {3} - {4}.", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name, ex.GetType().Name, ex.Message), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    return;
+                                }
+                            }*/
+
+                        }
+                        else
+                        {
+                            enteredValues = new string[1] { enteredValue };
+                            dataLength = 1;
+                            // Not needed for anything other than the priority array really, just to avoid sending 16 commands every time.
+                            existingStringValues = null;
+                        }
+
+
+
+                        if (!valueTypesDeterminedByJSON)
+                        {
+                            // ------------------------------------------------------------------
+                            // Below is only relevant if we are NOT entering the value as JSON.
+                            // ------------------------------------------------------------------
+
+                            new_b_vals = new BacnetValue[dataLength];
+                            for (int i = 0; i < dataLength; i++)
+                            {
+                                BacnetValue b_value = Values[i];
+                                BacnetApplicationTags dataType = b_value.Tag;
+
+                                if (string.IsNullOrWhiteSpace(enteredValues[i]) || enteredValues[i].Equals("null", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    new_b_vals[i] = new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL, null);
+                                }
+                                else
+                                {
+                                    bool gotDatatype = false;
+
+                                    if (dataType != BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL)
+                                    {
+                                        gotDatatype = true;
+                                        new_b_vals[i] = ConvertVal(enteredValues[i], dataType);
+                                    }
+
+                                    if (!gotDatatype)
+                                    {
+                                        try
+                                        {
+                                            if (!comm.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, out IList<BacnetValue> presentValueList))
+                                            {
+                                                Trace.TraceError(String.Format("Couldn't read the data type of the present value of device {0}, object {1}", ParentPoint.ParentDevice.Name, ParentPoint.Name));
+                                            }
+                                            else
+                                            {
+                                                dataType = presentValueList[0].Tag;
+                                                if (dataType != BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL)
+                                                {
+                                                    gotDatatype = true;
+                                                    new_b_vals[i] = ConvertVal(enteredValues[i], dataType);
+                                                }
+                                            }
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Trace.TraceError(String.Format("Couldn't read the data type of the present value of device {0}, object {1}. Exception: {2}.", ParentPoint.ParentDevice.Name, ParentPoint.Name, ex.GetType().ToString() + " - " + ex.Message));
+                                            gotDatatype = false;
+                                        }
+                                    }
+
+                                    if (!gotDatatype)
+                                    {
+                                        object o = null;
+                                        TypeConverter t = new TypeConverter();
+                                        // try to convert to the simplest type
+                                        String[] typelist = { "Boolean", "UInt32", "Int32", "Single", "Double" };
+
+                                        foreach (String typename in typelist)
+                                        {
+                                            try
+                                            {
+                                                o = Convert.ChangeType(enteredValues[i], Type.GetType("System." + typename));
+                                                gotDatatype = true;
+                                                break;
+                                            }
+                                            catch { }
+                                        }
+
+                                        if (o == null)
+                                            new_b_vals[i] = new BacnetValue(enteredValue);
+                                        else
+                                            new_b_vals[i] = new BacnetValue(o);
+                                    }
+                                }
+                            }
+
+                        } // End of valueTypesDetermined==false block
+
+                        try
+                        {
+                            if (PropertyID == BacnetPropertyIds.PROP_PRIORITY_ARRAY)
+                            {
+                                for (int i = 0; i < enteredValues.Length; i++)
+                                {
+                                    uint priority = (uint)i + 1;
+                                    if (enteredValues[i].Equals(existingStringValues[i]))
+                                    {
+                                        continue;
+                                    }
+                                    try
+                                    {
+                                        comm.WritePriority = priority;
+                                        if (!comm.WritePropertyRequest(adr, object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, new BacnetValue[1] { new_b_vals[i] }))
+                                        {
+                                            MessageBox.Show(String.Format("Couldn't write property {0} at priority {1} of device {2}, object {3}", PropertyID.ToString(), priority, ParentPoint.ParentDevice.Name, ParentPoint.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                        }
+
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        MessageBox.Show(String.Format("Error writing property {0} at priority {1} to device {2}, object {3}. Exception: {4}.", PropertyID.ToString(), priority, ParentPoint.ParentDevice.Name, ParentPoint.Name, ex.GetType().ToString() + " - " + ex.Message), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                comm.WritePriority = writePriority;
+                                if (!comm.WritePropertyRequest(adr, object_id, PropertyID, new_b_vals))
+                                {
+                                    MessageBox.Show(String.Format("Couldn't write property {0} of device {1}, object {2}", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    Cursor.Current = Cursors.Default;
+                                    return;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show(String.Format("Error writing property {0} to device {1}, object {2}. Exception: {3}.", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name, ex.GetType().ToString() + " - " + ex.Message), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            Cursor.Current = Cursors.Default;
+                            return;
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(String.Format("Error writing property {0} to device {1}, object {2}. Exception: {3}.", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name, ex.GetType().ToString() + " - " + ex.Message), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        Cursor.Current = Cursors.Default;
-                        return;
-                    }
+
                     try
                     {
                         if(!comm.ReadPropertyRequest(adr, object_id, PropertyID, out IList<BacnetValue> valueList))
@@ -1601,7 +1785,7 @@ namespace GlobalCommander
             PointList.Items.Clear();
 
             List<BacnetPointExport> filteredPoints = null;
-            if (_commonPoints != null && _commonPoints.Count > 0)
+            if (_pointListForDisplay != null && _pointListForDisplay.Count > 0)
             {
                 filteredPoints = FilterCommonPoints(txtPointFilter.Text);
                 foreach (BacnetPointExport point in filteredPoints)
@@ -1646,10 +1830,10 @@ namespace GlobalCommander
             List<BacnetPointExport> filteredList = new List<BacnetPointExport>();
             if (string.IsNullOrWhiteSpace(filterString))
             {
-                return _commonPoints;
+                return _pointListForDisplay;
             }
 
-            foreach (BacnetPointExport point in _commonPoints)
+            foreach (BacnetPointExport point in _pointListForDisplay)
             {
                 if (point.Name.Contains(filterString, StringComparison.OrdinalIgnoreCase))
                 {
@@ -1681,6 +1865,102 @@ namespace GlobalCommander
         private void PatienceTimer_Tick(object sender, EventArgs e)
         {
             RequestPatience();
+        }
+
+        private void radComObj_CheckedChanged(object sender, EventArgs e)
+        {
+            if(radComObj.Checked)
+            {
+                CheckDelimVisibility();
+                ResetFromObjectsList();
+            }
+        }
+
+        private void CheckDelimVisibility()
+        {
+            bool visible = false;
+            if(radComObj.Checked)
+            {
+                visible = true;
+            }
+            chkApostrophe.Visible = visible;
+            chkColon.Visible = visible;
+            chkComma.Visible = visible;
+            chkDot.Visible = visible;
+            chkHyphen.Visible = visible;
+            chkUnderscore.Visible = visible;
+            lblPtDelimLabel.Visible = visible;
+        }
+
+        private char[] GetDelims()
+        {
+            char[] delims = new char[6];
+            int count = 0;
+            if(chkApostrophe.Checked)
+            {
+                delims[count++] = '\'';
+            }
+            if(chkColon.Checked)
+            {
+                delims[count++] = ':';
+            }
+            if(chkComma.Checked)
+            {
+                delims[count++] = ',';
+            }
+            if(chkDot.Checked)
+            {
+                delims[count++] = '.';
+            }
+            if(chkHyphen.Checked)
+            {
+                delims[count++] = '-';
+            }
+            if(chkUnderscore.Checked)
+            {
+                delims[count++] = '_';
+            }
+            Array.Resize(ref delims, count);
+            return delims;
+        }
+
+        private void chkApostrophe_CheckedChanged(object sender, EventArgs e)
+        {
+            ResetFromObjectsList();
+        }
+
+        private void chkDot_CheckedChanged(object sender, EventArgs e)
+        {
+            ResetFromObjectsList();
+        }
+
+        private void chkColon_CheckedChanged(object sender, EventArgs e)
+        {
+            ResetFromObjectsList();
+        }
+
+        private void chkComma_CheckedChanged(object sender, EventArgs e)
+        {
+            ResetFromObjectsList();
+        }
+
+        private void chkUnderscore_CheckedChanged(object sender, EventArgs e)
+        {
+            ResetFromObjectsList();
+        }
+
+        private void chkHyphen_CheckedChanged(object sender, EventArgs e)
+        {
+            ResetFromObjectsList();
+        }
+
+        private void radJoinObj_CheckedChanged(object sender, EventArgs e)
+        {
+            if (radJoinObj.Checked)
+            {
+                CheckDelimVisibility();
+                ResetFromObjectsList();
+            }
         }
     }
 }

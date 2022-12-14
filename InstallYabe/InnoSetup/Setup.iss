@@ -56,6 +56,7 @@ Source: "..\..\Yabe\bin\Debug\CheckReliability.dll"; DestDir: "{app}"; Flags: ig
 Source: "..\..\Yabe\bin\Debug\CheckStatusFlags.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\ListOutOfService.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\GlobalCommander.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Newtonsoft.Json.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\README.Txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Docs\history.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Docs\MIT_license.txt"; DestDir: "{app}"; Flags: ignoreversion
@@ -64,6 +65,7 @@ Source: "..\..\Docs\Treeview_license.txt"; DestDir: "{app}"; Flags: ignoreversio
 
 Source: "..\..\Yabe\bin\Debug\ReadSinglePropDescr.Xml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\AdvertiseSample.cov"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Proprietary-properties.csv"; DestDir: "{app}"; Flags: ignoreversion
 
 Source: "..\..\DemoServer\bin\Debug\DemoServer.exe"; DestDir: "{app}\AddOn"; Flags: ignoreversion
 Source: "..\..\DemoServer\bin\Debug\DeviceStorage.Xml"; DestDir: "{app}\AddOn"; Flags: ignoreversion

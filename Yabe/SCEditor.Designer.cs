@@ -81,14 +81,14 @@
             // 
             this.UUID.Location = new System.Drawing.Point(111, 23);
             this.UUID.Name = "UUID";
-            this.UUID.Size = new System.Drawing.Size(210, 20);
+            this.UUID.Size = new System.Drawing.Size(204, 20);
             this.UUID.TabIndex = 3;
             // 
             // HubURI
             // 
             this.HubURI.Location = new System.Drawing.Point(111, 66);
             this.HubURI.Name = "HubURI";
-            this.HubURI.Size = new System.Drawing.Size(210, 20);
+            this.HubURI.Size = new System.Drawing.Size(204, 20);
             this.HubURI.TabIndex = 4;
             // 
             // btSave
@@ -197,7 +197,7 @@
             // chk_DirectConnect
             // 
             this.chk_DirectConnect.AutoSize = true;
-            this.chk_DirectConnect.Location = new System.Drawing.Point(18, 105);
+            this.chk_DirectConnect.Location = new System.Drawing.Point(23, 98);
             this.chk_DirectConnect.Name = "chk_DirectConnect";
             this.chk_DirectConnect.Size = new System.Drawing.Size(97, 17);
             this.chk_DirectConnect.TabIndex = 26;
@@ -207,7 +207,7 @@
             // 
             // bpGetX509
             // 
-            this.bpGetX509.Location = new System.Drawing.Point(238, 92);
+            this.bpGetX509.Location = new System.Drawing.Point(234, 92);
             this.bpGetX509.Name = "bpGetX509";
             this.bpGetX509.Size = new System.Drawing.Size(79, 23);
             this.bpGetX509.TabIndex = 27;
@@ -235,7 +235,6 @@
             this.Name = "SCEditor";
             this.ShowIcon = false;
             this.Text = "BACnet/SC Channel Configuration";
-            this.Load += new System.EventHandler(this.SCEditor_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.ResumeLayout(false);

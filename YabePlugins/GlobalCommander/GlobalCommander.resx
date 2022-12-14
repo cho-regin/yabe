@@ -120,4 +120,58 @@
   <metadata name="PatienceTimer.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
+  <metadata name="delimToolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>134, 19</value>
+  </metadata>
+  <data name="radComObj.ToolTip" xml:space="preserve">
+    <value>In "Common Objects" mode, objects are only shown if that object exists in every selected device,
+with a). the same instance number and b). the part of the object name after the final delimeter
+matches. E.g. if delimeter is set to apostrophe, "Rm1'Temp" matches with "Rm2'Temp", but
+"Rm1'Temp" and "Rm1'Hum" do not match.</value>
+  </data>
+  <data name="chkHyphen.ToolTip" xml:space="preserve">
+    <value>In "Common Objects" mode, objects are only shown if that object exists in every selected device,
+with a). the same instance number and b). the part of the object name after the final delimeter
+matches. E.g. if delimeter is set to apostrophe, "Rm1'Temp" matches with "Rm2'Temp", but
+"Rm1'Temp" and "Rm1'Hum" do not match.
+</value>
+  </data>
+  <data name="chkUnderscore.ToolTip" xml:space="preserve">
+    <value>In "Common Objects" mode, objects are only shown if that object exists in every selected device,
+with a). the same instance number and b). the part of the object name after the final delimeter
+matches. E.g. if delimeter is set to apostrophe, "Rm1'Temp" matches with "Rm2'Temp", but
+"Rm1'Temp" and "Rm1'Hum" do not match.
+</value>
+  </data>
+  <data name="chkComma.ToolTip" xml:space="preserve">
+    <value>In "Common Objects" mode, objects are only shown if that object exists in every selected device,
+with a). the same instance number and b). the part of the object name after the final delimeter
+matches. E.g. if delimeter is set to apostrophe, "Rm1'Temp" matches with "Rm2'Temp", but
+"Rm1'Temp" and "Rm1'Hum" do not match.
+</value>
+  </data>
+  <data name="chkColon.ToolTip" xml:space="preserve">
+    <value>In "Common Objects" mode, objects are only shown if that object exists in every selected device,
+with a). the same instance number and b). the part of the object name after the final delimeter
+matches. E.g. if delimeter is set to apostrophe, "Rm1'Temp" matches with "Rm2'Temp", but
+"Rm1'Temp" and "Rm1'Hum" do not match.
+</value>
+  </data>
+  <data name="chkDot.ToolTip" xml:space="preserve">
+    <value>In "Common Objects" mode, objects are only shown if that object exists in every selected device,
+with a). the same instance number and b). the part of the object name after the final delimeter
+matches. E.g. if delimeter is set to apostrophe, "Rm1'Temp" matches with "Rm2'Temp", but
+"Rm1'Temp" and "Rm1'Hum" do not match.
+</value>
+  </data>
+  <data name="chkApostrophe.ToolTip" xml:space="preserve">
+    <value>In "Common Objects" mode, objects are only shown if that object exists in every selected device,
+with a). the same instance number and b). the part of the object name after the final delimeter
+matches. E.g. if delimeter is set to apostrophe, "Rm1'Temp" matches with "Rm2'Temp", but
+"Rm1'Temp" and "Rm1'Hum" do not match.
+</value>
+  </data>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>53</value>
+  </metadata>
 </root>

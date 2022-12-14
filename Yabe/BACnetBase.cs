@@ -10175,8 +10175,8 @@ namespace System.IO.BACnet.Serialize
                 /* Tag 3: optional propertyArrayIndex */
                 if (p_value.property.propertyArrayIndex != ASN1.BACNET_ARRAY_ALL)
                     ASN1.encode_context_unsigned(buffer, 3, p_value.property.propertyArrayIndex);
-
-                if (p_value.value != null && p_value.value[0].Value is BacnetError)
+                
+                if (p_value.value != null && p_value.value.Count > 0 && p_value.value[0].Value is BacnetError)
                 {
                     /* Tag 5: Error */
                     ASN1.encode_opening_tag(buffer, 5);
@@ -11689,8 +11689,13 @@ namespace System.IO.BACnet.Serialize
                 {
                     tag_len = decode_tag_number_and_value(buffer, offset + len, out sub_tag_number, out len_value_type);
                     if (tag_len < 0) return -1;
-
-                    if (len_value_type == 0)
+                    
+                    if (sub_tag_number==0 && len_value_type==0)
+                    {
+                        list.Add(new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL, null));
+                        len += tag_len;
+                    }
+                    else if (len_value_type == 0)
                     {
                         BacnetValue sub_value;
                         len += tag_len;
