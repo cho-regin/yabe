@@ -74,10 +74,8 @@ namespace BACnetSCsampleNode
             {
                 primaryHubURI = "ws://127.0.0.1:4443",
                 UUID = "{92fb9be8-bac0-0000-0cab-171d5ec08e6c}",
-                // For certificates Files reference or X509 can be set here
+                // For certificates Files reference or X509 (X509Certificate2 objects) can be set here
             };
-            Guid g;
-            Guid.TryParse(config.UUID, out g);
 
             bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(config));
 
@@ -85,11 +83,11 @@ namespace BACnetSCsampleNode
             // StreamReader sr = new StreamReader("BACnetSCConfig.config");
             // bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(sr.BaseStream));
 
-            bacnet_client.Start();    // go
-
             // Send WhoIs in order to get back all the Iam responses :  
             bacnet_client.OnIam += new BacnetClient.IamHandler(handler_OnIam);
             bacnet_client.OnWhoIs += new BacnetClient.WhoIsHandler(handler_OnWhoIs);
+
+            bacnet_client.Start();    // go
 
             bacnet_client.WhoIs();
         }

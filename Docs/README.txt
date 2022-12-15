@@ -229,7 +229,7 @@
  			name or hides this Id.
 
 		2.7.14 Plugins
-			List of plugins to be loaded (see §2.8).
+			List of plugins to be loaded (see §2.9).
 
 	2.8 Bacnet Object name
 			By default Bacnet objects are displayed using the object identifier eg : 

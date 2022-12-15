@@ -458,9 +458,9 @@ namespace System.IO.BACnet
         {
             try
             {
-                m_exclusive_conn.Close();
+                m_exclusive_conn.Close(); 
                 m_exclusive_conn = null;
-                m_shared_conn.Close(); // maybe an exception if null
+                m_shared_conn.Close(); 
                 m_shared_conn = null;
             }
             catch { }

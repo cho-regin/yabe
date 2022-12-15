@@ -495,97 +495,99 @@ namespace Yabe
         {
             string sub_key = adr.ToString() + ":" + initiatingDeviceIdentifier.instance + ":" + subscriberProcessIdentifier;
 
-            lock (m_subscription_list)
+            this.BeginInvoke((MethodInvoker)delegate
             {
-                if (m_subscription_list.ContainsKey(sub_key))
+                try
                 {
-                    this.BeginInvoke((MethodInvoker)delegate
+                    ListViewItem itm;
+                    lock (m_subscription_list)
                     {
-                        try
+                        if(m_subscription_list.ContainsKey(sub_key))
                         {
-                            ListViewItem itm;
-                            lock (m_subscription_list)
-                            {
-                                itm = m_subscription_list[sub_key];
-                            }
-                            foreach (BacnetPropertyValue value in values)
-                            {
+                            itm = m_subscription_list[sub_key];
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                    foreach (BacnetPropertyValue value in values)
+                    {
 
-                                switch ((BacnetPropertyIds)value.property.propertyIdentifier)
+                        switch ((BacnetPropertyIds)value.property.propertyIdentifier)
+                        {
+                            case BacnetPropertyIds.PROP_PRESENT_VALUE:
+                                itm.SubItems[4].Text = ConvertToText(value.value);
+                                itm.SubItems[5].Text = DateTime.Now.ToString(Properties.Settings.Default.COVTimeFormater);
+                                if (itm.SubItems[6].Text == "Not started") itm.SubItems[6].Text = "OK";
+                                try
                                 {
-                                    case BacnetPropertyIds.PROP_PRESENT_VALUE:
-                                        itm.SubItems[4].Text = ConvertToText(value.value);
-                                        itm.SubItems[5].Text = DateTime.Now.ToString(Properties.Settings.Default.COVTimeFormater);
-                                        if (itm.SubItems[6].Text == "Not started") itm.SubItems[6].Text = "OK";
-                                        try
-                                        {
-                                            //  try convert from string
-                                            bool Ybool;
-                                            bool isBool = bool.TryParse(itm.SubItems[4].Text, out Ybool);
-                                            double Y = double.NaN;
-                                            if (isBool)
-                                            {
-                                                Y = Ybool ? 1.0 : 0.0;
-                                            }
-                                            else
-                                            {
-                                                Y = Convert.ToDouble(itm.SubItems[4].Text);
-                                            }
-                                            XDate X = new XDate(DateTime.Now);
-                                            //if (!String.IsNullOrWhiteSpace(itm.SubItems[9].Text) && bool.Parse(itm.SubItems[9].Text))
-                                            //{
-                                            Pane.Title.Text = "";
+                                    //  try convert from string
+                                    bool Ybool;
+                                    bool isBool = bool.TryParse(itm.SubItems[4].Text, out Ybool);
+                                    double Y = double.NaN;
+                                    if (isBool)
+                                    {
+                                        Y = Ybool ? 1.0 : 0.0;
+                                    }
+                                    else
+                                    {
+                                        Y = Convert.ToDouble(itm.SubItems[4].Text);
+                                    }
+                                    XDate X = new XDate(DateTime.Now);
+                                    //if (!String.IsNullOrWhiteSpace(itm.SubItems[9].Text) && bool.Parse(itm.SubItems[9].Text))
+                                    //{
+                                    Pane.Title.Text = "";
 
-                                            if ((Properties.Settings.Default.GraphLineStep) && (m_subscription_points[sub_key].Count != 0))
-                                            {
-                                                PointPair p = m_subscription_points[sub_key].Peek();
-                                                m_subscription_points[sub_key].Add(X, p.Y);
-                                            }
-                                            m_subscription_points[sub_key].Add(X, Y);
-                                            CovGraph.AxisChange();
-                                            CovGraph.Invalidate();
-                                            //}
-                                        }
-                                        catch { }
-                                        break;
-                                    case BacnetPropertyIds.PROP_STATUS_FLAGS:
-                                        if (value.value != null && value.value.Count > 0)
-                                        {
-                                            BacnetStatusFlags status = (BacnetStatusFlags)((BacnetBitString)value.value[0].Value).ConvertToInt();
-                                            string status_text = "";
-                                            if ((status & BacnetStatusFlags.STATUS_FLAG_FAULT) == BacnetStatusFlags.STATUS_FLAG_FAULT)
-                                                status_text += "FAULT,";
-                                            else if ((status & BacnetStatusFlags.STATUS_FLAG_IN_ALARM) == BacnetStatusFlags.STATUS_FLAG_IN_ALARM)
-                                                status_text += "ALARM,";
-                                            else if ((status & BacnetStatusFlags.STATUS_FLAG_OUT_OF_SERVICE) == BacnetStatusFlags.STATUS_FLAG_OUT_OF_SERVICE)
-                                                status_text += "OOS,";
-                                            else if ((status & BacnetStatusFlags.STATUS_FLAG_OVERRIDDEN) == BacnetStatusFlags.STATUS_FLAG_OVERRIDDEN)
-                                                status_text += "OR,";
-                                            if (status_text != "")
-                                            {
-                                                status_text = status_text.Substring(0, status_text.Length - 1);
-                                                itm.SubItems[6].Text = status_text;
-                                            }
-                                            else
-                                                itm.SubItems[6].Text = "OK";
-                                        }
-
-                                        break;
-                                    default:
-                                        //got something else? ignore it
-                                        break;
+                                    if ((Properties.Settings.Default.GraphLineStep) && (m_subscription_points[sub_key].Count != 0))
+                                    {
+                                        PointPair p = m_subscription_points[sub_key].Peek();
+                                        m_subscription_points[sub_key].Add(X, p.Y);
+                                    }
+                                    m_subscription_points[sub_key].Add(X, Y);
+                                    CovGraph.AxisChange();
+                                    CovGraph.Invalidate();
+                                    //}
                                 }
-                            }
+                                catch { }
+                                break;
+                            case BacnetPropertyIds.PROP_STATUS_FLAGS:
+                                if (value.value != null && value.value.Count > 0)
+                                {
+                                    BacnetStatusFlags status = (BacnetStatusFlags)((BacnetBitString)value.value[0].Value).ConvertToInt();
+                                    string status_text = "";
+                                    if ((status & BacnetStatusFlags.STATUS_FLAG_FAULT) == BacnetStatusFlags.STATUS_FLAG_FAULT)
+                                        status_text += "FAULT,";
+                                    else if ((status & BacnetStatusFlags.STATUS_FLAG_IN_ALARM) == BacnetStatusFlags.STATUS_FLAG_IN_ALARM)
+                                        status_text += "ALARM,";
+                                    else if ((status & BacnetStatusFlags.STATUS_FLAG_OUT_OF_SERVICE) == BacnetStatusFlags.STATUS_FLAG_OUT_OF_SERVICE)
+                                        status_text += "OOS,";
+                                    else if ((status & BacnetStatusFlags.STATUS_FLAG_OVERRIDDEN) == BacnetStatusFlags.STATUS_FLAG_OVERRIDDEN)
+                                        status_text += "OR,";
+                                    if (status_text != "")
+                                    {
+                                        status_text = status_text.Substring(0, status_text.Length - 1);
+                                        itm.SubItems[6].Text = status_text;
+                                    }
+                                    else
+                                        itm.SubItems[6].Text = "OK";
+                                }
 
-                            AddLogAlarmEvent(itm);
+                                break;
+                            default:
+                                //got something else? ignore it
+                                break;
                         }
-                        catch (Exception ex)
-                        {
-                            Trace.TraceError("Exception in subcribed value: " + ex.Message);
-                        }
-                    });
+                    }
+
+                    AddLogAlarmEvent(itm);
                 }
-            }
+                catch (Exception ex)
+                {
+                    Trace.TraceError("Exception in subcribed value: " + ex.Message);
+                }
+            });
+
             //send ack
             if (need_confirm)
             {
@@ -1204,7 +1206,7 @@ namespace Yabe
                 {
                     RollingPointPairList points = m_subscription_points[sub_key];
                     foreach (LineItem l in Pane.CurveList)
-                        if (l.Tag == points)
+                        if (l.Points == points)
                         {
                             Pane.CurveList.Remove(l);
                             break;
@@ -1240,6 +1242,10 @@ namespace Yabe
                     else
                         comm = m_DeviceTree.SelectedNode.Parent.Parent.Tag as BacnetClient; // device under a router
 
+                    m_AddressSpaceTree.Nodes.Clear();   //clear address space
+                    AddSpaceLabel.Text = "Address Space";
+                    m_DataGrid.SelectedObject = null;   //clear property grid
+
                     m_devices[comm].Devices.Remove((KeyValuePair<BacnetAddress, uint>)device_entry);
 
                     m_DeviceTree.Nodes.Remove(m_DeviceTree.SelectedNode);
@@ -1250,6 +1256,12 @@ namespace Yabe
             {
                 if (MessageBox.Show(this, "Delete this transport?", "Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                 {
+                    if (_selectedDevice ==null || (_selectedDevice.Tag is KeyValuePair<BacnetAddress, uint> currentDelectedDeviceComms && m_devices[comm_entry].Devices.Contains(currentDelectedDeviceComms)))
+                    {
+                            m_AddressSpaceTree.Nodes.Clear();   //clear address space
+                            AddSpaceLabel.Text = "Address Space";
+                            m_DataGrid.SelectedObject = null;   //clear property grid
+                    }
                     m_devices.Remove(comm_entry);
                     m_DeviceTree.Nodes.Remove(m_DeviceTree.SelectedNode);
                     RemoveSubscriptions(null, 0, comm_entry);
@@ -1513,13 +1525,11 @@ namespace Yabe
             return SortedList;
         }
 
-        
-
         private void m_DeviceTree_AfterSelect(object sender, TreeViewEventArgs e)
         {
             AsynchRequestId++; // disabled a possible thread pool work (update) on the AddressSpaceTree
             TreeNode node = e.Node;
-            _selectedDevice = null;
+            //_selectedDevice = null;
             KeyValuePair<BacnetAddress, uint>? entry = e.Node.Tag as KeyValuePair<BacnetAddress, uint>?;
             if (entry != null)
             {
@@ -2078,17 +2088,17 @@ namespace Yabe
             {
                 _selectedNode = null;
                 //fetch end point
-                if (m_DeviceTree.SelectedNode == null) return;
-                else if (m_DeviceTree.SelectedNode.Tag == null) return;
-                else if (!(m_DeviceTree.SelectedNode.Tag is KeyValuePair<BacnetAddress, uint>)) return;
-                KeyValuePair<BacnetAddress, uint> entry = (KeyValuePair<BacnetAddress, uint>)m_DeviceTree.SelectedNode.Tag;
+                if (_selectedDevice == null) return;
+                else if (_selectedDevice.Tag == null) return;
+                else if (!(_selectedDevice.Tag is KeyValuePair<BacnetAddress, uint>)) return;
+                KeyValuePair<BacnetAddress, uint> entry = (KeyValuePair<BacnetAddress, uint>)_selectedDevice.Tag;
                 BacnetAddress adr = entry.Key;
                 BacnetClient comm;
 
-                if (m_DeviceTree.SelectedNode.Parent.Tag is BacnetClient)
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Tag;
+                if (_selectedDevice.Parent.Tag is BacnetClient)
+                    comm = (BacnetClient)_selectedDevice.Parent.Tag;
                 else
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Parent.Tag;  // routed node
+                    comm = (BacnetClient)_selectedDevice.Parent.Parent.Tag;  // routed node
 
                 if (selected_node.Tag is BacnetObjectId)
                 {
@@ -2159,10 +2169,10 @@ namespace Yabe
         // Fixed a small problem when a right click is down in a Treeview
         private void TreeView_MouseDown(object sender, MouseEventArgs e)
         {
-            //if (e.Button != MouseButtons.Right)
-            //    return;
+            if (e.Button != MouseButtons.Right)
+                return;
             // Store the selected node (can deselect a node).
-            //(sender as TreeView).SelectedNode = (sender as TreeView).GetNodeAt(e.X, e.Y);
+            (sender as TreeView).SelectedNode = (sender as TreeView).GetNodeAt(e.X, e.Y);
         }
 
         private void m_DataGrid_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
@@ -3328,17 +3338,17 @@ namespace Yabe
             if (e.Data.GetDataPresent("CodersLab.Windows.Controls.NodesCollection", false))
             {
                 //fetch end point
-                if (m_DeviceTree.SelectedNode == null) return;
-                else if (m_DeviceTree.SelectedNode.Tag == null) return;
-                else if (!(m_DeviceTree.SelectedNode.Tag is KeyValuePair<BacnetAddress, uint>)) return;
-                KeyValuePair<BacnetAddress, uint> entry = (KeyValuePair<BacnetAddress, uint>)m_DeviceTree.SelectedNode.Tag;
+                if (_selectedDevice == null) return;
+                else if (_selectedDevice.Tag == null) return;
+                else if (!(_selectedDevice.Tag is KeyValuePair<BacnetAddress, uint>)) return;
+                KeyValuePair<BacnetAddress, uint> entry = (KeyValuePair<BacnetAddress, uint>)_selectedDevice.Tag;
                 BacnetAddress adr = entry.Key;
 
                 BacnetClient comm;
-                if (m_DeviceTree.SelectedNode.Parent.Tag is BacnetClient)
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Tag;
+                if (_selectedDevice.Parent.Tag is BacnetClient)
+                    comm = (BacnetClient)_selectedDevice.Parent.Tag;
                 else  // a routed device
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Parent.Tag;
+                    comm = (BacnetClient)_selectedDevice.Parent.Parent.Tag;
 
                 //fetch object_id
                 var nodes = (CodersLab.Windows.Controls.NodesCollection)e.Data.GetData("CodersLab.Windows.Controls.NodesCollection");
