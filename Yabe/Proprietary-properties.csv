@@ -1,4 +1,18 @@
 Id,PropertyDescription
+512,(Beckhoff) Scale_Offset (REAL)
+513,(Beckhoff) Io_Bus_Nr (Unsigned)
+514,(Beckhoff) Io_Module_Nr (Unsigned)
+515,(Beckhoff) Io_Channel_Nr (Unsigned)
+516,(Beckhoff) Persist_Data (Enumerated)
+517,(Beckhoff) Active_Priority (Unsigned)
+518,(Beckhoff) LastConfirmedServiceAccess (Character String)
+519,(Beckhoff) Data_Request_Mode (Enumerated)
+520,(Beckhoff) Data_Polling_Interval (Unsigned)
+521,(Beckhoff) EnrollmentCov_Resubscription_Interval (Unsigned)
+522,(Beckhoff) File_Name (Character String)
+523,(Beckhoff) Process_Id (Unsigned)
+524,(Beckhoff) PLC_SymbolName (Character String)
+525,(Beckhoff) UseUnconfirmedCoV (Boolean)
 3000,(Siemens) User designation
 3001,(Siemens) Reference to higher object
 3002,(Siemens) Interface list
