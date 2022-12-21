@@ -88,11 +88,11 @@ namespace System.IO.BACnet
 
             if (configuration.UseTLS)
             {
-                if ((configuration.OwnCertificate!=null)&&(configuration.OwnCertificate==null))
+                if ((configuration.OwnCertificateFile != null)&&(configuration.OwnCertificate==null))
                     try
                     {
                         // could be not given or with error if the remote device do not verify it (wrong idea)
-                        configuration.OwnCertificate = new X509Certificate2(configuration.OwnCertificateFile);
+                        configuration.OwnCertificate = new X509Certificate2(configuration.OwnCertificateFile, configuration.OwnCertificateFilePassword);
                     }
                     catch (Exception e)
                     {
@@ -606,6 +606,9 @@ namespace System.IO.BACnet
         public bool ValidateHubCertificate=false;
         public bool DirectConnect=false;
         public bool UseTLS { get { return primaryHubURI.Contains("wss://"); } }
+
+        [XmlIgnore]
+        public String OwnCertificateFilePassword;
 
         [XmlIgnore]
         public X509Certificate2 OwnCertificate; // with private key

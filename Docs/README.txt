@@ -157,6 +157,8 @@
 		- A configuration file is required and can be edited for parameters such as 
 		  the remote URI, the unique 'extra long' application ID and TLS security data
 		  (Yabe client certificate with private key, remote device or Hub certificate).
+		  The optional certificat password is not saved in the file. The value has to
+		   be given each time.
 		- Non standard uncyphered, unauthenticated ws:// can be use for test.
 
 	2.7 OPTIONS

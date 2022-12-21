@@ -120,6 +120,8 @@ namespace Yabe
             }
             try
             {
+                configuration.OwnCertificateFilePassword = SCEditor.YabeCertificateFilePassword;
+
                 m_result = new BacnetClient(new BACnetTransportSecureConnect(configuration));
                 this.DialogResult = System.Windows.Forms.DialogResult.OK;
 

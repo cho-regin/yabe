@@ -356,12 +356,26 @@ namespace Yabe
         private void ChangeTreeNodePropertyName(TreeNode tn, String Name)
         {
             // Tooltip not set is not null, strange !
-            if (tn.ToolTipText=="")
+            if (tn.ToolTipText == "")
+            {
                 tn.ToolTipText = tn.Text;
+            }
             if (Properties.Settings.Default.DisplayIdWithName)
-                tn.Text = Name + " (" + System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(tn.ToolTipText.ToLower())+")";
+            {
+                string abbreviatedName = ShortenObjectId(tn.ToolTipText);
+                if (!abbreviatedName.Equals(tn.ToolTipText))
+                {
+                    tn.Text = Name + " (" + abbreviatedName + ")";
+                }
+                else
+                {
+                    tn.Text = Name + " (" + System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(tn.ToolTipText.ToLower()) + ")";
+                }
+            }
             else
+            {
                 tn.Text = Name;
+            }
         }
 
         private void SetSubscriptionStatus(ListViewItem itm, string status)
@@ -1579,9 +1593,9 @@ namespace Yabe
 
                 try
                 {
-                    if (Properties.Settings.Default.Address_Space_Structured_View==AddressTreeViewType.Structured)
+                    if (Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Structured)
                     {
-                        value_list = FetchStructuredObjects(comm,adr,device_id, m_AddressSpaceTree.Nodes);
+                        value_list = FetchStructuredObjects(comm, adr, device_id, m_AddressSpaceTree.Nodes);
 
                         BacnetObjectId bobj_id = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id);
 
@@ -1609,9 +1623,9 @@ namespace Yabe
                                         lock (DevicesObjectsName)
                                         {
                                             Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id);
-                                            if(DevicesObjectsName.ContainsKey(t))
+                                            if (DevicesObjectsName.ContainsKey(t))
                                             {
-                                                if(!DevicesObjectsName[t].Equals(values[0].ToString()))
+                                                if (!DevicesObjectsName[t].Equals(values[0].ToString()))
                                                 {
                                                     DevicesObjectsName.Remove(t);
                                                     DevicesObjectsName.Add(t, values[0].ToString());
@@ -1629,13 +1643,13 @@ namespace Yabe
                                 catch { }
                         }
                     }
-                    if(value_list!=null)
+                    if (value_list != null)
                     {
                         AddSpaceLabel.Text = "Address Space : " + value_list.Count.ToString() + " objects";
                     }
                     else
                     {
-                    //fetch normal list
+                        //fetch normal list
                         try
                         {
                             if (!comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list))
@@ -1708,6 +1722,8 @@ namespace Yabe
                                         node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
                                     }
                                     else
+                                    {
+                                        this.Cursor = Cursors.WaitCursor;
                                         try
                                         {
                                             IList<BacnetValue> values;
@@ -1736,12 +1752,13 @@ namespace Yabe
                                             }
                                         }
                                         catch { }
+                                    }
                                 }
+                                AddObjectEntry(comm, adr, null, bobj_id, m_AddressSpaceTree.Nodes);//AddObjectEntry(comm, adr, null, bobj_id, e.Node.Nodes); 
                             }
-                            AddObjectEntry(comm, adr, null, bobj_id, m_AddressSpaceTree.Nodes);//AddObjectEntry(comm, adr, null, bobj_id, e.Node.Nodes); 
                         }
+                        _selectedDevice = node;
                     }
-                    _selectedDevice = node;
                 }
                 finally
                 {
@@ -4147,6 +4164,7 @@ namespace Yabe
 
                         }
 
+                        // Optimised for speed, so we don't do this one-by-one. We save the data and update it at the end.
                         //ChangeTreeNodePropertyName(t, Identifier);
                     }
                 }
@@ -4292,6 +4310,8 @@ namespace Yabe
             if (bras.Count==0)
                 IsOK = true;
             else
+            {
+                this.Cursor = Cursors.WaitCursor;
                 try
                 {
                     IList<BacnetReadAccessResult> result = null;
@@ -4302,18 +4322,23 @@ namespace Yabe
                     }
                 }
                 catch{}
-
-            // Fail, so go One by One, in a background thread
-            if (!IsOK)
+            }
+            
+            if (IsOK)
+            {
+                // We did not update the tree as we went (for speed), so do it all at once now
+                m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(this._selectedDevice));
+                this.Cursor = Cursors.Default;
+            }
+            else
+            {
+                // Fail, so go One by One, in a background thread
                 System.Threading.ThreadPool.QueueUserWorkItem((o) =>
                 {
                     ChangeObjectIdByNameOneByOne(m_AddressSpaceTree.Nodes, comm, adr, AsynchRequestId);
-                });  
-
-            comm.Retries = _retries;
-
-            // Now reload the tree all at once
-            m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(this._selectedDevice));
+                });
+                this.Cursor = Cursors.Default;
+            }
         }
 
         private void ChangeObjectIdByNameOneByOne(TreeNodeCollection tnc, BacnetClient comm, BacnetAddress adr, int AsynchRequestId)
@@ -4340,7 +4365,9 @@ namespace Yabe
                             {
                                 if (AsynchRequestId != this.AsynchRequestId) return; // another test in the GUI thread
 
-                                //ChangeTreeNodePropertyName(tn, name[0].Value.ToString());
+                                // We are already going on-by-one (SLOW), in a different thread, so just update
+                                // as we go. Don't bother optimising (Tested and only ~15% faster in this case)
+                                ChangeTreeNodePropertyName(tn, name[0].Value.ToString());
 
                                 lock (DevicesObjectsName)
                                 {

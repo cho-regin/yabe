@@ -38,6 +38,9 @@ namespace Yabe
 {
     public partial class SCEditor : Form
     {
+        // Password not saved in the XML file between Yabe session
+        public static String YabeCertificateFilePassword;
+
         BACnetSCConfigChannel config;
         String FileName;
         XmlSerializer Xmlser = new XmlSerializer(typeof(BACnetSCConfigChannel));
@@ -59,6 +62,8 @@ namespace Yabe
                 chk_VerifyHubCert.Checked = config.ValidateHubCertificate;
                 chk_DirectConnect.Checked = config.DirectConnect;
 
+                YabeCertPassword.Text = YabeCertificateFilePassword;
+
             }
             catch
             {
@@ -75,6 +80,9 @@ namespace Yabe
             config.OwnCertificateFile = YabeCert.Text;
             config.ValidateHubCertificate = chk_VerifyHubCert.Checked;
             config.DirectConnect = chk_DirectConnect.Checked;
+
+            // Password is put into the config object but not saved in the Xml file.
+            YabeCertificateFilePassword = YabeCertPassword.Text; 
 
             try
             {
@@ -156,7 +164,6 @@ namespace Yabe
             X509Certificate2UI.DisplayCertificate((X509Certificate2)certificate);
             return false; // reject, so close the connection
         }
-
     }
 
 }
