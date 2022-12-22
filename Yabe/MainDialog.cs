@@ -1754,11 +1754,11 @@ namespace Yabe
                                         catch { }
                                     }
                                 }
-                                AddObjectEntry(comm, adr, null, bobj_id, m_AddressSpaceTree.Nodes);//AddObjectEntry(comm, adr, null, bobj_id, e.Node.Nodes); 
                             }
+                            AddObjectEntry(comm, adr, null, bobj_id, m_AddressSpaceTree.Nodes);//AddObjectEntry(comm, adr, null, bobj_id, e.Node.Nodes); 
                         }
-                        _selectedDevice = node;
                     }
+                    _selectedDevice = node;
                 }
                 finally
                 {

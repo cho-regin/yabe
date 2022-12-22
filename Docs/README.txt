@@ -158,8 +158,11 @@
 		  the remote URI, the unique 'extra long' application ID and TLS security data
 		  (Yabe client certificate with private key, remote device or Hub certificate).
 		  The optional certificat password is not saved in the file. The value has to
-		   be given each time.
+		  be given each time.
 		- Non standard uncyphered, unauthenticated ws:// can be use for test.
+		- Today on Windows 10 .NET 4.8 TLS1.3 is not operational. You should
+		  configure teh Hub ou remote device to accept TLS1.2 (out of the BACnet
+		  standard). It's OK on Windows 11, maybe also on some Linux distributions.
 
 	2.7 OPTIONS
 	A few selected options.
