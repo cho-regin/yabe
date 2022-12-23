@@ -141,7 +141,7 @@ namespace System.IO.BACnet
 
             if (configuration.UseTLS)
             {
-                Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13 | SslProtocols.Tls12;
+                Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13;
                 Websocket.SslConfiguration.ServerCertificateValidationCallback = RemoteCertificateValidationCallback;
                 Websocket.SslConfiguration.ClientCertificateSelectionCallback = LocalCertificateSelectionCallback;
             }
