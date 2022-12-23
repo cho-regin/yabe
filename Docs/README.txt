@@ -171,7 +171,7 @@
 		       Client
 		  Then add the Dword32 value		
 		       Enabled and change de value to 00000001
-		  Or jump to Yabe source code thrunk\Docs, get the .reg file and double click on it.
+		  Or jump to Yabe source code trunk\Docs, get the .reg file and double click on it.
 		  This will have no effect on any versions of Windows prior to 1903.
 
 	2.7 OPTIONS
