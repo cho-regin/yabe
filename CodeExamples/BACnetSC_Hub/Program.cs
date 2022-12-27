@@ -21,7 +21,7 @@ namespace HubApp
             {
                 Console.WriteLine("\r\nEsc to exit, other key to refresh the certificates lists\r\n");
 
-                if (Console.ReadKey().Key == ConsoleKey.Escape)
+                if (Console.ReadKey(true).Key == ConsoleKey.Escape)
                     return;
 
                 scHub.RefreshRejectedAndTrustedCertificatesLists();

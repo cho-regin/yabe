@@ -42,13 +42,16 @@ namespace System.IO.BACnet
     // Yabe SourceForge Explorer and Full Open source BACnet stack
     public class bscHub
     {
-        WebSocketServer Websocket;
-        X509Certificate2 ownCertificate; // with private key
-        X509Certificate2Collection rejectedCertificates;
-        X509Certificate2Collection trustedCertificates;
-        String pkiDirectory;
+        readonly WebSocketServer Websocket;
 
-        X509Chain ExtraChain = new X509Chain();
+        X509Certificate2 ownCertificate; // with private key
+        readonly X509Certificate2Collection rejectedCertificates =new X509Certificate2Collection();
+        readonly X509Certificate2Collection trustedCertificates = new X509Certificate2Collection();
+        readonly string pkiDirectory;
+
+        readonly X509Chain trustedExtraChain = new X509Chain();
+        readonly X509Chain rejectedExtraChain = new X509Chain();
+
         public bscHub(string URI, String pkiDirectory=null, String ownCertificatePassword=null)
         {
             if (pkiDirectory != null)
@@ -83,9 +86,7 @@ namespace System.IO.BACnet
                 // error if it's wss://
                 Trace.TraceWarning("BACnet/SC : Warning no HUB certificate found"); 
             }
-            
-            rejectedCertificates = new X509Certificate2Collection();
-            trustedCertificates = new X509Certificate2Collection();
+
             RefreshRejectedAndTrustedCertificatesLists();
 
         }
@@ -108,21 +109,27 @@ namespace System.IO.BACnet
                     try { trustedCertificates.Add(new X509Certificate2(fileName)); } catch { }
             }
 
-            ExtraChain.ChainPolicy.ExtraStore.Clear();
-            ExtraChain.ChainPolicy.ExtraStore.AddRange(trustedCertificates);
-            ExtraChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority; // not suffisant !!
+            rejectedExtraChain.ChainPolicy.ExtraStore.Clear();
+            rejectedExtraChain.ChainPolicy.ExtraStore.AddRange(rejectedCertificates);
+            rejectedExtraChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority; // not suffisant !!
+
+            trustedExtraChain.ChainPolicy.ExtraStore.Clear();
+            trustedExtraChain.ChainPolicy.ExtraStore.AddRange(trustedCertificates);
+            trustedExtraChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority; // not suffisant !
 
         }
 
         // Here we accept all certificates known by the computer : SslPolicyErrors.None
-        // also all certificates in cert directory
+        // also all certificates in thrusted directory
+        // if it's the remote certificate or one of it's signing CA in the chain (if the chain is given)
+        // and we reject all certificates in rejected directory
         // if it's the remote certificate or one of it's signing CA in the chain (if the chain is given)
 
         // In fact here a lot of things a done without a real knowledge. You a expert, tell me what to do
-        private bool IsCertificateThrusted(X509Chain chain)
+        private bool IsCertificateRejected(X509Chain chain)
         {
             if (chain == null) // normaly not
-                return false;
+                return true;
 
             // explicitely rejected : : the cert itself or one of the CA in the CA chain
             lock (rejectedCertificates)
@@ -131,8 +138,15 @@ namespace System.IO.BACnet
                         if (chainElement.Certificate.Thumbprint == rejectedcert.Thumbprint)
                         {
                             Trace.TraceInformation("\tCertificate explicitely rejected");
-                            return false;
+                            return true;
                         }
+            return false;
+        }
+
+        private bool IsCertificateThrusted(X509Chain chain)
+        {
+            if (chain == null) // normaly not
+                return false;
 
             // explicitely accepted : the cert itself or one of the CA in the CA chain
             lock (trustedCertificates)
@@ -160,12 +174,15 @@ namespace System.IO.BACnet
                 return true;
             }
 
+            if (IsCertificateRejected(chain)) { return false; }
             if (IsCertificateThrusted(chain)) { return true; }
 
-            // The chain is certainly not given, so we try to build it with the trusted certificate
-            ExtraChain.Build(certificate as X509Certificate2);
+            // The chain is certainly not given, so we try to build it with the trusted and rejected certificate
+            rejectedExtraChain.Build(certificate as X509Certificate2);
+            if (IsCertificateRejected(rejectedExtraChain)) { return false; }
 
-            if (IsCertificateThrusted(ExtraChain)) { return true; }
+            trustedExtraChain.Build(certificate as X509Certificate2);
+            if (IsCertificateThrusted(trustedExtraChain)) { return true; }
 
             // save the untrusted certificate in the issuers directory so the user can copy it after 
             try
@@ -174,7 +191,6 @@ namespace System.IO.BACnet
                 Trace.TraceInformation("\tUnknown certificate written in PKI\\issuers");
             } 
             catch { Trace.TraceInformation("\tUnknown certificate NOT written in PKI\\issuers"); }
-
 
             return false;
         }
@@ -188,7 +204,7 @@ namespace System.IO.BACnet
         static byte[] myVMAC;       // The HUB VMac
         static Guid myGuid;         // The HUB GUID
 
-        static byte[] broadcastVMAC = new byte[] { 255, 255, 255, 255, 255, 255 };
+        static readonly byte[] broadcastVMAC = new byte[] { 255, 255, 255, 255, 255, 255 };
 
         byte[] RemoteVMac = new byte[6];    // The End-device connected 
         bool IsConnected = false;
