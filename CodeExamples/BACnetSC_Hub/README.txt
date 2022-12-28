@@ -1,4 +1,5 @@
 BACnet/SC Hub is ... a questionable (partially respecting the protocol) but working implementation of HUB service, but to experiment PKI.
+This application can be used for Wireshark capture of cyphered channel in an uncyphered channel : for programmer only, see code.
 
 For Windows 10 see trunk\Docs\ActivateTLS1.3 On Win10.reg
 
@@ -19,6 +20,8 @@ Certificates tree structure is :
               |                           |
                --- FakeNode        --- Hub
                                             --- Node
+                                            --- Node2
+                                            --- Node3 (outdated)
 
 and also a tree structure coming from the BACnet/SC Refercence Stack (https://sourceforge.net/projects/bacnet-sc-reference-stack/) :
 
@@ -29,10 +32,10 @@ and also a tree structure coming from the BACnet/SC Refercence Stack (https://so
           
 # In "own" directory the Hub application certificate can be found (with private key not password protected).
 
-# In "rejected" you can place certificates not accepted by the application (endUser or CA12 or CA1-CA12 ...). By default CA11 is inside.
-   So using FakeNode will be rejected.
+# In "rejected" you can place certificates not accepted by the application (endUser or CA12 or CA1-CA12 ...). 
+  By default Node2 and CA11 are inside. So using FakeNode will be rejected too.
 
-# In "trusted" you can place certificates accepted by the application (endUser or CA12 or CA1-CA12 ...). By default CA12 & TestNode are inside.
-   So using Node or TestNode will be trusted.
+# In "trusted" you can place certificates accepted by the application (endUser or CA12 or CA1-CA12 ...). 
+   By default CA12, TestNode & Node3 are inside. So using Node or TestNode will be trusted. Node3 is outdated.
 
 # The directory issuers is filled automaticaly with untrusted certificates from TLS connection. One can move it after in "trusted"

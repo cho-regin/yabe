@@ -29,9 +29,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Security;
 using System.Security.Authentication;
-using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using WebSocketSharp;
 using WebSocketSharp.Server;
@@ -43,8 +43,10 @@ namespace System.IO.BACnet
     public class bscHub
     {
         readonly WebSocketServer Websocket;
+        readonly WebSocketServer WebsocketLoopBackWiresharkServer;
+        readonly WebSocket WebsocketLoopBackWiresharkClient;
 
-        X509Certificate2 ownCertificate; // with private key
+        readonly X509Certificate2 ownCertificate; // with private key
         readonly X509Certificate2Collection rejectedCertificates =new X509Certificate2Collection();
         readonly X509Certificate2Collection trustedCertificates = new X509Certificate2Collection();
         readonly string pkiDirectory;
@@ -52,42 +54,52 @@ namespace System.IO.BACnet
         readonly X509Chain trustedExtraChain = new X509Chain();
         readonly X509Chain rejectedExtraChain = new X509Chain();
 
-        public bscHub(string URI, String pkiDirectory=null, String ownCertificatePassword=null)
+        public bscHub(string URI, String pkiDirectory = null, String ownCertificatePassword = null, UInt16 LoopbackWiresharkPort = 0)
         {
             if (pkiDirectory != null)
-            { 
-                this.pkiDirectory= pkiDirectory;    
-                PKI_Init(ownCertificatePassword);
+            {
+                this.pkiDirectory = pkiDirectory;
+                try
+                {
+                    ownCertificate = new X509Certificate2(pkiDirectory + "\\own\\Hub.p12", ownCertificatePassword);
+                    if (!ownCertificate.HasPrivateKey)
+                        // error if it's wss://
+                        Trace.WriteLine("BACnet/SC : Warning the HUB own certificate is without a private key");
+                }
+                catch
+                {
+                    // error if it's wss://
+                    Trace.WriteLine("BACnet/SC : Warning no HUB certificate found");
+                }
+
+                RefreshRejectedAndTrustedCertificatesLists();
             }
 
             Websocket = new WebSocketServer(URI);
             Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13;
-            Websocket.SslConfiguration.ClientCertificateRequired= true;
+            Websocket.SslConfiguration.ClientCertificateRequired = true;
             Websocket.SslConfiguration.ClientCertificateValidationCallback = RemoteCertificateValidationCallback;
             Websocket.SslConfiguration.ServerCertificate = ownCertificate;
             Websocket.AddWebSocketService<HubListener>("/");
 
-            // Disable WebsocketServer log
-            Websocket.Log.Output = (_, __) => { };
+            // Disable WebsocketServer log in the console
+            Websocket.Log.Output = (d, s) => { };
 
             Websocket.Start();
-        }
-        private void PKI_Init(String ownCertificatePassword)
-        {
-            try 
-            {
-                ownCertificate = new X509Certificate2(pkiDirectory + "\\own\\Hub.p12", ownCertificatePassword);
-                if (!ownCertificate.HasPrivateKey)
-                    // error if it's wss://
-                    Trace.TraceWarning("BACnet/SC : Warning the HUB own certificate is without a private key");
-            }
-            catch 
-            { 
-                // error if it's wss://
-                Trace.TraceWarning("BACnet/SC : Warning no HUB certificate found"); 
-            }
 
-            RefreshRejectedAndTrustedCertificatesLists();
+            // Open a ws channel in loopback then connect to it
+            // it's used to re-send each receive frame in a uncyphered channel for debug purpose
+            // when a device don't allows ws communication
+            if (LoopbackWiresharkPort != 0)
+            {
+                WebsocketLoopBackWiresharkServer = new WebSocketServer(IPAddress.Loopback, LoopbackWiresharkPort);
+                WebsocketLoopBackWiresharkServer.AddWebSocketService<HubListenerLoopBack>("/");
+                WebsocketLoopBackWiresharkServer.Start();
+
+                WebsocketLoopBackWiresharkClient = new WebSocket("ws://127.0.0.1:"+ LoopbackWiresharkPort.ToString(), new string[] { "hub.bsc.bacnet.org" });
+                WebsocketLoopBackWiresharkClient.ConnectAsync();
+                HubListener.WebsocketLoopBack = WebsocketLoopBackWiresharkClient;
+            }
 
         }
 
@@ -107,6 +119,7 @@ namespace System.IO.BACnet
                 string[] fileEntries = Directory.GetFiles(pkiDirectory + "\\trusted");
                 foreach (string fileName in fileEntries)
                     try { trustedCertificates.Add(new X509Certificate2(fileName)); } catch { }
+               
             }
 
             rejectedExtraChain.ChainPolicy.ExtraStore.Clear();
@@ -137,7 +150,7 @@ namespace System.IO.BACnet
                     foreach (X509Certificate2 rejectedcert in rejectedCertificates)
                         if (chainElement.Certificate.Thumbprint == rejectedcert.Thumbprint)
                         {
-                            Trace.TraceInformation("\tCertificate explicitely rejected");
+                            Trace.WriteLine("\tCertificate explicitely rejected");
                             return true;
                         }
             return false;
@@ -154,7 +167,7 @@ namespace System.IO.BACnet
                     foreach (X509Certificate2 trustedcert in trustedCertificates)
                         if (chainElement.Certificate.Thumbprint == trustedcert.Thumbprint)
                         {
-                            Trace.TraceInformation("\tCertificate explicitely accepted");
+                            Trace.WriteLine("\tCertificate explicitely accepted");
                             return true;
 
                         }
@@ -165,12 +178,12 @@ namespace System.IO.BACnet
             if (chain == null) // normaly not
                 return false;
 
-            Trace.TraceInformation("Connection with certificate name : " + certificate.Subject);
+            Trace.WriteLine("Connection with certificate name : " + certificate.Subject);
 
             // Maybe the root CA is system accepted
             if (sslPolicyErrors == SslPolicyErrors.None)
             {
-                Trace.TraceInformation("\tThrusted certificate respecting underlying system security policy");
+                Trace.WriteLine("\tThrusted certificate respecting underlying system security policy");
                 return true;
             }
 
@@ -188,11 +201,19 @@ namespace System.IO.BACnet
             try
             {
                 File.WriteAllBytes(pkiDirectory + "\\issuers\\" + certificate.Subject + ".cer", certificate.Export(X509ContentType.Cert));
-                Trace.TraceInformation("\tUnknown certificate written in PKI\\issuers");
+                Trace.WriteLine("\tUnknown certificate written in PKI\\issuers");
             } 
-            catch { Trace.TraceInformation("\tUnknown certificate NOT written in PKI\\issuers"); }
+            catch { Trace.WriteLine("\tUnknown certificate NOT written in PKI\\issuers"); }
 
             return false;
+        }
+    }
+    public class HubListenerLoopBack : WebSocketBehavior
+    {
+        // do nothing more, just here to allows a uncyphered capture in loopback mode
+        public HubListenerLoopBack()
+        {
+            this.Protocol = "hub.bsc.bacnet.org";
         }
     }
 
@@ -206,6 +227,8 @@ namespace System.IO.BACnet
 
         static readonly byte[] broadcastVMAC = new byte[] { 255, 255, 255, 255, 255, 255 };
 
+        public static WebSocket WebsocketLoopBack;
+
         byte[] RemoteVMac = new byte[6];    // The End-device connected 
         bool IsConnected = false;
 
@@ -213,7 +236,8 @@ namespace System.IO.BACnet
         {           
             new Random().NextBytes(myVMAC = new byte[6]);
             myVMAC[0] = (byte)((myVMAC[0] & 0xF0) | 0x02 ); // xxxx0010
-            myGuid = new Guid("deadbeaf-faed-bac0-0cab-de1e7ede1e7e");          
+            myGuid = new Guid("deadbeaf-faed-bac0-0cab-de1e7ede1e7e");
+
         }
          
         public HubListener() 
@@ -223,6 +247,13 @@ namespace System.IO.BACnet
    
         protected override void OnOpen()
         {
+            // basically if not, the client will also do not accept the proposal made in the ctor
+            if (!this.Context.SecWebSocketProtocols.Contains(this.Protocol))
+            { 
+                this.Context.WebSocket.CloseAsync();
+                return;
+            }
+
             lock (listeners)
                 listeners.Add(this);
             base.OnOpen();
@@ -244,6 +275,8 @@ namespace System.IO.BACnet
         }
         protected override void OnMessage(MessageEventArgs e)
         {
+            try { WebsocketLoopBack?.SendAsync(e.RawData, null); } catch { }
+
             try
             {
                 int ret = BVLC_SC_Decode(e.RawData, out BacnetBvlcSCMessage function, out byte[] DestVmac);
@@ -254,8 +287,11 @@ namespace System.IO.BACnet
 
                     if (((e.RawData[1] & 4) != 0) && ((e.RawData[1] & 8) == 0)) // A Dest VMAC but no source VMAC
                     {
+                        // Replace the destination VMAC by the Source Vmac
                         e.RawData[1] = (byte)((e.RawData[1] & ~4) | 8);
-                        Array.Copy(RemoteVMac, 0, e.RawData, 4, 6); // Replace the destination VMAC by the Source Vmac
+                        Array.Copy(RemoteVMac, 0, e.RawData, 4, 6);
+
+                        // Dispatch for everybody
                         if (DestVmac.SequenceEqual(broadcastVMAC))
                         {
                             lock (listeners)
@@ -263,6 +299,7 @@ namespace System.IO.BACnet
                                     if ((listener != this)&&(listener.IsConnected)) 
                                         listener.SendAsync(e.RawData, null);    // send everywhere expect sender & unconnected
                         }
+                        // or send only to the destination
                         else
                         {
                             lock (listeners)
