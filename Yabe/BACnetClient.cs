@@ -249,10 +249,14 @@ namespace System.IO.BACnet
                 }
                 else if (service == BacnetConfirmedServices.SERVICE_CONFIRMED_WRITE_PROP_MULTIPLE && OnWritePropertyMultipleRequest != null)
                 {
-                    BacnetObjectId object_id;
-                    ICollection<BacnetPropertyValue> values;
-                    if (Services.DecodeWritePropertyMultiple(buffer, offset, length, out object_id, out values) >= 0)
-                        OnWritePropertyMultipleRequest(this, adr, invoke_id, object_id, values, max_segments);
+                    List<BacnetWriteAccessSpecification> objects;
+                    if (Services.DecodeWritePropertyMultiple(buffer, offset, length, out objects) >= 0)
+                    {
+                        foreach (var obj in objects)
+                        {
+                            OnWritePropertyMultipleRequest(this, adr, invoke_id, obj.object_id, obj.values_refs, max_segments);
+                        }
+                    }
                     else
                     {
                         ErrorResponse(adr, service, invoke_id, BacnetErrorClasses.ERROR_CLASS_SERVICES, BacnetErrorCodes.ERROR_CODE_ABORT_OTHER);
