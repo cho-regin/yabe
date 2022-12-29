@@ -42,19 +42,18 @@ namespace System.IO.BACnet
     // Yabe SourceForge Explorer and Full Open source BACnet stack
     public class bscHub
     {
-        readonly WebSocketServer Websocket;
-        readonly WebSocketServer WebsocketLoopBackWiresharkServer;
-        readonly WebSocket WebsocketLoopBackWiresharkClient;
+        WebSocketServer Websocket;
+        WebSocketServer WebsocketLoopBackWiresharkServer;
+        WebSocket WebsocketLoopBackWiresharkClient;
 
-        readonly X509Certificate2 ownCertificate; // with private key
-        readonly X509Certificate2Collection rejectedCertificates =new X509Certificate2Collection();
-        readonly X509Certificate2Collection trustedCertificates = new X509Certificate2Collection();
-        readonly string pkiDirectory;
+        X509Certificate2 ownCertificate; // with private key
+        X509Certificate2Collection rejectedCertificates =new X509Certificate2Collection();
+        X509Certificate2Collection trustedCertificates = new X509Certificate2Collection();
+        string pkiDirectory;
 
-        readonly X509Chain trustedExtraChain = new X509Chain();
-        readonly X509Chain rejectedExtraChain = new X509Chain();
-
-        public bscHub(string URI, String pkiDirectory = null, String ownCertificatePassword = null, UInt16 LoopbackWiresharkPort = 0)
+        X509Chain trustedExtraChain = new X509Chain();
+        X509Chain rejectedExtraChain = new X509Chain();
+        public bscHub(string URI, String pkiDirectory = null, String ownCertificatePassword = null)
         {
             if (pkiDirectory != null)
             {
@@ -87,20 +86,22 @@ namespace System.IO.BACnet
 
             Websocket.Start();
 
-            // Open a ws channel in loopback then connect to it
-            // it's used to re-send each receive frame in a uncyphered channel for debug purpose
-            // when a device don't allows ws communication
-            if (LoopbackWiresharkPort != 0)
-            {
-                WebsocketLoopBackWiresharkServer = new WebSocketServer(IPAddress.Loopback, LoopbackWiresharkPort);
-                WebsocketLoopBackWiresharkServer.AddWebSocketService<HubListenerLoopBack>("/");
-                WebsocketLoopBackWiresharkServer.Start();
+        }
 
-                WebsocketLoopBackWiresharkClient = new WebSocket("ws://127.0.0.1:"+ LoopbackWiresharkPort.ToString(), new string[] { "hub.bsc.bacnet.org" });
-                WebsocketLoopBackWiresharkClient.ConnectAsync();
-                HubListener.WebsocketLoopBack = WebsocketLoopBackWiresharkClient;
-            }
+        public void ActivateSnifferForWireshark(UInt16 LoopbackWiresharkPort)
+        {
+            // Open a ws channel in loopback then connect to it.
+            // It's used to re-send each receive frame in a uncyphered channel for debug purpose
+            // when a device don't allows ws communication. Wireshark (npcap in fact) can capture loopback.
 
+            WebsocketLoopBackWiresharkServer = new WebSocketServer(IPAddress.Loopback, LoopbackWiresharkPort);
+            WebsocketLoopBackWiresharkServer.AddWebSocketService<HubListenerLoopBack>("/");
+            WebsocketLoopBackWiresharkServer.Log.Output = (d, s) => { };
+            WebsocketLoopBackWiresharkServer.Start();
+
+            WebsocketLoopBackWiresharkClient = new WebSocket("ws://127.0.0.1:" + LoopbackWiresharkPort.ToString(), new string[] { "hub.bsc.bacnet.org" });
+            WebsocketLoopBackWiresharkClient.ConnectAsync();
+            HubListener.WebsocketLoopBack = WebsocketLoopBackWiresharkClient;
         }
 
         public void RefreshRejectedAndTrustedCertificatesLists()
@@ -139,6 +140,7 @@ namespace System.IO.BACnet
         // if it's the remote certificate or one of it's signing CA in the chain (if the chain is given)
 
         // In fact here a lot of things a done without a real knowledge. You a expert, tell me what to do
+
         private bool IsCertificateRejected(X509Chain chain)
         {
             if (chain == null) // normaly not
@@ -187,6 +189,17 @@ namespace System.IO.BACnet
                 return true;
             }
 
+            if (DateTime.Parse(certificate.GetExpirationDateString())<DateTime.Now)
+            {
+                Trace.WriteLine("\tRejected certificate due to ExpirationDate");
+                return false;
+            }
+            if (DateTime.Parse(certificate.GetEffectiveDateString())>DateTime.Now)
+            {
+                Trace.WriteLine("\tRejected certificate due to EffectiveDate");
+                return false;
+            }
+
             if (IsCertificateRejected(chain)) { return false; }
             if (IsCertificateThrusted(chain)) { return true; }
 
@@ -210,7 +223,7 @@ namespace System.IO.BACnet
     }
     public class HubListenerLoopBack : WebSocketBehavior
     {
-        // do nothing more, just here to allows a uncyphered capture in loopback mode
+        // do nothing, just here to allows a unciphered capture in loopback mode
         public HubListenerLoopBack()
         {
             this.Protocol = "hub.bsc.bacnet.org";
@@ -229,7 +242,7 @@ namespace System.IO.BACnet
 
         public static WebSocket WebsocketLoopBack;
 
-        byte[] RemoteVMac = new byte[6];    // The End-device connected 
+        byte[] RemoteVMac = new byte[6];    // The BACnet Node connected 
         bool IsConnected = false;
 
         static HubListener()
@@ -264,7 +277,6 @@ namespace System.IO.BACnet
             lock (listeners)
                 listeners.Remove(this);
             base.OnClose(e);
-
         }
 
         protected override void OnError(WebSocketSharp.ErrorEventArgs e)
@@ -275,7 +287,7 @@ namespace System.IO.BACnet
         }
         protected override void OnMessage(MessageEventArgs e)
         {
-            try { WebsocketLoopBack?.SendAsync(e.RawData, null); } catch { }
+            try { WebsocketLoopBack?.SendAsync(e.RawData, null); } catch { WebsocketLoopBack = null; }
 
             try
             {
@@ -339,6 +351,7 @@ namespace System.IO.BACnet
             b[29] = 0xD9;
 
             SendAsync(b, null);
+            try { WebsocketLoopBack?.SendAsync(b, null); } catch { WebsocketLoopBack = null; }
         }
 
         //  Disconnect-ACK, Heartbeat-ACK
@@ -352,6 +365,7 @@ namespace System.IO.BACnet
             b[3] = MsgId2;
 
             SendAsync(b, null);
+            try { WebsocketLoopBack?.SendAsync(b, null); } catch { WebsocketLoopBack = null; }
         }
         // return 0 if the message is only for the HUB service (not to be re-transmitted on another channel)
         private int BVLC_SC_Decode(byte[] buffer , out BacnetBvlcSCMessage function, out byte[] destVMac)
@@ -417,8 +431,8 @@ namespace System.IO.BACnet
                     IsConnected = true;
                     return 0;
                 case BacnetBvlcSCMessage.BVLC_DISCONNECT_REQUEST:
-                    BVLC_SC_SendSimpleACK(BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK, buffer[2], buffer[3]);
                     IsConnected = false;
+                    BVLC_SC_SendSimpleACK(BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK, buffer[2], buffer[3]);
                     return 0;
                 case BacnetBvlcSCMessage.BVLC_HEARTBEAT_REQUEST:
                     if (destVMac.SequenceEqual(myVMAC))

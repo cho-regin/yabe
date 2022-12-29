@@ -1,4 +1,11 @@
-﻿using System;
+﻿/*********************************************************************
+*                           MIT License
+* 
+* Copyright (C) 2023 Frederic Chaxel <fchaxel@free.fr> 
+* Yabe SourceForge Explorer and Full Open source BACnet stack
+*
+*********************************************************************/
+using System;
 using System.IO.BACnet;
 using System.Diagnostics;
 
@@ -18,13 +25,13 @@ namespace HubApp
             // Hub
             bscHub scHub=new bscHub ("wss://127.0.0.1:47808", @"..\..\PKI");
 
-            // bscHub scHub=new bscHub ("wss://127.0.0.1:47808", @"..\..\PKI", null, 50000);
-            // ... add a ws server channel in loopback mode on port 50000 (with no activity).
-            // It's used to re-send each receive frame in a uncyphered channel for debug purpose (usefull only 
-            // when a device don't allows ws communication) : Wireshark can get all messages received by the HUB.
-            // The HUB offers a decryption service in this case.
-            // Wireshark must be started and listen on this port 50000 (Loopback interface) before lauching 
-            // the application, because it's the way done by it to detect hub.bsc.bacnet.org subprotocol.
+            // scHub.ActivateSnifferForWireshark (50000);
+            // ... add a ws server channel in loopback mode on port 50000 here (with no activity).
+            // It's used to re-send each receive frame in a unciphered channel for debug purpose (usefull only 
+            // when a device don't allows ws communication) : Wireshark can get all messages received by the HUB
+            // on all it's ciphered channels. The HUB offers a decryption service in this case !
+            // Wireshark must be started and listen on the given port (Loopback interface) BEFORE launching 
+            // the application, because the first two frames are used by it to detect BACnet protocol.
             // Of course the sender and receiver IP is always 127.0.0.1. You should look deeper the VMAC.
             // With a very light code modification it can be used to redirect all the trafic on another PC !
 

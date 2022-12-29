@@ -131,7 +131,7 @@ MultipleDevices
 
 BACnetSCsampleNode
 	Quite the same as BasicReadWrite but using BACnet/SC on TLS1.3 Websocket.
-	Some X509 & a Hub is required (see BACnet/SC Refercence Stack on SourceForge : 
+	Some X509 & a Hub is required (see BACnet/SC Reference Stack on SourceForge : 
 	https://sourceforge.net/projects/bacnet-sc-reference-stack/ ) for a starter.
 
 BACnet/SC Hub 
