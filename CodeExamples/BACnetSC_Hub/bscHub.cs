@@ -51,8 +51,7 @@ namespace System.IO.BACnet
         X509Certificate2Collection trustedCertificates = new X509Certificate2Collection();
         string pkiDirectory;
 
-        X509Chain trustedExtraChain = new X509Chain();
-        X509Chain rejectedExtraChain = new X509Chain();
+        X509Chain ExtraChain = new X509Chain();
         public bscHub(string URI, String pkiDirectory = null, String ownCertificatePassword = null)
         {
             if (pkiDirectory != null)
@@ -82,7 +81,7 @@ namespace System.IO.BACnet
             Websocket.AddWebSocketService<HubListener>("/");
 
             // Disable WebsocketServer log in the console
-            Websocket.Log.Output = (d, s) => { };
+            Websocket.Log.Output = (_, __) => { };
 
             Websocket.Start();
 
@@ -91,12 +90,12 @@ namespace System.IO.BACnet
         public void ActivateSnifferForWireshark(UInt16 LoopbackWiresharkPort)
         {
             // Open a ws channel in loopback then connect to it.
-            // It's used to re-send each receive frame in a uncyphered channel for debug purpose
+            // It's used to re-send each receive frame in a unciphered channel for debug purpose
             // when a device don't allows ws communication. Wireshark (npcap in fact) can capture loopback.
 
             WebsocketLoopBackWiresharkServer = new WebSocketServer(IPAddress.Loopback, LoopbackWiresharkPort);
             WebsocketLoopBackWiresharkServer.AddWebSocketService<HubListenerLoopBack>("/");
-            WebsocketLoopBackWiresharkServer.Log.Output = (d, s) => { };
+            WebsocketLoopBackWiresharkServer.Log.Output = (_,__) => { };
             WebsocketLoopBackWiresharkServer.Start();
 
             WebsocketLoopBackWiresharkClient = new WebSocket("ws://127.0.0.1:" + LoopbackWiresharkPort.ToString(), new string[] { "hub.bsc.bacnet.org" });
@@ -119,17 +118,26 @@ namespace System.IO.BACnet
                 trustedCertificates.Clear();
                 string[] fileEntries = Directory.GetFiles(pkiDirectory + "\\trusted");
                 foreach (string fileName in fileEntries)
-                    try { trustedCertificates.Add(new X509Certificate2(fileName)); } catch { }
+                    try 
+                    {
+                        X509Certificate2 cert = new X509Certificate2(fileName);
+                        if ((DateTime.Parse(cert.GetExpirationDateString()) >= DateTime.Now) && (DateTime.Parse(cert.GetEffectiveDateString()) <= DateTime.Now))
+                            trustedCertificates.Add(cert);
+                        else
+                            rejectedCertificates.Add(cert); // Checked by Build( ) later, so could be left in trustedCertificates
+                    } 
+                    catch { }
                
             }
 
-            rejectedExtraChain.ChainPolicy.ExtraStore.Clear();
-            rejectedExtraChain.ChainPolicy.ExtraStore.AddRange(rejectedCertificates);
-            rejectedExtraChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority; // not suffisant !!
-
-            trustedExtraChain.ChainPolicy.ExtraStore.Clear();
-            trustedExtraChain.ChainPolicy.ExtraStore.AddRange(trustedCertificates);
-            trustedExtraChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority; // not suffisant !
+            lock (ExtraChain)
+            { 
+                ExtraChain.ChainPolicy.ExtraStore.Clear();
+                ExtraChain.ChainPolicy.ExtraStore.AddRange(rejectedCertificates);
+                ExtraChain.ChainPolicy.ExtraStore.AddRange(trustedCertificates);
+                ExtraChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                ExtraChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            }
 
         }
 
@@ -139,7 +147,7 @@ namespace System.IO.BACnet
         // and we reject all certificates in rejected directory
         // if it's the remote certificate or one of it's signing CA in the chain (if the chain is given)
 
-        // In fact here a lot of things a done without a real knowledge. You a expert, tell me what to do
+        // In fact here a lot of things a done without a real knowledge. You are an expert, tell me what to do
 
         private bool IsCertificateRejected(X509Chain chain)
         {
@@ -182,33 +190,29 @@ namespace System.IO.BACnet
 
             Trace.WriteLine("Connection with certificate name : " + certificate.Subject);
 
-            // Maybe the root CA is system accepted
+            // The root CA is system accepted
             if (sslPolicyErrors == SslPolicyErrors.None)
             {
-                Trace.WriteLine("\tThrusted certificate respecting underlying system security policy");
+                Trace.WriteLine("\tThrusted certificate due to underlying system security policy");
                 return true;
-            }
-
-            if (DateTime.Parse(certificate.GetExpirationDateString())<DateTime.Now)
-            {
-                Trace.WriteLine("\tRejected certificate due to ExpirationDate");
-                return false;
-            }
-            if (DateTime.Parse(certificate.GetEffectiveDateString())>DateTime.Now)
-            {
-                Trace.WriteLine("\tRejected certificate due to EffectiveDate");
-                return false;
             }
 
             if (IsCertificateRejected(chain)) { return false; }
             if (IsCertificateThrusted(chain)) { return true; }
 
-            // The chain is certainly not given, so we try to build it with the trusted and rejected certificate
-            rejectedExtraChain.Build(certificate as X509Certificate2);
-            if (IsCertificateRejected(rejectedExtraChain)) { return false; }
+            // The chain is certainly not given, so we try to build it with our own PKI content
+            lock (ExtraChain)
+            { 
+                if (ExtraChain.Build(certificate as X509Certificate2)==false) // All Dates in the chain are verified here
+                {
+                    String Status = ""; foreach (var e in ExtraChain.ChainStatus) Status += e.Status.ToString()+" ";
+                    Trace.WriteLine("\tRejected certificate : " + Status);
+                    return false;
 
-            trustedExtraChain.Build(certificate as X509Certificate2);
-            if (IsCertificateThrusted(trustedExtraChain)) { return true; }
+                }
+                if (IsCertificateRejected(ExtraChain)) { return false; }
+                if (IsCertificateThrusted(ExtraChain)) { return true; }
+            }
 
             // save the untrusted certificate in the issuers directory so the user can copy it after 
             try
@@ -216,7 +220,7 @@ namespace System.IO.BACnet
                 File.WriteAllBytes(pkiDirectory + "\\issuers\\" + certificate.Subject + ".cer", certificate.Export(X509ContentType.Cert));
                 Trace.WriteLine("\tUnknown certificate written in PKI\\issuers");
             } 
-            catch { Trace.WriteLine("\tUnknown certificate NOT written in PKI\\issuers"); }
+            catch { Trace.WriteLine("\tWrite Error : Unknown certificate NOT written in PKI\\issuers"); }
 
             return false;
         }
