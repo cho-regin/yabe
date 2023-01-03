@@ -16,9 +16,14 @@ PKI directory :
               |
                --- p12 With private Key
 
+
 # In "certdatabase" directory the file xca.xdb is an XCA database (https://hohnstaedt.de/xca/index.php) with keys & certificates.
 The database is not encrypted nor password protected. A real one should be !
 All exported certificates are present. P12 files (cert + private Key without password) are in the "p12...." directory.
+Certviewer is a C# application to show certificate. Run in WinForm and command line mode : https://sourceforge.net/projects/x509-certificate-viewer/
+P12, pfx maybe other files cannot be open by a click. So this tool is here for that and to navigate in the Cert chain if exist.
+Cetificate files can be Drop on the Form or you can paste a valide URL (https, wss) using the popupMenu.
+Don't work on Linux for unknown reason. 
 
 Certificates tree structure is :
 
