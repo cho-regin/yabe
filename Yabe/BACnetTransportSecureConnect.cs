@@ -134,10 +134,12 @@ namespace System.IO.BACnet
         {
             if (ConfigOK == false) return;
 
+            Uri uri = new Uri(configuration.primaryHubURI); // WebSocket ctor fail if the string contains spaces, so use this to clean the path
+
             if (!configuration.DirectConnect)
-                Websocket = new WebSocketSharp.WebSocket(configuration.primaryHubURI, new string[] { "hub.bsc.bacnet.org" });
+                Websocket = new WebSocketSharp.WebSocket(uri.ToString(), new string[] { "hub.bsc.bacnet.org" });
             else
-                Websocket = new WebSocketSharp.WebSocket(configuration.primaryHubURI, new string[] { "dc.bsc.bacnet.org" });
+                Websocket = new WebSocketSharp.WebSocket(uri.ToString(), new string[] { "dc.bsc.bacnet.org" });
 
             if (configuration.UseTLS)
             {

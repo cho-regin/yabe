@@ -149,7 +149,8 @@ namespace Yabe
         {
             try
             {
-                WebSocketSharp.WebSocket Websocket = new WebSocketSharp.WebSocket(HubURI.Text);
+                Uri uri = new Uri(HubURI.Text); // WebSocket ctor fail if the string contains spaces, so use this to clean the path
+                WebSocketSharp.WebSocket Websocket = new WebSocketSharp.WebSocket(uri.ToString());
                 Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13;
                 Websocket.SslConfiguration.ServerCertificateValidationCallback = GetServerCertificate;
 

@@ -2338,9 +2338,10 @@ namespace System.IO.BACnet
         IPV4 = 5,
         ZIGBEE = 6,
         VIRTUAL = 7,
-        NON_BACNET = 8,// REMOVED IN VERSION 1 REVISION 18
+        NON_BACNET = 8,
         IPV6 = 9,
-        SERIAL = 10
+        SERIAL = 10,
+        SECURE_CONNECT = 11 // Addentum 135-2020cc
     }
 
     public enum BACnetSecurityLevel
@@ -8662,6 +8663,8 @@ namespace System.IO.BACnet
         PROP_STAGES = 494, //Addendum 135-2016bd
         PROP_STAGE_NAMES = 495, //Addendum 135-2016bd
         PROP_TARGET_REFERENCES = 496, //Addendum 135-2016bd
+
+        PROP_DEVICE_UUID = 507, // Addendum 135-2016bj
 
         /* The special property identifiers all, optional, and required  */
         /* are reserved for use in the ReadPropertyConditional and */
