@@ -225,11 +225,16 @@ namespace System.IO.BACnet
                 {
                     try
                     {
-                        Thread.Sleep(2000); // Wait a few the Disconnect Ack message
-                        Websocket.Close();
+                        // Wait a few the BVLC Disconnect Ack and the TCP FIN messages
+                        // The TCP round trip time is not available so wait ... euh 2s !
+                        Thread.Sleep(2000);
+                        if (state == BACnetSCState.DISCONNECTING)
+                            Websocket.Close();  // Not closed by the peer device, do it
                     }
                     catch { }
-                    // Websocket_OnClose will be call automatically
+
+                    state= BACnetSCState.IDLE;
+
                 }
                 );
             }
@@ -376,7 +381,8 @@ namespace System.IO.BACnet
             b[1] = 0;           // No VMAC, No Option
             b[2] = 0;           // Initial Message ID
             b[3] = 0;
-            // Originating Virtual Mac Address
+            // Payload
+            // VMAC address of the requesting node (me)
             Array.Copy(myVMAC, 0, b, 4, 6);
             // UUID
             byte[] bUUID;
@@ -547,7 +553,10 @@ namespace System.IO.BACnet
                     return 0;       // Only for BVLC 
                 case BacnetBvlcSCMessage.BVLC_DISCONNECT_REQUEST:
                     BVLC_SC_SendSimpleBVLCMsg(BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK, buffer[2], buffer[3]);
-                    state = BACnetSCState.IDLE;
+                    state=BACnetSCState.IDLE;
+                    return 0;       // Only for BVLC 
+                case BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK:
+                    // Don't set BACnetSCState.IDLE ... wait for close
                     return 0;       // Only for BVLC 
                 case BacnetBvlcSCMessage.BVLC_HEARTBEAT_REQUEST:
                     BVLC_SC_SendSimpleBVLCMsg(BacnetBvlcSCMessage.BVLC_HEARTBEAT_ACK, buffer[2], buffer[3]);
@@ -558,9 +567,7 @@ namespace System.IO.BACnet
                 case BacnetBvlcSCMessage.BVLC_PROPRIETARY_MESSAGE:
                     BVLC_SC_SendBvlcError(remote_address.VMac, buffer[2], buffer[3], BacnetErrorClasses.ERROR_CLASS_COMMUNICATION, BacnetErrorCodes.ERROR_CODE_BVLC_PROPRIETARY_FUNCTION_UNKNOWN);
                     return 0;       // Only for BVLC
-                case BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK:
-                    return 0;
-                case BacnetBvlcSCMessage.BVLC_ADVERTISEMENT:
+                case BacnetBvlcSCMessage.BVLC_ADVERTISEMENT_SOLICITATION:
                 default:
                     BVLC_SC_SendBvlcError(remote_address.VMac, buffer[2], buffer[3], BacnetErrorClasses.ERROR_CLASS_COMMUNICATION, BacnetErrorCodes.ERROR_CODE_BVLC_FUNCTION_UNKNOWN);
                     return 0;       // Only for BVLC
@@ -583,6 +590,7 @@ namespace System.IO.BACnet
         {
             try
             {
+                ConfigOK = false;
                 Close();
             }
             catch { }
