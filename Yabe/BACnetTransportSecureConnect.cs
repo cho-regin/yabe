@@ -214,17 +214,24 @@ namespace System.IO.BACnet
             Trace.TraceError("BACnet/SC Websocket : " + log.Message.Split(new[] { '\r', '\n' })[0]);
         }
 
-        // Not a friendly BVLC disconnection here. Could be done more cleaner
         private void Close()
         {
             if (state != BACnetSCState.IDLE)
             {
                 state = BACnetSCState.DISCONNECTING;
-                try
+
+                BVLC_SC_SendSimpleBVLCMsg(BacnetBvlcSCMessage.BVLC_DISCONNECT_REQUEST, 0, 0);
+                ThreadPool.QueueUserWorkItem( (_) =>
                 {
-                    Websocket.CloseAsync();
+                    try
+                    {
+                        Thread.Sleep(2000); // Wait a few the Disconnect Ack message
+                        Websocket.Close();
+                    }
+                    catch { }
+                    // Websocket_OnClose will be call automatically
                 }
-                catch { }
+                );
             }
         }
         public void Start()
@@ -369,7 +376,7 @@ namespace System.IO.BACnet
             b[1] = 0;           // No VMAC, No Option
             b[2] = 0;           // Initial Message ID
             b[3] = 0;
-            // Originating Virtual Address
+            // Originating Virtual Mac Address
             Array.Copy(myVMAC, 0, b, 4, 6);
             // UUID
             byte[] bUUID;
@@ -421,7 +428,7 @@ namespace System.IO.BACnet
         }
 
         //  Disconnect-ACK, Heartbeat-ACK
-        private void BVLC_SC_SendSimpleACK(BacnetBvlcSCMessage Msg, byte MsgId1, byte MsgId2)
+        private void BVLC_SC_SendSimpleBVLCMsg(BacnetBvlcSCMessage Msg, byte MsgId1, byte MsgId2)
         {
             byte[] b = new byte[4];
 
@@ -432,6 +439,7 @@ namespace System.IO.BACnet
 
             Send(b);
         }
+
         private int BVLC_SC_Encode(byte[] buffer, int offset, BacnetBvlcSCMessage function, ref int msg_length, BacnetAddress address)
         {
     
@@ -460,7 +468,7 @@ namespace System.IO.BACnet
                 return 4;
             }
 
-    }
+        }
         // Decode is called each time a Frame is received
         private int BVLC_SC_Decode(byte[] buffer, int offset, out BacnetBvlcSCMessage function, out int msg_length, BacnetAddress remote_address)
         {
@@ -538,11 +546,11 @@ namespace System.IO.BACnet
                     Array.Copy(buffer, 4, RemoteVMAC, 0, 6); // Hub or remote device VMAC ... used later for Direct Connect mode
                     return 0;       // Only for BVLC 
                 case BacnetBvlcSCMessage.BVLC_DISCONNECT_REQUEST:
-                    BVLC_SC_SendSimpleACK(BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK, buffer[2], buffer[3]);
+                    BVLC_SC_SendSimpleBVLCMsg(BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK, buffer[2], buffer[3]);
                     state = BACnetSCState.IDLE;
                     return 0;       // Only for BVLC 
                 case BacnetBvlcSCMessage.BVLC_HEARTBEAT_REQUEST:
-                    BVLC_SC_SendSimpleACK(BacnetBvlcSCMessage.BVLC_HEARTBEAT_ACK, buffer[2], buffer[3]);
+                    BVLC_SC_SendSimpleBVLCMsg(BacnetBvlcSCMessage.BVLC_HEARTBEAT_ACK, buffer[2], buffer[3]);
                     return 0;       // Only for BVLC 
                 case BacnetBvlcSCMessage.BVLC_ADDRESS_RESOLUTION:
                     BVLC_SC_SendBvlcError(remote_address.VMac, buffer[2], buffer[3], BacnetErrorClasses.ERROR_CLASS_COMMUNICATION, BacnetErrorCodes.ERROR_CODE_OPTIONAL_FUNCTIONALITY_NOT_SUPPORTED);
@@ -550,6 +558,8 @@ namespace System.IO.BACnet
                 case BacnetBvlcSCMessage.BVLC_PROPRIETARY_MESSAGE:
                     BVLC_SC_SendBvlcError(remote_address.VMac, buffer[2], buffer[3], BacnetErrorClasses.ERROR_CLASS_COMMUNICATION, BacnetErrorCodes.ERROR_CODE_BVLC_PROPRIETARY_FUNCTION_UNKNOWN);
                     return 0;       // Only for BVLC
+                case BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK:
+                    return 0;
                 case BacnetBvlcSCMessage.BVLC_ADVERTISEMENT:
                 default:
                     BVLC_SC_SendBvlcError(remote_address.VMac, buffer[2], buffer[3], BacnetErrorClasses.ERROR_CLASS_COMMUNICATION, BacnetErrorCodes.ERROR_CODE_BVLC_FUNCTION_UNKNOWN);
