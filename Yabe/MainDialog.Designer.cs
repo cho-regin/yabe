@@ -74,6 +74,7 @@
             this.m_SplitContainerButtom = new System.Windows.Forms.SplitContainer();
             this.m_SplitContainerLeft = new System.Windows.Forms.SplitContainer();
             this.splitContainer4 = new System.Windows.Forms.SplitContainer();
+            this.TbxHighlightDevice = new System.Windows.Forms.TextBox();
             this.m_DeviceTree = new System.Windows.Forms.TreeView();
             this.m_DeviceTreeMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addDeviceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -87,6 +88,7 @@
             this.readPropertiesNameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.createObjectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label2 = new System.Windows.Forms.Label();
+            this.TbxHighlightAddress = new System.Windows.Forms.TextBox();
             this.m_AddressSpaceTree = new CodersLab.Windows.Controls.TreeView();
             this.m_AddressSpaceMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.subscribeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -598,16 +600,31 @@
             // 
             // splitContainer4.Panel1
             // 
+            this.splitContainer4.Panel1.Controls.Add(this.TbxHighlightDevice);
             this.splitContainer4.Panel1.Controls.Add(this.m_DeviceTree);
             this.splitContainer4.Panel1.Controls.Add(this.label2);
             // 
             // splitContainer4.Panel2
             // 
+            this.splitContainer4.Panel2.Controls.Add(this.TbxHighlightAddress);
             this.splitContainer4.Panel2.Controls.Add(this.m_AddressSpaceTree);
             this.splitContainer4.Panel2.Controls.Add(this.AddSpaceLabel);
             this.splitContainer4.Size = new System.Drawing.Size(451, 544);
             this.splitContainer4.SplitterDistance = 189;
             this.splitContainer4.TabIndex = 0;
+            // 
+            // TbxHighlightDevice
+            // 
+            this.TbxHighlightDevice.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.TbxHighlightDevice.ForeColor = System.Drawing.SystemColors.WindowFrame;
+            this.TbxHighlightDevice.Location = new System.Drawing.Point(74, 8);
+            this.TbxHighlightDevice.Name = "TbxHighlightDevice";
+            this.TbxHighlightDevice.Size = new System.Drawing.Size(107, 20);
+            this.TbxHighlightDevice.TabIndex = 4;
+            this.TbxHighlightDevice.Text = "HighLight Filter";
+            this.TbxHighlightDevice.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TbxHighlightDevice.DoubleClick += new System.EventHandler(this.TbxHighlightTreeView_DoubleClick);
+            this.TbxHighlightDevice.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TbxHighlightTreeView_KeyDown);
             // 
             // m_DeviceTree
             // 
@@ -737,6 +754,19 @@
             this.label2.Size = new System.Drawing.Size(46, 13);
             this.label2.TabIndex = 2;
             this.label2.Text = "Devices";
+            // 
+            // TbxHighlightAddress
+            // 
+            this.TbxHighlightAddress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.TbxHighlightAddress.ForeColor = System.Drawing.SystemColors.WindowFrame;
+            this.TbxHighlightAddress.Location = new System.Drawing.Point(145, 7);
+            this.TbxHighlightAddress.Name = "TbxHighlightAddress";
+            this.TbxHighlightAddress.Size = new System.Drawing.Size(107, 20);
+            this.TbxHighlightAddress.TabIndex = 5;
+            this.TbxHighlightAddress.Text = "HighLight Filter";
+            this.TbxHighlightAddress.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TbxHighlightAddress.DoubleClick += new System.EventHandler(this.TbxHighlightTreeView_DoubleClick);
+            this.TbxHighlightAddress.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TbxHighlightTreeView_KeyDown);
             // 
             // m_AddressSpaceTree
             // 
@@ -1427,6 +1457,8 @@
         private System.Windows.Forms.RadioButton CovOpn;
         private System.Windows.Forms.RadioButton PollOpn;
         private System.Windows.Forms.Timer SaveObjectNamesTimer;
+        private System.Windows.Forms.TextBox TbxHighlightDevice;
+        private System.Windows.Forms.TextBox TbxHighlightAddress;
     }
 }
 

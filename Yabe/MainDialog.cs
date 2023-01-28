@@ -1008,6 +1008,7 @@ namespace Yabe
         private void addDevicesearchToolStripMenuItem_Click(object sender, EventArgs e)
         {
             labelDrop1.Visible = labelDrop2.Visible = false;
+            TbxHighlightAddress.Text = TbxHighlightDevice.Text = "";
 
             SearchDialog dlg = new SearchDialog();
             if (dlg.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
@@ -4902,6 +4903,43 @@ namespace Yabe
                 Properties.Settings.Default.Auto_Store_Object_Names = false;
                 return;
             }
+        }
+
+        private void HighlightTreeNodes(TreeNodeCollection tnc, String text, Color color)
+        {
+            foreach (TreeNode tn in tnc)
+            {
+                if (tn.Text.ToLower().Contains(text.ToLower()))
+                {
+                    tn.ForeColor = color;
+                }
+                else
+                    tn.ForeColor = Color.Black;
+
+                if (tn.Nodes.Count != 0)
+                    HighlightTreeNodes(tn.Nodes, text, color);
+
+            }
+        }
+        private void TbxHighlightTreeView_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode != Keys.Return) return;
+
+            TbxHighlightTreeView_DoubleClick(sender, null);
+        }
+
+        private void TbxHighlightTreeView_DoubleClick(object sender, EventArgs e)
+        {
+            TextBox tbx = (TextBox)sender;
+
+            Color color = Color.Red;
+            if ((tbx.Text == null) || (tbx.Text.Length == 0))
+                color = Color.Black;
+
+            if (tbx == TbxHighlightAddress)
+                HighlightTreeNodes(m_AddressSpaceTree.Nodes, tbx.Text, color);
+            else
+                HighlightTreeNodes(m_DeviceTree.Nodes, tbx.Text, color);
         }
 
         private void searchToolStripMenuItem1_Click(object sender, EventArgs e)
