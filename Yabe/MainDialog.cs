@@ -44,6 +44,7 @@ using System.Linq;
 using System.Collections;
 using System.Reflection;
 using ZedGraph;
+using WebSocketSharp;
 
 namespace Yabe
 {
@@ -128,7 +129,9 @@ namespace Yabe
                     {
                         bool moreLinesToRead = true;
 
-                        while(moreLinesToRead)
+                        reader.ReadLine(); // Read out the CSV description line
+
+                        while (moreLinesToRead)
                         {
                             string mapping = reader.ReadLine();
                             if(mapping==null)
@@ -376,6 +379,11 @@ namespace Yabe
             {
                 tn.Text = Name;
             }
+
+            if ((!TbxHighlightAddress.Text.IsNullOrEmpty()) && (tn.Text.ToLower().Contains(TbxHighlightAddress.Text.ToLower())))
+                tn.ForeColor = Color.Red;
+            else
+                tn.ForeColor = Color.Black;
         }
 
         private void SetSubscriptionStatus(ListViewItem itm, string status)
@@ -947,6 +955,7 @@ namespace Yabe
                             node.ToolTipText = "";
                         }
                         s.Nodes.Add(node);
+
                         m_DeviceTree.ExpandAll();
                         return;
                     }
@@ -1395,6 +1404,9 @@ namespace Yabe
             // Add to tree
             node.Tag = object_id;
             nodes.Add(node);
+            
+            if ((!TbxHighlightAddress.Text.IsNullOrEmpty())&&(node.Text.ToLower().Contains(TbxHighlightAddress.Text.ToLower())))
+                node.ForeColor = Color.Red;
 
             // icon
             SetNodeIcon(object_id.type, node);
@@ -1643,6 +1655,7 @@ namespace Yabe
                                 }
                                 catch { }
                         }
+                        
                     }
                     if (value_list != null)
                     {
@@ -1767,6 +1780,11 @@ namespace Yabe
                     _selectedNode = null;
                     m_DataGrid.SelectedObject = null;
                 }
+
+                if ((!TbxHighlightDevice.Text.IsNullOrEmpty()) && (node.Text.ToLower().Contains(TbxHighlightDevice.Text.ToLower())))
+                    node.ForeColor = Color.Red;
+                else
+                    node.ForeColor = Color.Black;
             }
         }
 
@@ -4698,6 +4716,7 @@ namespace Yabe
             // Allows delete menu 
             if (objId.type != BacnetObjectTypes.OBJECT_DEVICE)
                 m_AddressSpaceMenuStrip.Items[7].Visible = true;
+
         }
 
         private void m_SubscriptionView_SelectedIndexChanged(object sender, EventArgs e)

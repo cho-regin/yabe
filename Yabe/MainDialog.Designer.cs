@@ -623,6 +623,7 @@
             this.TbxHighlightDevice.TabIndex = 4;
             this.TbxHighlightDevice.Text = "HighLight Filter";
             this.TbxHighlightDevice.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TbxHighlightDevice.Visible = global::Yabe.Properties.Settings.Default.ShowHighLightFilter;
             this.TbxHighlightDevice.DoubleClick += new System.EventHandler(this.TbxHighlightTreeView_DoubleClick);
             this.TbxHighlightDevice.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TbxHighlightTreeView_KeyDown);
             // 
@@ -632,7 +633,7 @@
             this.m_DeviceTree.Dock = System.Windows.Forms.DockStyle.Fill;
             this.m_DeviceTree.ImageIndex = 0;
             this.m_DeviceTree.ImageList = m_ImageList;
-            this.m_DeviceTree.Location = new System.Drawing.Point(0, 13);
+            this.m_DeviceTree.Location = new System.Drawing.Point(0, 23);
             this.m_DeviceTree.Name = "m_DeviceTree";
             treeNode1.Name = "Node0";
             treeNode1.Text = "Devices";
@@ -641,7 +642,7 @@
             this.m_DeviceTree.SelectedImageIndex = 0;
             this.m_DeviceTree.ShowNodeToolTips = true;
             this.m_DeviceTree.ShowRootLines = false;
-            this.m_DeviceTree.Size = new System.Drawing.Size(189, 531);
+            this.m_DeviceTree.Size = new System.Drawing.Size(189, 521);
             this.m_DeviceTree.TabIndex = 0;
             this.m_DeviceTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.m_DeviceTree_AfterSelect);
             this.m_DeviceTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TreeView_MouseDown);
@@ -751,7 +752,8 @@
             this.label2.Dock = System.Windows.Forms.DockStyle.Top;
             this.label2.Location = new System.Drawing.Point(0, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(46, 13);
+            this.label2.Padding = new System.Windows.Forms.Padding(0, 5, 0, 5);
+            this.label2.Size = new System.Drawing.Size(46, 23);
             this.label2.TabIndex = 2;
             this.label2.Text = "Devices";
             // 
@@ -765,6 +767,7 @@
             this.TbxHighlightAddress.TabIndex = 5;
             this.TbxHighlightAddress.Text = "HighLight Filter";
             this.TbxHighlightAddress.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.TbxHighlightAddress.Visible = global::Yabe.Properties.Settings.Default.ShowHighLightFilter;
             this.TbxHighlightAddress.DoubleClick += new System.EventHandler(this.TbxHighlightTreeView_DoubleClick);
             this.TbxHighlightAddress.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TbxHighlightTreeView_KeyDown);
             // 
@@ -774,13 +777,13 @@
             this.m_AddressSpaceTree.Dock = System.Windows.Forms.DockStyle.Fill;
             this.m_AddressSpaceTree.ImageIndex = 0;
             this.m_AddressSpaceTree.ImageList = m_ImageList;
-            this.m_AddressSpaceTree.Location = new System.Drawing.Point(0, 13);
+            this.m_AddressSpaceTree.Location = new System.Drawing.Point(0, 23);
             this.m_AddressSpaceTree.Name = "m_AddressSpaceTree";
             this.m_AddressSpaceTree.SelectedImageIndex = 0;
             this.m_AddressSpaceTree.SelectionBackColor = System.Drawing.SystemColors.Highlight;
             this.m_AddressSpaceTree.SelectionMode = CodersLab.Windows.Controls.TreeViewSelectionMode.MultiSelectSameLevel;
             this.m_AddressSpaceTree.ShowNodeToolTips = true;
-            this.m_AddressSpaceTree.Size = new System.Drawing.Size(258, 531);
+            this.m_AddressSpaceTree.Size = new System.Drawing.Size(258, 521);
             this.m_AddressSpaceTree.TabIndex = 0;
             this.m_AddressSpaceTree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.m_AddressSpaceTree_ItemDrag);
             this.m_AddressSpaceTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.m_AddressSpaceTree_AfterSelect);
@@ -879,7 +882,8 @@
             this.AddSpaceLabel.Dock = System.Windows.Forms.DockStyle.Top;
             this.AddSpaceLabel.Location = new System.Drawing.Point(0, 0);
             this.AddSpaceLabel.Name = "AddSpaceLabel";
-            this.AddSpaceLabel.Size = new System.Drawing.Size(79, 13);
+            this.AddSpaceLabel.Padding = new System.Windows.Forms.Padding(0, 5, 0, 5);
+            this.AddSpaceLabel.Size = new System.Drawing.Size(79, 23);
             this.AddSpaceLabel.TabIndex = 3;
             this.AddSpaceLabel.Text = "Address Space";
             // 
