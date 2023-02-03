@@ -617,7 +617,7 @@
             // 
             this.TbxHighlightDevice.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.TbxHighlightDevice.ForeColor = System.Drawing.SystemColors.WindowFrame;
-            this.TbxHighlightDevice.Location = new System.Drawing.Point(74, 8);
+            this.TbxHighlightDevice.Location = new System.Drawing.Point(74, 7);
             this.TbxHighlightDevice.Name = "TbxHighlightDevice";
             this.TbxHighlightDevice.Size = new System.Drawing.Size(107, 20);
             this.TbxHighlightDevice.TabIndex = 4;
@@ -761,7 +761,7 @@
             // 
             this.TbxHighlightAddress.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.TbxHighlightAddress.ForeColor = System.Drawing.SystemColors.WindowFrame;
-            this.TbxHighlightAddress.Location = new System.Drawing.Point(145, 7);
+            this.TbxHighlightAddress.Location = new System.Drawing.Point(145, 8);
             this.TbxHighlightAddress.Name = "TbxHighlightAddress";
             this.TbxHighlightAddress.Size = new System.Drawing.Size(107, 20);
             this.TbxHighlightAddress.TabIndex = 5;

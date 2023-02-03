@@ -14426,7 +14426,7 @@ namespace System.IO.BACnet.Serialize
         }
 
         public static int DecodeWritePropertyMultiple(byte[] buffer, int offset, int apdu_len,
-            out List<BacnetWriteAccessSpecification> properties)
+                    out List<BacnetWriteAccessSpecification> properties)
         {
             int len = 0;
             byte tag_number;
@@ -14513,19 +14513,21 @@ namespace System.IO.BACnet.Serialize
                     new_entry.priority = (byte)ulVal;
 
                     _values.AddLast(new_entry);
-                }
 
-                /* Closing tag 1 - List of Properties */
-                if (!ASN1.decode_is_closing_tag_number(buffer, offset + len, 1))
-                    return -1;
-                len++;
+                    /* Closing tag 1 - List of Properties */
+                    if (!ASN1.decode_is_closing_tag_number(buffer, offset + len, 1))
+                        return -1;
+                    else
+                        tag_number = 1;
+
+                    len++;
+                }
 
                 properties.Add(new BacnetWriteAccessSpecification(object_id, _values));
             }
 
             return len;
         }
-
         public static void EncodeTimeSync(EncodeBuffer buffer, DateTime time)
         {
             ASN1.encode_application_date(buffer, time);
