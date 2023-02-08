@@ -4944,10 +4944,10 @@ namespace Yabe
         {
             if (e.KeyCode != Keys.Return) return;
 
-            TbxHighlightTreeView_DoubleClick(sender, null);
+            TbxHighlightTreeView_Update(sender, null);
         }
 
-        private void TbxHighlightTreeView_DoubleClick(object sender, EventArgs e)
+        private void TbxHighlightTreeView_Update(object sender, EventArgs e)
         {
             TextBox tbx = (TextBox)sender;
 

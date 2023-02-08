@@ -31,7 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.ImageList m_ImageList;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(YabeMainDialog));
-            System.Windows.Forms.TreeNode treeNode1 = new System.Windows.Forms.TreeNode("Devices");
+            System.Windows.Forms.TreeNode treeNode2 = new System.Windows.Forms.TreeNode("Devices");
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.m_SearchToolButton = new System.Windows.Forms.ToolStripButton();
             this.m_RemoveToolButton = new System.Windows.Forms.ToolStripButton();
@@ -624,8 +624,8 @@
             this.TbxHighlightDevice.Text = "HighLight Filter";
             this.TbxHighlightDevice.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.TbxHighlightDevice.Visible = global::Yabe.Properties.Settings.Default.ShowHighLightFilter;
-            this.TbxHighlightDevice.DoubleClick += new System.EventHandler(this.TbxHighlightTreeView_DoubleClick);
             this.TbxHighlightDevice.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TbxHighlightTreeView_KeyDown);
+            this.TbxHighlightDevice.Leave += new System.EventHandler(this.TbxHighlightTreeView_Update);
             // 
             // m_DeviceTree
             // 
@@ -635,10 +635,10 @@
             this.m_DeviceTree.ImageList = m_ImageList;
             this.m_DeviceTree.Location = new System.Drawing.Point(0, 23);
             this.m_DeviceTree.Name = "m_DeviceTree";
-            treeNode1.Name = "Node0";
-            treeNode1.Text = "Devices";
+            treeNode2.Name = "Node0";
+            treeNode2.Text = "Devices";
             this.m_DeviceTree.Nodes.AddRange(new System.Windows.Forms.TreeNode[] {
-            treeNode1});
+            treeNode2});
             this.m_DeviceTree.SelectedImageIndex = 0;
             this.m_DeviceTree.ShowNodeToolTips = true;
             this.m_DeviceTree.ShowRootLines = false;
@@ -768,8 +768,8 @@
             this.TbxHighlightAddress.Text = "HighLight Filter";
             this.TbxHighlightAddress.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.TbxHighlightAddress.Visible = global::Yabe.Properties.Settings.Default.ShowHighLightFilter;
-            this.TbxHighlightAddress.DoubleClick += new System.EventHandler(this.TbxHighlightTreeView_DoubleClick);
             this.TbxHighlightAddress.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TbxHighlightTreeView_KeyDown);
+            this.TbxHighlightAddress.Leave += new System.EventHandler(this.TbxHighlightTreeView_Update);
             // 
             // m_AddressSpaceTree
             // 
