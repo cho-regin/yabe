@@ -156,7 +156,7 @@ namespace System.IO.BACnet
         public event ReadPropertyMultipleRequestHandler OnReadPropertyMultipleRequest;
         public delegate void WritePropertyRequestHandler(BacnetClient sender, BacnetAddress adr, byte invoke_id, BacnetObjectId object_id, BacnetPropertyValue value, BacnetMaxSegments max_segments);
         public event WritePropertyRequestHandler OnWritePropertyRequest;
-        public delegate void WritePropertyMultipleRequestHandler(BacnetClient sender, BacnetAddress adr, byte invoke_id, BacnetObjectId object_id, ICollection<BacnetPropertyValue> values, BacnetMaxSegments max_segments);
+        public delegate void WritePropertyMultipleRequestHandler(BacnetClient sender, BacnetAddress adr, byte invoke_id, IList<BacnetWriteAccessSpecification> properties, BacnetMaxSegments max_segments);
         public event WritePropertyMultipleRequestHandler OnWritePropertyMultipleRequest;
         public delegate void AtomicWriteFileRequestHandler(BacnetClient sender, BacnetAddress adr, byte invoke_id, bool is_stream, BacnetObjectId object_id, int position, uint block_count, byte[][] blocks, int[] counts, BacnetMaxSegments max_segments);
         public event AtomicWriteFileRequestHandler OnAtomicWriteFileRequest;
@@ -250,14 +250,9 @@ namespace System.IO.BACnet
                 }
                 else if (service == BacnetConfirmedServices.SERVICE_CONFIRMED_WRITE_PROP_MULTIPLE && OnWritePropertyMultipleRequest != null)
                 {
-                    List<BacnetWriteAccessSpecification> objects;
-                    if (Services.DecodeWritePropertyMultiple(buffer, offset, length, out objects) >= 0)
-                    {
-                        foreach (var obj in objects)
-                        {
-                            OnWritePropertyMultipleRequest(this, adr, invoke_id, obj.object_id, obj.values_refs, max_segments);
-                        }
-                    }
+                    List<BacnetWriteAccessSpecification> properties;
+                    if (Services.DecodeWritePropertyMultiple(buffer, offset, length, out properties) >= 0)
+                        OnWritePropertyMultipleRequest(this, adr, invoke_id, properties, max_segments);
                     else
                     {
                         ErrorResponse(adr, service, invoke_id, BacnetErrorClasses.ERROR_CLASS_SERVICES, BacnetErrorCodes.ERROR_CODE_ABORT_OTHER);

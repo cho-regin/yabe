@@ -1017,7 +1017,8 @@ namespace Yabe
         private void addDevicesearchToolStripMenuItem_Click(object sender, EventArgs e)
         {
             labelDrop1.Visible = labelDrop2.Visible = false;
-            TbxHighlightAddress.Text = TbxHighlightDevice.Text = "";
+            if (TbxHighlightAddress.Text == "HighLight Filter")
+                TbxHighlightAddress.Text = TbxHighlightDevice.Text = "";
 
             SearchDialog dlg = new SearchDialog();
             if (dlg.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)

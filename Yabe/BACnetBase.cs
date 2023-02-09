@@ -14444,8 +14444,7 @@ namespace System.IO.BACnet.Serialize
                 len += ASN1.decode_tag_number_and_value(buffer, offset + len, out tag_number, out len_value);
                 if ((tag_number == 0) && (apdu_len > len))
                 {
-                    apdu_len -= len;
-                    if (apdu_len >= 4)
+                    if (apdu_len - len >= 4)
                     {
                         len += ASN1.decode_object_id(buffer, offset + len, out object_id.type, out object_id.instance);
                     }
@@ -14524,10 +14523,12 @@ namespace System.IO.BACnet.Serialize
                 }
 
                 properties.Add(new BacnetWriteAccessSpecification(object_id, _values));
+
             }
 
             return len;
         }
+
         public static void EncodeTimeSync(EncodeBuffer buffer, DateTime time)
         {
             ASN1.encode_application_date(buffer, time);
