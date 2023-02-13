@@ -145,7 +145,7 @@ namespace Yabe
                                 continue;
                             }
 
-                            string[] mappingParts = mapping.Trim().Split(';',',');
+                            string[] mappingParts = mapping.Trim().Split(new char[] {';',','}, 2);
 
                             if(mappingParts.Length<2)
                             {
@@ -168,7 +168,12 @@ namespace Yabe
                                 Trace.TraceError(String.Format("Invalid line in proprietary Bacnet properties file \"{0}\" - \"{1}\" is not a valid property ID number ({2}).", filePath, mappingParts[0], formatEx.Message));
                                 continue;
                             }
-                            string propDescription = mappingParts[1];
+                            string propDescription = mappingParts[1].Trim();
+                            
+                            if(propDescription.StartsWith("\"") && propDescription.EndsWith("\""))
+                            {
+                                propDescription = propDescription.Substring(1,propDescription.Length-2);
+                            }
 
                             if(_proprietaryPropertyMappings.ContainsKey(propIdNumber))
                             {

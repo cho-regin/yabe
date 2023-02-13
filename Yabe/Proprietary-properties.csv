@@ -108,8 +108,8 @@ Id,PropertyDescription
 3101,(Siemens) Day after tomorrow
 3102,(Siemens) Interval
 3103,(Siemens) Last alarm or event message
-3104,(Siemens) "Group members,(Siemens)  list of commanded group objects"
-3105,(Siemens) "Room members,(Siemens)  list of commanded rooms"
+3104,"(Siemens) Group members, list of commanded group objects"
+3105,"(Siemens) Room members, list of commanded rooms"
 3106,(Siemens) Favorites menu line
 3107,(Siemens) Monitoring time switch-on
 3108,(Siemens) Monitoring time switch-off
@@ -208,7 +208,7 @@ Id,PropertyDescription
 4103,(Siemens) Initial timeout (ISA)
 4104,(Siemens) Default timeout (ISA)
 4108,(Siemens) French CH
-4109,(Siemens) "French (CA,(Siemens)  short)"
+4109,"(Siemens) French (CA, short)"
 4392,(Siemens) DALI-2 Application Control Device Short Address
 4393,(Siemens) Name extension path
 4395,(Siemens) Event publishing
@@ -247,7 +247,7 @@ Id,PropertyDescription
 4428,(Siemens) Retry attempts
 4429,(Siemens) Last connected
 4430,(Siemens) Master alive timeout
-4431,(Siemens) "Change of value,(Siemens)  COV increment"
+4431,"(Siemens) Change of value, COV increment"
 4432,(Siemens) Present value truncated
 4433,(Siemens) Present value scaled
 4434,(Siemens) Allow http
@@ -428,14 +428,14 @@ Id,PropertyDescription
 4609,(Siemens) Substitution name 12
 4610,(Siemens) Substitution name 11
 4611,(Siemens) Present coil current
-4612,(Siemens) "Stuck determination,(Siemens)  calculated average current"
-4613,(Siemens) "Stuck determination,(Siemens)  present event count"
-4614,(Siemens) "Stuck determination,(Siemens)  total event count"
-4615,(Siemens) "Stuck determination,(Siemens)  present current limit"
-4616,(Siemens) "Stuck determination,(Siemens)  average current limit"
-4617,(Siemens) "Stuck determination,(Siemens)  retry threshold"
-4618,(Siemens) "Stuck determination,(Siemens)  calculation time"
-4619,(Siemens) "Motor stuck,(Siemens)  stop before retry"
+4612,"(Siemens) Stuck determination, calculated average current"
+4613,"(Siemens) Stuck determination, present event count"
+4614,"(Siemens) Stuck determination, total event count"
+4615,"(Siemens) Stuck determination, present current limit"
+4616,"(Siemens) Stuck determination, average current limit"
+4617,"(Siemens) Stuck determination, retry threshold"
+4618,"(Siemens) Stuck determination, calculation time"
+4619,"(Siemens) Motor stuck, stop before retry"
 4620,(Siemens) Server communication buffer
 4621,(Siemens) Member COV data send time slot
 4622,(Siemens) Valve application mode
@@ -448,9 +448,9 @@ Id,PropertyDescription
 4629,(Siemens) Backup mode activation delay
 4630,(Siemens) Member collected data send time slot
 4631,(Siemens) Pulse time
-4632,(Siemens) "Power failure,(Siemens)  power-down mode"
+4632,"(Siemens) Power failure, power-down mode"
 4633,(Siemens) LED active indication
-4634,(Siemens) "Power failure,(Siemens)  backup mode"
+4634,"(Siemens) Power failure, backup mode"
 4635,(Siemens) COV repetition time
 4636,(Siemens) COV increment signal value
 4637,(Siemens) Rail type
@@ -533,7 +533,7 @@ Id,PropertyDescription
 4714,(Siemens) Signal value 3
 4715,(Siemens) Process value 3
 4716,(Siemens) Feature evaluation results
-4717,(Siemens) "Enable pushbutton,(Siemens)  mode manual"
+4717,"(Siemens) Enable pushbutton, mode manual"
 4718,(Siemens) Info page 5
 4719,(Siemens) Info page 4
 4720,(Siemens) Info page 3
@@ -542,11 +542,11 @@ Id,PropertyDescription
 4723,(Siemens) Alarm display time
 4724,(Siemens) Timeout user operation
 4725,(Siemens) Timeout to default page
-4726,(Siemens) "Enable fume hood operation,(Siemens)  mode high"
-4727,(Siemens) "Enable fume hood op.,(Siemens)  mode medium"
-4728,(Siemens) "Enable fume hood operation,(Siemens)  mode low"
-4729,(Siemens) "Enable fume hood operation,(Siemens)  mode auto"
-4730,(Siemens) "Enable fume hood operation,(Siemens)  mode off"
+4726,"(Siemens) Enable fume hood operation, mode high"
+4727,"(Siemens) Enable fume hood op., mode medium"
+4728,"(Siemens) Enable fume hood operation, mode low"
+4729,"(Siemens) Enable fume hood operation, mode auto"
+4730,"(Siemens) Enable fume hood operation, mode off"
 4731,(Siemens) Enable automatic sash positioning
 4732,(Siemens) Enable fume hood integrated light
 4734,(Siemens) Air volume flow units (SI)
@@ -561,8 +561,8 @@ Id,PropertyDescription
 4743,(Siemens) Activation key
 4744,(Siemens) Reconnect delay
 4745,(Siemens) Enable connectivity
-4746,(Siemens) "Motor stuck,(Siemens)  retry interval"
-4747,(Siemens) "Motor stuck,(Siemens)  retry number"
+4746,"(Siemens) Motor stuck, retry interval"
+4747,"(Siemens) Motor stuck, retry number"
 4748,(Siemens) Motor state
 4749,(Siemens) Present speed
 4750,(Siemens) Decay mode
@@ -610,17 +610,17 @@ Id,PropertyDescription
 4796,(Siemens) Licensed
 4797,(Siemens) Challenge response
 4798,(Siemens) Alarm distribution schedule
-4799,(Siemens) "Email address,(Siemens)  sender"
-4800,(Siemens) "Email address,(Siemens)  recipients"
-4801,(Siemens) "Email server,(Siemens)  password"
-4802,(Siemens) "Email server,(Siemens)  user name"
-4803,(Siemens) "Email server,(Siemens)  login required"
-4804,(Siemens) "Email server,(Siemens)  connection security"
+4799,"(Siemens) Email address, sender"
+4800,"(Siemens) Email address, recipients"
+4801,"(Siemens) Email server, password"
+4802,"(Siemens) Email server, user name"
+4803,"(Siemens) Email server, login required"
+4804,"(Siemens) Email server, connection security"
 4805,(Siemens) Email server
-4806,(Siemens) "SMS Gateway,(Siemens)  TAP password"
+4806,"(Siemens) SMS Gateway, TAP password"
 4807,(Siemens) SMS gateway protocol
-4808,(Siemens) "SMS recipients,(Siemens)  phone number"
-4809,(Siemens) "SMS gateway,(Siemens)  phone number"
+4808,"(Siemens) SMS recipients, phone number"
+4809,"(Siemens) SMS gateway, phone number"
 4810,(Siemens) Enable alarm
 4811,(Siemens) Update command
 4812,(Siemens) Time to next value
@@ -631,8 +631,8 @@ Id,PropertyDescription
 4817,(Siemens) Disable auto-zero mode
 4818,(Siemens) Samples for average sensors calculation
 4819,(Siemens) Infinite impulse resp.filter time
-4820,(Siemens) "Auto-zero mode,(Siemens)  zero value"
-4821,(Siemens) "Auto-zero mode,(Siemens)  timer"
+4820,"(Siemens) Auto-zero mode, zero value"
+4821,"(Siemens) Auto-zero mode, timer"
 4822,(Siemens) Auto-zero mode
 4823,(Siemens) Feature selection state
 4824,(Siemens) Enable LED state indication
@@ -654,8 +654,8 @@ Id,PropertyDescription
 4840,(Siemens) Out of service object count
 4841,(Siemens) Out of service objects list
 4842,(Siemens) Overridden objects list
-4843,(Siemens) "Room operator unit,(Siemens)  manual operation locked"
-4844,(Siemens) "Room operator unit,(Siemens)  LED indication"
+4843,"(Siemens) Room operator unit, manual operation locked"
+4844,"(Siemens) Room operator unit, LED indication"
 4845,(Siemens) Present application version
 4846,(Siemens) Present application description
 4847,(Siemens) Present application name
@@ -719,21 +719,21 @@ Id,PropertyDescription
 4905,(Siemens) Enable operation: air quality setpoint
 4906,(Siemens) Enable operation: room humidity setpoint
 4907,(Siemens) Enable operation: fan speed setpoint
-4908,(Siemens) "Room unit,(Siemens)  room temp. setpoint display"
+4908,"(Siemens) Room unit, room temp. setpoint display"
 4909,(Siemens) Enable operation: room temperature setpoint
-4910,(Siemens) "Room unit,(Siemens)  display heating/cooling status"
-4911,(Siemens) "Room unit,(Siemens)  air quality display"
-4912,(Siemens) "Room unit,(Siemens)  display air quality"
-4913,(Siemens) "Room unit,(Siemens)  display windows status"
-4914,(Siemens) "Room unit,(Siemens)  display humidity"
-4915,(Siemens) "Room unit,(Siemens)  display temperature"
+4910,"(Siemens) Room unit, display heating/cooling status"
+4911,"(Siemens) Room unit, air quality display"
+4912,"(Siemens) Room unit, display air quality"
+4913,"(Siemens) Room unit, display windows status"
+4914,"(Siemens) Room unit, display humidity"
+4915,"(Siemens) Room unit, display temperature"
 4916,(Siemens) Swap button pair 2 (CD)
 4917,(Siemens) Swap button pair 1 (AB)
-4918,(Siemens) "Blinds position 4,(Siemens)  open"
-4919,(Siemens) "Blinds position 3,(Siemens)  sun altitude high"
-4920,(Siemens) "Blinds position 2,(Siemens)  sun altitude low"
-4921,(Siemens) "Blinds position 1,(Siemens)  visual protection"
-4922,(Siemens) "Blinds position 0,(Siemens)  closed"
+4918,"(Siemens) Blinds position 4,(Siemens)  open"
+4919,"(Siemens) Blinds position 3,(Siemens)  sun altitude high"
+4920,"(Siemens) Blinds position 2,(Siemens)  sun altitude low"
+4921,"(Siemens) Blinds position 1,(Siemens)  visual protection"
+4922,"(Siemens) Blinds position 0,(Siemens)  closed"
 4923,(Siemens) Calibration status
 4924,(Siemens) Calibration command
 4925,(Siemens) Group master context
@@ -772,7 +772,7 @@ Id,PropertyDescription
 4958,(Siemens) Motor operating hours
 4959,(Siemens) Enable angle adaptation
 4960,(Siemens) Minimum switch on/off time
-4961,(Siemens) "Units for altitude,(Siemens)  over sea level"
+4961,"(Siemens) Units for altitude, over sea level"
 4962,(Siemens) Altitude
 4963,(Siemens) Output level 2
 4964,(Siemens) Output level 1
@@ -843,9 +843,9 @@ Id,PropertyDescription
 5029,(Siemens) Diagnostics
 5030,(Siemens) Main value index
 5032,(Siemens) Actuator type
-5033,(Siemens) "Runtime state data,(Siemens)  modification counter"
+5033,"(Siemens) Runtime state data, modification counter"
 5034,(Siemens) FW-Internal: Last writing error code
-5035,(Siemens) "Resolution,(Siemens)  for display"
+5035,"(Siemens) Resolution, for display"
 5036,(Siemens) Present min. value
 5037,(Siemens) Present max. value
 5038,(Siemens) Reason for system state
@@ -891,8 +891,8 @@ Id,PropertyDescription
 5078,(Siemens) Compression
 5079,(Siemens) Checksum
 5080,(Siemens) File features
-5081,(Siemens) "Configuration data,(Siemens)  modification counter"
-5082,(Siemens) "Engineering data,(Siemens)  modification counter"
+5081,"(Siemens) Configuration data, modification counter"
+5082,"(Siemens) Engineering data, modification counter"
 5083,(Siemens) Progress value
 5084,(Siemens) Control command
 5085,(Siemens) Default command kind
