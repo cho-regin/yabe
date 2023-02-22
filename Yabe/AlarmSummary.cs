@@ -55,6 +55,16 @@ namespace Yabe
             Application.DoEvents();
         }
 
+        private void AlarmSummary_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.F4)
+            {
+                Alarms.Clear();
+                AlarmSummary_Shown(null, null);
+
+            }
+        }
+
         private void AlarmSummary_Shown(object sender, EventArgs e)
         {
             // get the Alarm summary

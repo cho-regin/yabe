@@ -52,7 +52,7 @@ namespace MultipleDevices
 
             Temp.internal_PROP_PRESENT_VALUE = 22.6f;
 
-            // The Second Device with 1 Device Object and also 1 AnalogInput
+            // The Second Device with 1 Device Object with 2 AnalogInput (first one is shared)
             DeviceObject Dev2 = new DeviceObject(5678, "Device 2", "The Second Device", false);
             AnalogInput<float>  Windspeed = new AnalogInput<float>
             (
@@ -62,6 +62,7 @@ namespace MultipleDevices
                 0,
                 BacnetUnitsId.UNITS_KILOMETERS_PER_HOUR
             );
+            Dev2.AddBacnetObject(Temp);
             Dev2.AddBacnetObject(Windspeed);
 
             Windspeed.internal_PROP_PRESENT_VALUE = 0.2f;

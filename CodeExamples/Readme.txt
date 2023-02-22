@@ -128,3 +128,12 @@ MultipleDevices
 	Shows how to run several devices, due to the Udp multisockets strategies used by 
 	Yabe core code. All devices share the same Udp Port 47808 for broadcast activities
 	and uses an exclusive socket for all others exchanges.
+
+BACnetSCsampleNode
+	Quite the same as BasicReadWrite but using BACnet/SC on TLS1.3 Websocket.
+	Some X509 & a Hub is required (see BACnet/SC Reference Stack on SourceForge : 
+	https://sourceforge.net/projects/bacnet-sc-reference-stack/ ) for a starter.
+
+BACnet/SC Hub 
+	See the readme file in the corresponding subdirectory.
+	EXE application is given for no Visual Studio users.

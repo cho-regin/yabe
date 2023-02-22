@@ -68,6 +68,12 @@
             this.m_EthernetInterfaceCombo = new System.Windows.Forms.ComboBox();
             this.label11 = new System.Windows.Forms.Label();
             this.m_AddEthernetButton = new System.Windows.Forms.Button();
+            this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this.label16 = new System.Windows.Forms.Label();
+            this.m_SC_Config = new System.Windows.Forms.TextBox();
+            this.m_EditSC = new System.Windows.Forms.Button();
+            this.m_SelectSC = new System.Windows.Forms.Button();
+            this.m_AddScButton = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_PortValue)).BeginInit();
             this.groupBox2.SuspendLayout();
@@ -81,6 +87,7 @@
             this.groupBox4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_PtpBaudRate)).BeginInit();
             this.groupBox5.SuspendLayout();
+            this.groupBox6.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox1
@@ -92,12 +99,12 @@
             this.groupBox1.Controls.Add(this.m_AddUdpButton);
             this.groupBox1.Controls.Add(this.m_PortValue);
             this.groupBox1.Controls.Add(this.label1);
-            this.groupBox1.Location = new System.Drawing.Point(12, 108);
+            this.groupBox1.Location = new System.Drawing.Point(12, 78);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(274, 82);
+            this.groupBox1.Size = new System.Drawing.Size(300, 82);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "BACnet/IP over Udp";
+            this.groupBox1.Text = "BACnet/IP V4 && V6 over Udp";
             // 
             // label10
             // 
@@ -114,18 +121,18 @@
             this.m_localUdpEndpointsCombo.FormattingEnabled = true;
             this.m_localUdpEndpointsCombo.Location = new System.Drawing.Point(98, 45);
             this.m_localUdpEndpointsCombo.Name = "m_localUdpEndpointsCombo";
-            this.m_localUdpEndpointsCombo.Size = new System.Drawing.Size(170, 21);
+            this.m_localUdpEndpointsCombo.Size = new System.Drawing.Size(196, 21);
             this.m_localUdpEndpointsCombo.TabIndex = 7;
             this.m_localUdpEndpointsCombo.Text = global::Yabe.Properties.Settings.Default.DefaultUdpIp;
             // 
             // m_AddUdpButton
             // 
             this.m_AddUdpButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.m_AddUdpButton.Location = new System.Drawing.Point(208, 16);
+            this.m_AddUdpButton.Location = new System.Drawing.Point(234, 16);
             this.m_AddUdpButton.Name = "m_AddUdpButton";
             this.m_AddUdpButton.Size = new System.Drawing.Size(60, 23);
             this.m_AddUdpButton.TabIndex = 6;
-            this.m_AddUdpButton.Text = "Add";
+            this.m_AddUdpButton.Text = "Start";
             this.m_AddUdpButton.UseVisualStyleBackColor = true;
             this.m_AddUdpButton.Click += new System.EventHandler(this.m_SearchIpButton_Click);
             // 
@@ -186,9 +193,9 @@
             this.groupBox2.Controls.Add(this.m_AddSerialButton);
             this.groupBox2.Controls.Add(this.label4);
             this.groupBox2.Controls.Add(this.m_SerialPortCombo);
-            this.groupBox2.Location = new System.Drawing.Point(12, 196);
+            this.groupBox2.Location = new System.Drawing.Point(324, 78);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(274, 160);
+            this.groupBox2.Size = new System.Drawing.Size(300, 160);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "BACnet/MSTP over serial";
@@ -298,11 +305,11 @@
             // m_AddSerialButton
             // 
             this.m_AddSerialButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.m_AddSerialButton.Location = new System.Drawing.Point(208, 121);
+            this.m_AddSerialButton.Location = new System.Drawing.Point(228, 19);
             this.m_AddSerialButton.Name = "m_AddSerialButton";
             this.m_AddSerialButton.Size = new System.Drawing.Size(60, 23);
             this.m_AddSerialButton.TabIndex = 7;
-            this.m_AddSerialButton.Text = "Add";
+            this.m_AddSerialButton.Text = "Start";
             this.m_AddSerialButton.UseVisualStyleBackColor = true;
             this.m_AddSerialButton.Click += new System.EventHandler(this.m_AddSerialButton_Click);
             // 
@@ -337,14 +344,14 @@
             this.groupBox3.Controls.Add(this.m_RetriesValue);
             this.groupBox3.Location = new System.Drawing.Point(12, 12);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(274, 90);
+            this.groupBox3.Size = new System.Drawing.Size(612, 60);
             this.groupBox3.TabIndex = 2;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "General";
             // 
             // WhoLimitHigh
             // 
-            this.WhoLimitHigh.Location = new System.Drawing.Point(175, 55);
+            this.WhoLimitHigh.Location = new System.Drawing.Point(444, 19);
             this.WhoLimitHigh.Name = "WhoLimitHigh";
             this.WhoLimitHigh.Size = new System.Drawing.Size(52, 20);
             this.WhoLimitHigh.TabIndex = 9;
@@ -352,7 +359,7 @@
             // label15
             // 
             this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(144, 58);
+            this.label15.Location = new System.Drawing.Point(413, 22);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(27, 13);
             this.label15.TabIndex = 8;
@@ -360,7 +367,7 @@
             // 
             // WhoLimitLow
             // 
-            this.WhoLimitLow.Location = new System.Drawing.Point(86, 55);
+            this.WhoLimitLow.Location = new System.Drawing.Point(355, 19);
             this.WhoLimitLow.Name = "WhoLimitLow";
             this.WhoLimitLow.Size = new System.Drawing.Size(52, 20);
             this.WhoLimitLow.TabIndex = 7;
@@ -368,7 +375,7 @@
             // label14
             // 
             this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(10, 58);
+            this.label14.Location = new System.Drawing.Point(279, 22);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(77, 13);
             this.label14.TabIndex = 6;
@@ -418,9 +425,9 @@
             this.groupBox4.Controls.Add(this.m_AddPtpSerialButton);
             this.groupBox4.Controls.Add(this.label13);
             this.groupBox4.Controls.Add(this.m_SerialPtpPortCombo);
-            this.groupBox4.Location = new System.Drawing.Point(12, 362);
+            this.groupBox4.Location = new System.Drawing.Point(324, 295);
             this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Size = new System.Drawing.Size(274, 108);
+            this.groupBox4.Size = new System.Drawing.Size(300, 108);
             this.groupBox4.TabIndex = 3;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "BACnet/PTP over serial";
@@ -468,11 +475,11 @@
             // m_AddPtpSerialButton
             // 
             this.m_AddPtpSerialButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.m_AddPtpSerialButton.Location = new System.Drawing.Point(208, 69);
+            this.m_AddPtpSerialButton.Location = new System.Drawing.Point(234, 19);
             this.m_AddPtpSerialButton.Name = "m_AddPtpSerialButton";
             this.m_AddPtpSerialButton.Size = new System.Drawing.Size(60, 23);
             this.m_AddPtpSerialButton.TabIndex = 7;
-            this.m_AddPtpSerialButton.Text = "Add";
+            this.m_AddPtpSerialButton.Text = "Start";
             this.m_AddPtpSerialButton.UseVisualStyleBackColor = true;
             this.m_AddPtpSerialButton.Click += new System.EventHandler(this.m_AddPtpSerialButton_Click);
             // 
@@ -498,9 +505,9 @@
             this.groupBox5.Controls.Add(this.m_EthernetInterfaceCombo);
             this.groupBox5.Controls.Add(this.label11);
             this.groupBox5.Controls.Add(this.m_AddEthernetButton);
-            this.groupBox5.Location = new System.Drawing.Point(12, 476);
+            this.groupBox5.Location = new System.Drawing.Point(12, 318);
             this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Size = new System.Drawing.Size(274, 85);
+            this.groupBox5.Size = new System.Drawing.Size(300, 85);
             this.groupBox5.TabIndex = 4;
             this.groupBox5.TabStop = false;
             this.groupBox5.Text = "BACnet/Ethernet";
@@ -510,7 +517,7 @@
             this.m_EthernetInterfaceCombo.FormattingEnabled = true;
             this.m_EthernetInterfaceCombo.Location = new System.Drawing.Point(13, 48);
             this.m_EthernetInterfaceCombo.Name = "m_EthernetInterfaceCombo";
-            this.m_EthernetInterfaceCombo.Size = new System.Drawing.Size(255, 21);
+            this.m_EthernetInterfaceCombo.Size = new System.Drawing.Size(271, 21);
             this.m_EthernetInterfaceCombo.TabIndex = 12;
             // 
             // label11
@@ -525,19 +532,86 @@
             // m_AddEthernetButton
             // 
             this.m_AddEthernetButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.m_AddEthernetButton.Location = new System.Drawing.Point(208, 21);
+            this.m_AddEthernetButton.Location = new System.Drawing.Point(234, 16);
             this.m_AddEthernetButton.Name = "m_AddEthernetButton";
             this.m_AddEthernetButton.Size = new System.Drawing.Size(60, 23);
             this.m_AddEthernetButton.TabIndex = 12;
-            this.m_AddEthernetButton.Text = "Add";
+            this.m_AddEthernetButton.Text = "Start";
             this.m_AddEthernetButton.UseVisualStyleBackColor = true;
             this.m_AddEthernetButton.Click += new System.EventHandler(this.m_AddEthernetButton_Click);
+            // 
+            // groupBox6
+            // 
+            this.groupBox6.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox6.Controls.Add(this.label16);
+            this.groupBox6.Controls.Add(this.m_SC_Config);
+            this.groupBox6.Controls.Add(this.m_EditSC);
+            this.groupBox6.Controls.Add(this.m_SelectSC);
+            this.groupBox6.Controls.Add(this.m_AddScButton);
+            this.groupBox6.Location = new System.Drawing.Point(12, 182);
+            this.groupBox6.Name = "groupBox6";
+            this.groupBox6.Size = new System.Drawing.Size(300, 110);
+            this.groupBox6.TabIndex = 9;
+            this.groupBox6.TabStop = false;
+            this.groupBox6.Text = "BACnet/Secure Connect over Websocket";
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Location = new System.Drawing.Point(12, 27);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(149, 13);
+            this.label16.TabIndex = 10;
+            this.label16.Text = "Configuration parameters File :";
+            // 
+            // m_SC_Config
+            // 
+            this.m_SC_Config.Location = new System.Drawing.Point(11, 44);
+            this.m_SC_Config.Name = "m_SC_Config";
+            this.m_SC_Config.ReadOnly = true;
+            this.m_SC_Config.Size = new System.Drawing.Size(275, 20);
+            this.m_SC_Config.TabIndex = 9;
+            // 
+            // m_EditSC
+            // 
+            this.m_EditSC.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.m_EditSC.Location = new System.Drawing.Point(79, 75);
+            this.m_EditSC.Name = "m_EditSC";
+            this.m_EditSC.Size = new System.Drawing.Size(60, 23);
+            this.m_EditSC.TabIndex = 8;
+            this.m_EditSC.Text = "Edit";
+            this.m_EditSC.UseVisualStyleBackColor = true;
+            this.m_EditSC.Click += new System.EventHandler(this.m_EditSC_Click);
+            // 
+            // m_SelectSC
+            // 
+            this.m_SelectSC.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.m_SelectSC.Location = new System.Drawing.Point(13, 75);
+            this.m_SelectSC.Name = "m_SelectSC";
+            this.m_SelectSC.Size = new System.Drawing.Size(60, 23);
+            this.m_SelectSC.TabIndex = 7;
+            this.m_SelectSC.Text = "Select";
+            this.m_SelectSC.UseVisualStyleBackColor = true;
+            this.m_SelectSC.Click += new System.EventHandler(this.m_SelectSC_Click);
+            // 
+            // m_AddScButton
+            // 
+            this.m_AddScButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.m_AddScButton.Location = new System.Drawing.Point(234, 15);
+            this.m_AddScButton.Name = "m_AddScButton";
+            this.m_AddScButton.Size = new System.Drawing.Size(60, 23);
+            this.m_AddScButton.TabIndex = 6;
+            this.m_AddScButton.Text = "Start";
+            this.m_AddScButton.UseVisualStyleBackColor = true;
+            this.m_AddScButton.Click += new System.EventHandler(this.m_AddScButton_Click);
             // 
             // SearchDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(298, 564);
+            this.ClientSize = new System.Drawing.Size(636, 415);
+            this.Controls.Add(this.groupBox6);
             this.Controls.Add(this.groupBox5);
             this.Controls.Add(this.groupBox4);
             this.Controls.Add(this.groupBox3);
@@ -548,7 +622,7 @@
             this.MinimizeBox = false;
             this.Name = "SearchDialog";
             this.ShowInTaskbar = false;
-            this.Text = "Search";
+            this.Text = "BACnet Communication Channel";
             this.Load += new System.EventHandler(this.SearchDialog_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
@@ -568,6 +642,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.m_PtpBaudRate)).EndInit();
             this.groupBox5.ResumeLayout(false);
             this.groupBox5.PerformLayout();
+            this.groupBox6.ResumeLayout(false);
+            this.groupBox6.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -613,5 +689,11 @@
         private System.Windows.Forms.Label label15;
         public System.Windows.Forms.TextBox WhoLimitLow;
         private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.GroupBox groupBox6;
+        private System.Windows.Forms.Button m_AddScButton;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.TextBox m_SC_Config;
+        private System.Windows.Forms.Button m_EditSC;
+        private System.Windows.Forms.Button m_SelectSC;
     }
 }

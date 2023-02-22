@@ -44,14 +44,24 @@ using System.Linq;
 using System.Collections;
 using System.Reflection;
 using ZedGraph;
+using WebSocketSharp;
 
 namespace Yabe
 {
     public partial class YabeMainDialog : Form
-    {       
+    {
+
+        private const int MIN_POLL_PERIOD = 100; //ms
+        private const int MAX_POLL_PERIOD = 120000; //ms
+
         private Dictionary<BacnetClient, BacnetDeviceLine> m_devices = new Dictionary<BacnetClient, BacnetDeviceLine>();
-        
-	public int DeviceCount 
+
+        private object _selectedNode = null;
+        private TreeNode _selectedDevice = null;
+
+        List<BacnetObjectId> _structuredViewParents = null;
+
+        public int DeviceCount 
         { 
             get {
                 int count = 0;
@@ -67,10 +77,19 @@ namespace Yabe
         private Dictionary<string, RollingPointPairList> m_subscription_points = new Dictionary<string, RollingPointPairList>();        
         Color[] GraphColor = {Color.Red, Color.Blue, Color.Green, Color.Violet, Color.Chocolate, Color.Orange};
         GraphPane Pane;
+        private ManualResetEvent _plotterPause;
+        private bool _plotterPauseFlag = true; // Change this one initial value to make the graphs start paused (false) or in play mode (true).
+        private const string PLAY_BUTTON_TEXT_WHEN_RUNNING = "Pause Plotter";
+        private const string PLAY_BUTTON_TEXT_WHEN_PAUSED = "Resume Plotter";
+        private Random _rand = new Random();
 
         // Memory of all object names already discovered, first string in the Tuple is the device network address hash
         // The tuple contains two value types, so it's ok for cross session
         public Dictionary<Tuple<String, BacnetObjectId>, String> DevicesObjectsName = new Dictionary<Tuple<String, BacnetObjectId>, String>();
+
+        public bool objectNamesChangedFlag = false;
+
+        public Dictionary<BacnetClient, BacnetDeviceLine> DiscoveredDevices { get { return m_devices; } }
 
         private uint m_next_subscription_id = 0;
 
@@ -79,7 +98,115 @@ namespace Yabe
 
         YabeMainDialog yabeFrm; // Ref to itself, already affected, usefull for plugin developpmenet inside this code, before exporting it
 
-        private class BacnetDeviceLine
+        private Dictionary<int, string> _proprietaryPropertyMappings = new Dictionary<int, string>();
+
+        public void LoadProprietaryProperties()
+        {
+            _proprietaryPropertyMappings.Clear();
+            if(string.IsNullOrWhiteSpace(Properties.Settings.Default.Proprietary_Properties_Files))
+            {
+                return;
+            }
+
+            string[] filePaths = Properties.Settings.Default.Proprietary_Properties_Files.Split(';',',');
+
+            foreach(string filePath in filePaths)
+            {
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    if (!File.Exists(filePath))
+                    {
+                        Trace.TraceError(String.Format("Failed to open proprietary Bacnet properties file \"{0}\": {1}", filePath, "The file does not exist."));
+                        continue;
+                    }
+
+                    using (StreamReader reader = new StreamReader(filePath))
+                    {
+                        bool moreLinesToRead = true;
+
+                        reader.ReadLine(); // Read out the CSV description line
+
+                        while (moreLinesToRead)
+                        {
+                            string mapping = reader.ReadLine();
+                            if(mapping==null)
+                            {
+                                moreLinesToRead = false;
+                                continue;
+                            }
+
+                            if(string.IsNullOrWhiteSpace(mapping))
+                            {
+                                continue;
+                            }
+
+                            string[] mappingParts = mapping.Trim().Split(new char[] {';',','}, 2);
+
+                            if(mappingParts.Length<2)
+                            {
+                                Trace.TraceError(String.Format("Invalid line in proprietary Bacnet properties file \"{0}\" - \"{1}\" is not a valid mapping.", filePath, mapping));
+                                continue;
+                            }
+
+                            int propIdNumber;
+                            try
+                            {
+                                propIdNumber = Convert.ToInt32(mappingParts[0]);
+                            }
+                            catch(OverflowException overflowEx)
+                            {
+                                Trace.TraceError(String.Format("Invalid line in proprietary Bacnet properties file \"{0}\" - \"{1}\" is not a valid property ID number ({2}).", filePath, mappingParts[0], overflowEx.Message));
+                                continue;
+                            }
+                            catch(FormatException formatEx)
+                            {
+                                Trace.TraceError(String.Format("Invalid line in proprietary Bacnet properties file \"{0}\" - \"{1}\" is not a valid property ID number ({2}).", filePath, mappingParts[0], formatEx.Message));
+                                continue;
+                            }
+                            string propDescription = mappingParts[1].Trim();
+                            
+                            if(propDescription.StartsWith("\"") && propDescription.EndsWith("\""))
+                            {
+                                propDescription = propDescription.Substring(1,propDescription.Length-2);
+                            }
+
+                            if(_proprietaryPropertyMappings.ContainsKey(propIdNumber))
+                            {
+                                // If we have the same ID number defined twice, take the very first one and spit out a warning for the rest.
+                                Trace.TraceError(String.Format("Warning: duplicate proprietary property definition in \"{0}\" ID number {1} is already defined as \"{2}\" (attemped to redefine as \"{3}\").", filePath, mappingParts[0], _proprietaryPropertyMappings[propIdNumber],propDescription));
+                                continue;
+                            }
+                            else
+                            {
+                                _proprietaryPropertyMappings.Add(propIdNumber,propDescription);
+                            }
+
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError(String.Format("Failed to open proprietary Bacnet properties file \"{0}\": {1}", filePath, ex.GetType().Name + " - " + ex.Message));
+                    continue;
+                }
+            }
+        }
+
+        public string GetProprietaryPropertyName(int id)
+        {
+            if (_proprietaryPropertyMappings.ContainsKey(id))
+            {
+                return _proprietaryPropertyMappings[id];
+            }
+            return null;
+        }
+
+        public class BacnetDeviceLine
         {
             public BacnetClient Line;
             public List<KeyValuePair<BacnetAddress, uint>> Devices = new List<KeyValuePair<BacnetAddress, uint>>();
@@ -99,6 +226,26 @@ namespace Yabe
 
             InitializeComponent();
             Trace.Listeners.Add(new MyTraceListener(this));
+
+            LoadProprietaryProperties();
+
+            if (_plotterPauseFlag)
+            {
+                btnPlay.Text = PLAY_BUTTON_TEXT_WHEN_RUNNING;
+            }
+            else
+            {
+                btnPlay.Text = PLAY_BUTTON_TEXT_WHEN_PAUSED;
+            }
+
+            pollRateSelector.Minimum = MIN_POLL_PERIOD;
+            pollRateSelector.Maximum = MAX_POLL_PERIOD;
+            pollRateSelector.Value = Math.Max(MIN_POLL_PERIOD, Math.Min(Properties.Settings.Default.Subscriptions_ReplacementPollingPeriod, MAX_POLL_PERIOD));
+
+            pollRateSelector.Enabled = Properties.Settings.Default.UsePollingByDefault;
+            CovOpn.Checked = !Properties.Settings.Default.UsePollingByDefault;
+            PollOpn.Checked = Properties.Settings.Default.UsePollingByDefault;
+
             m_DeviceTree.ExpandAll();
 
             // COV Graph
@@ -116,7 +263,8 @@ namespace Yabe
             Pane.YAxis.MajorGrid.Color = Color.Gray;
             CovGraph.AxisChange();
             CovGraph.IsAutoScrollRange = true;
-           
+
+            _plotterPause = new ManualResetEvent(_plotterPauseFlag);
             CovGraph.PointValueEvent += new ZedGraphControl.PointValueHandler(CovGraph_PointValueEvent);
 
             //load splitter setup & SubsciptionView columns order&size
@@ -137,22 +285,21 @@ namespace Yabe
                     this.WindowState = state;
                 if (Properties.Settings.Default.GUI_SplitterButtom != -1)
                     m_SplitContainerButtom.SplitterDistance = Properties.Settings.Default.GUI_SplitterButtom;
+                if (Properties.Settings.Default.GUI_SplitterMiddle != -1)
+                    m_SplitContainerLeft.SplitterDistance = Properties.Settings.Default.GUI_SplitterMiddle;
                 if (Properties.Settings.Default.GUI_SplitterLeft != -1)
-                    m_SplitContainerLeft.SplitterDistance = Properties.Settings.Default.GUI_SplitterLeft;
+                    splitContainer4.SplitterDistance = Properties.Settings.Default.GUI_SplitterLeft;
                 if (Properties.Settings.Default.GUI_SplitterRight != -1)
                     m_SplitContainerRight.SplitterDistance = Properties.Settings.Default.GUI_SplitterRight;
-
-                try
+                
+                if(Properties.Settings.Default.Vertical_Object_Splitter_Orientation)
                 {
-                    // Try to open the current (if exist) object Id<-> object name mapping file
-                    Stream stream = File.Open(Properties.Settings.Default.ObjectNameFile, FileMode.Open);
-                    BinaryFormatter bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-                    var d = (Dictionary<Tuple<String, BacnetObjectId>, String>)bf.Deserialize(stream);
-                    stream.Close();
-
-                    if (d != null) DevicesObjectsName = d;
+                    splitContainer4.Orientation = Orientation.Vertical;
                 }
-                catch{}
+                else
+                {
+                    splitContainer4.Orientation = Orientation.Horizontal;
+                }
 
                 // m_SubscriptionView Columns order & size
                 if (Properties.Settings.Default.GUI_SubscriptionColumns != null)
@@ -176,6 +323,13 @@ namespace Yabe
             {
                 //ignore
             }
+
+            int intervalMinutes = Math.Max(Math.Min(Properties.Settings.Default.Auto_Store_Period_Minutes, 480), 1);
+            if (intervalMinutes != Properties.Settings.Default.Auto_Store_Period_Minutes)
+                Properties.Settings.Default.Auto_Store_Period_Minutes = intervalMinutes;
+            SaveObjectNamesTimer.Interval = intervalMinutes * 60000;
+            
+            SaveObjectNamesTimer.Enabled = true;
         }
 
         string CovGraph_PointValueEvent(ZedGraphControl sender, GraphPane pane, CurveItem curve, int iPt)
@@ -210,19 +364,38 @@ namespace Yabe
         private void ChangeTreeNodePropertyName(TreeNode tn, String Name)
         {
             // Tooltip not set is not null, strange !
-            if (tn.ToolTipText=="")
+            if (tn.ToolTipText == "")
+            {
                 tn.ToolTipText = tn.Text;
+            }
             if (Properties.Settings.Default.DisplayIdWithName)
-                tn.Text = Name + " (" + System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(tn.ToolTipText.ToLower())+")";
+            {
+                string abbreviatedName = ShortenObjectId(tn.ToolTipText);
+                if (!abbreviatedName.Equals(tn.ToolTipText))
+                {
+                    tn.Text = Name + " (" + abbreviatedName + ")";
+                }
+                else
+                {
+                    tn.Text = Name + " (" + System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(tn.ToolTipText.ToLower()) + ")";
+                }
+            }
             else
+            {
                 tn.Text = Name;
+            }
+
+            if ((!TbxHighlightAddress.Text.IsNullOrEmpty()) && (tn.Text.ToLower().Contains(TbxHighlightAddress.Text.ToLower())))
+                tn.ForeColor = Color.Red;
+            else
+                tn.ForeColor = Color.Black;
         }
 
         private void SetSubscriptionStatus(ListViewItem itm, string status)
         {
-            if (itm.SubItems[5].Text == status) return;
-            itm.SubItems[5].Text = status;
-            itm.SubItems[4].Text = DateTime.Now.ToString(Properties.Settings.Default.COVTimeFormater);
+            if (itm.SubItems[6].Text == status) return;
+            itm.SubItems[6].Text = status;
+            itm.SubItems[5].Text = DateTime.Now.ToString(Properties.Settings.Default.COVTimeFormater);
         }
 
         private string EventTypeNiceName(BacnetEventNotificationData.BacnetEventStates state)
@@ -252,21 +425,87 @@ namespace Yabe
                 }
             }
 
+            uint deviceInstance = EventData.initiatingObjectIdentifier.instance;
+            BacnetObjectId objectId = EventData.eventObjectIdentifier;
+
             if (itm == null)
             {
-                itm = m_SubscriptionView.Items.Add(EventData.initiatingObjectIdentifier.instance.ToString());
+                itm = m_SubscriptionView.Items.Add("");//device_id.ToString());
+                // Always a blank on [0] to allow for the "Show" Column
+
                 itm.Tag = sub_key;
-                itm.SubItems.Add("DEVICE:" + EventData.initiatingObjectIdentifier.instance.ToString());
-                itm.SubItems.Add(EventData.eventObjectIdentifier.type + ":" + EventData.eventObjectIdentifier.instance);   //name
-                itm.SubItems.Add(EventTypeNiceName(EventData.fromState) + " to " + EventTypeNiceName(EventData.toState));
-                itm.SubItems.Add(EventData.timeStamp.Time.ToString(Properties.Settings.Default.COVTimeFormater));   //time
-                itm.SubItems.Add(EventData.notifyType.ToString());   //status
+
+                // device id is index [1]
+                itm.SubItems.Add(deviceInstance.ToString()); // device instance
+                itm.SubItems.Add(ShortenObjectId(objectId.ToString())); // object ID [2]
+
+                string name = objectId.ToString();
+
+                lock (DevicesObjectsName)
+                {
+                    Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), objectId);
+                    if (DevicesObjectsName.ContainsKey(t))
+                    {
+                        name = DevicesObjectsName[t];
+                    }
+                    else
+                    {
+                        name = GetObjectName(sender, adr, objectId);
+                        if(string.IsNullOrWhiteSpace(name) || name.StartsWith("["))
+                        {
+                            name = objectId.ToString();
+                        }
+                    }
+                }
+
+                itm.SubItems.Add(name);   //name [3]
+                itm.SubItems.Add(EventTypeNiceName(EventData.fromState) + " to " + EventTypeNiceName(EventData.toState)); //value [4]
+                itm.SubItems.Add(EventData.timeStamp.Time.ToString(Properties.Settings.Default.COVTimeFormater));   //time [5]
+                itm.SubItems.Add(EventData.notifyType.ToString());   //status [6]
+
+
+                if (Properties.Settings.Default.ShowDescriptionWhenUsefull)
+                {
+                    itm.SubItems.Add("Yabe received an event notification");   // Description [7]
+                }
+                else
+                {
+                    itm.SubItems.Add(""); // Description [7]
+                }
             }
             else
             {
-                itm.SubItems[3].Text = EventTypeNiceName(EventData.fromState) + " to " + EventTypeNiceName(EventData.toState);
-                itm.SubItems[4].Text = EventData.timeStamp.Time.ToString("HH:mm:ss");   //time
-                itm.SubItems[5].Text = EventData.notifyType.ToString();   //status
+                string tempName = objectId.ToString();
+
+                if (itm.SubItems[3].Text.Equals(tempName))
+                {
+                    string name = null;
+
+                    lock (DevicesObjectsName)
+                    {
+                        Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), objectId);
+                        if (DevicesObjectsName.ContainsKey(t))
+                        {
+                            name = DevicesObjectsName[t];
+                        }
+                        else
+                        {
+                            name = GetObjectName(sender, adr, objectId);
+                            if (string.IsNullOrWhiteSpace(name) || name.StartsWith("["))
+                            {
+                                name = objectId.ToString();
+                            }
+                        }
+                    }
+
+                    if(name!=null)
+                        itm.SubItems[3].Text = name;
+
+                }
+
+                itm.SubItems[4].Text = EventTypeNiceName(EventData.fromState) + " to " + EventTypeNiceName(EventData.toState);
+                itm.SubItems[5].Text = EventData.timeStamp.Time.ToString("HH:mm:ss");   //time
+                itm.SubItems[6].Text = EventData.notifyType.ToString();   //status
             }
 
             AddLogAlarmEvent(itm);
@@ -282,36 +521,52 @@ namespace Yabe
         private void OnCOVNotification(BacnetClient sender, BacnetAddress adr, byte invoke_id, uint subscriberProcessIdentifier, BacnetObjectId initiatingDeviceIdentifier, BacnetObjectId monitoredObjectIdentifier, uint timeRemaining, bool need_confirm, ICollection<BacnetPropertyValue> values, BacnetMaxSegments max_segments)
         {
             string sub_key = adr.ToString() + ":" + initiatingDeviceIdentifier.instance + ":" + subscriberProcessIdentifier;
-            
-            lock (m_subscription_list)
-            if (m_subscription_list.ContainsKey(sub_key))
+
+            this.BeginInvoke((MethodInvoker)delegate
             {
-                this.BeginInvoke((MethodInvoker)delegate{
                 try
                 {
                     ListViewItem itm;
                     lock (m_subscription_list)
-                        itm = m_subscription_list[sub_key];
-
+                    {
+                        if(m_subscription_list.ContainsKey(sub_key))
+                        {
+                            itm = m_subscription_list[sub_key];
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
                     foreach (BacnetPropertyValue value in values)
                     {
 
                         switch ((BacnetPropertyIds)value.property.propertyIdentifier)
                         {
                             case BacnetPropertyIds.PROP_PRESENT_VALUE:
-                                itm.SubItems[3].Text = ConvertToText(value.value);
-                                itm.SubItems[4].Text = DateTime.Now.ToString(Properties.Settings.Default.COVTimeFormater);
-                                if (itm.SubItems[5].Text == "Not started") itm.SubItems[5].Text = "OK";
-
+                                itm.SubItems[4].Text = ConvertToText(value.value);
+                                itm.SubItems[5].Text = DateTime.Now.ToString(Properties.Settings.Default.COVTimeFormater);
+                                if (itm.SubItems[6].Text == "Not started") itm.SubItems[6].Text = "OK";
                                 try
                                 {
                                     //  try convert from string
-                                    double Y = Convert.ToDouble(itm.SubItems[3].Text);
+                                    bool Ybool;
+                                    bool isBool = bool.TryParse(itm.SubItems[4].Text, out Ybool);
+                                    double Y = double.NaN;
+                                    if (isBool)
+                                    {
+                                        Y = Ybool ? 1.0 : 0.0;
+                                    }
+                                    else
+                                    {
+                                        Y = Convert.ToDouble(itm.SubItems[4].Text);
+                                    }
                                     XDate X = new XDate(DateTime.Now);
-
+                                    //if (!String.IsNullOrWhiteSpace(itm.SubItems[9].Text) && bool.Parse(itm.SubItems[9].Text))
+                                    //{
                                     Pane.Title.Text = "";
 
-                                    if ((Properties.Settings.Default.GraphLineStep)&&(m_subscription_points[sub_key].Count != 0))
+                                    if ((Properties.Settings.Default.GraphLineStep) && (m_subscription_points[sub_key].Count != 0))
                                     {
                                         PointPair p = m_subscription_points[sub_key].Peek();
                                         m_subscription_points[sub_key].Add(X, p.Y);
@@ -319,6 +574,7 @@ namespace Yabe
                                     m_subscription_points[sub_key].Add(X, Y);
                                     CovGraph.AxisChange();
                                     CovGraph.Invalidate();
+                                    //}
                                 }
                                 catch { }
                                 break;
@@ -338,10 +594,10 @@ namespace Yabe
                                     if (status_text != "")
                                     {
                                         status_text = status_text.Substring(0, status_text.Length - 1);
-                                        itm.SubItems[5].Text = status_text;
+                                        itm.SubItems[6].Text = status_text;
                                     }
                                     else
-                                        itm.SubItems[5].Text = "OK";
+                                        itm.SubItems[6].Text = "OK";
                                 }
 
                                 break;
@@ -357,8 +613,7 @@ namespace Yabe
                 {
                     Trace.TraceError("Exception in subcribed value: " + ex.Message);
                 }
-                });
-            }
+            });
 
             //send ack
             if (need_confirm)
@@ -457,28 +712,95 @@ namespace Yabe
             //display nice floats in propertygrid
             Utilities.CustomSingleConverter.DontDisplayExactFloats = true;
 
+            // Plugins
             m_DeviceTree.TreeViewNodeSorter = new NodeSorter();
 
             string[] listPlugins = Properties.Settings.Default.Plugins.Split(new char[] { ',', ';' });
 
-            foreach (string pluginname in listPlugins)
-            {
-                try
+            if (Environment.OSVersion.Platform.ToString().Contains("Win"))
+                foreach (string pluginname in listPlugins)
                 {
-                    string path = Path.GetDirectoryName(Application.ExecutablePath);
-                    string name = pluginname.Replace(" ", String.Empty);
-                    Assembly myDll = Assembly.LoadFrom(path+"/"+name + ".dll");
-                    Type[] types = myDll.GetExportedTypes();
-                    IYabePlugin plugin = (IYabePlugin)myDll.CreateInstance(name + ".Plugin", true);
-                    plugin.Init(this);
+                    try
+                    {
+                        // string path = Path.GetDirectoryName(Application.ExecutablePath);
+                        string name = pluginname.Replace(" ", String.Empty);
+                        // Assembly myDll = Assembly.LoadFrom(path + "\\" + name + ".dll");
+                        Assembly myDll = Assembly.LoadFrom(name + ".dll");
+                        Trace.WriteLine(String.Format("Loaded plugin \"{0}\".", pluginname));
+                        Type[] types = myDll.GetExportedTypes();
+                        IYabePlugin plugin = (IYabePlugin)myDll.CreateInstance(name + ".Plugin", true);
+                        plugin.Init(this);
+                    }
+                    catch(Exception ex)
+                    {
+                        Trace.WriteLine(String.Format("Error loading plugin \"{0}\". {1}",pluginname,ex.Message));
+                    }
                 }
-                catch
-                {
-                    Trace.WriteLine("Error loading plugins " + pluginname);
-                }
-            }
 
             if (pluginsToolStripMenuItem.DropDownItems.Count == 0) pluginsToolStripMenuItem.Visible = false;
+
+
+            // Object Names
+            if (Properties.Settings.Default.Auto_Store_Object_Names)
+            {
+                string fileTotal = Properties.Settings.Default.Auto_Store_Object_Names_File;
+                if (!string.IsNullOrWhiteSpace(fileTotal))
+                {
+                    try
+                    {
+                        string file = Path.GetFileName(fileTotal);
+                        string directory = Path.GetDirectoryName(fileTotal);
+                        if (string.IsNullOrWhiteSpace(file))
+                        {
+                            file = "Auto_Stored_Object_Names.YabeMap";
+                            fileTotal = Path.Combine(directory, file);
+                            Properties.Settings.Default.Auto_Store_Object_Names_File = fileTotal;
+                        }
+
+                        if (File.Exists(fileTotal))
+                        {
+                            // Try to open the current (if exist) object Id<-> object name mapping file
+                            Stream stream = File.Open(fileTotal, FileMode.Open);
+                            BinaryFormatter bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                            var d = (Dictionary<Tuple<String, BacnetObjectId>, String>)bf.Deserialize(stream);
+                            stream.Close();
+
+                            if (d != null)
+                            {
+                                DevicesObjectsName = d;
+                                objectNamesChangedFlag = false;
+                                Trace.TraceInformation("Loaded object names from \""+ fileTotal + "\".");
+                            }
+                        }
+                        else
+                        {
+                            if (!Directory.Exists(directory))
+                            {
+                                try
+                                {
+                                    Directory.CreateDirectory(directory);
+                                    Trace.TraceInformation("Created directory \"" + directory + "\".");
+                                }
+                                catch(UnauthorizedAccessException)
+                                {
+                                    Trace.TraceError("Error trying to setup the auto-save object names function: The directory \"" + directory + "\" does not exist, and Yabe does not have permissions to automatically create this directory. Try changing the Auto_StoreObject_Names_File setting to a different path.");                                    Properties.Settings.Default.Auto_Store_Object_Names = false;
+                                }
+                            }
+                            //Trace.TraceError("Error trying to auto-load object names from file: The file \"" + file + "\" does not exist. Try resetting the Auto_StoreObject_Names_File setting to a valid file path, or disable auto-store.");
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.TraceError("Exception trying to setup the auto-save object names function: " + ex.Message + ". Try resetting the Auto_StoreObject_Names_File setting to a valid file path.");
+                        Properties.Settings.Default.Auto_Store_Object_Names = false;
+                    }
+                }
+                else
+                {
+                    Properties.Settings.Default.Auto_Store_Object_Names = false;
+                }
+            }
         }
 
         private TreeNode FindCommTreeNode(BacnetClient comm)
@@ -570,6 +892,11 @@ namespace Yabe
 
         void OnIam(BacnetClient sender, BacnetAddress adr, uint device_id, uint max_apdu, BacnetSegmentations segmentation, ushort vendor_id)
         {
+            DoReceiveIamImplementation(sender, adr, device_id);
+        }
+
+        private void DoReceiveIamImplementation(BacnetClient sender, BacnetAddress adr, uint device_id)
+        {
             KeyValuePair<BacnetAddress, uint> new_entry = new KeyValuePair<BacnetAddress, uint>(adr, device_id);
             lock (m_devices)
             {
@@ -587,7 +914,7 @@ namespace Yabe
                 if (parent == null) return;
 
                 bool Prop_Object_NameOK = false;
-                String Identifier=null;
+                String Identifier = null;
 
                 var key = new Tuple<String, BacnetObjectId>(adr.FullHashString(),
                     new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id));
@@ -598,16 +925,20 @@ namespace Yabe
                 foreach (TreeNode s in parent.Nodes)
                 {
                     KeyValuePair<BacnetAddress, uint>? entry = s.Tag as KeyValuePair<BacnetAddress, uint>?;
-                    if(entry != null && entry.Value.Key.Equals(adr))
+                    if (entry != null && entry.Value.Key.Equals(adr))
                     {
-                        s.Text="Device "+new_entry.Value+ " - "+ new_entry.Key.ToString(s.Parent.Parent!=null);
-                        s.Tag = new_entry;                       
+                        s.Text = "Device " + new_entry.Value + " - " + new_entry.Key.ToString(s.Parent.Parent != null);
+                        s.Tag = new_entry;
                         if (Prop_Object_NameOK)
                         {
                             s.ToolTipText = s.Text;
                             s.Text = Identifier + " [" + device_id.ToString() + "] ";
                         }
-                        
+                        else
+                        {
+                            s.ToolTipText = "";
+                        }
+
                         return;
                     }
                 }
@@ -615,9 +946,9 @@ namespace Yabe
                 foreach (TreeNode s in parent.Nodes)
                 {
                     KeyValuePair<BacnetAddress, uint>? entry = s.Tag as KeyValuePair<BacnetAddress, uint>?;
-                    if (entry!=null && entry.Value.Key.IsMyRouter(adr))
+                    if (entry != null && entry.Value.Key.IsMyRouter(adr))
                     {
-                        TreeNode node = new TreeNode("Device "+new_entry.Value+ " - "+ new_entry.Key.ToString(true));
+                        TreeNode node = new TreeNode("Device " + new_entry.Value + " - " + new_entry.Key.ToString(true));
                         node.ImageIndex = 2;
                         node.SelectedImageIndex = node.ImageIndex;
                         node.Tag = new_entry;
@@ -631,6 +962,7 @@ namespace Yabe
                             AsyncGetObjectName(sender, adr, key, node);
                         }
                         s.Nodes.Add(node);
+
                         m_DeviceTree.ExpandAll();
                         return;
                     }
@@ -687,7 +1019,20 @@ namespace Yabe
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show(this, "Yet Another Bacnet Explorer - Yabe\nVersion " + this.GetType().Assembly.GetName().Version + "\nBy Morten Kvistgaard - Copyright 2014-2017\nBy Frederic Chaxel - Copyright 2015-2020\n" +
+            string product;
+                
+            Assembly currentAssem = this.GetType().Assembly;
+            object[] attribs = currentAssem.GetCustomAttributes(typeof(AssemblyProductAttribute), true);
+            if (attribs.Length > 0)
+            {
+                product = ((AssemblyProductAttribute)attribs[0]).Product;
+            }
+            else
+            {
+                product = this.GetType().Assembly.GetName().Name;
+            }
+
+            MessageBox.Show(this, product + "\nVersion " + this.GetType().Assembly.GetName().Version + "\nBy Morten Kvistgaard - Copyright 2014-2017\nBy Frederic Chaxel - Copyright 2015-2022\n" +
                 "\nReferences:"+
                 "\nhttp://bacnet.sourceforge.net/" + 
                 "\nhttp://www.unified-automation.com/products/development-tools/uaexpert.html" +
@@ -695,7 +1040,8 @@ namespace Yabe
                 "\nhttp://sourceforge.net/projects/zedgraph/"+
                 "\nhttp://www.codeproject.com/Articles/38699/A-Professional-Calendar-Agenda-View-That-You-Will"+
                 "\nhttps://github.com/chmorgan/sharppcap"+
-                "\nhttps://sourceforge.net/projects/mstreeview"
+                "\nhttps://sourceforge.net/projects/mstreeview" + 
+                "\nhttps://github.com/sta/websocket-sharp"
                 
                 , "About", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -708,6 +1054,8 @@ namespace Yabe
         private void addDevicesearchToolStripMenuItem_Click(object sender, EventArgs e)
         {
             labelDrop1.Visible = labelDrop2.Visible = false;
+            if (TbxHighlightAddress.Text == "HighLight Filter")
+                TbxHighlightAddress.Text = TbxHighlightDevice.Text = "";
 
             SearchDialog dlg = new SearchDialog();
             if (dlg.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
@@ -729,6 +1077,9 @@ namespace Yabe
                         break;
                     case BacnetAddressTypes.MSTP:
                         node.ImageIndex = 1;
+                        break;
+                    case BacnetAddressTypes.SC:
+                        node.ImageIndex = 17;
                         break;
                     default:
                         node.ImageIndex = 8;
@@ -780,9 +1131,12 @@ namespace Yabe
                     if ((IdMin!=-1)&&(IdMax==-1)) IdMax=0x3FFFFF;
                     if ((IdMax != -1) && (IdMin == -1)) IdMin = 0;
 
+                    if (comm.Transport.Type == BacnetAddressTypes.SC) comm.Retries = 1; // Not required devices are connected to the Hub
+
                     //start search
                     if (comm.Transport.Type == BacnetAddressTypes.IP || comm.Transport.Type == BacnetAddressTypes.Ethernet 
-                        || comm.Transport.Type == BacnetAddressTypes.IPV6 
+                        || comm.Transport.Type == BacnetAddressTypes.IPV6
+                        || comm.Transport.Type == BacnetAddressTypes.SC
                         || (comm.Transport is BacnetMstpProtocolTransport && ((BacnetMstpProtocolTransport)comm.Transport).SourceAddress != -1) 
                         || comm.Transport.Type == BacnetAddressTypes.PTP)
                     {
@@ -914,7 +1268,7 @@ namespace Yabe
                 {
                     RollingPointPairList points = m_subscription_points[sub_key];
                     foreach (LineItem l in Pane.CurveList)
-                        if (l.Tag == points)
+                        if (l.Points == points)
                         {
                             Pane.CurveList.Remove(l);
                             break;
@@ -950,6 +1304,10 @@ namespace Yabe
                     else
                         comm = m_DeviceTree.SelectedNode.Parent.Parent.Tag as BacnetClient; // device under a router
 
+                    m_AddressSpaceTree.Nodes.Clear();   //clear address space
+                    AddSpaceLabel.Text = "Address Space";
+                    m_DataGrid.SelectedObject = null;   //clear property grid
+
                     m_devices[comm].Devices.Remove((KeyValuePair<BacnetAddress, uint>)device_entry);
 
                     m_DeviceTree.Nodes.Remove(m_DeviceTree.SelectedNode);
@@ -960,6 +1318,12 @@ namespace Yabe
             {
                 if (MessageBox.Show(this, "Delete this transport?", "Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                 {
+                    if (_selectedDevice ==null || (_selectedDevice.Tag is KeyValuePair<BacnetAddress, uint> currentDelectedDeviceComms && m_devices[comm_entry].Devices.Contains(currentDelectedDeviceComms)))
+                    {
+                            m_AddressSpaceTree.Nodes.Clear();   //clear address space
+                            AddSpaceLabel.Text = "Address Space";
+                            m_DataGrid.SelectedObject = null;   //clear property grid
+                    }
                     m_devices.Remove(comm_entry);
                     m_DeviceTree.Nodes.Remove(m_DeviceTree.SelectedNode);
                     RemoveSubscriptions(null, 0, comm_entry);
@@ -1013,46 +1377,134 @@ namespace Yabe
             node.SelectedImageIndex = node.ImageIndex;
         }
 
+#if DEBUG
+        private int depth = 0;
+        private const int maxDepth = 5;
+#endif
         private void AddObjectEntry(BacnetClient comm, BacnetAddress adr, string name, BacnetObjectId object_id, TreeNodeCollection nodes)
         {
+            bool iAmTheCreator = false;
+            bool recursionDetected = false;
+            if (object_id.type==BacnetObjectTypes.OBJECT_STRUCTURED_VIEW)
+            {
+                if(_structuredViewParents==null)
+                {
+                    _structuredViewParents = new List<BacnetObjectId>();
+                    iAmTheCreator = true;
+                }
+
+                if(_structuredViewParents.Contains(object_id))
+                {
+                    recursionDetected = true;
+#if DEBUG
+                    depth++;
+#endif
+                }
+                else
+                {
+                    _structuredViewParents.Add(object_id);
+                }
+            }
+
             if (string.IsNullOrEmpty(name)) name = object_id.ToString();
 
             TreeNode node;
 
-            if (name.StartsWith("OBJECT_"))
-                node = nodes.Add(name.Substring(7));
-            else
-                node = nodes.Add("PROPRIETARY:" + object_id.Instance.ToString() + " (" + name + ")");  // Propertary Objects not in enum appears only with the number such as 584:0
+            lock (DevicesObjectsName)
+            {
+                // Get the property name if already known
+                if (DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), object_id), out string objName) == true)
+                {
+                    if (Properties.Settings.Default.DisplayIdWithName)
+                    {
+                        string abbreviatedName = ShortenObjectId(name);
+                        if (!abbreviatedName.Equals(name))
+                        {
+                            objName = objName + " (" + abbreviatedName + ")";
+                        }
+                        else
+                        {
+                            string titleCaseName = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower());
+                            objName = objName + " (" + name + ")";
+                        }
+                    }
 
+                    node = new TreeNode(objName);
+                    node.ToolTipText = name;
+                }
+                else
+                {
+                    node = new TreeNode(name);
+                    node.ToolTipText = "";
+                }
+            }
+
+            // Add to tree
             node.Tag = object_id;
+            nodes.Add(node);
+            
+            if ((!TbxHighlightAddress.Text.IsNullOrEmpty())&&(node.Text.ToLower().Contains(TbxHighlightAddress.Text.ToLower())))
+                node.ForeColor = Color.Red;
 
-            //icon
+            // icon
             SetNodeIcon(object_id.type, node);
 
-            // Get the property name if already known
-            String PropName;
-
-            lock (DevicesObjectsName)
-                if (DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), object_id), out PropName) == true)
-                {
-                    ChangeTreeNodePropertyName(node, PropName); ;
-                }
 
             //fetch sub properties
             if (object_id.type == BacnetObjectTypes.OBJECT_GROUP)
-                FetchGroupProperties(comm, adr, object_id, node.Nodes);
-            else if ((object_id.type == BacnetObjectTypes.OBJECT_STRUCTURED_VIEW) && Properties.Settings.Default.GetStructuredView)
-                FetchViewObjects(comm, adr, object_id, node.Nodes);
-            else if ((object_id.type == BacnetObjectTypes.OBJECT_DEVICE) && (node.Parent == null) && (Properties.Settings.Default.GetStructuredView==true))
             {
-                node = node.Nodes.Add("STRUCTURED VIEW");
-                node.ImageIndex = GetIconNum(BacnetObjectTypes.OBJECT_STRUCTURED_VIEW);
-                node.SelectedImageIndex = node.ImageIndex;
+                FetchGroupProperties(comm, adr, object_id, node.Nodes);
+            }
+            else if ((object_id.type == BacnetObjectTypes.OBJECT_STRUCTURED_VIEW) && (Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Structured || Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Both))
+            {
+                if (recursionDetected)
+                {
+#if DEBUG
+                    if (depth > maxDepth)
+                    {
+#endif
+                        TreeNode recursiveNode = node.Nodes.Add("WARNING: RECURSIVE NODE DETECTED");
+                        recursiveNode.ImageIndex = 16;
+                        recursiveNode.SelectedImageIndex = 16;
+#if DEBUG
+                    }
+                    else
+                    {
+                        FetchViewObjects(comm, adr, object_id, node.Nodes);
+                    }
+                    depth--;
+#endif
+                }
+                else
+                {
+                    FetchViewObjects(comm, adr, object_id, node.Nodes);
+                }
+            }
+            else if ((object_id.type == BacnetObjectTypes.OBJECT_DEVICE) && (node.Parent == null) && (Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Structured || Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Both))
+            {
                 FetchStructuredObjects(comm, adr, object_id.Instance, node.Nodes);
+            }
+
+            if (object_id.type == BacnetObjectTypes.OBJECT_STRUCTURED_VIEW)
+            {
+                if (_structuredViewParents != null)
+                {
+                    if(_structuredViewParents.Contains(object_id))
+                    {
+                        _structuredViewParents.Remove(object_id);
+                    }
+                    if (iAmTheCreator)
+                    {
+                        _structuredViewParents = null;
+                    }
+                }
+                
             }
         }
 
-        private void FetchStructuredObjects(BacnetClient comm, BacnetAddress adr, uint device_id, TreeNodeCollection nodes)
+        
+
+        private IList<BacnetValue> FetchStructuredObjects(BacnetClient comm, BacnetAddress adr, uint device_id, TreeNodeCollection nodes)
         {
             IList<BacnetValue> ret;
             int old_reties = comm.Retries;
@@ -1062,7 +1514,7 @@ namespace Yabe
                 if (!comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_STRUCTURED_OBJECT_LIST, out ret))
                 {
                     Trace.TraceInformation("Didn't get response from 'Structured Object List'");
-
+                    return null;
                 }
                 else
                 {
@@ -1074,11 +1526,13 @@ namespace Yabe
             catch (Exception)
             {
                 Trace.TraceInformation("Got exception from 'Structured Object List'");
+                return null;
             }
             finally
             {
                 comm.Retries = old_reties;
             }
+            return ret;
         }
 
         private void AddObjectListOneByOneAsync(BacnetClient comm, BacnetAddress adr, uint device_id, uint count, int AsynchRequestId)
@@ -1118,7 +1572,7 @@ namespace Yabe
             });
         }
 
-        private List<BacnetObjectId> SortBacnetObjects(IList<BacnetValue> RawList)
+        public List<BacnetObjectId> SortBacnetObjects(IList<BacnetValue> RawList)
         {
 
             List<BacnetObjectId> SortedList = new List<BacnetObjectId>();
@@ -1139,7 +1593,8 @@ namespace Yabe
         private void m_DeviceTree_AfterSelect(object sender, TreeViewEventArgs e)
         {
             AsynchRequestId++; // disabled a possible thread pool work (update) on the AddressSpaceTree
-
+            TreeNode node = e.Node;
+            //_selectedDevice = null;
             KeyValuePair<BacnetAddress, uint>? entry = e.Node.Tag as KeyValuePair<BacnetAddress, uint>?;
             if (entry != null)
             {
@@ -1186,12 +1641,67 @@ namespace Yabe
                 Application.DoEvents();
                 int old_timeout = comm.Timeout;
                 IList<BacnetValue> value_list = null;
+
                 try
                 {
+                    if (Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Structured)
+                    {
+                        value_list = FetchStructuredObjects(comm, adr, device_id, m_AddressSpaceTree.Nodes);
 
-                    //fetch normal list
-                    if (value_list == null)
-                    {                   
+                        BacnetObjectId bobj_id = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id);
+
+                        // If the Device name not set, try to update it
+                        if (node.ToolTipText == "")   // already update with the device name
+                        {
+                            bool Prop_Object_NameOK = false;
+                            String Identifier;
+
+                            lock (DevicesObjectsName)
+                                Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id), out Identifier);
+                            if (Prop_Object_NameOK)
+                            {
+                                node.ToolTipText = node.Text;
+                                node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
+                            }
+                            else
+                                try
+                                {
+                                    IList<BacnetValue> values;
+                                    if (comm.ReadPropertyRequest(adr, bobj_id, BacnetPropertyIds.PROP_OBJECT_NAME, out values))
+                                    {
+                                        node.ToolTipText = node.Text;   // IP or MSTP node id -> in the Tooltip
+                                        node.Text = values[0].ToString() + " [" + bobj_id.Instance.ToString() + "] ";  // change @ by the Name    
+                                        lock (DevicesObjectsName)
+                                        {
+                                            Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id);
+                                            if (DevicesObjectsName.ContainsKey(t))
+                                            {
+                                                if (!DevicesObjectsName[t].Equals(values[0].ToString()))
+                                                {
+                                                    DevicesObjectsName.Remove(t);
+                                                    DevicesObjectsName.Add(t, values[0].ToString());
+                                                    objectNamesChangedFlag = true;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                DevicesObjectsName.Add(t, values[0].ToString());
+                                                objectNamesChangedFlag = true;
+                                            }
+                                        }
+                                    }
+                                }
+                                catch { }
+                        }
+                        
+                    }
+                    if (value_list != null)
+                    {
+                        AddSpaceLabel.Text = "Address Space : " + value_list.Count.ToString() + " objects";
+                    }
+                    else
+                    {
+                        //fetch normal list
                         try
                         {
                             if (!comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list))
@@ -1205,89 +1715,114 @@ namespace Yabe
                             Trace.TraceWarning("Got exception from 'Object List'");
                             value_list = null;
                         }
-                    }
-                    
-                    //fetch list one-by-one
-                    if (value_list == null)
-                    {
-                        try
+
+
+                        //fetch list one-by-one
+                        if (value_list == null)
                         {
-                            //fetch object list count
-                            if (!comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list, 0, 0))
+                            try
                             {
-                                MessageBox.Show(this, "Couldn't fetch objects", "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                //fetch object list count
+                                if (!comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list, 0, 0))
+                                {
+                                    MessageBox.Show(this, "Couldn't fetch objects", "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    return;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show(this, "Error during read: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
+
+                            if (value_list != null && value_list.Count == 1 && value_list[0].Value is ulong)
+                            {
+                                uint list_count = (uint)(ulong)value_list[0].Value;
+                                AddSpaceLabel.Text = "Address Space : " + list_count.ToString() + " objects";
+                                AddObjectListOneByOneAsync(comm, adr, device_id, list_count, AsynchRequestId);
+                                _selectedDevice = node;
+                                return;
+                            }
+                            else
+                            {
+                                MessageBox.Show(this, "Couldn't read 'Object List' count", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                                 return;
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show(this, "Error during read: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
-                        }
 
-                        if (value_list != null && value_list.Count == 1 && value_list[0].Value is ulong)
-                        {
-                            uint list_count = (uint)(ulong)value_list[0].Value;
-                            AddSpaceLabel.Text = "Address Space : " + list_count.ToString() + " objects";
-                            AddObjectListOneByOneAsync(comm, adr, device_id, list_count, AsynchRequestId);
-                            return;
-                        }
-                        else
-                        {
-                            MessageBox.Show(this, "Couldn't read 'Object List' count", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
-                        }
-                    }
+                        List<BacnetObjectId> objectList = SortBacnetObjects(value_list);
 
-                    List<BacnetObjectId> objectList= SortBacnetObjects(value_list);
-                    AddSpaceLabel.Text = "Address Space : " + objectList.Count.ToString() + " objects";
-                    //add to tree
-                    foreach (BacnetObjectId bobj_id in objectList)
-                    {                                                
-                        // Add FC
-                        // If the Device name not set, try to update it
-                        if (bobj_id.type == BacnetObjectTypes.OBJECT_DEVICE)
+                        AddSpaceLabel.Text = "Address Space : " + objectList.Count.ToString() + " objects";
+                        //add to tree
+                        foreach (BacnetObjectId bobj_id in objectList)
                         {
-                            if (e.Node.ToolTipText=="")   // already update with the device name
+                            // Add FC
+                            // If the Device name not set, try to update it
+                            if (bobj_id.type == BacnetObjectTypes.OBJECT_DEVICE)
                             {
-                                bool Prop_Object_NameOK = false;
-                                String Identifier;
-
-                                lock (DevicesObjectsName)
-                                    Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id), out Identifier);
-                                if (Prop_Object_NameOK)
+                                // If the Device name not set, try to update it
+                                if (node.ToolTipText == "")   // already update with the device name
                                 {
-                                    e.Node.ToolTipText = e.Node.Text;
-                                    e.Node.Text = Identifier+" ["+bobj_id.Instance.ToString()+"] ";
-                                }
-                                else
-                                    try
+                                    bool Prop_Object_NameOK = false;
+                                    String Identifier;
+
+                                    lock (DevicesObjectsName)
+                                        Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id), out Identifier);
+                                    if (Prop_Object_NameOK)
                                     {
-                                        IList<BacnetValue> values;
-                                        if (comm.ReadPropertyRequest(adr, bobj_id, BacnetPropertyIds.PROP_OBJECT_NAME, out values))
+                                        node.ToolTipText = node.Text;
+                                        node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
+                                    }
+                                    else
+                                    {
+                                        this.Cursor = Cursors.WaitCursor;
+                                        try
                                         {
-                                                e.Node.ToolTipText = e.Node.Text;   // IP or MSTP node id -> in the Tooltip
-                                                e.Node.Text = values[0].ToString() + " [" + bobj_id.Instance.ToString() + "] ";  // change @ by the Name    
+                                            IList<BacnetValue> values;
+                                            if (comm.ReadPropertyRequest(adr, bobj_id, BacnetPropertyIds.PROP_OBJECT_NAME, out values))
+                                            {
+                                                node.ToolTipText = node.Text;   // IP or MSTP node id -> in the Tooltip
+                                                node.Text = values[0].ToString() + " [" + bobj_id.Instance.ToString() + "] ";  // change @ by the Name    
                                                 lock (DevicesObjectsName)
                                                 {
                                                     Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id);
-                                                    DevicesObjectsName.Remove(t);
-                                                    DevicesObjectsName.Add(t, values[0].ToString());
+                                                    if (DevicesObjectsName.ContainsKey(t))
+                                                    {
+                                                        if (!DevicesObjectsName[t].Equals(values[0].ToString()))
+                                                        {
+                                                            DevicesObjectsName.Remove(t);
+                                                            DevicesObjectsName.Add(t, values[0].ToString());
+                                                            objectNamesChangedFlag = true;
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        DevicesObjectsName.Add(t, values[0].ToString());
+                                                        objectNamesChangedFlag = true;
+                                                    }
                                                 }
+                                            }
                                         }
+                                        catch { }
                                     }
-                                    catch { }
+                                }
                             }
-                         }
-
-                        AddObjectEntry(comm, adr, null, bobj_id, m_AddressSpaceTree.Nodes);//AddObjectEntry(comm, adr, null, bobj_id, e.Node.Nodes); 
+                            AddObjectEntry(comm, adr, null, bobj_id, m_AddressSpaceTree.Nodes);//AddObjectEntry(comm, adr, null, bobj_id, e.Node.Nodes); 
+                        }
                     }
+                    _selectedDevice = node;
                 }
                 finally
                 {
-                    this.Cursor = Cursors.Default; 
+                    this.Cursor = Cursors.Default;
+                    _selectedNode = null;
                     m_DataGrid.SelectedObject = null;
                 }
+
+                if ((!TbxHighlightDevice.Text.IsNullOrEmpty()) && (node.Text.ToLower().Contains(TbxHighlightDevice.Text.ToLower())))
+                    node.ForeColor = Color.Red;
+                else
+                    node.ForeColor = Color.Black;
             }
         }
 
@@ -1353,18 +1888,42 @@ namespace Yabe
             removeDeviceToolStripMenuItem_Click(this, null);
         }
 
-        private static string GetNiceName(BacnetPropertyIds property)
+        public string GetNiceName(BacnetPropertyIds property, bool forceShowNumber = false)
         {
+            bool prependNumber = forceShowNumber || Properties.Settings.Default.Show_Property_Id_Numbers;
             string name = property.ToString();
             if (name.StartsWith("PROP_"))
             {
                 name = name.Substring(5);
                 name = name.Replace('_', ' ');
-                name = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower());
+                if(prependNumber)
+                {
+                    name = String.Format("{0} - {1}", (int)property, System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()));
+                }
+                else
+                {
+                    name = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower());
+                }
             }
             else
-                //name = "Proprietary (" + property.ToString() + ")";
-                name = property.ToString() + " - Proprietary";
+            {
+                name = GetProprietaryPropertyName((int)property);
+                if(name!=null)
+                {
+                    if (prependNumber)
+                    {
+                        name = String.Format("Proprietary {0} - {1}", (int)property, System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()));
+                    }
+                    else
+                    {
+                        name = "Proprietary - " + System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower());
+                    }
+                }
+                else
+                {
+                    name = String.Format("Proprietary - {0}", (int)property);
+                }
+            }
             return name;
         }
 
@@ -1383,11 +1942,12 @@ namespace Yabe
                 return false;         //ignore
             }
             new_entry.value = value;
+
             values.Add(new_entry);
             return true;
         }
 
-        private bool ReadAllPropertiesBySingle(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id, out IList<BacnetReadAccessResult> value_list)
+        public bool ReadAllPropertiesBySingle(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id, out IList<BacnetReadAccessResult> value_list)
         {
 
             if (objectsDescriptionDefault == null)  // first call, Read Objects description from internal & optional external xml file
@@ -1493,126 +2053,163 @@ namespace Yabe
             return true;
         }
 
+        private String UpdateGrid(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id)
+        {
+            string ReturnPROP_OBJECT_NAME = null;
+            try
+            {
+                m_DataGrid.SelectedObject = null;   //clear
+
+                BacnetPropertyReference[] properties = new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_ALL, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL) };
+                IList<BacnetReadAccessResult> multi_value_list;
+                try
+                {
+                    //fetch properties. This might not be supported (ReadMultiple) or the response might be too long.
+                    if (!comm.ReadPropertyMultipleRequest(adr, object_id, properties, out multi_value_list))
+                    {
+                        Trace.TraceWarning("Couldn't perform ReadPropertyMultiple ... Trying ReadProperty instead");
+                        if (!ReadAllPropertiesBySingle(comm, adr, object_id, out multi_value_list))
+                        {
+                            MessageBox.Show(this, "Couldn't fetch properties", "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return ReturnPROP_OBJECT_NAME;
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    Trace.TraceWarning("Couldn't perform ReadPropertyMultiple ... Trying ReadProperty instead");
+                    Application.DoEvents();
+                    try
+                    {
+                        //fetch properties with single calls
+                        if (!ReadAllPropertiesBySingle(comm, adr, object_id, out multi_value_list))
+                        {
+                            MessageBox.Show(this, "Couldn't fetch properties", "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return ReturnPROP_OBJECT_NAME;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(this, "Error during read: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return ReturnPROP_OBJECT_NAME;
+                    }
+                }
+
+                //update grid
+                Utilities.DynamicPropertyGridContainer bag = new Utilities.DynamicPropertyGridContainer();
+                foreach (BacnetPropertyValue p_value in multi_value_list[0].values)
+                {
+                    object value = null;
+                    BacnetValue[] b_values = null;
+                    if (p_value.value != null)
+                    {
+
+                        b_values = new BacnetValue[p_value.value.Count];
+
+                        p_value.value.CopyTo(b_values, 0);
+                        if (b_values.Length > 1)
+                        {
+                            object[] arr = new object[b_values.Length];
+                            for (int j = 0; j < arr.Length; j++)
+                                arr[j] = b_values[j].Value;
+                            value = arr;
+                        }
+                        else if (b_values.Length == 1)
+                            value = b_values[0].Value;
+                    }
+                    else
+                        b_values = new BacnetValue[0];
+
+                    switch ((BacnetPropertyIds)p_value.property.propertyIdentifier)
+                    {
+                        // PROP_PRESENT_VALUE can be write at null value to clear the prioroityarray if exists
+                        case BacnetPropertyIds.PROP_PRESENT_VALUE:
+                            // change to the related nullable type
+                            Type t = value.GetType();
+                            try
+                            {
+                                if (t != typeof(String)) // a bug on linuxmono where the folling instruction generates a wrong type
+                                    t = Type.GetType("System.Nullable`1[" + value.GetType().FullName + "]");
+                            }
+                            catch { }
+                            bag.Add(new Utilities.CustomProperty(GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, t != null ? t : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
+                            break;
+
+                        default:
+                            bag.Add(new Utilities.CustomProperty(GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
+                            break;
+                    }
+
+                    // The Prop Name replace the PropId into the Treenode 
+                    if (p_value.property.propertyIdentifier == (byte)BacnetPropertyIds.PROP_OBJECT_NAME)
+                    {
+                        ReturnPROP_OBJECT_NAME = value.ToString();
+                    }
+                }
+
+                m_DataGrid.SelectedObject = bag;
+            }
+            catch { }
+
+            return ReturnPROP_OBJECT_NAME;
+        }
+
+
         private void UpdateGrid(TreeNode selected_node)
         {
             this.Cursor = Cursors.WaitCursor;
             try
             {
+                _selectedNode = null;
                 //fetch end point
-                if (m_DeviceTree.SelectedNode == null) return;
-                else if (m_DeviceTree.SelectedNode.Tag == null) return;
-                else if (!(m_DeviceTree.SelectedNode.Tag is KeyValuePair<BacnetAddress, uint>)) return;
-                KeyValuePair<BacnetAddress, uint> entry = (KeyValuePair<BacnetAddress, uint>)m_DeviceTree.SelectedNode.Tag;
+                if (_selectedDevice == null) return;
+                else if (_selectedDevice.Tag == null) return;
+                else if (!(_selectedDevice.Tag is KeyValuePair<BacnetAddress, uint>)) return;
+                KeyValuePair<BacnetAddress, uint> entry = (KeyValuePair<BacnetAddress, uint>)_selectedDevice.Tag;
                 BacnetAddress adr = entry.Key;
                 BacnetClient comm;
-                
-                if (m_DeviceTree.SelectedNode.Parent.Tag is BacnetClient)
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Tag;
+
+                if (_selectedDevice.Parent.Tag is BacnetClient)
+                    comm = (BacnetClient)_selectedDevice.Parent.Tag;
                 else
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Parent.Tag;  // routed node
+                    comm = (BacnetClient)_selectedDevice.Parent.Parent.Tag;  // routed node
 
                 if (selected_node.Tag is BacnetObjectId)
                 {
                     m_DataGrid.SelectedObject = null;   //clear
 
                     BacnetObjectId object_id = (BacnetObjectId)selected_node.Tag;
-                    BacnetPropertyReference[] properties = new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_ALL, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL) };
-                    IList<BacnetReadAccessResult> multi_value_list;
-                    try
-                    {                       
-                        //fetch properties. This might not be supported (ReadMultiple) or the response might be too long.
-                        if (!comm.ReadPropertyMultipleRequest(adr, object_id, properties, out multi_value_list))
-                        {
-                            Trace.TraceWarning("Couldn't perform ReadPropertyMultiple ... Trying ReadProperty instead");
-                            if (!ReadAllPropertiesBySingle(comm, adr, object_id, out multi_value_list))
-                            {
-                                MessageBox.Show(this, "Couldn't fetch properties", "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                return;
-                            }
-                        }
-                    }
-                    catch (Exception)
+
+                    String NewObjectName = UpdateGrid(comm, adr, object_id);
+
+                    if (NewObjectName != null)
                     {
-                        Trace.TraceWarning("Couldn't perform ReadPropertyMultiple ... Trying ReadProperty instead");
-                        Application.DoEvents();
-                        try
+                        ChangeTreeNodePropertyName(selected_node, NewObjectName);// Update the object name if needed
+                        lock (DevicesObjectsName)
                         {
-                            //fetch properties with single calls
-                            if (!ReadAllPropertiesBySingle(comm, adr, object_id, out multi_value_list))
+                            Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), object_id);
+                            if (DevicesObjectsName.ContainsKey(t))
                             {
-                                MessageBox.Show(this, "Couldn't fetch properties", "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                return;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show(this, "Error during read: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
-                        }
-                    }
-
-                    //update grid
-                    Utilities.DynamicPropertyGridContainer bag = new Utilities.DynamicPropertyGridContainer();
-                    foreach (BacnetPropertyValue p_value in multi_value_list[0].values)
-                    {
-                        object value = null;
-                        BacnetValue[] b_values = null;
-                        if (p_value.value != null)
-                        {
-
-                             b_values = new BacnetValue[p_value.value.Count];
-
-                            p_value.value.CopyTo(b_values, 0);
-                            if (b_values.Length > 1)
-                            {
-                                object[] arr = new object[b_values.Length];
-                                for (int j = 0; j < arr.Length; j++)
-                                    arr[j] = b_values[j].Value;
-                                value = arr;
-                            }
-                            else if (b_values.Length == 1)
-                                value = b_values[0].Value;
-                        }
-                        else
-                            b_values = new BacnetValue[0];
-
-                        // Modif FC
-                        switch ((BacnetPropertyIds)p_value.property.propertyIdentifier)
-                        {
-                            // PROP_RELINQUISH_DEFAULT can be write to null value
-                            case BacnetPropertyIds.PROP_PRESENT_VALUE:
-                                // change to the related nullable type
-                                Type t = null;
-                                try
+                                if (!DevicesObjectsName[t].Equals(NewObjectName))
                                 {
-                                    t = value.GetType();
-                                    t = Type.GetType("System.Nullable`1[" + value.GetType().FullName + "]");
+                                    DevicesObjectsName.Remove(t);
+                                    DevicesObjectsName.Add(t, NewObjectName);
+                                    objectNamesChangedFlag = true;
                                 }
-                                catch { }
-                                bag.Add(new Utilities.CustomProperty(GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, t != null ? t : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
-                                break;
-
-                            default:
-                                bag.Add(new Utilities.CustomProperty(GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
-                                break;
-                        }
-
-                        // The Prop Name replace the PropId into the Treenode 
-                        if (p_value.property.propertyIdentifier == (byte)BacnetPropertyIds.PROP_OBJECT_NAME)
-                        {
- 
-                            ChangeTreeNodePropertyName(selected_node, value.ToString());// Update the object name if needed
-
-                            lock (DevicesObjectsName)
+                            }
+                            else
                             {
-                                Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), object_id);
-                                DevicesObjectsName.Remove(t);
-                                DevicesObjectsName.Add(t, value.ToString());
+                                DevicesObjectsName.Add(t, NewObjectName);
+                                objectNamesChangedFlag = true;
                             }
                         }
                     }
+					/*
                     m_DataGrid.SelectedObject = bag;
                     m_DataGrid.SelectedGridItem = m_DataGrid.SelectedGridItem.Parent;
+					*/
+
+                    _selectedNode = selected_node;
                 }
             }
             finally
@@ -1620,59 +2217,40 @@ namespace Yabe
                 this.Cursor = Cursors.Default;
             }
         }
+
+        private void UpdateGrid(Subscription subscription)
+        {
+            this.Cursor = Cursors.WaitCursor;
+            try
+            {
+                _selectedNode = null;
+                BacnetAddress adr = subscription.adr;
+                BacnetClient comm = subscription.comm;
+
+                m_DataGrid.SelectedObject = null;   //clear
+
+                BacnetObjectId object_id = subscription.object_id;
+
+                UpdateGrid(comm, adr, object_id);
+
+                _selectedNode = subscription;
+
+            }
+            finally
+            {
+                this.Cursor = Cursors.Default;
+            }
+        }
+
+
+
         // Fixed a small problem when a right click is down in a Treeview
         private void TreeView_MouseDown(object sender, MouseEventArgs e)
         {
-            //if (e.Button != MouseButtons.Right)
-            //    return;
+            if (e.Button != MouseButtons.Right)
+                return;
             // Store the selected node (can deselect a node).
-            //(sender as TreeView).SelectedNode = (sender as TreeView).GetNodeAt(e.X, e.Y);
-        }
-
-        private void m_AddressSpaceTree_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            UpdateGrid(e.Node);
-            BacnetClient cl; BacnetAddress ba;BacnetObjectId objId;
-
-            // Hide all elements in the toolstip menu
-            foreach (object its in m_AddressSpaceMenuStrip.Items)
-                (its as ToolStripMenuItem).Visible = false;
-            // Set Subscribe always visible
-            m_AddressSpaceMenuStrip.Items[0].Visible = true;
-            // Set Search always visible
-            m_AddressSpaceMenuStrip.Items[8].Visible = true;
-
-            // Get the node type
-            GetObjectLink(out cl, out ba, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
-            // Set visible some elements depending of the object type
-            switch (objId.type)
-            {
-                case BacnetObjectTypes.OBJECT_FILE:
-                    m_AddressSpaceMenuStrip.Items[1].Visible = true;
-                    m_AddressSpaceMenuStrip.Items[2].Visible = true;
-                    break;
-
-                case BacnetObjectTypes.OBJECT_TRENDLOG:
-                case BacnetObjectTypes.OBJECT_TREND_LOG_MULTIPLE:
-                    m_AddressSpaceMenuStrip.Items[3].Visible = true;
-                    break;
-
-                case BacnetObjectTypes.OBJECT_SCHEDULE:
-                    m_AddressSpaceMenuStrip.Items[4].Visible = true;
-                    break;
-
-                case BacnetObjectTypes.OBJECT_NOTIFICATION_CLASS:
-                    m_AddressSpaceMenuStrip.Items[5].Visible = true;
-                    break;
-
-                case BacnetObjectTypes.OBJECT_CALENDAR:
-                    m_AddressSpaceMenuStrip.Items[6].Visible = true;
-                    break;
-            }
-
-            // Allows delete menu 
-            if (objId.type!=BacnetObjectTypes.OBJECT_DEVICE)
-                m_AddressSpaceMenuStrip.Items[7].Visible = true;
+            (sender as TreeView).SelectedNode = (sender as TreeView).GetNodeAt(e.X, e.Y);
         }
 
         private void m_DataGrid_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
@@ -1680,25 +2258,88 @@ namespace Yabe
             this.Cursor = Cursors.WaitCursor;
             try
             {
-                //fetch end point
-                if (m_DeviceTree.SelectedNode == null) return;
-                else if (m_DeviceTree.SelectedNode.Tag == null) return;
-                else if (!(m_DeviceTree.SelectedNode.Tag is KeyValuePair<BacnetAddress, uint>)) return;
-                KeyValuePair<BacnetAddress, uint> entry = (KeyValuePair<BacnetAddress, uint>)m_DeviceTree.SelectedNode.Tag;
-                BacnetAddress adr = entry.Key;
-
+                KeyValuePair<BacnetAddress, uint> entry;
+                BacnetAddress adr;
                 BacnetClient comm;
 
-                if (m_DeviceTree.SelectedNode.Parent.Tag is BacnetClient)
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Tag;
-                else
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Parent.Tag; // a node under a router
-
                 //fetch object_id
-                if (m_AddressSpaceTree.SelectedNode == null) return;
-                else if (m_AddressSpaceTree.SelectedNode.Tag == null) return;
-                else if (!(m_AddressSpaceTree.SelectedNode.Tag is BacnetObjectId)) return;
-                BacnetObjectId object_id = (BacnetObjectId)m_AddressSpaceTree.SelectedNode.Tag;
+                BacnetObjectId object_id;
+
+                if(_selectedNode!=null)
+                {
+                    if(_selectedNode is Subscription)
+                    {
+                        Subscription subscription=_selectedNode as Subscription;
+                        //fetch object_id
+                        object_id = subscription.object_id;
+
+                        //fetch end point
+                        comm = subscription.comm;
+                        adr = subscription.adr;
+                    }
+                    else if(_selectedNode is TreeNode)
+                    {
+                        TreeNode selectedObject=_selectedNode as TreeNode;
+                        if(_selectedDevice != null)
+                        {
+                            //fetch end point
+                            if (_selectedDevice == null)
+                            {
+                                _selectedNode = null;
+                                m_DataGrid.SelectedObject = null;
+                                return;
+                            }
+                            else if (_selectedDevice.Tag == null)
+                            {
+                                _selectedNode = null;
+                                m_DataGrid.SelectedObject = null;
+                                return;
+                            }
+                            else if (!(_selectedDevice.Tag is KeyValuePair<BacnetAddress, uint>))
+                            {
+                                _selectedNode = null;
+                                m_DataGrid.SelectedObject = null;
+                                return;
+                            }
+
+                            entry = (KeyValuePair<BacnetAddress, uint>)_selectedDevice.Tag;
+                            adr = entry.Key;
+
+                            if (_selectedDevice.Parent.Tag is BacnetClient)
+                                comm = (BacnetClient)_selectedDevice.Parent.Tag;
+                            else
+                                comm = (BacnetClient)_selectedDevice.Parent.Parent.Tag; // a node under a router
+                            if (selectedObject.Tag == null) return;
+                            else if (!(selectedObject.Tag is BacnetObjectId)) return;
+                            object_id = (BacnetObjectId)selectedObject.Tag;
+                        }
+                        else
+                        {
+                            _selectedNode = null;
+                            m_DataGrid.SelectedObject = null;
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        _selectedNode = null;
+                        m_DataGrid.SelectedObject = null;
+                        return;
+                    }
+                }
+                else
+                {
+                    _selectedDevice = null;
+                    m_DataGrid.SelectedObject = null;
+                    return;
+                }
+
+
+                PropertyGrid pg = null;
+                if (s is PropertyGrid)
+                {
+                    pg = (PropertyGrid)s;
+                }
 
                 Utilities.CustomPropertyDescriptor c=null;
                 GridItem gridItem=e.ChangedItem;
@@ -1786,7 +2427,50 @@ namespace Yabe
                 }
 
                 //reload
-                UpdateGrid(m_AddressSpaceTree.SelectedNode);
+                if (_selectedNode != null)
+                {
+                    if (_selectedNode is Subscription)
+                    {
+                        Subscription subscription = _selectedNode as Subscription;
+                        UpdateGrid(subscription);
+                        if(pg!=null)
+                        {
+                            pg.SelectedGridItem = gridItem;
+                        }
+
+                    }
+                    else if (_selectedNode is TreeNode)
+                    {
+                        TreeNode selectedObject= _selectedNode as TreeNode;
+                        if (_selectedDevice!=null)
+                        {
+                            UpdateGrid(selectedObject);
+                            if (pg != null)
+                            {
+                                pg.SelectedGridItem = gridItem;
+                            }
+                        }
+                        else
+                        {
+                            _selectedNode = null;
+                            m_DataGrid.SelectedObject = null;
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        _selectedNode = null;
+                        m_DataGrid.SelectedObject = null;
+                        return;
+                    }
+                }
+                else
+                {
+                    _selectedDevice = null;
+                    m_DataGrid.SelectedObject = null;
+                    return;
+                }
+
             }
             finally
             {
@@ -2037,7 +2721,7 @@ namespace Yabe
                 if (MessageBox.Show("Are you sure you want to delete this object ?", object_id.ToString(), MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK)
                 {
                     comm.DeleteObjectRequest(adr, object_id);
-                    m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(m_DeviceTree.SelectedNode));
+                    m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(this._selectedDevice));
                 }
 
             }
@@ -2137,7 +2821,56 @@ namespace Yabe
             }
         }
 
-        private bool CreateSubscription(BacnetClient comm, BacnetAddress adr, uint device_id, BacnetObjectId object_id, bool WithGraph)
+        private string ShortenObjectId(string objectId)
+        {
+            string result = objectId;
+
+            if(result.StartsWith("OBJECT_"))
+            {
+                result = result.Substring(7);
+            }
+
+            if(result.Contains("ANALOG_INPUT"))
+            {
+                result = result.Replace("ANALOG_INPUT", "AI");
+            }
+            if (result.Contains("ANALOG_OUTPUT"))
+            {
+                result = result.Replace("ANALOG_OUTPUT", "AO");
+            }
+            if (result.Contains("ANALOG_VALUE"))
+            {
+                result = result.Replace("ANALOG_VALUE", "AV");
+            }
+            if (result.Contains("BINARY_INPUT"))
+            {
+                result = result.Replace("BINARY_INPUT", "BI");
+            }
+            if (result.Contains("BINARY_OUTPUT"))
+            {
+                result = result.Replace("BINARY_OUTPUT", "BO");
+            }
+            if (result.Contains("BINARY_VALUE"))
+            {
+                result = result.Replace("BINARY_VALUE", "BV");
+            }
+            if (result.Contains("MULTI_STATE_INPUT"))
+            {
+                result = result.Replace("MULTI_STATE_INPUT", "MI");
+            }
+            if (result.Contains("MULTI_STATE_OUTPUT"))
+            {
+                result = result.Replace("MULTI_STATE_OUTPUT", "MO");
+            }
+            if (result.Contains("MULTI_STATE_VALUE"))
+            {
+                result = result.Replace("MULTI_STATE_VALUE", "MV");
+            }
+
+            return result;
+        }
+
+        private bool CreateSubscription(BacnetClient comm, BacnetAddress adr, uint device_id, BacnetObjectId object_id, bool WithGraph, int pollPeriod = -1)
         {
             this.Cursor = Cursors.WaitCursor;
             try
@@ -2153,73 +2886,188 @@ namespace Yabe
                 string sub_key = adr.ToString() + ":" + device_id + ":" + m_next_subscription_id;
                 Subscription sub = new Subscription(comm, adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), object_id, sub_key, m_next_subscription_id);
 
-                //add to list
-                ListViewItem itm = m_SubscriptionView.Items.Add(device_id.ToString());
-                itm.SubItems.Add(object_id.ToString().Substring(7));
+                string obj_id = object_id.ToString().Substring(7);
+                obj_id = ShortenObjectId(obj_id);
+
                 CurveToolTip = GetObjectName(comm, adr, object_id);
-                itm.SubItems.Add(CurveToolTip);   //name
-                itm.SubItems.Add("");   //value
-                itm.SubItems.Add("");   //time
-                itm.SubItems.Add("Not started");   //status
+
+                DialogResult useCov;
+                
+                if (pollPeriod<0)
+                {
+                    /*useCov = MessageBox.Show(String.Format("Do you want to use COV notifications for {0}?", CurveToolTip), "COV Subscription", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                    if (useCov == DialogResult.Cancel)
+                    {
+                        return false;
+                    }*/
+
+                    if(CovOpn.Checked)
+                    {
+                        useCov = DialogResult.Yes;
+                    }
+                    else
+                    {
+                        useCov = DialogResult.No;
+                    }
+
+                }
+                else if(pollPeriod==0)
+                {
+                    useCov = DialogResult.Yes;
+                }
+                else
+                {
+                    useCov = DialogResult.No;
+                }
+
+
+                //add to list
+                ListViewItem itm = m_SubscriptionView.Items.Add("");//device_id.ToString());
+                // Always a blank on [0] to allow for the "Show" Column
+
+
+                // device id is index [1]
+                itm.SubItems.Add(device_id.ToString()); 
+                itm.SubItems.Add(obj_id); // object id [2]
+                itm.SubItems.Add(CurveToolTip);   //name [3]
+                itm.SubItems.Add("");   //value [4]
+                itm.SubItems.Add("");   //time [5]
+                itm.SubItems.Add("Not started");   //status [6]
                 if (Properties.Settings.Default.ShowDescriptionWhenUsefull)
                 {
                     IList<BacnetValue> values;
                     if (comm.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_DESCRIPTION, out values))
                     {
-                        itm.SubItems.Add(values[0].Value.ToString());   // Description
+                        itm.SubItems.Add(values[0].Value.ToString());   // Description [7]
                         CurveToolTip = CurveToolTip + Environment.NewLine + values[0].Value.ToString();
                     }
                 }
                 else
-                    itm.SubItems.Add(""); // Description
+                    itm.SubItems.Add(""); // Description [7]
 
-                itm.SubItems.Add("");   // Graph Line Color
+                itm.SubItems.Add("");   // Graph Line Color [8]
+                itm.SubItems.Add(WithGraph.ToString());   // With Graph? [9]
+                itm.SubItems.Add("-1");   // COV or Polled with Period [10]
                 itm.Tag = sub;
-
                 lock (m_subscription_list)
                 {
                     m_subscription_list.Add(sub_key, itm);
                     if (WithGraph)
                     {
-                        RollingPointPairList points = new RollingPointPairList(1000);
-                        m_subscription_points.Add(sub_key, points);
-                        Color color= GraphColor[Pane.CurveList.Count%GraphColor.Length];
-                        LineItem l = Pane.AddCurve("", points, color, Properties.Settings.Default.GraphDotStyle);
-                        l.Tag = CurveToolTip; // store the Name to display it in the Tooltip
-                        itm.SubItems[7].BackColor = color;
-                        itm.UseItemStyleForSubItems = false;
-                        CovGraph.Invalidate();
+                        itm.Checked = true;
                     }
+                    RollingPointPairList points = new RollingPointPairList(10000);
+                    m_subscription_points.Add(sub_key, points);
+                    Color color= GraphColor[Pane.CurveList.Count%GraphColor.Length];
+                    LineItem l = Pane.AddCurve("", points, color, Properties.Settings.Default.GraphDotStyle);
+                    l.IsVisible = itm.Checked;
+                    l.Tag = CurveToolTip; // store the Name to display it in the Tooltip
+                    itm.SubItems[8].BackColor = color;
+                    itm.UseItemStyleForSubItems = false;
+                    CovGraph.Invalidate();
+                    //}
                 }
 
                 //add to device
 
                 bool SubscribeOK = false;
 
-                try
+                if (useCov == DialogResult.Yes)
                 {
-                    SubscribeOK = comm.SubscribeCOVRequest(adr, object_id, m_next_subscription_id, false, Properties.Settings.Default.Subscriptions_IssueConfirmedNotifies, Properties.Settings.Default.Subscriptions_Lifetime);
+                    try
+                    {
+                        SubscribeOK = comm.SubscribeCOVRequest(adr, object_id, m_next_subscription_id, false, Properties.Settings.Default.Subscriptions_IssueConfirmedNotifies, Properties.Settings.Default.Subscriptions_Lifetime);
+                    }
+                    catch { }
                 }
-                catch { }
 
                 if (SubscribeOK == false) // echec : launch period acquisiton in the ThreadPool
                 {
+                    //double boxSize = 1.0;
+                    string prompt = String.Empty;
+                    if(useCov == DialogResult.No)
+                    {
+                        prompt = String.Format("Point will be polled - enter poll period in milliseconds.", CurveToolTip);
+                        //boxSize = 2.0;
+                    }
+                    else
+                    {
+                        prompt = String.Format("Failed to subscribe to COV for {0}. Point will be polled instead - enter poll period in milliseconds.", CurveToolTip);
+                        Trace.TraceWarning(String.Format("Failed to subscribe to COV for {0}. Point will be polled instead - enter poll period in milliseconds.", CurveToolTip));
+                        //boxSize = 4.0;
+                    }
                     sub.is_active_subscription = false;
-                    var Qst = new GenericInputBox<NumericUpDown>("Error during subscribe", "Polling period replacement (s)",
+
+                    //DialogResult rep;
+                    //GenericInputBox<NumericUpDown> Qst = null;
+                    int period = -1;
+                    if (pollPeriod>0)
+                    {
+                        period = pollPeriod;
+                    }
+                    else
+                    {
+                        /*Qst = new GenericInputBox<NumericUpDown>("Polling period (ms)",prompt,
                               (o) =>
                               {
-                                  o.Minimum = 1; o.Maximum = 120; o.Value = Properties.Settings.Default.Subscriptions_ReplacementPollingPeriod;
-                              });
+                                  o.Minimum = MIN_POLL_PERIOD; o.Maximum = MAX_POLL_PERIOD; o.Value = Math.Max(Math.Min(Properties.Settings.Default.Subscriptions_ReplacementPollingPeriod, MAX_POLL_PERIOD), MIN_POLL_PERIOD);
+                              },
+                              boxSize);
 
-                    DialogResult rep = Qst.ShowDialog();
-                    if (rep == DialogResult.OK)
-                    {
-                        int period = (int)Qst.genericInput.Value;
-                        Properties.Settings.Default.Subscriptions_ReplacementPollingPeriod = (uint)period;
-                        ThreadPool.QueueUserWorkItem(a => ReadPropertyPoolingRemplacementToCOV(sub, period));
+                        rep = Qst.ShowDialog();*/
+
+                        period = (int)pollRateSelector.Value;
+                        //Properties.Settings.Default.Subscriptions_ReplacementPollingPeriod = (uint)period;
+
+                        /*if (rep == DialogResult.OK)
+                        {
+                            if (Qst != null) { period = (int)Qst.genericInput.Value; }
+                            Properties.Settings.Default.Subscriptions_ReplacementPollingPeriod = (uint)period;
+
+                        }
+                        else
+                        {
+                            lock (m_subscription_list)
+                            {
+                                m_subscription_list.Remove(sub_key);
+                                //remove from interface
+                                m_SubscriptionView.Items.Remove(itm);
+                                //if (WithGraph)
+                                //{
+                                try
+                                {
+                                    RollingPointPairList points = m_subscription_points[sub_key];
+                                    foreach (LineItem l in Pane.CurveList)
+                                        if (l.Points == points)
+                                        {
+                                            Pane.CurveList.Remove(l);
+                                            break;
+                                        }
+
+                                    m_subscription_points.Remove(sub_key);
+                                }
+                                catch { }
+                                //}
+                            }
+
+                            return false;
+                        }*/
                     }
 
-                    return false; // COV is not done
+                    lock (m_subscription_list)
+                    {
+                        itm.SubItems[10].Text = period.ToString();
+                    }
+
+                    ThreadPool.QueueUserWorkItem(a => ReadPropertyPoolingRemplacementToCOV(sub, period));
+                }
+                else
+                {
+                    // COV - set period indicator to 0
+                    lock (m_subscription_list)
+                    {
+                        itm.SubItems[10].Text = "0";
+                    }
                 }
             }
             catch
@@ -2238,21 +3086,328 @@ namespace Yabe
         // x seconds poolling period
         private void ReadPropertyPoolingRemplacementToCOV(Subscription sub, int period)
         {
+            int errorCount = 0;
+            bool readPropertyMultipleFailedPreviously = false;
+            bool wasPaused = !_plotterPauseFlag;
+            bool firstIteration = true;
+
+            // Save this for later so maybe we can notify the user when polling has crashed/stopped
+            ListViewItem.ListViewSubItem statusItemFromListBox = null;
+            lock (m_subscription_list)
+            {
+                if(m_subscription_list.ContainsKey(sub.sub_key))
+                {
+                    statusItemFromListBox = m_subscription_list[sub.sub_key].SubItems[6];
+                }
+            }
+
             for (; ; )
             {
-                IList<BacnetPropertyValue> values = new List<BacnetPropertyValue>();
-                if (ReadProperty(sub.comm, sub.adr, sub.object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, ref values) == false)
-                    return; // maybe here we could not go away 
+                if (!firstIteration)
+                {
+                    Thread.Sleep(Math.Max(Math.Min(MAX_POLL_PERIOD, period), MIN_POLL_PERIOD));
+
+                    if (!_plotterPause.WaitOne(0))
+                    {
+                        wasPaused = true;
+                        _plotterPause.WaitOne();
+                    }
+
+                    if (wasPaused)
+                    {
+                        Thread.Sleep(Math.Max(Math.Min(MAX_POLL_PERIOD, _rand.Next(0, 250)), MIN_POLL_PERIOD));
+                    }
+                }
+                else
+                {
+                    firstIteration = false;
+                }
+
+                IList<BacnetPropertyValue> presentValueValues = new List<BacnetPropertyValue>();
+                IList<BacnetPropertyValue> statusFlagValues = new List<BacnetPropertyValue>();
+
+                BacnetPropertyReference[] propertiesToPoll = new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_PRESENT_VALUE, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL), new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_STATUS_FLAGS, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL) };
+                IList<BacnetReadAccessResult> multi_value_list = null;
+
+                bool readValuesSuccessfully = false;
+
+                if (sub == null)
+                {
+                    break;
+                }
+
+                if (sub.comm == null)
+                {
+                    break;
+                }
 
                 lock (m_subscription_list)
-                    if (m_subscription_list.ContainsKey(sub.sub_key))
-                        // COVNotification replacement
-                        OnCOVNotification(sub.comm, sub.adr, 0, sub.subscribe_id, sub.device_id, sub.object_id, 0, false, values, BacnetMaxSegments.MAX_SEG0);
-                    else
-                        return;
+                {
+                    if (!m_subscription_list.ContainsKey(sub.sub_key))
+                    {
+                        break;
+                    }
+                }
 
-                Thread.Sleep(Math.Max(1, period) * 1000);
+                if (!readPropertyMultipleFailedPreviously)
+                {
+                    try
+                    {
+                        // We have no real way of checking wheter sub.comm has ben disposed other than catching the exception?
+                        // I suppose hopefully sub.is_active_subscription will be false by the time that happens...
+                        bool readMultipleSuccessfully = sub.comm.ReadPropertyMultipleRequest(sub.adr, sub.object_id, propertiesToPoll, out multi_value_list);
+                        if(!readMultipleSuccessfully)
+                        {
+                            // Timeout, could potentially just return?
+                            readPropertyMultipleFailedPreviously = true;
+                        }
+                        readValuesSuccessfully = readMultipleSuccessfully;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex is NullReferenceException)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            readPropertyMultipleFailedPreviously = true;
+                            Trace.TraceError(String.Format("ReadPropertyMultiple failed while polling device {0}, object {1} - trying ReadProperty from now on.", sub.device_id.instance.ToString(), sub.object_id.ToString()));
+                        }
+                    }
+                }
+
+                if (readValuesSuccessfully)
+                {
+                    // ReadPropertyMultiple succeeded
+                    try
+                    {
+                        lock (m_subscription_list)
+                        {
+                            if (m_subscription_list.ContainsKey(sub.sub_key))
+                            {
+                                OnCOVNotification(sub.comm, sub.adr, 0, sub.subscribe_id, sub.device_id, sub.object_id, 0, false, multi_value_list[0].values, BacnetMaxSegments.MAX_SEG0);
+                                errorCount = 0;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        errorCount++;
+                        if (errorCount >= 4)
+                        {
+                            Trace.TraceError(String.Format("The Notify function (while polling device {0}, object {1} using ReadPropertyMultiple) failed - last error was {2} - {3}.", sub.device_id.instance.ToString(), sub.object_id.ToString(), ex.GetType().Name, ex.Message));
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    // ReadPropertyMultiple failed, try ReadProperty
+                    // ReadProperty Ignores any internal exceptions, so we don't need to catch
+                    bool readSuccessValue = ReadProperty(sub.comm, sub.adr, sub.object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, ref presentValueValues);
+                    if (!readSuccessValue)
+                    {
+                        errorCount++;
+                        if (errorCount >= 4)
+                        {
+                            Trace.TraceError(String.Format("The ReadProperty function (while polling of device {0}, object {1}) failed.", sub.device_id.instance.ToString(), sub.object_id.ToString()));
+                            break; // maybe here we could not go away
+                        }
+                        continue;
+                    }
+
+                    bool readSuccessStatus = false;
+                    // Only continue if the previous operation succeeded
+                    if (readSuccessValue)
+                    {
+                        readSuccessStatus = ReadProperty(sub.comm, sub.adr, sub.object_id, BacnetPropertyIds.PROP_STATUS_FLAGS, ref statusFlagValues);
+                        if (!readSuccessStatus)
+                        {
+                            errorCount++;
+                            if (errorCount >= 4)
+                            {
+                                Trace.TraceError(String.Format("The ReadProperty function (while polling of device {0}, object {1}) failed.", sub.device_id.instance.ToString(), sub.object_id.ToString()));
+                                break; // maybe here we could not go away
+                            }
+                            continue;
+                        }
+                    }
+
+                    readValuesSuccessfully = true;
+
+                    List<BacnetPropertyValue> presentValueAndStatusFlagsValues = new List<BacnetPropertyValue>();
+                    if (presentValueValues.Count > 0)
+                    {
+                        presentValueAndStatusFlagsValues.Add(presentValueValues[0]);
+                    }
+                    if (statusFlagValues.Count > 0)
+                    {
+                        presentValueAndStatusFlagsValues.Add(statusFlagValues[0]);
+                    }
+
+                    if (presentValueAndStatusFlagsValues.Count > 0)
+                    {
+                        try
+                        {
+                            lock (m_subscription_list)
+                            {
+                                if (m_subscription_list.ContainsKey(sub.sub_key))
+                                {
+                                    OnCOVNotification(sub.comm, sub.adr, 0, sub.subscribe_id, sub.device_id, sub.object_id, 0, false, presentValueAndStatusFlagsValues, BacnetMaxSegments.MAX_SEG0);
+                                    errorCount = 0;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            errorCount++;
+                            if (errorCount >= 4)
+                            {
+                                Trace.TraceError(String.Format("The Notify function (while polling of device {0}, object {1} using ReadProperty) failed - last error was {2} - {3}.", sub.device_id.instance.ToString(), sub.object_id.ToString(), ex.GetType().Name, ex.Message));
+                                break;
+                            }
+                        }
+                    }
+                }
             }
+
+            if(statusItemFromListBox!=null && statusItemFromListBox.Text!=null)
+            {
+                this.BeginInvoke((MethodInvoker)delegate
+                {
+                    statusItemFromListBox.Text = "Polling stopped";
+                });
+            }
+
+        }
+
+        private void TogglePlotter()
+        {
+
+            if (_plotterPauseFlag)
+            {
+                _plotterPauseFlag = false;
+                btnPlay.Text = PLAY_BUTTON_TEXT_WHEN_PAUSED;
+                _plotterPause.Reset();
+            }
+            else
+            {
+                _plotterPauseFlag = true;
+                btnPlay.Text = PLAY_BUTTON_TEXT_WHEN_RUNNING;
+                _plotterPause.Set();
+            }
+        }
+
+        private void ExportCovGraph()
+        {
+            StringBuilder sb = new StringBuilder();
+            int count=0;
+            foreach (KeyValuePair<string,ListViewItem> subscription in m_subscription_list)
+            {
+                // sub_key = adr.ToString() + ":" + device_id + ":" + m_next_subscription_id;
+                bool hasGraph = false;
+                if(!string.IsNullOrWhiteSpace(subscription.Value.SubItems[9].Text))
+                {
+                    bool graphBoolParsed;
+                    if(bool.TryParse(subscription.Value.SubItems[9].Text, out graphBoolParsed))
+                    {
+                        hasGraph = graphBoolParsed;
+                    }
+                }
+
+                sb.Append(hasGraph ? "P" : "T");
+                sb.Append(';');
+
+                string key = subscription.Key;
+                string[] keyComponents = key.Split(':');
+                if(keyComponents.Length!=4)
+                {
+                    continue;
+                }
+                sb.Append(keyComponents[2]);
+                sb.Append(';');
+                string value = string.Empty;
+                try
+                {
+                    value = ((Subscription)subscription.Value.Tag).object_id.ToString();
+                    //value = subscription.Value.SubItems[2].Text;
+                }
+                catch { continue; }
+                if(value.Length==0 || !value.Contains(':'))
+                {
+                    continue;
+                }
+                sb.Append(value);
+                sb.Append(';');
+                sb.AppendLine(subscription.Value.SubItems[10].Text);
+                count++;
+            }
+            if (count==0)
+            {
+                MessageBox.Show("No valid setup on COV graph to write to file.", "Write to file fail", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                return;
+            }
+            string path = string.Empty;
+            string fullPath = string.Empty;
+            if (!String.IsNullOrWhiteSpace(Properties.Settings.Default.COV_Export_Path) && Properties.Settings.Default.COV_Export_Path.Length>0)
+            {
+                path = Path.GetDirectoryName(Properties.Settings.Default.COV_Export_Path);
+                while(path.StartsWith("\\"))
+                {
+                    path = path.Substring(1);
+                }
+                if(!String.IsNullOrWhiteSpace(path) && !Directory.Exists(path))
+                {
+                    // Attempt to create
+                    try
+                    {
+                        Directory.CreateDirectory(path);
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show(String.Format("Failed to create directory \"{0}\". {1} - {2}", path, e.GetType().ToString(), e.Message), "Write to file error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+            }
+            DateTime now = DateTime.Now;
+            string fileName = String.Format("COV_Graph_Setup_Export_{0:0000}-{1:00}-{2:00}_{3:00}.{4:00}.{5:00}.txt",
+                    now.Year,             /* Year in which the file was created */
+                    now.Month,            /* Month in which the file was created */
+                    now.Day,              /* Day in which the file was created */
+                    now.Hour,             /* Hour in which the file was created */
+                    now.Minute,           /* Minute in which the file was created */
+                    now.Second);          /* Second in which the file was created */
+
+            if(string.IsNullOrWhiteSpace(path))
+            {
+                fullPath = fileName;
+            }
+            else
+            {
+                fullPath = Path.Combine(path, fileName);
+            }
+
+            try
+            {
+                File.WriteAllText(fullPath, sb.ToString());
+            }
+            catch(Exception e)
+            {
+                MessageBox.Show(String.Format("Failed to write COV graph setup data to file \"{0}\". {1} - {2}", fullPath, e.GetType().ToString(), e.Message), "Write to file error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            MessageBox.Show(String.Format("Wrote COV graph setup data to file \"{0}\".", fullPath), "Write to file success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void m_SubscriptionView_DragDrop(object sender, DragEventArgs e)
@@ -2261,17 +3416,17 @@ namespace Yabe
             if (e.Data.GetDataPresent("CodersLab.Windows.Controls.NodesCollection", false))
             {
                 //fetch end point
-                if (m_DeviceTree.SelectedNode == null) return;
-                else if (m_DeviceTree.SelectedNode.Tag == null) return;
-                else if (!(m_DeviceTree.SelectedNode.Tag is KeyValuePair<BacnetAddress, uint>)) return;
-                KeyValuePair<BacnetAddress, uint> entry = (KeyValuePair<BacnetAddress, uint>)m_DeviceTree.SelectedNode.Tag;
+                if (_selectedDevice == null) return;
+                else if (_selectedDevice.Tag == null) return;
+                else if (!(_selectedDevice.Tag is KeyValuePair<BacnetAddress, uint>)) return;
+                KeyValuePair<BacnetAddress, uint> entry = (KeyValuePair<BacnetAddress, uint>)_selectedDevice.Tag;
                 BacnetAddress adr = entry.Key;
 
                 BacnetClient comm;
-                if (m_DeviceTree.SelectedNode.Parent.Tag is BacnetClient)
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Tag;
+                if (_selectedDevice.Parent.Tag is BacnetClient)
+                    comm = (BacnetClient)_selectedDevice.Parent.Tag;
                 else  // a routed device
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Parent.Tag;
+                    comm = (BacnetClient)_selectedDevice.Parent.Parent.Tag;
 
                 //fetch object_id
                 var nodes = (CodersLab.Windows.Controls.NodesCollection)e.Data.GetData("CodersLab.Windows.Controls.NodesCollection");
@@ -2309,13 +3464,18 @@ namespace Yabe
                         {
 
                             string[] description = line.Split(';');
-                            if (description.Length == 2)
+                            if (description.Length == 3)
                             {
                                 try
                                 {
                                     uint deviceId;
-                                    deviceId = Convert.ToUInt32(description[0]);
-                                    BacnetObjectId objectId = BacnetObjectId.Parse("OBJECT_" + description[1]);
+                                    deviceId = Convert.ToUInt32(description[1]);
+                                    string objectIdString = description[2];
+                                    if(!objectIdString.StartsWith("OBJECT_"))
+                                    {
+                                        objectIdString = "OBJECT_" + objectIdString;
+                                    }
+                                    BacnetObjectId objectId = BacnetObjectId.Parse(objectIdString);
 
                                     foreach (var E in m_devices)
                                     {
@@ -2324,7 +3484,37 @@ namespace Yabe
                                         {
                                             if (deviceEntry.Value == deviceId)
                                             {
-                                                CreateSubscription(E.Key, deviceEntry.Key, deviceId, objectId, sender == CovGraph);
+                                                CreateSubscription(E.Key, deviceEntry.Key, deviceId, objectId, description[0].Equals("P",StringComparison.OrdinalIgnoreCase));
+                                                break;
+                                            }
+                                        }
+
+                                    }
+                                }
+                                catch { }
+
+                            }
+                            else if (description.Length == 4)
+                            {
+                                try
+                                {
+                                    uint deviceId;
+                                    deviceId = Convert.ToUInt32(description[1]);
+                                    string objectIdString = description[2];
+                                    if (!objectIdString.StartsWith("OBJECT_"))
+                                    {
+                                        objectIdString = "OBJECT_" + objectIdString;
+                                    }
+                                    BacnetObjectId objectId = BacnetObjectId.Parse(objectIdString);
+                                    int period = Int32.Parse(description[3]);
+                                    foreach (var E in m_devices)
+                                    {
+                                        var comm = E.Value.Devices;
+                                        foreach (var deviceEntry in comm)
+                                        {
+                                            if (deviceEntry.Value == deviceId)
+                                            {
+                                                CreateSubscription(E.Key, deviceEntry.Key, deviceId, objectId, description[0].Equals("P", StringComparison.OrdinalIgnoreCase), period);
                                                 break;
                                             }
                                         }
@@ -2350,8 +3540,9 @@ namespace Yabe
             {
                 //commit setup
                 Properties.Settings.Default.GUI_SplitterButtom = m_SplitContainerButtom.SplitterDistance;
-                Properties.Settings.Default.GUI_SplitterLeft = m_SplitContainerLeft.SplitterDistance;
+                Properties.Settings.Default.GUI_SplitterMiddle = m_SplitContainerLeft.SplitterDistance;
                 Properties.Settings.Default.GUI_SplitterRight = m_SplitContainerRight.SplitterDistance;
+                Properties.Settings.Default.GUI_SplitterLeft = splitContainer4.SplitterDistance;
                 Properties.Settings.Default.GUI_FormSize = this.Size;
                 Properties.Settings.Default.GUI_FormState = this.WindowState.ToString();
 
@@ -2366,10 +3557,7 @@ namespace Yabe
                 Properties.Settings.Default.Save();
 
                 // save object name<->id file
-                Stream stream = File.Open(Properties.Settings.Default.ObjectNameFile, FileMode.Create);
-                BinaryFormatter bf = new BinaryFormatter();
-                bf.Serialize(stream, DevicesObjectsName);
-                stream.Close();
+                DoSaveObjectNamesIfNecessary();
 
             }
             catch
@@ -2430,9 +3618,12 @@ namespace Yabe
 
                         CovGraph.AxisChange();
                         CovGraph.Invalidate();
+                        //m_SubscriptionView.Items.Remove(itm);
+                    }
+                    else
+                    {
                         m_SubscriptionView.Items.Remove(itm);
                     }
-
                 }
             }
         }
@@ -2498,9 +3689,30 @@ namespace Yabe
 
         private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            bool prevVertOrientation = Properties.Settings.Default.Vertical_Object_Splitter_Orientation;
+
             SettingsDialog dlg = new SettingsDialog();
             dlg.SelectedObject = Properties.Settings.Default;
             dlg.ShowDialog(this);
+
+            bool changedOrientation = prevVertOrientation ^ Properties.Settings.Default.Vertical_Object_Splitter_Orientation;
+
+            if(changedOrientation)
+            {
+                if (Properties.Settings.Default.Vertical_Object_Splitter_Orientation)
+                {
+                    splitContainer4.Orientation = Orientation.Vertical;
+                    Properties.Settings.Default.GUI_SplitterLeft = (int)(m_SplitContainerLeft.SplitterDistance * 0.45f);
+                }
+                else
+                {
+                    splitContainer4.Orientation = Orientation.Horizontal;
+                    Properties.Settings.Default.GUI_SplitterLeft = m_SplitContainerButtom.SplitterDistance / 2;
+                }
+                splitContainer4.SplitterDistance = Properties.Settings.Default.GUI_SplitterLeft;
+
+            }
+
         }
 
         /// <summary>
@@ -2990,14 +4202,39 @@ namespace Yabe
                     if (t.ToolTipText == "")
                     {
                         lock (DevicesObjectsName)
+                        {
                             DevicesObjectsName.Add(new Tuple<String, BacnetObjectId>(adr.FullHashString(), Bacobj), Identifier);
+                            objectNamesChangedFlag = true;
 
-                        ChangeTreeNodePropertyName(t, Identifier);
+                            Tuple<string,BacnetObjectId> adrHash = new Tuple<string, BacnetObjectId>(adr.FullHashString(), Bacobj);
+
+                            if (DevicesObjectsName.ContainsKey(adrHash))
+                            {
+                                if (!DevicesObjectsName[adrHash].Equals(Identifier.ToString()))
+                                {
+                                    DevicesObjectsName.Remove(adrHash);
+                                    DevicesObjectsName.Add(adrHash, Identifier.ToString());
+                                    objectNamesChangedFlag = true;
+                                }
+                            }
+                            else
+                            {
+                                DevicesObjectsName.Add(adrHash, Identifier.ToString());
+                                objectNamesChangedFlag = true;
+                            }
+
+                        }
+
+                        // Optimised for speed, so we don't do this one-by-one. We save the data and update it at the end.
+                        //ChangeTreeNodePropertyName(t, Identifier);
                     }
                 }
 
                 Sw_EDE.Close();
                 Sw_StateText.Close();
+
+                // Now re-display the tree
+                m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(this._selectedDevice));
 
                 //display
                 MessageBox.Show(this, "Done", "Export done", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -3104,12 +4341,13 @@ namespace Yabe
                     if (tn.ToolTipText == "")
                     {
                         BacnetReadAccessResult r = result.Single(o => o.objectIdentifier.Equals(b));
-                        ChangeTreeNodePropertyName(tn, r.values[0].value[0].ToString());
+                        // ChangeTreeNodePropertyName(tn, r.values[0].value[0].ToString());
                         lock (DevicesObjectsName)
                         {
                             var t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), (BacnetObjectId)tn.Tag);
                             DevicesObjectsName.Remove(t); // sometimes the same object appears at several place (in Groups for instance).
                             DevicesObjectsName.Add(t, r.values[0].value[0].ToString());
+                            objectNamesChangedFlag = true;
                         }
                     }
                 }
@@ -3133,6 +4371,8 @@ namespace Yabe
             if (bras.Count==0)
                 IsOK = true;
             else
+            {
+                this.Cursor = Cursors.WaitCursor;
                 try
                 {
                     IList<BacnetReadAccessResult> result = null;
@@ -3143,15 +4383,23 @@ namespace Yabe
                     }
                 }
                 catch{}
-
-            // Fail, so go One by One, in a background thread
-            if (!IsOK)
+            }
+            
+            if (IsOK)
+            {
+                // We did not update the tree as we went (for speed), so do it all at once now
+                m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(this._selectedDevice));
+                this.Cursor = Cursors.Default;
+            }
+            else
+            {
+                // Fail, so go One by One, in a background thread
                 System.Threading.ThreadPool.QueueUserWorkItem((o) =>
                 {
                     ChangeObjectIdByNameOneByOne(m_AddressSpaceTree.Nodes, comm, adr, AsynchRequestId);
-                });  
-
-            comm.Retries = _retries;
+                });
+                this.Cursor = Cursors.Default;
+            }
         }
 
         private void ChangeObjectIdByNameOneByOne(TreeNodeCollection tnc, BacnetClient comm, BacnetAddress adr, int AsynchRequestId)
@@ -3161,30 +4409,40 @@ namespace Yabe
 
             foreach (TreeNode tn in tnc)
             {
-                if ((tn.ToolTipText == "")&&(tn.Tag!=null))
+                if ((tn.ToolTipText == "") && (tn.Tag != null))
                 {
                     IList<BacnetValue> name;
-                    if (comm.ReadPropertyRequest(adr, (BacnetObjectId)tn.Tag, BacnetPropertyIds.PROP_OBJECT_NAME, out name) == true)
+                    try
                     {
-                        if (AsynchRequestId != this.AsynchRequestId) // Selected device is no more the good one
+                        if (comm.ReadPropertyRequest(adr, (BacnetObjectId)tn.Tag, BacnetPropertyIds.PROP_OBJECT_NAME, out name) == true)
                         {
-                            comm.Retries = _retries;
-                            return;
-                        }
-
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            if (AsynchRequestId != this.AsynchRequestId) return; // another test in the GUI thread
-
-                            ChangeTreeNodePropertyName(tn, name[0].Value.ToString());
-
-                            lock (DevicesObjectsName)
+                            if (AsynchRequestId != this.AsynchRequestId) // Selected device is no more the good one
                             {
-                                var t=new Tuple<String, BacnetObjectId>(adr.FullHashString(), (BacnetObjectId)tn.Tag);
-                                DevicesObjectsName.Remove(t); // sometimes the same object appears at several place (in Groups for instance).
-                                DevicesObjectsName.Add(t, name[0].Value.ToString());
+                                comm.Retries = _retries;
+                                return;
                             }
-                        });
+
+                            this.Invoke((MethodInvoker)delegate
+                            {
+                                if (AsynchRequestId != this.AsynchRequestId) return; // another test in the GUI thread
+
+                                // We are already going on-by-one (SLOW), in a different thread, so just update
+                                // as we go. Don't bother optimising (Tested and only ~15% faster in this case)
+                                ChangeTreeNodePropertyName(tn, name[0].Value.ToString());
+
+                                lock (DevicesObjectsName)
+                                {
+                                    var t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), (BacnetObjectId)tn.Tag);
+                                    DevicesObjectsName.Remove(t); // sometimes the same object appears at several place (in Groups for instance).
+                                    DevicesObjectsName.Add(t, name[0].Value.ToString());
+                                    objectNamesChangedFlag = true;
+                                }
+                            });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.TraceWarning("Failed to obtain object name for object " + tn.Tag + ": " + ex);
                     }
                 }
 
@@ -3200,21 +4458,26 @@ namespace Yabe
         {
             //which file to upload?
             OpenFileDialog dlg = new OpenFileDialog();
-            dlg.FileName = Properties.Settings.Default.ObjectNameFile;
+            dlg.InitialDirectory = Path.GetDirectoryName(Properties.Settings.Default.Auto_Store_Object_Names_File);
             dlg.DefaultExt = "YabeMap";
             dlg.Filter = "Yabe Map files (*.YabeMap)|*.YabeMap|All files (*.*)|*.*";
             if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
             string filename = dlg.FileName;
-            Properties.Settings.Default.ObjectNameFile = filename;
+            
 
             try
             {
-                Stream stream = File.Open(Properties.Settings.Default.ObjectNameFile, FileMode.Open);
+                Stream stream = File.Open(filename, FileMode.Open);
                 BinaryFormatter bf = new BinaryFormatter();
                 var d = (Dictionary<Tuple<String, BacnetObjectId>, String>)bf.Deserialize(stream);
                 stream.Close();
 
-                if (d != null) DevicesObjectsName = d;
+                if (d != null)
+                {
+                    DevicesObjectsName = d;
+                    objectNamesChangedFlag = true;
+                    Trace.TraceInformation("Loaded object names from \"" + filename + "\".");
+                }
             }
             catch
             {
@@ -3227,19 +4490,18 @@ namespace Yabe
         {
 
             SaveFileDialog dlg = new SaveFileDialog();
-            dlg.FileName = Properties.Settings.Default.ObjectNameFile;
+            dlg.InitialDirectory = Path.GetDirectoryName(Properties.Settings.Default.Auto_Store_Object_Names_File);
             dlg.DefaultExt = "YabeMap";
             dlg.Filter = "Yabe Map files (*.YabeMap)|*.YabeMap|All files (*.*)|*.*";
             if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
             string filename = dlg.FileName;
-            Properties.Settings.Default.ObjectNameFile = filename;
-
             try
             {
-                Stream stream = File.Open(Properties.Settings.Default.ObjectNameFile, FileMode.Create);
+                Stream stream = File.Open(filename, FileMode.Create);
                 BinaryFormatter bf = new BinaryFormatter();
                 bf.Serialize(stream, DevicesObjectsName);
                 stream.Close();
+                Trace.TraceInformation("Saved object names to \"" + filename + "\".");
             }
             catch
             {
@@ -3277,12 +4539,13 @@ namespace Yabe
                         initialvalues = new BacnetPropertyValue[1];
                         initialvalues[0] = new BacnetPropertyValue();
                         initialvalues[0].property.propertyIdentifier = (uint)BacnetPropertyIds.PROP_OBJECT_NAME;
+                        initialvalues[0].property.propertyArrayIndex = System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL;
                         initialvalues[0].value = new BacnetValue[1];
                         initialvalues[0].value[0] = new BacnetValue(F.ObjectName.Text);
                     }
                     comm.CreateObjectRequest(adr, new BacnetObjectId((BacnetObjectTypes)F.ObjectType.SelectedIndex, (uint)F.ObjectId.Value), initialvalues);
 
-                    m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(m_DeviceTree.SelectedNode));
+                    m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(this._selectedDevice));
                 }
                 catch (Exception ex)
                 {
@@ -3309,9 +4572,65 @@ namespace Yabe
 
         private void cleanToolStripMenuItem_Click(object sender, EventArgs e)
         {             
-            DialogResult res = MessageBox.Show(this, "Clean all "+DevicesObjectsName.Count.ToString()+" entries, really ?", "Name database suppression", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
-            if (res==DialogResult.OK)
+            DialogResult res = MessageBox.Show(this, "Clean all "+DevicesObjectsName.Count.ToString()+" entries from \""+Properties.Settings.Default.Auto_Store_Object_Names_File+"\", really?", "Name database suppression", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+            if (res == DialogResult.OK)
+            {
                 DevicesObjectsName = new Dictionary<Tuple<String, BacnetObjectId>, String>();
+                Trace.TraceInformation("Created new object names dictionary.");
+                objectNamesChangedFlag = true;
+                DoSaveObjectNames();
+                // Enumerate each Transport Layer:
+                foreach (TreeNode transport in m_DeviceTree.Nodes[0].Nodes)
+                {
+                    //Enumerate each Parent Device:
+                    foreach (TreeNode node in transport.Nodes)
+                    {
+                        try
+                        {
+                            KeyValuePair<BacnetAddress, uint>? entryNullable = node.Tag as KeyValuePair<BacnetAddress, uint>?;
+                            if(entryNullable!=null)
+                            {
+                                KeyValuePair<BacnetAddress, uint> entry = entryNullable.Value;
+
+                                node.Text = "Device " + entry.Value + " - " + entry.Key.ToString(false);
+                                node.ToolTipText = "";
+                            }
+
+                        }
+                        catch(Exception)
+                        {
+
+                        }
+
+                        //Enumerate routed nodes
+                        foreach (TreeNode subNode in node.Nodes)
+                        {
+                            try
+                            {
+                                KeyValuePair<BacnetAddress, uint>? entryNullable2 = subNode.Tag as KeyValuePair<BacnetAddress, uint>?;
+                                if(entryNullable2!=null)
+                                {
+                                    KeyValuePair<BacnetAddress, uint> entry2 = entryNullable2.Value;
+                                    subNode.Text = "Device " + entry2.Value + " - " + entry2.Key.ToString(true);
+                                    subNode.ToolTipText = "";
+                                }
+                                
+                            }
+                            catch(Exception)
+                            {
+
+                            }
+                        }
+                    }
+                }
+
+                m_DeviceTree.SelectedNode = null;
+                m_AddressSpaceTree.SelectedNode = null;
+                m_AddressSpaceTree.Nodes.Clear();
+                m_DataGrid.SelectedObject = null;
+                _selectedDevice = null;
+                _selectedNode = null;
+            }
         }
 
         // Change the WritePriority Value
@@ -3389,6 +4708,301 @@ namespace Yabe
 
         #endregion
 
+        private void btnExport_Click(object sender, EventArgs e)
+        {
+            ExportCovGraph();
+        }
+
+        private void m_AddressSpaceTree_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            this.m_SubscriptionView.SelectedItems.Clear();
+            UpdateGrid(e.Node);
+            BacnetClient cl; BacnetAddress ba; BacnetObjectId objId;
+
+            // Hide all elements in the toolstip menu
+            foreach (object its in m_AddressSpaceMenuStrip.Items)
+                (its as ToolStripMenuItem).Visible = false;
+            // Set Subscribe always visible
+            m_AddressSpaceMenuStrip.Items[0].Visible = true;
+            // Set Search always visible
+            m_AddressSpaceMenuStrip.Items[8].Visible = true;
+
+            // Get the node type
+            GetObjectLink(out cl, out ba, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
+            // Set visible some elements depending of the object type
+            switch (objId.type)
+            {
+                case BacnetObjectTypes.OBJECT_FILE:
+                    m_AddressSpaceMenuStrip.Items[1].Visible = true;
+                    m_AddressSpaceMenuStrip.Items[2].Visible = true;
+                    break;
+
+                case BacnetObjectTypes.OBJECT_TRENDLOG:
+                case BacnetObjectTypes.OBJECT_TREND_LOG_MULTIPLE:
+                    m_AddressSpaceMenuStrip.Items[3].Visible = true;
+                    break;
+
+                case BacnetObjectTypes.OBJECT_SCHEDULE:
+                    m_AddressSpaceMenuStrip.Items[4].Visible = true;
+                    break;
+
+                case BacnetObjectTypes.OBJECT_NOTIFICATION_CLASS:
+                    m_AddressSpaceMenuStrip.Items[5].Visible = true;
+                    break;
+
+                case BacnetObjectTypes.OBJECT_CALENDAR:
+                    m_AddressSpaceMenuStrip.Items[6].Visible = true;
+                    break;
+            }
+
+            // Allows delete menu 
+            if (objId.type != BacnetObjectTypes.OBJECT_DEVICE)
+                m_AddressSpaceMenuStrip.Items[7].Visible = true;
+
+        }
+
+        private void m_SubscriptionView_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ListView.SelectedListViewItemCollection selectedSubscriptions = this.m_SubscriptionView.SelectedItems;
+            if(selectedSubscriptions==null || selectedSubscriptions.Count==0)
+            {
+                return;
+            }
+
+            this.m_AddressSpaceTree.SelectedNode = null;
+            this.m_AddressSpaceTree.SelectedNodes.Clear();
+
+            ListViewItem itm = selectedSubscriptions[0];
+
+            if(itm.Tag==null)
+            {
+                return;
+            }
+
+            if(itm.Tag is Subscription subscription)
+            {
+                UpdateGrid(subscription);
+            }
+        }
+
+        private void btnPlay_Click(object sender, EventArgs e)
+        {
+            TogglePlotter();
+        }
+
+        private void m_SubscriptionView_ItemChecked(object sender, ItemCheckedEventArgs e)
+        {
+            if(e.Item.Tag is Subscription sub)
+            {
+                lock (m_subscription_list)
+                {
+                    try
+                    {
+                        RollingPointPairList points = m_subscription_points[sub.sub_key];
+                        foreach (LineItem li in Pane.CurveList)
+                            if (li.Points == points)
+                            {
+                                li.IsVisible = e.Item.Checked;
+                                e.Item.SubItems[9].Text = e.Item.Checked.ToString();
+                                CovGraph.AxisChange();
+                                CovGraph.Invalidate();
+                                break;
+                            }
+                    }
+                    catch { }
+                }
+            }
+            else
+            {
+                e.Item.Checked = false;
+            }
+        }
+
+        private void ClearPlotterButton_Click(object sender, EventArgs e)
+        {
+            lock (m_subscription_list)
+            {
+                foreach (RollingPointPairList p in m_subscription_points.Values)
+                {
+                    try
+                    {
+                        p.Clear();
+                    }
+                    catch { }
+                }
+                CovGraph.AxisChange();
+                CovGraph.Invalidate();
+            }
+        }
+
+        private void pollRateSelector_ValueChanged(object sender, EventArgs e)
+        {
+            uint period = Math.Max(Math.Min((uint)((NumericUpDown)sender).Value, MAX_POLL_PERIOD), MIN_POLL_PERIOD);
+            Properties.Settings.Default.Subscriptions_ReplacementPollingPeriod = period;
+        }
+
+        private void PollOpn_CheckedChanged(object sender, EventArgs e)
+        {
+            if(PollOpn.Checked)
+            {
+                pollRateSelector.Enabled = true;
+                Properties.Settings.Default.UsePollingByDefault = true;
+            }
+            else
+            {
+                pollRateSelector.Enabled = false;
+                Properties.Settings.Default.UsePollingByDefault = false;
+            }
+        }
+
+        private int _saveFaultCount = 0;
+        private void SaveObjectNamesTimer_Tick(object sender, EventArgs e)
+        {
+            int intervalMinutes = Math.Max(Math.Min(Properties.Settings.Default.Auto_Store_Period_Minutes, 480), 1);
+            if (intervalMinutes != Properties.Settings.Default.Auto_Store_Period_Minutes)
+                Properties.Settings.Default.Auto_Store_Period_Minutes = intervalMinutes;
+            SaveObjectNamesTimer.Interval = intervalMinutes * 60000;
+            
+            DoSaveObjectNamesIfNecessary();
+        }
+
+        private void DoSaveObjectNamesIfNecessary(string path = null)
+        {
+            if (Properties.Settings.Default.Auto_Store_Object_Names)
+            {
+                if (objectNamesChangedFlag)
+                {
+                    DoSaveObjectNames();
+                }
+            }
+        }
+
+        private void DoSaveObjectNames(string path = null)
+        {
+            string fileTotal;
+            if(string.IsNullOrWhiteSpace(path))
+            {
+                fileTotal = Properties.Settings.Default.Auto_Store_Object_Names_File;
+            }
+            else
+            {
+                fileTotal = path;
+            }
+
+            if (!string.IsNullOrWhiteSpace(fileTotal))
+            {
+                try
+                {
+                    string file = Path.GetFileName(fileTotal);
+                    string directory = Path.GetDirectoryName(fileTotal);
+                    if (string.IsNullOrWhiteSpace(file))
+                    {
+                        if (path == null)
+                        {
+                            file = "Auto_Stored_Object_Names.YabeMap";
+                        }
+                        else
+                        {
+                            DateTime d = DateTime.Now;
+                            file = "New_Object_Names_File_" + d.Year.ToString() + "-" + d.Month.ToString() + "-" + d.Day.ToString() + "_" + d.Hour.ToString() + "_" + d.Minute.ToString() + ".YabeMap";
+                        }
+                        fileTotal = Path.Combine(directory, file);
+                        Properties.Settings.Default.Auto_Store_Object_Names_File = fileTotal;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+                    {
+                        try
+                        {
+                            Directory.CreateDirectory(directory);
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                            Trace.TraceError("Error trying to auto-save object names to file: The directory \"" + directory + "\" does not exist, and Yabe does not have permissions to automatically create this directory. Try changing the Auto_StoreObject_Names_File setting to a different path.");
+                            Properties.Settings.Default.Auto_Store_Object_Names = false;
+                            return;
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError("Exception trying to auto-save object names to file: " + ex.Message + ". Try resetting the Auto_StoreObject_Names_File setting to a valid file path.");
+                    Properties.Settings.Default.Auto_Store_Object_Names = false;
+                    return;
+                }
+
+                try
+                {
+                    Stream stream = File.Open(fileTotal, FileMode.Create);
+                    BinaryFormatter bf = new BinaryFormatter();
+                    bf.Serialize(stream, DevicesObjectsName);
+                    stream.Close();
+                    objectNamesChangedFlag = false;
+                    _saveFaultCount = 0;
+                    Trace.TraceInformation("Saved object names to \"" + fileTotal + "\".");
+                }
+                catch (Exception ex)
+                {
+                    _saveFaultCount++;
+                    int maxFault = 3;
+                    if (_saveFaultCount >= maxFault)
+                    {
+                        Trace.TraceError(String.Format("Exception trying to auto-save object names to file: " + ex.Message + ". We will retry {0} more time(s).", maxFault - _saveFaultCount));
+                    }
+                    else
+                    {
+                        Trace.TraceError(String.Format("Exception trying to auto-save object names to file: " + ex.Message + ". This error happened {0} times, so auto-save is being disabled. Try resetting the Auto_StoreObject_Names_File setting to a valid file path.", _saveFaultCount));
+                        Properties.Settings.Default.Auto_Store_Object_Names = false;
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                Trace.TraceError("Error trying to auto-save object names to file: There is no file specified. Try resetting the Auto_StoreObject_Names_File setting to a valid file path.");
+                Properties.Settings.Default.Auto_Store_Object_Names = false;
+                return;
+            }
+        }
+
+        private void HighlightTreeNodes(TreeNodeCollection tnc, String text, Color color)
+        {
+            foreach (TreeNode tn in tnc)
+            {
+                if (tn.Text.ToLower().Contains(text.ToLower()))
+                {
+                    tn.ForeColor = color;
+                }
+                else
+                    tn.ForeColor = Color.Black;
+
+                if (tn.Nodes.Count != 0)
+                    HighlightTreeNodes(tn.Nodes, text, color);
+
+            }
+        }
+        private void TbxHighlightTreeView_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode != Keys.Return) return;
+
+            TbxHighlightTreeView_Update(sender, null);
+        }
+
+        private void TbxHighlightTreeView_Update(object sender, EventArgs e)
+        {
+            TextBox tbx = (TextBox)sender;
+
+            Color color = Color.Red;
+            if ((tbx.Text == null) || (tbx.Text.Length == 0))
+                color = Color.Black;
+
+            if (tbx == TbxHighlightAddress)
+                HighlightTreeNodes(m_AddressSpaceTree.Nodes, tbx.Text, color);
+            else
+                HighlightTreeNodes(m_DeviceTree.Nodes, tbx.Text, color);
+        }
+
         private void searchToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             GenericInputBox<TextBox> search = new GenericInputBox<TextBox>("Search object", "Name",     (o) =>
@@ -3431,5 +5045,12 @@ namespace Yabe
             else // something must be provide
                 return tx.Text.CompareTo(ty.Text);
         }
+    }
+
+    public enum AddressTreeViewType
+    {
+        List,
+        Structured,
+        Both
     }
 }

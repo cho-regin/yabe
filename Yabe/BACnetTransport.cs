@@ -460,9 +460,9 @@ namespace System.IO.BACnet
         {
             try
             {
-                m_exclusive_conn.Close();
+                m_exclusive_conn.Close(); 
                 m_exclusive_conn = null;
-                m_shared_conn.Close(); // maybe an exception if null
+                m_shared_conn.Close(); 
                 m_shared_conn = null;
             }
             catch { }
@@ -860,7 +860,8 @@ namespace System.IO.BACnet
 
                         for (int i = 0; i < NbEntries; i++)
                         {
-                            long add = BitConverter.ToInt32(buffer, 4 + i * 10);
+                            byte[] Add = new byte[4];
+                            Array.Copy(buffer, 4 + i * 10, Add, 0, 4);
 
                             Array.Reverse(buffer, 8 + i * 10, 2);
                             ushort port = BitConverter.ToUInt16(buffer, 8 + i * 10);
@@ -869,7 +870,7 @@ namespace System.IO.BACnet
                             byte[] Mask = new byte[4];
                             Array.Copy(buffer, 10 + i * 10, Mask, 0, 4);
 
-                            Tuple<IPEndPoint, IPAddress> entry = new Tuple<IPEndPoint, IPAddress>(new IPEndPoint(new IPAddress(add), port), new IPAddress(Mask));
+                            Tuple<IPEndPoint, IPAddress> entry = new Tuple<IPEndPoint, IPAddress>(new IPEndPoint(new IPAddress(Add), port), new IPAddress(Mask));
                             Entries.Add(entry);
                         }
 

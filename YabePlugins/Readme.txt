@@ -20,7 +20,9 @@ CheckStatusFlags
 ListCOV_Increment
 	By Alexander Jaszkowski : displays all COV_INCREMENT values, for network's behaviour debug.
 
-
+GlobalCommander
+	By Lance Tollenaar : Allows to send the same value into several properties of multiple objects
+	in multiple devices.
 
 A usefull plugin by yourself, not too much dedicated to your application (or customizable), send it,
 I'will add it.

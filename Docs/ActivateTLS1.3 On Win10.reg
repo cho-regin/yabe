@@ -1,0 +1,15 @@
+Windows Registry Editor Version 5.00
+
+; BACnet/SC uses only TLS1.3, not activated on Windows 10
+; Double click on this file to add Keys into the registry
+; Need administator privilege
+; Reboot after
+; Doesn't work on Windows 10 before version 1903 (May 21, 2019)
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.3]
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.3\Client]
+"Enabled"=dword:00000001
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.3\Server]
+"Enabled"=dword:00000001

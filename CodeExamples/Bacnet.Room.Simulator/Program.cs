@@ -35,19 +35,25 @@ using System.Management;
 namespace Bacnet.Room.Simulator
 {
 
-
     static class Program
     {
         public static int Count;
+        public static int DeviceId=-1;
 
         /// <summary>
         /// Point d'entrée principal de l'application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
 
-            // Le semaphore sert a donner un id unqiue au noeud Bacnet
+            if ((args != null) && (args.Length == 1))
+            {
+                if (Int32.TryParse(args[0], out DeviceId) == false)
+                    DeviceId = -1;
+            }
+
+            // Le semaphore sert a donner un id unqiue au noeud Bacnet si DeviceId=-1
             Semaphore s = new Semaphore(63, 63, "Bacnet.Room{FAED-FAED}");
             if (s.WaitOne() == true)
             {

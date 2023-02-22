@@ -29,10 +29,22 @@ namespace Yabe
             return Port==0 ? 47808 : Port;
 
         }
+
+        private short TTL()
+        {
+            short TTL;
+            if (!short.TryParse(TTL_Input.Text, out TTL))
+            {
+                TTL = 30;
+            }
+            return TTL;
+        }
+
         private void sendFDR_Click(object sender, EventArgs e)
         {
             try
             {
+
                 IPAddress[] IPs = Dns.GetHostAddresses(BBMD_IP.Text);
 
                 IPAddress IP;
@@ -42,7 +54,7 @@ namespace Yabe
                 else
                     IP = IPs.First<IPAddress>(o => o.AddressFamily == AddressFamily.InterNetworkV6);
 
-                client.RegisterAsForeignDevice(IP.ToString(), 30, PortNumber());
+                client.RegisterAsForeignDevice(IP.ToString(), TTL(), PortNumber());
                 Thread.Sleep(50);
                 client.RemoteWhoIs(IP.ToString(), PortNumber());
                 SendWhois.Enabled = true;

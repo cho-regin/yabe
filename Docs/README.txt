@@ -47,7 +47,7 @@
 		The file operations are also able to use 'segmentation' if the options are
 		set accordingly.
 		I'm not sure if my implementation or my usage is correct though. I've 
-		followed the guidelines	from the 'standard'. But my copy is rather old and 
+		followed the guidelines from the 'standard'. But my copy is rather old and 
 		I haven't found any other BACnet programs that supports it. 
 		I also support 'segmentation' with a window_size > 1 in MSTP. (This was my
 		original purpose.) According to my 'standard' this is illegal. I hope that
@@ -55,11 +55,11 @@
 		bacnet-l mailing list. 
 
 	1.3 CREDITS
-		The projected is created by me, Morten Kvistgaard, anno 2014. 
-		A few patches and input has been given by the community.
+		The projected is created by Morten Kvistgaard, anno 2014. 
 		F. Chaxel has contributed a lot of the later additions (eg Foreign Device
 		Registration, BBMD services, TrendLog & Schedule display, Calendar editor,
-		Alarms summary, Bacnet on Ethernet, Bacnet IPv6).
+		Alarms summary, Bacnet on Ethernet, Bacnet IPv6, Bacnet Secure Connect).
+		A few patches and input has been given by the community.
 		Graphics are the usual FamFamFam: http://www.famfamfam.com/
 		Serializing (most/some) is ported from project by Steve Karg:
 		http://bacnet.sourceforge.net/
@@ -69,6 +69,7 @@
 		Calendar control come from :
 		http://www.codeproject.com/Articles/38699/A-Professional-Calendar-Agenda-View-That-You-Will
 		Sharppcap come from : http://sourceforge.net/projects/sharppcap/
+		Websocket-sharp come from : https://github.com/sta/websocket-sharp
 
 2.  USAGE
 
@@ -76,9 +77,9 @@
 		- Start up the DemoServer program or another BACnet device.
 		- Start Yabe.
 		- Select "Add device" under "Functions".
-		- Press the "Add" button in the "BACnet/IP over Udp" field.
+		- Press the "Start" button in the "BACnet/IP over Udp" field.
 		  The program will now add a Udp connection to the "Devices" tree and send
-		  out 3 "WhoIs" broadcasts. If there're any BACnet/IP devices in the 
+		  out some "WhoIs" broadcasts. If there're any BACnet/IP devices in the 
 		  network they will show up in the tree. The DemoServer will show up as 
 		  something like "192.168.1.91:57049 - 389002". This is the IP, the Udp
 		  port and the device_id.
@@ -123,7 +124,7 @@
 	2.3 BACNET/MSTP OVER PIPE
 		- For general usage refer to section 2.1. 
 		- In the "Search" dialog select "COM1003" in the port combo box and press
-		  "Add". This will add a MSTP pipe created by the DemoServer. 
+		  "Start". This will add a MSTP pipe created by the DemoServer. 
 		  Notice that the "Source Address" defaults to "-1". This is not a valid 
 		  address and you will not be able to communicate with the device through 
 		  this. The program will still be able to listen in on the network though.
@@ -138,7 +139,7 @@
 	2.4	BACNET/PTP OVER PIPE
 		- For general usage refer to section 2.1. 
 		- In the "Search" dialog select "COM1004" in the port combo box and press
-		  "Add". This will add a PTP pipe created by the DemoServer. 
+		  "Start". This will add a PTP pipe created by the DemoServer. 
 		  The BACnet/PTP transport is meant for 1-to-1. Eg. RS232 or ... usb? So
 		  far I haven't found any others easy accessible tools that also supports
 		  it. So I haven't been able to test it. It's implemented purely by doc.
@@ -147,42 +148,63 @@
 		- pcap/winpcap must be installed on the Pc before usage
 		       go to http://www.tcpdump.org/ or https://www.winpcap.org/
 		       or more simply download wireshark https://www.wireshark.org/#download
-		- Start Yabe.
-		- Select "Add device" under "Functions"
+		- For general usage refer to section 2.1.
 		- Select an Ethernet or Wifi Interface
-		- Press the "Add" button in the "BACnet/Ethernet" field.
+		- Press the "Start" button in the "BACnet/Ethernet" field.
 
-	2.6 OPTIONS
+	2.6	BACNET/SC
+		- For general usage refer to section 2.1.
+		- A configuration file is required and can be edited for parameters such as 
+		  the remote URI, the unique 'extra long' application ID and TLS security data
+		  (Yabe client certificate with private key, remote device or Hub certificate).
+		  The optional certificat password is not saved in the file. The value has to
+		  be given each time.
+		- Non standard uncyphered, unauthenticated ws:// can be use for test.
+		- Today on Windows 10 TLS1.3 is not operational by default. You should
+		  configure the system to accept it using regedit (add  manually the Branch
+		  TLS 1.3\Client and the value Enabled=1, then reboot the PC) :
+		  In 
+		        HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols
+		  Add the key  
+		       TLS 1.3
+		  then under it Add the key
+		       Client
+		  Then add the Dword32 value		
+		       Enabled and change de value to 00000001
+		  Or jump to Yabe source code trunk\Docs, get the .reg file and double click on it.
+		  This will have no effect on any versions of Windows prior to 1903.
+
+	2.7 OPTIONS
 	A few selected options.
 
-		2.6.1 Udp_ExclusiveUseOfSocket
+		2.7.1 Udp_ExclusiveUseOfSocket
 			Set this to 'true' to force single socket usage on port 0xBAC0. A value of 
 			'false' will create an extra unicast socket and allow multiple clients on
 			same ip/machine.
 
-		2.6.2 Subscriptions_Lifetime
+		2.7.2 Subscriptions_Lifetime
 			Subscriptions will be created with this lifetime. Eg. after 120 seconds the
 			subscription will be removed by device. Set to 0 to disable.
 	
-		2.6.3 Subscriptions_IssueConfirmedNotifies
+		2.7.3 Subscriptions_IssueConfirmedNotifies
 			By default notifications will be sent 'unconfirmed'. If you think your 
 			notifications are important set this to 'true' instead. 
 
-		2.6.4 MSTP_DisplayFreeAddresses
+		2.7.4 MSTP_DisplayFreeAddresses
 			By default a MSTP connection will display all 'free' addresses in the 
 			'Device' tree. This can help select a source_address for the program.
 			If you don't want to see the 'free' entries, set this option to 'false'
 
-		2.6.5 MSTP_LogStateMachine
+		2.7.5 MSTP_LogStateMachine
 			The MSTP code is able to display all state changes in log. This is very
 			verbose. It may help you understand the MSTP better though.
 	
-		2.6.6 Segments_Max
+		2.7.6 Segments_Max
 			This value sets 'allowed max_segments' to send to the client. The client
 			might not support segmentation though. If it gives you trouble, set this 
 			to 0 to disable.
 	
-		2.6.7 DefaultDownloadSpeed
+		2.7.7 DefaultDownloadSpeed
 			This value sets the method for 'file download'. (This is part of the 
 			original tests.) 
 			The default value of '0' will result in a standard 'send request, wait 
@@ -192,39 +214,39 @@
 			Value '2' will result in a 'segmented' sequence. This is the most efficient
 			for both Udp and MSTP. This is the result I sought!
 	
-		2.6.8 Udp_DontFragment
+		2.7.8 Udp_DontFragment
 			This will enforce (if set to 'true') no fragmentation on the udp. It ought
 			to be enforced, but it turns out that MTU is a bit tricky. (See 2.5.9)
 
-		2.6.9 Udp_MaxPayload
+		2.7.9 Udp_MaxPayload
 			The max payload for udp seems to differ from the expectations of BACnet.
 			The most common payload is 1472. Which is 1500 when added with the 28 bytes
 			ip headers. This number is determined by your local switch/router through.
 
-		2.6.10 DefaultPreferStructuredView
+		2.7.10 DefaultPreferStructuredView
 			The Addendum 135d defines a 'Structured View' entry in the address space.
 			This enables a hierarchical address space. (Thank you very much.)
 			Though if you like the flat model better, set this to 'false'.
 
-		2.6.11 DefaultWritePriority
+		2.7.11 DefaultWritePriority
 			Priorty level used for write operation. Can be changed without reboot.
 			<Ctrl><Alt> + 0 to 9 keys are shortcuts to change this value directly 
 			from the main form (0: no priority to priority level 9, for others ... 
 			no shortcut): a sound is played.
 
-		2.6.12 YabeDeviceId
+		2.7.12 YabeDeviceId
 			If this value is positive Yabe send response to Who-Is with this Bacnet
 			device Id. Can be usefull to set recipients list in notification class 
 			objects without using Yabe Ip endpoint. 
 
-		2.6.13 DisplayIdWithName
+		2.7.13 DisplayIdWithName
 			Leaves properties Id (such as ANALOG_INPUT:0) along with the properties 
  			name or hides this Id.
 
-		2.6.14 Plugins
-			List of plugins to be loaded (see §2.8).
+		2.7.14 Plugins
+			List of plugins to be loaded (see §2.9).
 
-	2.7 Bacnet Object name
+	2.8 Bacnet Object name
 			By default Bacnet objects are displayed using the object identifier eg : 
 			ANALOG_INPUT:0, DEVICE:333 ...
 			During network exploration, when object properties are read this
@@ -256,11 +278,11 @@
 			If a device got a physical address of an old one, the mapping is wrong, but
 			after all read operations in the Address space, it's OK.
 
-	2.8 External plugins
+	2.9 External plugins
 			User plugins written en C# can be add to Yabe (Menu Option-Plugins). 
 			See Readme file in the YabePlugins source code directory.
 
-	2.9 COV, Event logging & live Graph
+	2.10 COV, Event logging & live Graph
 			Objects can be drag/drop on the central panel to be subscribed.
 			If the drag/drop is done onto the graph the value is also drawn.
 			Subscriptions updates & Events displayed in the central panel can be 
@@ -273,8 +295,8 @@
 3.  TECHNICAL
     
 	3.1 MULTIPLE UDP CLIENTS ON SAME IP
-		Most BACnet/IP programs that I've seen so far are not able to coexist on a
-		single PC. This is because they only connect to the one BACnet udp port 
+		Most BACnet/IP programs are not able to coexist on a single PC.
+		This is because they only connect to the one BACnet udp port 
 		and seeks to do all their traffic through this. This will work only if you 
 		got max 1 client at each machine. Eg. you'll need a virtual machine if you 
 		want to work with these. I cannot find anywhere in the standard that 
@@ -295,11 +317,11 @@
 		which to assume ownership of the token. The time slot is defined as 
 		[500 + TS*10 : 500 + (TS+1)*10] ms. This is a 10 ms time slot measured 
 		after the last byte on the line. 
-		My code implements the MSTP Master state machine a bit differently from the
+		This code implements the MSTP Master state machine a bit differently from the
 		standard. The standard is designed for small unscheduled MCUs. Scheduled 
 		systems like RTOS and Windows can take advantage of blocking code structure
 		and thereby give a bit more simple code. This is probably not wise to use 
-		in non real time systems like Windows. But so I've done. My first version
+		in non real time systems like Windows. But so I've done. The first version
 		was implemented with a high resolution timer (The Stopwatch class in .NET)
 		but I like this version better. And it still retains most of the state
 		machine.
@@ -324,6 +346,9 @@
 		- Wago 750/830 (vendor Id 222)
 		- Newron DoGate (vendor Id 451)
 		- Sauter EY-AS521 (vendor Id 80)
+	BACnet/SC has been tested with
+		- BACnet Reference Stack tools
+ 		- ScadaEngine BACnet Simulator
 
 5.  SUPPORT
 	There's no support for the project at this time. That's reserved for our 
@@ -337,12 +362,12 @@
 	If you find a device that doesn't work with Yabe, it might be interesting.
 	But in order for me to fix it, I need either access to the physical device
 	or printouts from programs like Wireshark, that displays the error.
-	Write to me at mk@pch-engineering.dk.
+	Write to us at fchaxel@free.fr or mk@pch-engineering.dk.
 
 7.  CONTRIBUTE
 	Really? You think it's missing something? It's not really meant as a huge 
-	glorified project you know, but if you really must, try contacting me
-	at mk@pch-engineering.dk.
+	glorified project you know, but if you really must, try contacting us
+	at fchaxel@free.fr or mk@pch-engineering.dk.
 	
 8.  MISC
 	Project web page is located at: 

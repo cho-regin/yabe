@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Yabe"
-#define MyAppVersion "1.2.2"
+#define MyAppVersion "1.3.1"
 #define MyAppPublisher "Yabe Authors"
 #define MyAppURL "http://sourceforge.net/projects/yetanotherbacnetexplorer"
 #define MyAppExeName "Yabe.exe"
@@ -20,7 +20,7 @@ AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
-LicenseFile=C:\Users\Fred\Dev\Yabe\trunk\Docs\MIT_license.txt
+LicenseFile=..\..\Docs\MIT_license.txt
 OutputBaseFilename=SetupYabe_v{#MyAppVersion}
 Compression=lzma
 SolidCompression=yes
@@ -55,6 +55,7 @@ Source: "..\..\Yabe\bin\Debug\Yabe.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\CheckReliability.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\CheckStatusFlags.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\ListOutOfService.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\GlobalCommander.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\README.Txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Docs\history.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Docs\MIT_license.txt"; DestDir: "{app}"; Flags: ignoreversion
@@ -63,6 +64,7 @@ Source: "..\..\Docs\Treeview_license.txt"; DestDir: "{app}"; Flags: ignoreversio
 
 Source: "..\..\Yabe\bin\Debug\ReadSinglePropDescr.Xml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\AdvertiseSample.cov"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Proprietary-properties.csv"; DestDir: "{app}"; Flags: ignoreversion
 
 Source: "..\..\DemoServer\bin\Debug\DemoServer.exe"; DestDir: "{app}\AddOn"; Flags: ignoreversion
 Source: "..\..\DemoServer\bin\Debug\DeviceStorage.Xml"; DestDir: "{app}\AddOn"; Flags: ignoreversion
@@ -75,6 +77,10 @@ Source: "..\..\CodeExamples\Wheather2_to_Bacnet\Readme.txt"; DestName:"ReadmeWhe
 Source: "..\..\CodeExamples\Wheather2_to_Bacnet\Wheather2config.reg"; DestDir: "{app}\AddOn"; Flags: ignoreversion
 
 Source: "..\..\Mstp.BacnetCapture\bin\Debug\Mstp.BacnetCapture.exe"; DestDir: "{app}\AddOn"; Flags: ignoreversion
+
+Source: "..\..\Yabe\Yabe.p12"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\TestHub.crt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\BACnetSCConfig.config"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\Yabe"; Filename: "{app}\Yabe.Exe"

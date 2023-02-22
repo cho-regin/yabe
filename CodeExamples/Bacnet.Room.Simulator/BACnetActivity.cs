@@ -64,13 +64,18 @@ namespace DemoServer
                     select netiface.GetPhysicalAddress()
                 ).FirstOrDefault();
 
-                if (macAddr != null)
+                if (Program.DeviceId == -1)
                 {
-                    byte[] mac = macAddr.GetAddressBytes();
-                    deviceId = (uint)mac[5] + (uint)((mac[4] << 8)<<6);
+                    if (macAddr != null)
+                    {
+                        byte[] mac = macAddr.GetAddressBytes();
+                        deviceId = (uint)mac[5] + (uint)((mac[4] << 8) << 6);
+                    }
+                    // Un bricollage du dimanche vite fait ici !
+                    deviceId = deviceId + ((uint)(Program.Count & 0x3F));
                 }
-                // Un bricollage du dimanche vite fait ici !
-                deviceId = deviceId + ((uint)(Program.Count & 0x3F));
+                else
+                    deviceId = (uint)Program.DeviceId;
 
                 if (Application.CurrentCulture.TwoLetterISOLanguageName=="fr")
                     m_storage = DeviceStorage.Load("Bacnet.Room.Simulator.DeviceStorage.xml", deviceId);    
@@ -661,8 +666,6 @@ namespace DemoServer
                 (object_id.Equals("OBJECT_ANALOG_VALUE:2") && (PropId == BacnetPropertyIds.PROP_PRESENT_VALUE)) ||
                 (object_id.Equals("OBJECT_ANALOG_VALUE:3") && (PropId == BacnetPropertyIds.PROP_PRESENT_VALUE)) ||
                 (object_id.Equals("OBJECT_CHARACTERSTRING_VALUE:1") && (PropId == BacnetPropertyIds.PROP_PRESENT_VALUE)) ||
-                (object_id.Equals("OBJECT_CHARACTERSTRING_VALUE:2") && (PropId == BacnetPropertyIds.PROP_PRESENT_VALUE)) ||
-                (object_id.Equals("OBJECT_CHARACTERSTRING_VALUE:3") && (PropId == BacnetPropertyIds.PROP_PRESENT_VALUE)) ||
                 (object_id.Equals("OBJECT_MULTI_STATE_VALUE:0") && (PropId == BacnetPropertyIds.PROP_PRESENT_VALUE));
 
             if (AllowWrite == false)

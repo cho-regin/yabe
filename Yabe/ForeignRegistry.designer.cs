@@ -34,6 +34,9 @@
             this.sendFDR = new System.Windows.Forms.Button();
             this.SendWhois = new System.Windows.Forms.Button();
             this.BBMD_Port = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.TTL_Input = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // BBMD_IP
@@ -56,7 +59,7 @@
             // 
             // sendFDR
             // 
-            this.sendFDR.Location = new System.Drawing.Point(21, 85);
+            this.sendFDR.Location = new System.Drawing.Point(21, 108);
             this.sendFDR.Name = "sendFDR";
             this.sendFDR.Size = new System.Drawing.Size(171, 27);
             this.sendFDR.TabIndex = 2;
@@ -67,7 +70,7 @@
             // SendWhois
             // 
             this.SendWhois.Enabled = false;
-            this.SendWhois.Location = new System.Drawing.Point(21, 129);
+            this.SendWhois.Location = new System.Drawing.Point(21, 152);
             this.SendWhois.Name = "SendWhois";
             this.SendWhois.Size = new System.Drawing.Size(171, 27);
             this.SendWhois.TabIndex = 3;
@@ -85,11 +88,40 @@
             this.BBMD_Port.Text = "47808";
             this.BBMD_Port.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
+            // label2
+            // 
+            this.label2.Location = new System.Drawing.Point(14, 73);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(103, 21);
+            this.label2.TabIndex = 5;
+            this.label2.Text = "Registration Time:";
+            // 
+            // TTL_Input
+            // 
+            this.TTL_Input.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.TTL_Input.Location = new System.Drawing.Point(109, 71);
+            this.TTL_Input.Name = "TTL_Input";
+            this.TTL_Input.Size = new System.Drawing.Size(38, 20);
+            this.TTL_Input.TabIndex = 4;
+            this.TTL_Input.Text = "30";
+            this.TTL_Input.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            // 
+            // label3
+            // 
+            this.label3.Location = new System.Drawing.Point(151, 73);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(44, 21);
+            this.label3.TabIndex = 6;
+            this.label3.Text = "minutes";
+            // 
             // ForeignRegistry
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(220, 177);
+            this.ClientSize = new System.Drawing.Size(223, 201);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.TTL_Input);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.BBMD_Port);
             this.Controls.Add(this.SendWhois);
             this.Controls.Add(this.sendFDR);
@@ -114,5 +146,8 @@
         private System.Windows.Forms.Button sendFDR;
         private System.Windows.Forms.Button SendWhois;
         private System.Windows.Forms.TextBox BBMD_Port;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox TTL_Input;
+        private System.Windows.Forms.Label label3;
     }
 }
