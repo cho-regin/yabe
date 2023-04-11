@@ -35,6 +35,7 @@ using System.Xml.Serialization;
 using System.Net.Security;
 using System.Text;
 using System.Security.Authentication;
+using System.Linq;
 
 // based on Addendum 135-2016 bj
 // and with the help of sample applications from https://sourceforge.net/projects/bacnet-sc-reference-stack/
@@ -52,12 +53,12 @@ namespace System.IO.BACnet
 
         // A very good and simple lib for secure and unsecure websocket communication
         // https://github.com/sta/websocket-sharp
-        private WebSocketSharp.WebSocket Websocket; 
+        private WebSocketSharp.WebSocket Websocket;
 
         private BACnetSCConfigChannel configuration;
 
         private byte[] myVMAC = new byte[6];          // my random VMAC
-        private byte[] RemoteVMAC = new byte[6];    // HUB or Direct connected device VMAC 
+        private byte[] RemoteVMAC = new byte[6];    // HUB or Direct connected device VMAC
 
         // Several frames type
         // resize will be done after, if needed
@@ -175,16 +176,16 @@ namespace System.IO.BACnet
 
             // We have a certificate in the chain (even self signed) : CA Root, CA Intermediate
             foreach (X509ChainElement chainElement in chain.ChainElements)
-                if (chainElement.Certificate.Equals(configuration.HubCertificate)) 
+                if (chainElement.Certificate.Equals(configuration.HubCertificate))
                     return true;
 
             // We have the final certificate (even self signed) ... normaly this certificate is in the previous X509Chain
             if (certificate.Equals(configuration.HubCertificate))
-                return true;   
+                return true;
 
             Trace.TraceError("BACnet/SC : Remote certificate rejected");
 
-            return false; 
+            return false;
 
         }
         private void Websocket_OnOpen(object sender, EventArgs e)
@@ -208,7 +209,7 @@ namespace System.IO.BACnet
             state = BACnetSCState.IDLE;
             OnChannelDisconnected?.Invoke(this, e);
         }
-        private void Websocket_OnLog(LogData log, String Logmessage) 
+        private void Websocket_OnLog(LogData log, String Logmessage)
         {
             // First line is enough
             Trace.TraceError("BACnet/SC Websocket : " + log.Message.Split(new[] { '\r', '\n' })[0]);
@@ -389,7 +390,7 @@ namespace System.IO.BACnet
             if (Guid.TryParse(configuration.UUID, out Guid uuid)==true)
                 bUUID = uuid.ToByteArray();
             else
-            { 
+            {
                 bUUID = Encoding.ASCII.GetBytes(configuration.UUID);
                 Array.Resize(ref bUUID, 16);
             }
@@ -448,7 +449,7 @@ namespace System.IO.BACnet
 
         private int BVLC_SC_Encode(byte[] buffer, int offset, BacnetBvlcSCMessage function, ref int msg_length, BacnetAddress address)
         {
-    
+
             // offset should be zero
 
             if (!configuration.DirectConnect)
@@ -550,17 +551,17 @@ namespace System.IO.BACnet
                     return offset;  // all bytes for the upper layers
                 case BacnetBvlcSCMessage.BVLC_CONNECT_ACCEPT:
                     Array.Copy(buffer, 4, RemoteVMAC, 0, 6); // Hub or remote device VMAC ... used later for Direct Connect mode
-                    return 0;       // Only for BVLC 
+                    return 0;       // Only for BVLC
                 case BacnetBvlcSCMessage.BVLC_DISCONNECT_REQUEST:
                     BVLC_SC_SendSimpleBVLCMsg(BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK, buffer[2], buffer[3]);
                     state=BACnetSCState.IDLE;
-                    return 0;       // Only for BVLC 
+                    return 0;       // Only for BVLC
                 case BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK:
                     // Don't set BACnetSCState.IDLE ... wait for close
-                    return 0;       // Only for BVLC 
+                    return 0;       // Only for BVLC
                 case BacnetBvlcSCMessage.BVLC_HEARTBEAT_REQUEST:
                     BVLC_SC_SendSimpleBVLCMsg(BacnetBvlcSCMessage.BVLC_HEARTBEAT_ACK, buffer[2], buffer[3]);
-                    return 0;       // Only for BVLC 
+                    return 0;       // Only for BVLC
                 case BacnetBvlcSCMessage.BVLC_ADDRESS_RESOLUTION:
                     BVLC_SC_SendBvlcError(remote_address.VMac, buffer[2], buffer[3], BacnetErrorClasses.ERROR_CLASS_COMMUNICATION, BacnetErrorCodes.ERROR_CODE_OPTIONAL_FUNCTIONALITY_NOT_SUPPORTED);
                     return 0;       // Only for BVLC
@@ -595,7 +596,13 @@ namespace System.IO.BACnet
             }
             catch { }
         }
-        private enum BacnetBvlcSCMessage : byte
+
+		public string GetMacString()
+		{
+            return string.Join("", myVMAC.Select((x) => x.ToString("X2")));
+		}
+
+		private enum BacnetBvlcSCMessage : byte
         {
             BVLC_RESULT = 0,
             BVLC_ENCASULATED_NPDU = 1,
