@@ -47,13 +47,14 @@
             this.checkData = new System.Windows.Forms.CheckBox();
             this.label7 = new System.Windows.Forms.Label();
             this.treeView = new Mstp.BacnetCapture.BufferedTreeView();
+            this.linkLabel1 = new System.Windows.Forms.LinkLabel();
             ((System.ComponentModel.ISupportInitialize)(this.checksbox)).BeginInit();
             this.SuspendLayout();
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 22);
+            this.label1.Location = new System.Drawing.Point(12, 10);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(214, 13);
             this.label1.TabIndex = 0;
@@ -61,7 +62,7 @@
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(240, 19);
+            this.textBox1.Location = new System.Drawing.Point(240, 7);
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
             this.textBox1.Size = new System.Drawing.Size(150, 20);
@@ -72,7 +73,7 @@
             // comboPort
             // 
             this.comboPort.FormattingEnabled = true;
-            this.comboPort.Location = new System.Drawing.Point(77, 85);
+            this.comboPort.Location = new System.Drawing.Point(77, 94);
             this.comboPort.Name = "comboPort";
             this.comboPort.Size = new System.Drawing.Size(86, 21);
             this.comboPort.TabIndex = 2;
@@ -80,7 +81,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 88);
+            this.label2.Location = new System.Drawing.Point(12, 97);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(61, 13);
             this.label2.TabIndex = 3;
@@ -89,7 +90,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(276, 88);
+            this.label3.Location = new System.Drawing.Point(276, 97);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(44, 13);
             this.label3.TabIndex = 5;
@@ -97,7 +98,7 @@
             // 
             // buttonGo
             // 
-            this.buttonGo.Location = new System.Drawing.Point(15, 121);
+            this.buttonGo.Location = new System.Drawing.Point(15, 125);
             this.buttonGo.Name = "buttonGo";
             this.buttonGo.Size = new System.Drawing.Size(377, 23);
             this.buttonGo.TabIndex = 6;
@@ -107,7 +108,7 @@
             // 
             // label4
             // 
-            this.label4.Location = new System.Drawing.Point(1, 154);
+            this.label4.Location = new System.Drawing.Point(1, 158);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(123, 13);
             this.label4.TabIndex = 9;
@@ -132,7 +133,7 @@
             "57600",
             "76800",
             "115200"});
-            this.comboSpeed.Location = new System.Drawing.Point(329, 85);
+            this.comboSpeed.Location = new System.Drawing.Point(329, 94);
             this.comboSpeed.Name = "comboSpeed";
             this.comboSpeed.Size = new System.Drawing.Size(63, 21);
             this.comboSpeed.TabIndex = 11;
@@ -141,7 +142,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(188, 154);
+            this.label5.Location = new System.Drawing.Point(188, 158);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(129, 13);
             this.label5.TabIndex = 12;
@@ -151,7 +152,7 @@
             // 
             this.checksbox.BackColor = System.Drawing.SystemColors.ButtonHighlight;
             this.checksbox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.checksbox.Location = new System.Drawing.Point(15, 179);
+            this.checksbox.Location = new System.Drawing.Point(15, 183);
             this.checksbox.Name = "checksbox";
             this.checksbox.Size = new System.Drawing.Size(100, 244);
             this.checksbox.TabIndex = 13;
@@ -161,7 +162,7 @@
             // 
             this.checkToken.AutoSize = true;
             this.checkToken.BackColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.checkToken.Location = new System.Drawing.Point(22, 193);
+            this.checkToken.Location = new System.Drawing.Point(22, 197);
             this.checkToken.Name = "checkToken";
             this.checkToken.Size = new System.Drawing.Size(57, 17);
             this.checkToken.TabIndex = 14;
@@ -173,7 +174,7 @@
             // 
             this.checkMaster.AutoSize = true;
             this.checkMaster.BackColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.checkMaster.Location = new System.Drawing.Point(22, 257);
+            this.checkMaster.Location = new System.Drawing.Point(22, 261);
             this.checkMaster.Name = "checkMaster";
             this.checkMaster.Size = new System.Drawing.Size(92, 17);
             this.checkMaster.TabIndex = 15;
@@ -185,7 +186,7 @@
             // 
             this.checkTest.AutoSize = true;
             this.checkTest.BackColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.checkTest.Location = new System.Drawing.Point(22, 321);
+            this.checkTest.Location = new System.Drawing.Point(22, 325);
             this.checkTest.Name = "checkTest";
             this.checkTest.Size = new System.Drawing.Size(47, 17);
             this.checkTest.TabIndex = 16;
@@ -197,7 +198,7 @@
             // 
             this.checkData.AutoSize = true;
             this.checkData.BackColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.checkData.Location = new System.Drawing.Point(22, 385);
+            this.checkData.Location = new System.Drawing.Point(22, 389);
             this.checkData.Name = "checkData";
             this.checkData.Size = new System.Drawing.Size(49, 17);
             this.checkData.TabIndex = 17;
@@ -208,7 +209,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(49, 48);
+            this.label7.Location = new System.Drawing.Point(81, 42);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(309, 13);
             this.label7.TabIndex = 19;
@@ -218,17 +219,29 @@
             // 
             this.treeView.ImageIndex = 0;
             this.treeView.ImageList = this.imageList;
-            this.treeView.Location = new System.Drawing.Point(121, 179);
+            this.treeView.Location = new System.Drawing.Point(121, 183);
             this.treeView.Name = "treeView";
             this.treeView.SelectedImageIndex = 0;
             this.treeView.Size = new System.Drawing.Size(271, 244);
             this.treeView.TabIndex = 10;
+            // 
+            // linkLabel1
+            // 
+            this.linkLabel1.AutoSize = true;
+            this.linkLabel1.Location = new System.Drawing.Point(310, 64);
+            this.linkLabel1.Name = "linkLabel1";
+            this.linkLabel1.Size = new System.Drawing.Size(80, 13);
+            this.linkLabel1.TabIndex = 20;
+            this.linkLabel1.TabStop = true;
+            this.linkLabel1.Text = "Start Wireshark";
+            this.linkLabel1.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel1_LinkClicked);
             // 
             // BacnetCapture
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(404, 626);
+            this.Controls.Add(this.linkLabel1);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.checkData);
             this.Controls.Add(this.checkTest);
@@ -276,6 +289,7 @@
         private System.Windows.Forms.CheckBox checkData;
         private BufferedTreeView treeView;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.LinkLabel linkLabel1;
     }
 }
 

@@ -229,7 +229,33 @@ namespace Mstp.BacnetCapture
             checksbox.Height = this.Height - 235;
             this.Width=420;
         }
-    
+
+        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            // Change the color of the link text by setting LinkVisited
+            // to true.
+            linkLabel1.LinkVisited = true;
+            //Call the Process.Start method to open the default browser
+            //with a URL:
+            try
+            {
+                // first attempt with static directory assignment
+                //                System.Diagnostics.Process.Start("\"c:\\program files\\Wireshark\\Wireshark.exe\"", "\"-ni \\\\.\\pipe\\bacnet\"");
+
+                // second attempt with static cmd
+                //                string cmd = "\"c:\\program files\\Wireshark\\Wireshark.exe\"";
+
+                // third attempt retrieving the path from system, to test: Other harddrive than C:
+                string programFiles = Environment.ExpandEnvironmentVariables("%ProgramW6432%");
+                string cmd = programFiles + "\\Wireshark\\Wireshark.exe";
+                string args = "-ni \\\\.\\pipe\\bacnet";
+                System.Diagnostics.Process.Start(cmd, args);
+            }
+            catch
+            {
+                System.Windows.Forms.MessageBox.Show("Error starting Wireshark");
+            }
+        }
     }
 
     // treeview comparer base on the (int)Tag associated to the TreeNode
