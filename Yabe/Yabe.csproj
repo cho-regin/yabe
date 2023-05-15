@@ -317,6 +317,7 @@
     <EmbeddedResource Include="Resources\EmbeddedDll\ZedGraph.dll" />
     <None Include="Resources\plugin.png" />
     <EmbeddedResource Include="Resources\EmbeddedDll\websocket-sharp.dll" />
+    <Content Include="Resources\reload.png" />
     <Content Include="Search.ico" />
   </ItemGroup>
   <ItemGroup>

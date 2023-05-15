@@ -4967,6 +4967,13 @@ namespace Yabe
                 HighlightTreeNodes(m_DeviceTree.Nodes, tbx.Text, color);
         }
 
+        private void manual_refresh_properties_Click(object sender, EventArgs e)
+        {
+            // perform manual update
+            if (m_AddressSpaceTree.SelectedNode != null)
+                UpdateGrid(m_AddressSpaceTree.SelectedNode);
+        }
+
         private void searchToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             GenericInputBox<TextBox> search = new GenericInputBox<TextBox>("Search object", "Name",     (o) =>
