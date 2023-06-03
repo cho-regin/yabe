@@ -143,7 +143,7 @@ namespace System.IO.BACnet
 
             if (configuration.UseTLS)
             {
-                Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13;
+                Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.None; // The operating system will choose, the server should propose only Tls1.3
                 Websocket.SslConfiguration.ServerCertificateValidationCallback = RemoteCertificateValidationCallback;
                 Websocket.SslConfiguration.ClientCertificateSelectionCallback = LocalCertificateSelectionCallback;
             }
@@ -334,7 +334,8 @@ namespace System.IO.BACnet
             else
             {
                 // NPDU sent before a full SC connection (Iam, WhoIs certainly), push the Frame on a tempo buffer
-                // Upper layers (using ethernet, udp or serial) were not by designed for a delay between open and send
+                // Upper layers (using ethernet, udp or serial) were not designed for a delay between open and send
+                // ... all using at least one level of queue
                 byte[] cpy = new byte[full_length];
                 Array.Copy(buffer, cpy, full_length);
                 lock (AwaitingFrames)

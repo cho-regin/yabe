@@ -504,7 +504,7 @@ namespace Yabe
                 }
 
                 itm.SubItems[4].Text = EventTypeNiceName(EventData.fromState) + " to " + EventTypeNiceName(EventData.toState);
-                itm.SubItems[5].Text = EventData.timeStamp.Time.ToString("HH:mm:ss");   //time
+                itm.SubItems[5].Text = EventData.timeStamp.Time.ToString(Properties.Settings.Default.COVTimeFormater);   //time
                 itm.SubItems[6].Text = EventData.notifyType.ToString();   //status
             }
 
@@ -4660,9 +4660,9 @@ namespace Yabe
             {
                 if (AlarmFileWritter != null)
                 {
-                    for (int i = 0; i < itm.SubItems.Count; i++)
+                    for (int i = 1; i < itm.SubItems.Count-2; i++)
                     {
-                        AlarmFileWritter.Write(((i != 0) ? ";" : "") + itm.SubItems[i].Text);
+                        AlarmFileWritter.Write(((i != 1) ? ";" : "") + itm.SubItems[i].Text);
                     }
                     AlarmFileWritter.WriteLine();
                     AlarmFileWritter.Flush();
