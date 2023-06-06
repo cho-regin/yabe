@@ -143,7 +143,11 @@ namespace System.IO.BACnet
 
             if (configuration.UseTLS)
             {
-                Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.None; // The operating system will choose, the server should propose only Tls1.3
+                if (configuration.OnlyAllowsTLS13==true)
+                    Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13;
+                else
+                    Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.None; // The client send all available options, the server should normaly propose only Tls1.3
+               
                 Websocket.SslConfiguration.ServerCertificateValidationCallback = RemoteCertificateValidationCallback;
                 Websocket.SslConfiguration.ClientCertificateSelectionCallback = LocalCertificateSelectionCallback;
             }
@@ -626,6 +630,8 @@ namespace System.IO.BACnet
 
         public bool ValidateHubCertificate=false;
         public bool DirectConnect=false;
+
+        public bool OnlyAllowsTLS13 = false;
         public bool UseTLS { get { return primaryHubURI.Contains("wss://"); } }
 
         [XmlIgnore]
