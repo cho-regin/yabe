@@ -13866,7 +13866,10 @@ namespace System.IO.BACnet.Serialize
                     len += ASN1.decode_unsigned(buffer, offset + len, len_value_type, out property.propertyArrayIndex);
                 }
                 else
+                {
+                    property.propertyArrayIndex = ASN1.BACNET_ARRAY_ALL;
                     return -2;
+                }
             }
             else
                 property.propertyArrayIndex = ASN1.BACNET_ARRAY_ALL;

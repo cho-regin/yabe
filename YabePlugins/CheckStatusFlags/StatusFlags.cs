@@ -97,6 +97,12 @@ namespace CheckStatusFlags
             {
                 Application.DoEvents();
 
+                // avoid for non-relevant objects, e.g. Structured-View
+                if (tn.Tag == null)
+                {
+                    continue;
+                }
+
                 BacnetObjectId object_id = (BacnetObjectId)tn.Tag;
 
                 String Identifier = null;
