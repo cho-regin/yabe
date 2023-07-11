@@ -138,9 +138,13 @@ namespace GlobalCommander
             }
 
             int prog = 0;
-            int progTotal = _selectedPoints.Count * _selectedDevices.Count + 2;
+            int progTotal = _selectedPoints.Count + 2;
+            if (selectObjInsFromAllDevices)
+            {
+                progTotal = _selectedPoints.Count * _selectedDevices.Count + 2;
+            }
 
-            if(doProgBar)
+            if (doProgBar)
             {
                 progBar.Value = (int)(100 * prog / progTotal);
                 Application.DoEvents();
@@ -603,7 +607,11 @@ namespace GlobalCommander
             progBar.Value = 0;
             Application.DoEvents();
             int prog = 0;
-            int progTotal = _selectedPoints.Count * _selectedDevices.Count + 3;
+            int progTotal = _selectedPoints.Count + 3;
+            if (radComObj.Checked)
+            {
+                progTotal = _selectedPoints.Count * _selectedDevices.Count + 3;
+            }
 
             BacnetValue b_value = _selectedProperty.Values[0];
             BacnetApplicationTags dataType = b_value.Tag;
@@ -704,6 +712,8 @@ namespace GlobalCommander
             BacnetAddress adr;
             BacnetObjectId object_id;
 
+            DisableCommanding();
+
             foreach (BacnetPropertyExport propertyToCommand in _allSelectedProperties)
             {
                 comm = propertyToCommand.ParentPoint.ParentDevice.Comm;
@@ -728,6 +738,7 @@ namespace GlobalCommander
                     progBar.Value = 0;
                     Application.DoEvents();
                     Cursor.Current = Cursors.Default;
+                    EnableCommanding();
                     return;
                 }
 
@@ -739,6 +750,55 @@ namespace GlobalCommander
             progBar.Value = 100;
             Application.DoEvents();
             Cursor.Current = Cursors.Default;
+            EnableCommanding();
+        }
+
+        private void DisableCommanding()
+        {
+            cmdCommand.Enabled = false;
+            o1.Enabled = false;
+            o2.Enabled = false;
+            o3.Enabled = false;
+            o4.Enabled = false;
+            o5.Enabled = false;
+            o6.Enabled = false;
+            o7.Enabled = false;
+            o8.Enabled = false;
+            o9.Enabled = false;
+            o10.Enabled = false;
+            o11.Enabled = false;
+            o12.Enabled = false;
+            o13.Enabled = false;
+            o14.Enabled = false;
+            o15.Enabled = false;
+            o16.Enabled = false;
+            btnSyncTime.Enabled = false;
+            txtCmdVal.Enabled = false;
+            cmdViewProps.Enabled = false;
+        }
+
+        private void EnableCommanding()
+        {
+            cmdViewProps.Enabled = true;
+            txtCmdVal.Enabled = true;
+            btnSyncTime.Enabled = true;
+            o16.Enabled = true;
+            o15.Enabled = true;
+            o14.Enabled = true;
+            o13.Enabled = true;
+            o12.Enabled = true;
+            o11.Enabled = true;
+            o10.Enabled = true;
+            o9.Enabled = true;
+            o8.Enabled = true;
+            o7.Enabled = true;
+            o6.Enabled = true;
+            o5.Enabled = true;
+            o4.Enabled = true;
+            o3.Enabled = true;
+            o2.Enabled = true;
+            o1.Enabled = true;
+            cmdCommand.Enabled = true;
         }
 
         private void cmdViewProps_Click(object sender, EventArgs e)
@@ -1968,6 +2028,64 @@ namespace GlobalCommander
                 CheckDelimVisibility();
                 ResetFromObjectsList();
             }
+        }
+
+        private void btnSyncTime_Click(object sender, EventArgs e)
+        {
+
+            _selectedDevices = new List<BacnetDeviceExport>();
+
+            if (DeviceList.SelectedItem != null)
+            {
+                foreach (ListViewItemBetterString item in DeviceList.SelectedItems)
+                {
+                    _selectedDevices.Add((BacnetDeviceExport)item.Tag);
+                }
+            }
+            else
+            {
+                MessageBox.Show("No device(s) selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            Cursor.Current = Cursors.WaitCursor;
+            StartPatienceTimer();
+            progBar.Value = 0;
+            Application.DoEvents();
+
+            _pointListForDisplay = new List<BacnetPointExport>();
+
+
+            if (_selectedDevices != null && _selectedDevices.Count > 0)
+            {
+                for (int i = 0; i < _selectedDevices.Count; i++)
+                {
+
+                    BacnetClient comm = _selectedDevices[i].Comm;
+                    BacnetAddress adr = _selectedDevices[i].DeviceAddress;
+                    uint device_id = _selectedDevices[i].DeviceID;
+                    try
+                    {
+                        if (_yabeFrm.GetSetting_TimeSynchronize_UTC())
+                            comm.SynchronizeTime(adr, DateTime.Now.ToUniversalTime(), true);
+                        else
+                            comm.SynchronizeTime(adr, DateTime.Now, false);
+                    }
+                    catch(Exception ex)
+                    {
+                        MessageBox.Show(this, String.Format("Failed to sync time for device {0}: {1}", _selectedDevices[i].Name, ex.Message), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+
+                    progBar.Value = (int)(100 * i / _selectedDevices.Count);
+                    Application.DoEvents();
+                    
+                }
+
+            }
+
+            progBar.Value = 100;
+            ResetPatience();
+            Cursor.Current = Cursors.Default;
         }
     }
 }

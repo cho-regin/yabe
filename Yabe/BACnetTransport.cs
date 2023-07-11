@@ -162,11 +162,6 @@ namespace System.IO.BACnet
             bvlc = new BVLC(this);
         }
 
-        private void Close()
-        {
-            m_exclusive_conn.Close();
-        }
-
         public void Start()
         {
             Open();
@@ -255,24 +250,24 @@ namespace System.IO.BACnet
                             if ((MessageRecieved != null) && (rx > HEADER_LENGTH)) MessageRecieved(this, local_buffer, HEADER_LENGTH, rx - HEADER_LENGTH, remote_address);
                     }
                 }
+                catch (ObjectDisposedException ex)
+                {
+                    //Transport is probably being deleted, so ignore and swallow exception
+                    Trace.TraceWarning("ObjectDisposedException while receiving data in Udp OnRecieveData - Transport is probably being deleted: " + ex.Message);
+                }
                 catch (Exception ex)
                 {
-                    Trace.TraceError("Exception in udp recieve: " + ex.Message);
+                    Trace.TraceError("Unhandled exception in Udp OnRecieveData - receive loop cannot continue: " + ex.Message);
                 }
-                finally
-                {
-                    //restart data receive
-                    //conn.BeginReceive(OnReceiveData, conn);
-                }
+            }
+            catch (ObjectDisposedException ex)
+            {
+                //Transport is probably being deleted, so ignore and swallow exception
+                Trace.TraceWarning("ObjectDisposedException while receiving data in Udp OnRecieveData - Transport is probably being deleted: " + ex.Message);
             }
             catch (Exception ex)
             {
-                //restart data receive
-                if (conn.Client != null)
-                {
-                    Trace.TraceError("Exception in Ip OnRecieveData: " + ex.Message);
-                    conn.BeginReceive(OnReceiveData, conn);
-                }
+                Trace.TraceError("Unhandled " + ex.GetType().Name + " in Udp OnRecieveData - receive loop cannot continue: " + ex.Message);
             }
         }
 
@@ -458,9 +453,13 @@ namespace System.IO.BACnet
         {
             try
             {
-                m_exclusive_conn.Close(); 
+                if(m_exclusive_conn!=null)
+                    m_exclusive_conn.Close(); 
+                
+                if(m_shared_conn!=null)
+                    m_shared_conn.Close();
+
                 m_exclusive_conn = null;
-                m_shared_conn.Close(); 
                 m_shared_conn = null;
             }
             catch { }
