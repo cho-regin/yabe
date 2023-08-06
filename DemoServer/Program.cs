@@ -761,13 +761,15 @@ namespace DemoServer
             }
         }
 
-        private static void OnWritePropertyMultipleRequest(BacnetClient sender, BacnetAddress adr, byte invoke_id, BacnetObjectId object_id, ICollection<BacnetPropertyValue> values, BacnetMaxSegments max_segments)
+        private static void OnWritePropertyMultipleRequest(BacnetClient sender, BacnetAddress adr, byte invoke_id, IList<BacnetWriteAccessSpecification> properties, BacnetMaxSegments max_segments)
         {
             lock (m_lockObject)
             {
                 try
                 {
-                    m_storage.WritePropertyMultiple(object_id, values);
+                    foreach (var prop in properties)
+                        m_storage.WritePropertyMultiple(prop.object_id, prop.values_refs);
+
                     sender.SimpleAckResponse(adr, BacnetConfirmedServices.SERVICE_CONFIRMED_WRITE_PROP_MULTIPLE, invoke_id);
                 }
                 catch (Exception)
