@@ -3966,6 +3966,12 @@ namespace Yabe
             }
             throw new KeyNotFoundException($"Failed to determine node of device with ID {deviceId}!");
         }
+        private void FetchEndPoint(out List<(BacnetClient Client, BacnetAddress Address, uint DeviceId)> endPoints)
+        {
+            endPoints = new List<(BacnetClient Client, BacnetAddress Address, uint DeviceId)>();
+            if (FetchEndPoint(out BacnetClient comm, out BacnetAddress adr, out uint device_id))
+                endPoints.Add((comm, adr, device_id));
+        }
         private void FetchEndPoints(out List<(BacnetClient Client, BacnetAddress Address, uint DeviceId)> endPoints)
         {
             endPoints = new List<(BacnetClient, BacnetAddress, uint)>();
@@ -4044,62 +4050,104 @@ namespace Yabe
             communicationControlToolStripMenuItem_Click(this, null);
         }
 
-
-        private string EdeExport_DefaultDeviceName(uint deviceId) => $"Device{deviceId}.ede.csv";
-        private void exportEDEFilesSelDeviceToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exportEDEFilesSelDeviceToolStripMenuItem_Click(object sender, EventArgs e) => exportDeviceEDEFile(true);
+        private void exportEDEFilesAllDevicesToolStripMenuItem_Click(object sender, EventArgs e) => exportDeviceEDEFile(false);
+        private const string EDE_EXPORT_TITLE = "EDE file export";
+        private const string EDE_EXPORT_EXT = "ede.csv";
+        private void exportDeviceEDEFile(bool selDeviceOnly)
         {
-            if (FetchEndPoint(out BacnetClient comm, out BacnetAddress adr, out uint device_id))
+            // Fetch endpoints:
+            var endPoints = new List<(BacnetClient Client, BacnetAddress Address, uint DeviceId)>();
+            if (selDeviceOnly)
+                FetchEndPoint(out endPoints);
+            else
+                FetchEndPoints(out endPoints);
+            if (endPoints.Count == 0)
+                return;
+
+            string file;
+            var singleFile = ((endPoints.Count == 1) || (Properties.Settings.Default.EDE_SingleFile));
+            if (singleFile)
             {
-                //select file to store
-                SaveFileDialog dlg = new SaveFileDialog()
-                {
+                // Export device(s) in into single file:
+                var endPoint = endPoints.First();
+                if (endPoints.Count == 1)
+                    file = $"Device{endPoint.DeviceId}.{EDE_EXPORT_EXT}";
+                else
+                    file = $"Devices.{EDE_EXPORT_EXT}";
+                var dlg = new SaveFileDialog() {
                     Filter = "csv|*.csv",
-                    FileName = EdeExport_DefaultDeviceName(device_id)
+                    FileName = file
                 };
-                if (dlg.ShowDialog(this) != DialogResult.OK) return;
-                String FileName = dlg.FileName.Remove(dlg.FileName.Length - 4, 4);
+                if (dlg.ShowDialog(this) != DialogResult.OK)
+                    return;
 
-                exportDeviceEDEFile(comm, adr, device_id, FileName);
-
-                // Now re-display the tree
-                m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(_selectedDevice));
-
-                //display
-                MessageBox.Show(this, "Done", "Export done", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                file = dlg.FileName.Remove(dlg.FileName.Length - 4, 4);
+                exportDeviceEDEFile(endPoints, file);
             }
             else
-                throw new InvalidOperationException("Unreachable code");
-        }
-        private void exportEDEFilesAllDevicesToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            FetchEndPoints(out var endPoints);
-            if (endPoints.Count >= 1)
             {
-                //select folder to store
-                var dlg = new FolderBrowserDialog()
-                {
+                // Export devices in into separate files:
+                var dlg = new FolderBrowserDialog() {
                     Description = $"Select output folder to export {endPoints.Count} EDE files to."
                 };
-                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                if (dlg.ShowDialog(this) != DialogResult.OK)
+                    return;
 
                 foreach (var endPoint in endPoints)
                 {
-                    String FileName = Path.Combine(dlg.SelectedPath, EdeExport_DefaultDeviceName(endPoint.DeviceId));
-                    exportDeviceEDEFile(endPoint.Client, endPoint.Address, endPoint.DeviceId, FileName);
+                    file = Path.Combine(dlg.SelectedPath, $"Device{endPoint.DeviceId}.{EDE_EXPORT_EXT}");
+                    exportDeviceEDEFile(endPoint.Client, endPoint.Address, endPoint.DeviceId, file);
                 }
+            }
 
-                if (_selectedDevice != null)
-                    // Now re-display the tree
-                    m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(_selectedDevice));
+            if (_selectedDevice != null)
+                // Now re-display the tree:
+                m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(_selectedDevice));
 
-                //display
-                MessageBox.Show(this, "Done", "Export done", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(this, $"Exported {endPoints.Count} device(s).", EDE_EXPORT_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        /// <summary>
+        /// Exports a single device to EDE file.
+        /// </summary>
+        private void exportDeviceEDEFile(BacnetClient client, BacnetAddress address, uint deviceId, String fileName) => exportDeviceEDEFile(Enumerable.Repeat((client, address, deviceId), 1), fileName);
+        /// <summary>
+        /// Exports one or more devices to EDE file.
+        /// </summary>
+        /// <remarks>
+        /// This will download all values from a given device and store it in 2 csv files: EDE and StateText (for Binary and Multistate objects).
+        /// Ede files for Units and ObjectTypes are common when all values are coming from the standard
+        /// </remarks>
+        /// <example>
+        /// Base on https://www.big-eu.org/s/big_ede_2_3.zip
+        /// </example>
+        private void exportDeviceEDEFile(IEnumerable<(BacnetClient Client, BacnetAddress Address, uint DeviceId)> endPoints, String fileName)
+        {
+            using (var edeWriter = new StreamWriter(fileName + "_EDE.csv"))
+            using (var stateTextWriter = new StreamWriter(fileName + "_StateTexts.csv"))
+            {
+                // Write document headers
+                edeWriter.WriteLine("#Engineering-Data-Exchange - B.I.G.-EU");
+                edeWriter.WriteLine("PROJECT_NAME");
+                edeWriter.WriteLine("VERSION_OF_REFERENCEFILE");
+                edeWriter.WriteLine("TIMESTAMP_OF_LAST_CHANGE;" + DateTime.Now.ToShortDateString());
+                edeWriter.WriteLine("AUTHOR_OF_LAST_CHANGE;YABE Yet Another Bacnet Explorer");
+                edeWriter.WriteLine("VERSION_OF_LAYOUT;2.3");
+                edeWriter.WriteLine("#mandatory;mandator;mandatory;mandatory;mandatory;optional;optional;optional;optional;optional;optional;optional;optional;optional;optional;optional");
+                edeWriter.WriteLine("# keyname;device obj.-instance;object-name;object-type;object-instance;description;present-value-default;min-present-value;max-present-value;settable;supports COV;hi-limit;low-limit;state-text-reference;unit-code;vendor-specific-addres");
+
+                stateTextWriter.WriteLine("#State Text Reference");
+                // Some colums, certainly enough. User need to add it manualy in the csv file if it's to few.
+                stateTextWriter.WriteLine("#Reference Number;Text 1 or Inactive-Text;Text 2 or Active-Text;Text 3;Text 4;Text 5;Text 6;Text 7;Text 8;Text 9;Text 10;Text 11;Text 12;Text 13");
+
+                foreach (var endPoint in endPoints)
+                    exportDeviceEDEFile(endPoint.Client, endPoint.Address, endPoint.DeviceId, edeWriter, stateTextWriter);
             }
         }
-        // Base on https://www.big-eu.org/s/big_ede_2_3.zip
-        // This will download all values from a given device and store it in 2 csv files : EDE and StateText (for Binary and Multistate objects)
-        // Ede files for Units and ObjectTypes are common when all values are coming from the standard
-        private void exportDeviceEDEFile(BacnetClient client, BacnetAddress address, uint deviceId, String fileName)
+        /// <summary>
+        /// Gathers a devices EDE data and writes it to a file stream.
+        /// </summary>
+        private void exportDeviceEDEFile(BacnetClient client, BacnetAddress address, uint deviceId, StreamWriter edeWriter, StreamWriter stateTextWriter)
         {
             // update devices
             m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(GetTreeNodeFromDeviceId(deviceId)));
@@ -4108,35 +4156,17 @@ namespace Yabe
             Application.DoEvents();
             try
             {
-
                 int StateTextCount = 0;
 
                 // Read 6 properties even if not existing in the given object
-                BacnetPropertyReference[] propertiesWithText = new BacnetPropertyReference[6]
-                                                                    {
-                                                                        new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_NAME, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
-                                                                        new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_DESCRIPTION, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
-                                                                        new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_UNITS, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
-                                                                        new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_STATE_TEXT, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
-                                                                        new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_INACTIVE_TEXT, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
-                                                                        new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_ACTIVE_TEXT, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
-                                                                    };
-
-                StreamWriter Sw_EDE = new StreamWriter(fileName + "_EDE.csv");
-                StreamWriter Sw_StateText = new StreamWriter(fileName + "_StateTexts.csv");
-
-                Sw_EDE.WriteLine("#Engineering-Data-Exchange - B.I.G.-EU");
-                Sw_EDE.WriteLine("PROJECT_NAME");
-                Sw_EDE.WriteLine("VERSION_OF_REFERENCEFILE");
-                Sw_EDE.WriteLine("TIMESTAMP_OF_LAST_CHANGE;" + DateTime.Now.ToShortDateString());
-                Sw_EDE.WriteLine("AUTHOR_OF_LAST_CHANGE;YABE Yet Another Bacnet Explorer");
-                Sw_EDE.WriteLine("VERSION_OF_LAYOUT;2.3");
-                Sw_EDE.WriteLine("#mandatory;mandator;mandatory;mandatory;mandatory;optional;optional;optional;optional;optional;optional;optional;optional;optional;optional;optional");
-                Sw_EDE.WriteLine("# keyname;device obj.-instance;object-name;object-type;object-instance;description;present-value-default;min-present-value;max-present-value;settable;supports COV;hi-limit;low-limit;state-text-reference;unit-code;vendor-specific-addres");
-
-                Sw_StateText.WriteLine("#State Text Reference");
-                // Some colums, certainly enough. User need to add it manualy in the csv file if it's to few.
-                Sw_StateText.WriteLine("#Reference Number;Text 1 or Inactive-Text;Text 2 or Active-Text;Text 3;Text 4;Text 5;Text 6;Text 7;Text 8;Text 9;Text 10;Text 11;Text 12;Text 13");
+                BacnetPropertyReference[] propertiesWithText = new BacnetPropertyReference[6] {
+                    new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_NAME, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
+                    new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_DESCRIPTION, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
+                    new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_UNITS, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
+                    new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_STATE_TEXT, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
+                    new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_INACTIVE_TEXT, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
+                    new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_ACTIVE_TEXT, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
+                };
 
                 bool ReadPropertyMultipleSupported = true; // For the first request assume it's OK
 
@@ -4232,20 +4262,20 @@ namespace Yabe
                     }
 
                     if ((State_Text == null) && (InactiveText == ""))
-                        Sw_EDE.WriteLine(Bacobj.ToString() + ";" + deviceId.ToString() + ";" + Identifier + ";" + ((int)Bacobj.type).ToString() + ";" + Bacobj.instance.ToString() + ";" + Description + ";;;;;;;;;" + UnitCode);
+                        edeWriter.WriteLine(Bacobj.ToString() + ";" + deviceId.ToString() + ";" + Identifier + ";" + ((int)Bacobj.type).ToString() + ";" + Bacobj.instance.ToString() + ";" + Description + ";;;;;;;;;" + UnitCode);
                     else
                     {
-                        Sw_EDE.WriteLine(Bacobj.ToString() + ";" + deviceId.ToString() + ";" + Identifier + ";" + ((int)Bacobj.type).ToString() + ";" + Bacobj.instance.ToString() + ";" + Description + ";;;;;;;;" + StateTextCount + ";" + UnitCode);
+                        edeWriter.WriteLine(Bacobj.ToString() + ";" + deviceId.ToString() + ";" + Identifier + ";" + ((int)Bacobj.type).ToString() + ";" + Bacobj.instance.ToString() + ";" + Description + ";;;;;;;;" + StateTextCount + ";" + UnitCode);
 
-                        Sw_StateText.Write(StateTextCount++);
+                        stateTextWriter.Write(StateTextCount++);
 
                         if (State_Text != null)
                             foreach (var v in State_Text)
-                                Sw_StateText.Write(";" + v.Value.ToString());
+                                stateTextWriter.Write(";" + v.Value.ToString());
                         else
-                            Sw_StateText.Write(";" + InactiveText + ";" + ActiveText);
+                            stateTextWriter.Write(";" + InactiveText + ";" + ActiveText);
 
-                        Sw_StateText.WriteLine();
+                        stateTextWriter.WriteLine();
                     }
                     // Update also the Dictionary of known object name and the threenode
                     if (t.ToolTipText == "")
@@ -4278,13 +4308,10 @@ namespace Yabe
                         //ChangeTreeNodePropertyName(t, Identifier);
                     }
                 }
-
-                Sw_EDE.Close();
-                Sw_StateText.Close();
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, "Error during export: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, $"Export failed:\r\n{ex.Message}", EDE_EXPORT_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
