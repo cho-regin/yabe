@@ -50,7 +50,6 @@ namespace Yabe
 {
     public partial class YabeMainDialog : Form
     {
-
         private const int MIN_POLL_PERIOD = 100; //ms
         private const int MAX_POLL_PERIOD = 120000; //ms
 
@@ -4126,7 +4125,7 @@ namespace Yabe
             using (var edeWriter = new StreamWriter(fileName + "_EDE.csv"))
             using (var stateTextWriter = new StreamWriter(fileName + "_StateTexts.csv"))
             {
-                // Write document headers
+                // Write export file(s):
                 edeWriter.WriteLine("#Engineering-Data-Exchange - B.I.G.-EU");
                 edeWriter.WriteLine("PROJECT_NAME");
                 edeWriter.WriteLine("VERSION_OF_REFERENCEFILE");
@@ -4136,18 +4135,39 @@ namespace Yabe
                 edeWriter.WriteLine("#mandatory;mandator;mandatory;mandatory;mandatory;optional;optional;optional;optional;optional;optional;optional;optional;optional;optional;optional");
                 edeWriter.WriteLine("# keyname;device obj.-instance;object-name;object-type;object-instance;description;present-value-default;min-present-value;max-present-value;settable;supports COV;hi-limit;low-limit;state-text-reference;unit-code;vendor-specific-addres");
 
-                stateTextWriter.WriteLine("#State Text Reference");
-                // Some colums, certainly enough. User need to add it manualy in the csv file if it's to few.
-                stateTextWriter.WriteLine("#Reference Number;Text 1 or Inactive-Text;Text 2 or Active-Text;Text 3;Text 4;Text 5;Text 6;Text 7;Text 8;Text 9;Text 10;Text 11;Text 12;Text 13");
-
+                var stateTextReferences = new List<string>();
                 foreach (var endPoint in endPoints)
-                    exportDeviceEDEFile(endPoint.Client, endPoint.Address, endPoint.DeviceId, edeWriter, stateTextWriter);
+                    exportDeviceEDEFile(endPoint.Client, endPoint.Address, endPoint.DeviceId, edeWriter, stateTextReferences);
+
+                // Write state text references file:
+                stateTextWriter.WriteLine("#State Text Reference");
+                if (stateTextReferences.Count > 0)
+                {
+                    var maxStates = stateTextReferences
+                        .Select(stateRef => stateRef.Count(c => c.Equals(';')) + 1)
+                        .Max();
+                    var columns = Enumerable
+                        .Range(0, maxStates + 1)
+                        .Select(col => $"Text {col}")
+                        .ToArray();
+                    if (maxStates >= 0) columns[0] = "Reference Number";
+                    if (maxStates >= 1) columns[1] += " or Inactive-Text";
+                    if (maxStates >= 2) columns[2] += " or Active-Text";
+                    stateTextWriter.WriteLine("#" + string.Join(";", columns));
+
+                    int i = 0;
+                    foreach (var stateRef in stateTextReferences)
+                    {
+                        stateTextWriter.Write($"{i++};");
+                        stateTextWriter.WriteLine(stateRef);
+                    }
+                }
             }
         }
         /// <summary>
         /// Gathers a devices EDE data and writes it to a file stream.
         /// </summary>
-        private void exportDeviceEDEFile(BacnetClient client, BacnetAddress address, uint deviceId, StreamWriter edeWriter, StreamWriter stateTextWriter)
+        private void exportDeviceEDEFile(BacnetClient client, BacnetAddress address, uint deviceId, StreamWriter edeWriter, List<string> stateTextReferences)
         {
             // update devices
             m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(GetTreeNodeFromDeviceId(deviceId)));
@@ -4156,8 +4176,6 @@ namespace Yabe
             Application.DoEvents();
             try
             {
-                int StateTextCount = 0;
-
                 // Read 6 properties even if not existing in the given object
                 BacnetPropertyReference[] propertiesWithText = new BacnetPropertyReference[6] {
                     new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_NAME, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
@@ -4261,22 +4279,28 @@ namespace Yabe
                         catch { }
                     }
 
-                    if ((State_Text == null) && (InactiveText == ""))
-                        edeWriter.WriteLine(Bacobj.ToString() + ";" + deviceId.ToString() + ";" + Identifier + ";" + ((int)Bacobj.type).ToString() + ";" + Bacobj.instance.ToString() + ";" + Description + ";;;;;;;;;" + UnitCode);
-                    else
+                    // Write state texts:
+                    int? stateTextIdx = null;
+                    IEnumerable<string> stateTexts = null;
+                    if (State_Text != null)
+                        stateTexts = State_Text.Select(sta => sta.Value.ToString());
+                    else if ((InactiveText != "") && (ActiveText != ""))
+                        stateTexts = new string[] { InactiveText, ActiveText };
+
+                    if (stateTexts != null)
                     {
-                        edeWriter.WriteLine(Bacobj.ToString() + ";" + deviceId.ToString() + ";" + Identifier + ";" + ((int)Bacobj.type).ToString() + ";" + Bacobj.instance.ToString() + ";" + Description + ";;;;;;;;" + StateTextCount + ";" + UnitCode);
-
-                        stateTextWriter.Write(StateTextCount++);
-
-                        if (State_Text != null)
-                            foreach (var v in State_Text)
-                                stateTextWriter.Write(";" + v.Value.ToString());
+                        var line = string.Join(";", stateTexts);
+                        stateTextIdx = stateTextReferences.IndexOf(line);
+                        if (stateTextIdx == -1)
+                        {
+                            stateTextIdx = stateTextReferences.Count;
+                            stateTextReferences.Add(line);
+                        }
                         else
-                            stateTextWriter.Write(";" + InactiveText + ";" + ActiveText);
-
-                        stateTextWriter.WriteLine();
+                            ; // Use previously created reference.
                     }
+                    edeWriter.WriteLine(Bacobj.ToString() + ";" + deviceId.ToString() + ";" + Identifier + ";" + ((int)Bacobj.type).ToString() + ";" + Bacobj.instance.ToString() + ";" + Description + ";;;;;;;;" + stateTextIdx + ";" + UnitCode);
+
                     // Update also the Dictionary of known object name and the threenode
                     if (t.ToolTipText == "")
                     {
