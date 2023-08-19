@@ -164,7 +164,7 @@ namespace Yabe
                     currentTn.Tag = alarm;
                     TAlarmList.Nodes.Add(currentTn);
 
-                    if (Properties.Settings.Default.ShowDescriptionWhenUsefull)
+                    if (Properties.Settings.Default.ShowDescriptionWhenUseful)
                     {
                         String Descr = "";
                         try

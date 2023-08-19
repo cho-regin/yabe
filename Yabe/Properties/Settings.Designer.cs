@@ -410,12 +410,12 @@ namespace Yabe.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool ShowDescriptionWhenUsefull {
+        public bool ShowDescriptionWhenUseful {
             get {
-                return ((bool)(this["ShowDescriptionWhenUsefull"]));
+                return ((bool)(this["ShowDescriptionWhenUseful"]));
             }
             set {
-                this["ShowDescriptionWhenUsefull"] = value;
+                this["ShowDescriptionWhenUseful"] = value;
             }
         }
         
@@ -632,6 +632,18 @@ namespace Yabe.Properties {
             }
             set {
                 this["EDE_SingleFile"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EDE_CommonFiles {
+            get {
+                return ((bool)(this["EDE_CommonFiles"]));
+            }
+            set {
+                this["EDE_CommonFiles"] = value;
             }
         }
     }

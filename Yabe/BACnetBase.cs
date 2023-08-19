@@ -35,6 +35,7 @@ using System.IO.BACnet.Serialize;
 using System.Net;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using System.ComponentModel;
 
 namespace System.IO.BACnet
 {
@@ -855,7 +856,15 @@ namespace System.IO.BACnet
         UNITS_JOULES_PER_CUBIC_METER = 251,
         UNITS_MOLE_PERCENT = 252,
         UNITS_PASCAL_SECONDS = 253,
-        UNITS_MILLION_STANDARD_CUBIC_FEET_PER_MINUTE = 254
+        UNITS_MILLION_STANDARD_CUBIC_FEET_PER_MINUTE = 254,
+        // Since Addendum 135-2020ar
+        UNITS_DEGREES_LOVIBOND = 47816,
+        UNITS_ALCOHOL_BY_VOLUME = 47817,
+        UNITS_INTERNATIONAL_BITTERING_UNITS = 47818,
+        UNITS_EUROPEAN_BITTERNESS_UNITS = 47819,
+        UNITS_DEGREES_PLATO = 47820,
+        UNITS_SPECIFIC_GRAVITY = 47821,
+        UNITS_EUROPEAN_BREWING_CONVENTION = 47822
         /*-- Enumerated values 0-255 and 47808-49999 are reserved for definition by ASHRAE. Enumerated values
           -- 256-47807 and 50000-65535 may be used by others subject to the procedures and constraints described
           -- in Clause 23.*/

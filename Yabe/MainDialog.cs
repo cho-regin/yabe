@@ -481,7 +481,7 @@ namespace Yabe
                 itm.SubItems.Add(EventData.notifyType.ToString());   //status [6]
 
 
-                if (Properties.Settings.Default.ShowDescriptionWhenUsefull)
+                if (Properties.Settings.Default.ShowDescriptionWhenUseful)
                 {
                     itm.SubItems.Add("Yabe received an event notification");   // Description [7]
                 }
@@ -2914,7 +2914,7 @@ namespace Yabe
                 itm.SubItems.Add("");   //value [4]
                 itm.SubItems.Add("");   //time [5]
                 itm.SubItems.Add("Not started");   //status [6]
-                if (Properties.Settings.Default.ShowDescriptionWhenUsefull)
+                if (Properties.Settings.Default.ShowDescriptionWhenUseful)
                 {
                     IList<BacnetValue> values;
                     if (comm.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_DESCRIPTION, out values))
@@ -4052,7 +4052,7 @@ namespace Yabe
         private void exportEDEFilesSelDeviceToolStripMenuItem_Click(object sender, EventArgs e) => exportDeviceEDEFile(true);
         private void exportEDEFilesAllDevicesToolStripMenuItem_Click(object sender, EventArgs e) => exportDeviceEDEFile(false);
         private const string EDE_EXPORT_TITLE = "EDE file export";
-        private const string EDE_EXPORT_EXT = "ede.csv";
+        private const string EDE_EXPORT_EXT = "csv";
         private void exportDeviceEDEFile(bool selDeviceOnly)
         {
             // Fetch endpoints:
@@ -4122,10 +4122,10 @@ namespace Yabe
         /// </example>
         private void exportDeviceEDEFile(IEnumerable<(BacnetClient Client, BacnetAddress Address, uint DeviceId)> endPoints, String fileName)
         {
-            using (var edeWriter = new StreamWriter(fileName + "_EDE.csv"))
-            using (var stateTextWriter = new StreamWriter(fileName + "_StateTexts.csv"))
+            var stateTextReferences = new List<string>();
+
+            using (var edeWriter = new StreamWriter($"{fileName}_EDE.csv"))
             {
-                // Write export file(s):
                 edeWriter.WriteLine("#Engineering-Data-Exchange - B.I.G.-EU");
                 edeWriter.WriteLine("PROJECT_NAME");
                 edeWriter.WriteLine("VERSION_OF_REFERENCEFILE");
@@ -4135,11 +4135,11 @@ namespace Yabe
                 edeWriter.WriteLine("#mandatory;mandator;mandatory;mandatory;mandatory;optional;optional;optional;optional;optional;optional;optional;optional;optional;optional;optional");
                 edeWriter.WriteLine("# keyname;device obj.-instance;object-name;object-type;object-instance;description;present-value-default;min-present-value;max-present-value;settable;supports COV;hi-limit;low-limit;state-text-reference;unit-code;vendor-specific-addres");
 
-                var stateTextReferences = new List<string>();
                 foreach (var endPoint in endPoints)
                     exportDeviceEDEFile(endPoint.Client, endPoint.Address, endPoint.DeviceId, edeWriter, stateTextReferences);
-
-                // Write state text references file:
+            }
+            using (var stateTextWriter = new StreamWriter($"{fileName}_StateTexts.csv"))
+            {
                 stateTextWriter.WriteLine("#State Text Reference");
                 if (stateTextReferences.Count > 0)
                 {
@@ -4161,6 +4161,24 @@ namespace Yabe
                         stateTextWriter.Write($"{i++};");
                         stateTextWriter.WriteLine(stateRef);
                     }
+                }
+            }
+
+            if (Properties.Settings.Default.EDE_CommonFiles)
+            {
+                using (var objTypesWriter = new StreamWriter($"{fileName}_ObjTypes.csv"))
+                {
+                    objTypesWriter.WriteLine("#Encoding of BACnet Object Types;");
+                    objTypesWriter.WriteLine("#Code;Object Type;");
+                    foreach (var objType in Common.ObjectType_EdeTexts)
+                        objTypesWriter.WriteLine($"{(int)objType.Key};{objType.Value};");
+                }
+                using (var unitsWriter = new StreamWriter($"{fileName}_Units.csv"))
+                {
+                    unitsWriter.WriteLine("#Encoding of BACnet Engineering Units;");
+                    unitsWriter.WriteLine("#Code;Unit Text;");
+                    foreach (var unit in Common.Unit_EdeTexts)
+                        unitsWriter.WriteLine($"{(int)unit.Key};{unit.Value};");
                 }
             }
         }

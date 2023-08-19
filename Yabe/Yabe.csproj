@@ -116,6 +116,7 @@
     <Compile Include="CalendarEditor.Designer.cs">
       <DependentUpon>CalendarEditor.cs</DependentUpon>
     </Compile>
+    <Compile Include="Common.cs" />
     <Compile Include="CreateObject.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -266,9 +267,11 @@
     <None Include="Proprietary-properties.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <EmbeddedResource Include="Resources\ObjectTypes.csv" />
     <None Include="TestHub.crt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <EmbeddedResource Include="Resources\Units.csv" />
     <None Include="Yabe.p12">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
