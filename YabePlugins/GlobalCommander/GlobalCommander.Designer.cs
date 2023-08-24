@@ -78,6 +78,7 @@ namespace GlobalCommander
             this.chkDot = new System.Windows.Forms.CheckBox();
             this.chkApostrophe = new System.Windows.Forms.CheckBox();
             this.delimToolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.btnSyncTime = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -140,6 +141,8 @@ namespace GlobalCommander
             this.cmdPopulateDevices.Size = new System.Drawing.Size(140, 36);
             this.cmdPopulateDevices.TabIndex = 3;
             this.cmdPopulateDevices.Text = "Populate Devices";
+            this.delimToolTip.SetToolTip(this.cmdPopulateDevices, "Populate the list with all currently discovered\r\ndevices that are showing in the " +
+        "main window.");
             this.cmdPopulateDevices.UseVisualStyleBackColor = true;
             this.cmdPopulateDevices.Click += new System.EventHandler(this.cmdPopulateDevices_Click);
             // 
@@ -150,6 +153,7 @@ namespace GlobalCommander
             this.cmdPopulatePoints.Size = new System.Drawing.Size(140, 36);
             this.cmdPopulatePoints.TabIndex = 5;
             this.cmdPopulatePoints.Text = "Populate Points";
+            this.delimToolTip.SetToolTip(this.cmdPopulatePoints, resources.GetString("cmdPopulatePoints.ToolTip"));
             this.cmdPopulatePoints.UseVisualStyleBackColor = true;
             this.cmdPopulatePoints.Click += new System.EventHandler(this.cmdPopulatePoints_Click);
             // 
@@ -160,6 +164,7 @@ namespace GlobalCommander
             this.cmdPopulateProperties.Size = new System.Drawing.Size(140, 36);
             this.cmdPopulateProperties.TabIndex = 7;
             this.cmdPopulateProperties.Text = "Populate Properties";
+            this.delimToolTip.SetToolTip(this.cmdPopulateProperties, resources.GetString("cmdPopulateProperties.ToolTip"));
             this.cmdPopulateProperties.UseVisualStyleBackColor = true;
             this.cmdPopulateProperties.Click += new System.EventHandler(this.cmdPopulateProperties_Click);
             // 
@@ -171,6 +176,8 @@ namespace GlobalCommander
             this.cmdCommand.Size = new System.Drawing.Size(214, 36);
             this.cmdCommand.TabIndex = 8;
             this.cmdCommand.Text = "Globally Command";
+            this.delimToolTip.SetToolTip(this.cmdCommand, "Command/relinquish the selected property\r\non all selected objects/devices to the " +
+        "specified\r\nvalue.");
             this.cmdCommand.UseVisualStyleBackColor = true;
             this.cmdCommand.Click += new System.EventHandler(this.cmdCommand_Click);
             // 
@@ -191,6 +198,7 @@ namespace GlobalCommander
             this.txtCmdVal.Name = "txtCmdVal";
             this.txtCmdVal.Size = new System.Drawing.Size(120, 20);
             this.txtCmdVal.TabIndex = 28;
+            this.delimToolTip.SetToolTip(this.txtCmdVal, resources.GetString("txtCmdVal.ToolTip"));
             // 
             // o1
             // 
@@ -387,6 +395,9 @@ namespace GlobalCommander
             this.cmdViewProps.Size = new System.Drawing.Size(213, 36);
             this.cmdViewProps.TabIndex = 9;
             this.cmdViewProps.Text = "View Properties in Scope";
+            this.delimToolTip.SetToolTip(this.cmdViewProps, "View all the curent value of the selected property\r\non all selected objects/devic" +
+        "es that would be globally\r\ncommanded. The values can also be commanded\r\none-by-o" +
+        "ne from here.");
             this.cmdViewProps.UseVisualStyleBackColor = true;
             this.cmdViewProps.Click += new System.EventHandler(this.cmdViewProps_Click);
             // 
@@ -687,11 +698,25 @@ namespace GlobalCommander
             this.delimToolTip.ToolTipIcon = System.Windows.Forms.ToolTipIcon.Info;
             this.delimToolTip.ToolTipTitle = "Info";
             // 
+            // btnSyncTime
+            // 
+            this.btnSyncTime.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSyncTime.Location = new System.Drawing.Point(1032, 338);
+            this.btnSyncTime.Name = "btnSyncTime";
+            this.btnSyncTime.Size = new System.Drawing.Size(53, 43);
+            this.btnSyncTime.TabIndex = 10;
+            this.btnSyncTime.Text = "Sync Time";
+            this.delimToolTip.SetToolTip(this.btnSyncTime, "Synchronize the time of the selected devices\r\nwith the PC\'s time. This will be ei" +
+        "ther local\r\ntime or UTC time, depending on the setting\r\n\"TimeSynchronize_UTC\".");
+            this.btnSyncTime.UseVisualStyleBackColor = true;
+            this.btnSyncTime.Click += new System.EventHandler(this.btnSyncTime_Click);
+            // 
             // GlobalCommander
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1253, 659);
+            this.Controls.Add(this.btnSyncTime);
             this.Controls.Add(this.grpPointNames);
             this.Controls.Add(this.PatienceLabel);
             this.Controls.Add(this.splitContainer1);
@@ -798,5 +823,6 @@ namespace GlobalCommander
         private System.Windows.Forms.CheckBox chkDot;
         private System.Windows.Forms.CheckBox chkApostrophe;
         private System.Windows.Forms.ToolTip delimToolTip;
+        private System.Windows.Forms.Button btnSyncTime;
     }
 }

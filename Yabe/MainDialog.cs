@@ -213,6 +213,10 @@ namespace Yabe
                 }
             }
         }
+        public bool GetSetting_TimeSynchronize_UTC()
+        {
+            return Properties.Settings.Default.TimeSynchronize_UTC;
+        }
 
         public string GetProprietaryPropertyName(int id)
         {
@@ -5118,8 +5122,28 @@ namespace Yabe
         private void manual_refresh_properties_Click(object sender, EventArgs e)
         {
             // perform manual update
-            if (m_AddressSpaceTree.SelectedNode != null)
-                UpdateGrid(m_AddressSpaceTree.SelectedNode);
+            if (_selectedNode != null)
+            {
+                if (_selectedNode is Subscription sub)
+                {
+                    UpdateGrid(sub);
+                }
+                else if (_selectedNode is TreeNode node)
+                {
+                    UpdateGrid(node);
+                }
+                else
+                {
+                    _selectedNode = null;
+                    m_DataGrid.SelectedObject = null;
+                    return;
+                }
+            }
+            else
+            {
+                m_DataGrid.SelectedObject = null;
+                return;
+            }
         }
 
         private void menuStrip1_MenuActivate(object sender, EventArgs e)
