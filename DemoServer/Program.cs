@@ -372,7 +372,7 @@ namespace DemoServer
                     foreach (Subscription sub in entry.Value)
                     {
                         //encode
-                        System.IO.BACnet.Serialize.EncodeBuffer buffer = new System.IO.BACnet.Serialize.EncodeBuffer();
+                        //System.IO.BACnet.Serialize.EncodeBuffer buffer = new System.IO.BACnet.Serialize.EncodeBuffer();
                         BacnetCOVSubscription cov = new BacnetCOVSubscription();
                         cov.Recipient = sub.reciever_address;
                         cov.subscriptionProcessIdentifier = sub.subscriberProcessIdentifier;
@@ -381,13 +381,13 @@ namespace DemoServer
                         cov.IssueConfirmedNotifications = sub.issueConfirmedNotifications;
                         cov.TimeRemaining = (uint)sub.lifetime - (uint)(DateTime.Now - sub.start).TotalMinutes;
                         cov.COVIncrement = sub.covIncrement;
-                        System.IO.BACnet.Serialize.ASN1.encode_cov_subscription(buffer, cov);
+                        //System.IO.BACnet.Serialize.ASN1.encode_cov_subscription(buffer, cov);
 
                         //add
-                        BacnetValue v = new BacnetValue();
-                        v.Tag = BacnetApplicationTags.BACNET_APPLICATION_TAG_COV_SUBSCRIPTION;
-                        v.Value = buffer.ToArray();
-                        list.Add(v);
+                        //BacnetValue v = new BacnetValue();
+                        //v.Tag = BacnetApplicationTags.BACNET_APPLICATION_TAG_COV_SUBSCRIPTION;
+                        //v.Value = buffer.ToArray();
+                        list.Add(new BacnetValue(cov));
                     }
                 }
                 value = list;

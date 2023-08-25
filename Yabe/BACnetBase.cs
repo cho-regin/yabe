@@ -7563,7 +7563,7 @@ namespace System.IO.BACnet
         }
     }
 
-    public struct BacnetCOVSubscription
+    public struct BacnetCOVSubscription : ASN1.IASN1encode
     {
         /* BACnetRecipientProcess */
         public BacnetAddress Recipient;
@@ -7583,6 +7583,11 @@ namespace System.IO.BACnet
             if (name.StartsWith("OBJECT_")) name = name.Substring(7);
 
             return name + " by " + Recipient.ToString() + ", remain " + TimeRemaining + "s";
+        }
+
+        public void ASN1encode(EncodeBuffer buffer)
+        {
+            System.IO.BACnet.Serialize.ASN1.encode_cov_subscription(buffer, this);
         }
     }
 
@@ -9694,7 +9699,7 @@ namespace System.IO.BACnet.Serialize
                 case BacnetApplicationTags.BACNET_APPLICATION_TAG_OBJECT_ID:
                     encode_application_object_id(buffer, ((BacnetObjectId)value.Value).type, ((BacnetObjectId)value.Value).instance);
                     break;
-                case BacnetApplicationTags.BACNET_APPLICATION_TAG_COV_SUBSCRIPTION:
+                case BacnetApplicationTags.BACNET_APPLICATION_TAG_COV_SUBSCRIPTION:              //leave maybe breaks something
                     encode_cov_subscription(buffer, ((BacnetCOVSubscription)value.Value));       //is this the right way to do it, I wonder?
                     break;
                 case BacnetApplicationTags.BACNET_APPLICATION_TAG_READ_ACCESS_RESULT:
@@ -9791,7 +9796,13 @@ namespace System.IO.BACnet.Serialize
                         BACnetAccumulatorRecord v = (BACnetAccumulatorRecord)value.Value;
                         v.ASN1encode(buffer);
 
-                    }else
+                    }
+                    else if (with_type == typeof(BacnetCOVSubscription))
+                    {
+                        BacnetCOVSubscription v = (BacnetCOVSubscription)value.Value;
+                        v.ASN1encode(buffer);
+                    }
+                    else
 
                     if (value.Value is byte[])
                     {
