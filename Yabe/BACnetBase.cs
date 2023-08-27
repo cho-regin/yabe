@@ -1079,22 +1079,39 @@ namespace System.IO.BACnet
 
     public enum BacnetWritePriority
     {
+        [Description("0. None")]
         NO_PRIORITY = 0,
+        [Description("1. Manual life safety")]
         MANUAL_LIFE_SAFETY = 1,
+        [Description("2. Automatic life safety")]
         AUTOMATIC_LIFE_SAFETY = 2,
+        [Description("3. <Unspecified>")]
         UNSPECIFIED_LEVEL_3 = 3,
+        [Description("4. <Unspecified>")]
         UNSPECIFIED_LEVEL_4 = 4,
+        [Description("5. Critical equipment control")]
         CRITICAL_EQUIPMENT_CONTROL = 5,
+        [Description("6. Minimum on/off")]
         MINIMUM_ON_OFF = 6,
+        [Description("7. <Unspecified>")]
         UNSPECIFIED_LEVEL_7 = 7,
+        [Description("8. Manual operator")]
         MANUAL_OPERATOR = 8,
+        [Description("9. <Unspecified>")]
         UNSPECIFIED_LEVEL_9 = 9,
+        [Description("10. <Unspecified>")]
         UNSPECIFIED_LEVEL_10 = 10,
+        [Description("11. <Unspecified>")]
         UNSPECIFIED_LEVEL_11 = 11,
+        [Description("12. <Unspecified>")]
         UNSPECIFIED_LEVEL_12 = 12,
+        [Description("13. <Unspecified>")]
         UNSPECIFIED_LEVEL_13 = 13,
+        [Description("14. <Unspecified>")]
         UNSPECIFIED_LEVEL_14 = 14,
+        [Description("15. <Unspecified>")]
         UNSPECIFIED_LEVEL_15 = 15,
+        [Description("16. <Default>")]
         LOWEST_AND_DEFAULT = 16
     }
 

@@ -3676,9 +3676,7 @@ namespace Yabe
         {
             bool prevVertOrientation = Properties.Settings.Default.Vertical_Object_Splitter_Orientation;
 
-            SettingsDialog dlg = new SettingsDialog();
-            dlg.SelectedObject = Properties.Settings.Default;
-            dlg.ShowDialog(this);
+            new SettingsDialog(Properties.Settings.Default).ShowDialog(this);
 
             bool changedOrientation = prevVertOrientation ^ Properties.Settings.Default.Vertical_Object_Splitter_Orientation;
 
