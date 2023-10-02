@@ -4592,6 +4592,9 @@ namespace Yabe
                     objectNamesChangedFlag = true;
                     Trace.TraceInformation("Loaded object names from \"" + filename + "\".");
                 }
+
+                Properties.Settings.Default.Auto_Store_Object_Names_File = filename;
+                Properties.Settings.Default.Save();
             }
             catch
             {
@@ -4616,6 +4619,9 @@ namespace Yabe
                 bf.Serialize(stream, DevicesObjectsName);
                 stream.Close();
                 Trace.TraceInformation("Saved object names to \"" + filename + "\".");
+
+                Properties.Settings.Default.Auto_Store_Object_Names_File = filename;
+                Properties.Settings.Default.Save();
             }
             catch
             {
