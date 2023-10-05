@@ -4594,6 +4594,7 @@ namespace Yabe
                 }
 
                 Properties.Settings.Default.Auto_Store_Object_Names_File = filename;
+                Properties.Settings.Default.Auto_Store_Object_Names = true;
                 Properties.Settings.Default.Save();
             }
             catch
@@ -4621,6 +4622,7 @@ namespace Yabe
                 Trace.TraceInformation("Saved object names to \"" + filename + "\".");
 
                 Properties.Settings.Default.Auto_Store_Object_Names_File = filename;
+                Properties.Settings.Default.Auto_Store_Object_Names = true;
                 Properties.Settings.Default.Save();
             }
             catch
