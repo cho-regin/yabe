@@ -74,14 +74,14 @@ namespace BACnetSCsampleNode
             {
                 primaryHubURI = "ws://127.0.0.1:4443",
                 UUID = "{92fb9be8-bac0-0000-0cab-171d5ec08e6c}",
-                // For certificates Files reference or X509 (X509Certificate2 objects) can be set here
+                // if primaryHubURI is wss, PKI data are to be provided, otherwise not
+                ValidateHubCertificate = true,       // if you want
+                OnlyAllowsTLS13 = true,              // normally it is forced by the Hub
+                OwnCertificateFile = "Yabe.p12",     // own certificate with private key, others formats than p12 suppported
+                OwnCertificateFilePassword = null,   // if certfile is password protected put it here (see DPAPI rather)
+                HubCertificateFile = "TestHub.crt",  // hub certificate or CA one, pem or other format
             };
-
             bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(config));
-
-            // Configuration could also be done with a File side the .exe, see BACnetSCConfig.config in Yabe directory
-            // StreamReader sr = new StreamReader("BACnetSCConfig.config");
-            // bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(sr.BaseStream));
 
             // Send WhoIs in order to get back all the Iam responses :  
             bacnet_client.OnIam += new BacnetClient.IamHandler(handler_OnIam);
