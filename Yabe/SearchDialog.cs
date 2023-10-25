@@ -237,11 +237,12 @@ namespace Yabe
         private void m_SelectSC_Click(object sender, EventArgs e)
         {
             OpenFileDialog dlg = new OpenFileDialog();
-            dlg.InitialDirectory = Path.GetDirectoryName(Properties.Settings.Default.Auto_Store_Object_Names_File);
+            dlg.InitialDirectory = Path.GetDirectoryName(Properties.Settings.Default.BACnetSCConfigFile);
             dlg.DefaultExt = "Config";
             dlg.Filter = "XML Configuration Files (*.Config)|*.Config|All files (*.*)|*.*";
             if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
             m_SC_Config.Text=Properties.Settings.Default.BACnetSCConfigFile = dlg.FileName;
+            Properties.Settings.Default.Save();
         }
     }
 }
