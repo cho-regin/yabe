@@ -1,0 +1,8 @@
+C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\bin\Debug\ListOutOfService.dll
+C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\bin\Debug\ListOutOfService.pdb
+C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\obj\Debug\ListOutOfService.csproj.AssemblyReference.cache
+C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\obj\Debug\ListOutOfService.Priorities.resources
+C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\obj\Debug\ListOutOfService.csproj.GenerateResource.cache
+C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\obj\Debug\ListOutOfService.csproj.CoreCompileInputs.cache
+C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\obj\Debug\ListOutOfService.dll
+C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\obj\Debug\ListOutOfService.pdb
