@@ -82,6 +82,7 @@ namespace System.IO.BACnet
 
         private bool ConfigOK = false;
 
+        private X509Chain CertValidationChain;
         public BACnetTransportSecureConnect(BACnetSCConfigChannel config)
         {
             configuration = config;
@@ -109,13 +110,30 @@ namespace System.IO.BACnet
                     try
                     {
                         // could be not given if the root CA is in the default computer store
-                        configuration.HubCertificate = new X509Certificate2(configuration.HubCertificateFile);
+                        if (configuration.HubCertificateFile != null)
+                            configuration.HubCertificate = new X509Certificate2(configuration.HubCertificateFile);
                     }
                     catch
                     {
                         // Error may or not occur later during connection
-                        return;
                     }
+
+                if (configuration.ValidateHubCertificate)
+                {
+                    // Import all the CA and own certificate
+                    // so we will also accept all remote devices with the same CAs
+                    // and also certificate signed by Yabe if it's a CA also
+                    X509Certificate2Collection CertValidationCollection = new X509Certificate2Collection();
+                    CertValidationCollection.Import(configuration.OwnCertificateFile);
+                    CertValidationChain = new X509Chain();
+                    CertValidationChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                    CertValidationChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                    foreach (X509Certificate2 cert in CertValidationCollection)
+                        CertValidationChain.ChainPolicy.ExtraStore.Add(cert);
+
+                    if (configuration.HubCertificate != null)
+                        CertValidationChain.ChainPolicy.ExtraStore.Add(configuration.HubCertificate);
+                }
             }
 
             ConfigOK = true;
@@ -178,13 +196,23 @@ namespace System.IO.BACnet
                 return true;
 
             // We have a certificate in the chain (even self signed) : CA Root, CA Intermediate
+            // The chain is not alway sent so not always working
             foreach (X509ChainElement chainElement in chain.ChainElements)
                 if (chainElement.Certificate.Equals(configuration.HubCertificate)) 
                     return true;
 
             // We have the final certificate (even self signed) ... normaly this certificate is in the previous X509Chain
+            // so this test can certainly be remove
             if (certificate.Equals(configuration.HubCertificate))
-                return true;   
+                return true;
+
+            // Try if the cert share the same PKI as Yabe
+            if (CertValidationChain!=null)
+            {
+                CertValidationChain.Build(certificate as X509Certificate2);
+                if (CertValidationChain.ChainElements.Count > 1)
+                    return true;
+            }
 
             Trace.TraceError("BACnet/SC : Remote certificate rejected");
 
