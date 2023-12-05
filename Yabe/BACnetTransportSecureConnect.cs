@@ -120,18 +120,18 @@ namespace System.IO.BACnet
 
                 if (configuration.ValidateHubCertificate)
                 {
-                    // Import all the CA and own certificate
+                    // Import all the CA form the .pfx and Yabe own certificate
                     // so we will also accept all remote devices with the same CAs
                     // and also certificate signed by Yabe if it's a CA also
                     X509Certificate2Collection CertValidationCollection = new X509Certificate2Collection();
-                    CertValidationCollection.Import(configuration.OwnCertificateFile);
+                    CertValidationCollection.Import(configuration.OwnCertificateFile, configuration.OwnCertificateFilePassword, X509KeyStorageFlags.DefaultKeySet);
                     CertValidationChain = new X509Chain();
                     CertValidationChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
                     CertValidationChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
                     foreach (X509Certificate2 cert in CertValidationCollection)
                         CertValidationChain.ChainPolicy.ExtraStore.Add(cert);
 
-                    if (configuration.HubCertificate != null)
+                    if (configuration.HubCertificate != null) // could be the direct CA of the Hub
                         CertValidationChain.ChainPolicy.ExtraStore.Add(configuration.HubCertificate);
                 }
             }
@@ -201,17 +201,12 @@ namespace System.IO.BACnet
                 if (chainElement.Certificate.Equals(configuration.HubCertificate)) 
                     return true;
 
-            // We have the final certificate (even self signed) ... normaly this certificate is in the previous X509Chain
-            // so this test can certainly be remove
-            if (certificate.Equals(configuration.HubCertificate))
-                return true;
-
-            // Try if the cert share the same PKI as Yabe
+            // Try if the cert share the same PKI as Yabe or the HubCertificate is the direct CA certificate
             if (CertValidationChain!=null)
             {
-                CertValidationChain.Build(certificate as X509Certificate2);
-                if (CertValidationChain.ChainElements.Count > 1)
-                    return true;
+                if (CertValidationChain.Build(certificate as X509Certificate2)==true)
+                    if (CertValidationChain.ChainElements.Count > 1)    // The certificate is link to at least another one in the 'ephemeral store'
+                        return true;
             }
 
             Trace.TraceError("BACnet/SC : Remote certificate rejected");

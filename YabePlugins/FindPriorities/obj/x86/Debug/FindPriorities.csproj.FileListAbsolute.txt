@@ -1,7 +1,0 @@
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\bin\x86\Debug\FindPriorities.dll
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\bin\x86\Debug\FindPriorities.pdb
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\obj\x86\Debug\FindPriorities.Priorities.resources
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\obj\x86\Debug\FindPriorities.csproj.GenerateResource.cache
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\obj\x86\Debug\FindPriorities.csproj.CoreCompileInputs.cache
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\obj\x86\Debug\FindPriorities.dll
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPriorities\obj\x86\Debug\FindPriorities.pdb

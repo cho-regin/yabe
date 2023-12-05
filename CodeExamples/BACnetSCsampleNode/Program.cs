@@ -76,10 +76,10 @@ namespace BACnetSCsampleNode
                 UUID = "{92fb9be8-bac0-0000-0cab-171d5ec08e6c}",
                 // if primaryHubURI is wss, PKI data are to be provided, otherwise not
                 ValidateHubCertificate = true,       // if you want
-                OnlyAllowsTLS13 = true,              // normally it is forced by the Hub
-                OwnCertificateFile = "Yabe.p12",     // own certificate with private key, others formats than p12 suppported
-                OwnCertificateFilePassword = null,   // if certfile is password protected put it here (see DPAPI rather)
-                HubCertificateFile = "TestHub.crt",  // hub certificate or CA one, pem or other format
+                OnlyAllowsTLS13 = true,              // normally it is forced by the Hub, not working on Windows 10 without registry modification
+                OwnCertificateFile = "Yabe.p12",     // own certificate with private key, others formats than p12, pfx suppported
+                OwnCertificateFilePassword = null,   // if certfile is password protected put it here (see DPAPI to hide it)
+                HubCertificateFile = "TestHub.crt",  // hub certificate or CA one, pem or other format, not required if the Hub share the same PKI as own
             };
             bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(config));
 
