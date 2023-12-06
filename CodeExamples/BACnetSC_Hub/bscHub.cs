@@ -49,20 +49,46 @@ namespace System.IO.BACnet
         X509Certificate2 ownCertificate; // with private key
         X509Certificate2Collection rejectedCertificates =new X509Certificate2Collection();
         X509Certificate2Collection trustedCertificates = new X509Certificate2Collection();
+        X509Certificate2Collection issuerCertificates = new X509Certificate2Collection();
         string pkiDirectory;
 
         X509Chain ExtraChain = new X509Chain();
+        X509Chain CertificatValidator=new X509Chain();  // Used to check individual certificate for date and self signature
+
         public bscHub(string URI, String pkiDirectory = null, String ownCertificatePassword = null)
         {
             if (pkiDirectory != null)
             {
+                // Used to check signature et validity date
+                CertificatValidator.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                CertificatValidator.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
                 this.pkiDirectory = pkiDirectory;
                 try
                 {
                     ownCertificate = new X509Certificate2(pkiDirectory + "\\own\\Hub.p12", ownCertificatePassword);
+
                     if (!ownCertificate.HasPrivateKey)
                         // error if it's wss://
                         Trace.WriteLine("BACnet/SC : Warning the HUB own certificate is without a private key");
+                    
+                    // ownCertificate.Verify() not working, it only uses Windows cert store
+                    if (CertificatValidator.Build(ownCertificate)==false)
+                        Trace.WriteLine("BACnet/SC : Warning HUB certificate invalid");
+
+                    // Using this we will accept all client with the same direct CA
+                    X509Certificate2Collection collection = new X509Certificate2Collection();
+                    collection.Import(pkiDirectory + "\\own\\Hub.p12", ownCertificatePassword, X509KeyStorageFlags.DefaultKeySet);
+
+                    foreach (X509Certificate2 cert in collection)   // collection.Find nor working !
+                        if (cert.Subject== ownCertificate.Issuer)
+                            ExtraChain.ChainPolicy.ExtraStore.Add(cert);
+
+                    ExtraChain.ChainPolicy.ExtraStore.Add(ownCertificate); // we can be also a CA
+
+                    ExtraChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+                    ExtraChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+
                 }
                 catch
                 {
@@ -71,6 +97,7 @@ namespace System.IO.BACnet
                 }
 
                 RefreshRejectedAndTrustedCertificatesLists();
+
             }
 
             Websocket = new WebSocketServer(URI);
@@ -97,7 +124,7 @@ namespace System.IO.BACnet
             WebsocketLoopBackWiresharkServer.AddWebSocketService<HubListenerLoopBack>("/");
             WebsocketLoopBackWiresharkServer.Log.Output = (_,__) => { };
             WebsocketLoopBackWiresharkServer.Start();
-
+             
             WebsocketLoopBackWiresharkClient = new WebSocket("ws://127.0.0.1:" + LoopbackWiresharkPort.ToString(), new string[] { "hub.bsc.bacnet.org" });
             WebsocketLoopBackWiresharkClient.ConnectAsync();
             HubListener.WebsocketLoopBack = WebsocketLoopBackWiresharkClient;
@@ -121,23 +148,31 @@ namespace System.IO.BACnet
                     try 
                     {
                         X509Certificate2 cert = new X509Certificate2(fileName);
-                        if ((DateTime.Parse(cert.GetExpirationDateString()) >= DateTime.Now) && (DateTime.Parse(cert.GetEffectiveDateString()) <= DateTime.Now))
+                        if (CertificatValidator.Build(cert) == true)    // Check the dates and singature if self signed
                             trustedCertificates.Add(cert);
                         else
-                            rejectedCertificates.Add(cert); // Checked by Build( ) later, so could be left in trustedCertificates
+                            rejectedCertificates.Add(cert);
                     } 
+                    catch { } 
+            }
+            lock(issuerCertificates)
+            {
+                issuerCertificates.Clear();
+
+                string[] fileEntries = Directory.GetFiles(pkiDirectory + "\\issuers");
+                foreach (string fileName in fileEntries)
+                    try
+                    {
+                        X509Certificate2 cert = new X509Certificate2(fileName);
+                        if (CertificatValidator.Build(cert) == true)
+                            issuerCertificates.Add(cert);
+                    }
                     catch { }
-               
+
             }
 
             lock (ExtraChain)
-            { 
-                ExtraChain.ChainPolicy.ExtraStore.Clear();
-                ExtraChain.ChainPolicy.ExtraStore.AddRange(rejectedCertificates);
-                ExtraChain.ChainPolicy.ExtraStore.AddRange(trustedCertificates);
-                ExtraChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
-                ExtraChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-            }
+                ExtraChain.ChainPolicy.ExtraStore.AddRange(issuerCertificates);
 
         }
 
@@ -152,7 +187,7 @@ namespace System.IO.BACnet
         private bool IsCertificateRejected(X509Chain chain)
         {
             if (chain == null) // normaly not
-                return true;
+                return false;
 
             // explicitely rejected : : the cert itself or one of the CA in the CA chain
             lock (rejectedCertificates)
@@ -166,61 +201,55 @@ namespace System.IO.BACnet
             return false;
         }
 
-        private bool IsCertificateThrusted(X509Chain chain)
+        private bool IsCertificateThrusted(X509Certificate2 certificate)
         {
-            if (chain == null) // normaly not
-                return false;
 
-            // explicitely accepted : the cert itself or one of the CA in the CA chain
+            // explicitely accepted
             lock (trustedCertificates)
-                foreach (X509ChainElement chainElement in chain.ChainElements)
-                    foreach (X509Certificate2 trustedcert in trustedCertificates)
-                        if (chainElement.Certificate.Thumbprint == trustedcert.Thumbprint)
-                        {
-                            Trace.WriteLine("\tCertificate explicitely accepted");
-                            return true;
+                foreach (X509Certificate2 trustedcert in trustedCertificates)
+                    if (certificate.Thumbprint == trustedcert.Thumbprint)
+                    {
+                        Trace.WriteLine("\tCertificate explicitely accepted");
+                        return true;
 
-                        }
+                    }
             return false;
         }
         private bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            if (chain == null) // normaly not
-                return false;
 
             Trace.WriteLine("Connection with certificate name : " + certificate.Subject);
 
-            // The root CA is system accepted
-            if (sslPolicyErrors == SslPolicyErrors.None)
-            {
-                Trace.WriteLine("\tThrusted certificate due to underlying system security policy");
-                return true;
-            }
+            // The certificate system accepted, sslPolicyErrors == SslPolicyErrors.None is not OK for BACNet/SC
 
             if (IsCertificateRejected(chain)) { return false; }
-            if (IsCertificateThrusted(chain)) { return true; }
 
-            // The chain is certainly not given, so we try to build it with our own PKI content
+            if (IsCertificateThrusted(certificate as X509Certificate2)) { return true; }
+
+            //  Build the chain with our own local content in the PKI directory
             lock (ExtraChain)
             { 
-                if (ExtraChain.Build(certificate as X509Certificate2)==false) // All Dates in the chain are verified here
+                if (ExtraChain.Build(certificate as X509Certificate2)==true) // All Dates and sign in the chain are verified here
                 {
-                    String Status = ""; foreach (var e in ExtraChain.ChainStatus) Status += e.Status.ToString()+" ";
-                    Trace.WriteLine("\tRejected certificate : " + Status);
-                    return false;
-
+                    if (ExtraChain.ChainElements.Count > 1) // The cert + at least one CA in the issuers list
+                    {
+                        // Reject certificats with CA in the system store, only the Extra store of the application is allowed
+                        if (ExtraChain.ChainPolicy.ExtraStore.Contains(ExtraChain.ChainElements[ExtraChain.ChainElements.Count - 1].Certificate))
+                        {
+                            Trace.WriteLine("\tThrusted certificate due to a known issuer");
+                            return true;
+                        }
+                    }
                 }
-                if (IsCertificateRejected(ExtraChain)) { return false; }
-                if (IsCertificateThrusted(ExtraChain)) { return true; }
             }
 
-            // save the untrusted certificate in the issuers directory so the user can copy it after 
+            // save the untrusted certificate in the rejected directory so the user can copy it after 
             try
             {
-                File.WriteAllBytes(pkiDirectory + "\\issuers\\" + certificate.Subject + ".cer", certificate.Export(X509ContentType.Cert));
-                Trace.WriteLine("\tUnknown certificate written in PKI\\issuers");
+                File.WriteAllBytes(pkiDirectory + "\\rejected\\" + certificate.Subject + ".cer", certificate.Export(X509ContentType.Cert));
+                Trace.WriteLine("\tUnknown certificate written in PKI\\rejected");
             } 
-            catch { Trace.WriteLine("\tWrite Error : Unknown certificate NOT written in PKI\\issuers"); }
+            catch {  }
 
             return false;
         }
