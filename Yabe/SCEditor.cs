@@ -57,7 +57,7 @@ namespace Yabe
 
                 UUID.Text = config.UUID;
                 HubURI.Text = config.primaryHubURI;
-                HubCert.Text = config.HubCertificateFile;
+                HubCert.Text = config.ThrustedCertificatesFile;
                 YabeCert.Text = config.OwnCertificateFile;
                 chk_VerifyHubCert.Checked = config.ValidateHubCertificate;
                 chk_DirectConnect.Checked = config.DirectConnect;
@@ -75,7 +75,7 @@ namespace Yabe
         {
             config.UUID = UUID.Text;
             config.primaryHubURI = HubURI.Text;
-            config.HubCertificateFile = HubCert.Text;
+            config.ThrustedCertificatesFile = HubCert.Text;
 
             config.OwnCertificateFile = YabeCert.Text;
             config.ValidateHubCertificate = chk_VerifyHubCert.Checked;

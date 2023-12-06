@@ -35,6 +35,7 @@ using System.Xml.Serialization;
 using System.Net.Security;
 using System.Text;
 using System.Security.Authentication;
+using System.Linq;
 
 // based on Addendum 135-2016 bj
 // and with the help of sample applications from https://sourceforge.net/projects/bacnet-sc-reference-stack/
@@ -106,39 +107,73 @@ namespace System.IO.BACnet
                 if ((configuration.OwnCertificate!=null)&&(!configuration.OwnCertificate.HasPrivateKey))
                     Trace.TraceWarning("BACnet/SC : Warning the App own certificate is without a private key");
 
-                if ((configuration.ValidateHubCertificate)&&(configuration.HubCertificate == null))
+                if ((configuration.ValidateHubCertificate)&&(configuration.ThrustedCertificates == null))
                     try
                     {
-                        // could be not given if the root CA is in the default computer store
-                        // or share the same CA as our
-                        if (configuration.HubCertificateFile != null)
-                            configuration.HubCertificate = new X509Certificate2(configuration.HubCertificateFile);
+                        // could be not given if the direct CA share the same CA as our
+                        if (configuration.ThrustedCertificatesFile != null)
+                        {
+                            configuration.ThrustedCertificates = new X509Certificate2Collection();
+
+                            // Not working to extract multi certs file from a pem concatenation, only working with pfx ... arggggg
+                            // So got it (single pem, der, pfx but normaly not) and after trys to read the possible multi-pem
+                            configuration.ThrustedCertificates.Import(configuration.ThrustedCertificatesFile);
+
+                            // so manually cut the possible multi certificates pem !
+                            // jump in catch if not
+                            StringBuilder sb =new StringBuilder();
+                            using (StreamReader sr = new StreamReader(configuration.ThrustedCertificatesFile))
+                            {
+                                String l;
+                                do
+                                {
+                                    l = sr.ReadLine();
+                                    if ((l != null) && (l.Contains("-----")))   // Detect both ----BEGIN and ----END
+                                    {
+                                        if (sb.Length > 0)
+                                        {
+                                            try
+                                            {
+                                                X509Certificate2 cert = new X509Certificate2(Convert.FromBase64String(sb.ToString()));
+                                                if (!configuration.ThrustedCertificates.Contains(cert))
+                                                    configuration.ThrustedCertificates.Add(cert);
+                                            }
+                                            catch { }
+                                            sb.Clear();
+                                        }
+                                    }
+                                    else if (!String.IsNullOrWhiteSpace(l))
+                                        sb.Append(l);
+                                } while (l != null);
+                            }
+                        }
                     }
-                    catch
-                    {
-                        // Error may or not occur later during connection
-                    }
+                    catch { }
 
                 if (configuration.ValidateHubCertificate)
                 {
-                    // Import the CA if any from the .pfx and Yabe own certificate
-                    // so we will accept all remote devices with the same CA
-                    // and also certificate signed by Yabe if it's a CA also
-                    CertValidationChain.ChainPolicy.ExtraStore.Add(configuration.OwnCertificate);
-
-                    X509Certificate2Collection CertValidationCollection = new X509Certificate2Collection();
-                    CertValidationCollection.Import(configuration.OwnCertificateFile, configuration.OwnCertificateFilePassword, X509KeyStorageFlags.DefaultKeySet);
-                    
+                    // The validation chain : using both the system store and the extra store we will add now
+                    // System store validation will be removed later
                     CertValidationChain = new X509Chain();
                     CertValidationChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
                     CertValidationChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
+                    // Import the CA if any from the .pfx and Yabe own certificate
+                    // so we will accept all remote devices with the same CA
+                    // and also certificate signed by Yabe if it's a CA also.
+                    // So load again the pfx file in another way
+                    X509Certificate2Collection CertValidationCollection = new X509Certificate2Collection();
+                    CertValidationCollection.Import(configuration.OwnCertificateFile, configuration.OwnCertificateFilePassword, X509KeyStorageFlags.DefaultKeySet);
 
                     foreach (X509Certificate2 cert in CertValidationCollection)   // collection.Find nor working !
                         if (cert.Subject == configuration.OwnCertificate.Issuer)
                             CertValidationChain.ChainPolicy.ExtraStore.Add(cert);
 
-                    if (configuration.HubCertificate != null) // could be the direct CA of the Hub or the hub certificate
-                        CertValidationChain.ChainPolicy.ExtraStore.Add(configuration.HubCertificate);
+                    CertValidationChain.ChainPolicy.ExtraStore.Add(configuration.OwnCertificate);
+
+                    if (configuration.ThrustedCertificates != null) // the additional CA and some final certificates
+                        CertValidationChain.ChainPolicy.ExtraStore.AddRange(configuration.ThrustedCertificates);
+
                 }
             }
 
@@ -202,8 +237,9 @@ namespace System.IO.BACnet
             // The chain contains (somewhere) the given authorized certficate  : CA or HUB
             // The chain is not alway sent so not always working, but HUB own certificate is always inside, alone or not
             foreach (X509ChainElement chainElement in chain.ChainElements)
-                if (chainElement.Certificate.Equals(configuration.HubCertificate))
-                    return true;
+                foreach (X509Certificate2 cert in configuration.ThrustedCertificates)
+                    if (chainElement.Certificate.Equals(cert))
+                        return true;
 
             // Try if the cert share the same PKI as Yabe or the given HubCertificate is rather it's direct CA certificate
             if (CertValidationChain != null)
@@ -658,7 +694,7 @@ namespace System.IO.BACnet
         public String UUID="If Forgot !";
 
         public String OwnCertificateFile;
-        public String HubCertificateFile;
+        public String ThrustedCertificatesFile;
 
         public bool ValidateHubCertificate=false;
         public bool DirectConnect=false;
@@ -672,7 +708,7 @@ namespace System.IO.BACnet
         [XmlIgnore]
         public X509Certificate2 OwnCertificate; // with private key
         [XmlIgnore]
-        public X509Certificate2 HubCertificate;
+        public X509Certificate2Collection ThrustedCertificates;
 
     }
 }

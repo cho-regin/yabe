@@ -159,6 +159,9 @@
 		  (Yabe client certificate with private key, remote device or Hub certificate).
 		  The optional certificat password is not saved in the file. The value has to
 		  be given each time.
+		  The remote devices certificates or CAs file could be a concatenation of several 
+		  certificates in a unique .pem file. It's not required if it share the same direct 
+		  CA as Yabe. 
 		- Non standard uncyphered, unauthenticated ws:// can be use for test.
 		- Today on Windows 10 TLS1.3 is not operational by default. You should
 		  configure the system to accept it using regedit (add  manually the Branch
@@ -244,7 +247,7 @@
  			name or hides this Id.
 
 		2.7.14 Plugins
-			List of plugins to be loaded (see §2.9).
+			List of plugins to be loaded (see  2.9).
 
 	2.8 Bacnet Object name
 			By default Bacnet objects are displayed using the object identifier eg : 

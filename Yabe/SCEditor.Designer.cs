@@ -202,9 +202,9 @@
             this.lblRemoteCertificate.AutoSize = true;
             this.lblRemoteCertificate.Location = new System.Drawing.Point(2, 147);
             this.lblRemoteCertificate.Name = "lblRemoteCertificate";
-            this.lblRemoteCertificate.Size = new System.Drawing.Size(128, 13);
+            this.lblRemoteCertificate.Size = new System.Drawing.Size(156, 13);
             this.lblRemoteCertificate.TabIndex = 19;
-            this.lblRemoteCertificate.Text = "HUB or CA Certificate File";
+            this.lblRemoteCertificate.Text = "HUB and/or CA Certificates File";
             // 
             // label3
             // 
