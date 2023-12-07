@@ -609,7 +609,144 @@ could be 'ovveride' by an optional external file
     <BacnetPropertyIds>PROP_PRIORITY_ARRAY</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_RELINQUISH_DEFAULT</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_LIGHTING_COMMAND_DEFAULT_PRIORITY</BacnetPropertyIds>
-    </propsId>
+	<BacnetPropertyIds>PROP_CURRENT_COMMAND_PRIORITY</BacnetPropertyIds>
+	</propsId>
+</BacnetObjectDescription>
+<BacnetObjectDescription>
+	<typeId>OBJECT_BINARY_LIGHTING_OUTPUT</typeId>
+	<propsId>
+		<BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_STATUS_FLAGS</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_BLINK_WARN_ENABLE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_EGRESS_TIME</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_EGRESS_ACTIVE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_PRIORITY_ARRAY</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_RELINQUISH_DEFAULT</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_CURRENT_COMMAND_PRIORITY</BacnetPropertyIds>
+	</propsId>
+</BacnetObjectDescription>
+<BacnetObjectDescription>
+	<typeId>OBJECT_NETWORK_PORT</typeId>
+	<propsId>
+		<BacnetPropertyIds>PROP_STATUS_FLAGS</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_RELIABILITY</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_NETWORK_TYPE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_PROTOCOL_LEVEL</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_NETWORK_NUMBER</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_NETWORK_NUMBER_QUALITY</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_CHANGES_PENDING</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_APDU_LENGTH</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_LINK_SPEED</BacnetPropertyIds>
+	</propsId>
+</BacnetObjectDescription>
+<BacnetObjectDescription>
+	<typeId>OBJECT_ELEVATOR_GROUP</typeId>
+	<propsId>
+		<BacnetPropertyIds>PROP_MACHINE_ROOM_ID</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_GROUP_ID</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_GROUP_MEMBERS</BacnetPropertyIds>
+	</propsId>
+</BacnetObjectDescription>
+<BacnetObjectDescription>
+	<typeId>OBJECT_ESCALATOR</typeId>
+	<propsId>
+		<BacnetPropertyIds>PROP_STATUS_FLAGS</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_ELEVATOR_GROUP</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_GROUP_ID</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_INSTALLATION_ID</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_OPERATION_DIRECTION</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_PASSENGER_ALARM</BacnetPropertyIds>
+	</propsId>
+</BacnetObjectDescription>
+
+<BacnetObjectDescription>
+	<typeId>OBJECT_LIFT</typeId>
+	<propsId>
+		<BacnetPropertyIds>PROP_STATUS_FLAGS</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_ELEVATOR_GROUP</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_GROUP_ID</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_INSTALLATION_ID</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_CAR_POSITION</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_CAR_MOVING_DIRECTION</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_CAR_DOOR_STATUS</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_PASSENGER_ALARM</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_FAULT_SIGNALS</BacnetPropertyIds>
+	</propsId>
+</BacnetObjectDescription>
+
+<BacnetObjectDescription>
+	<typeId>OBJECT_STAGING</typeId>
+	<propsId>
+		<BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_PRESENT_STAGE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_STAGES</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_STATUS_FLAGS</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_EVENT_STATE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_RELIABILITY</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_UNITS</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_TARGET_REFERENCES</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_PRIORITY_FOR_WRITING</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_MIN_PRES_VALUE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_MAX_PRES_VALUE</BacnetPropertyIds>
+	</propsId>
+</BacnetObjectDescription>
+
+<BacnetObjectDescription>
+	<typeId>OBJECT_AUDIT_LOG</typeId>
+	<propsId>
+		<BacnetPropertyIds>PROP_STATUS_FLAGS</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_EVENT_STATE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_ENABLE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_BUFFER_SIZE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_LOG_BUFFER</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_RECORD_COUNT</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_TOTAL_RECORD_COUNT</BacnetPropertyIds>
+	</propsId>
+</BacnetObjectDescription>
+
+<BacnetObjectDescription>
+	<typeId>OBJECT_AUDIT_REPORTER</typeId>
+	<propsId>
+		<BacnetPropertyIds>PROP_STATUS_FLAGS</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_RELIABILITY</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_EVENT_STATE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_AUDIT_LEVEL</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_AUDIT_SOURCE_REPORTER</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_AUDITABLE_OPERATIONS</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_AUDIT_PRIORITY_FILTER</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_ISSUE_CONFIRMED_NOTIFICATIONS</BacnetPropertyIds>
+	</propsId>
+</BacnetObjectDescription>
+
+<BacnetObjectDescription>
+	<typeId>OBJECT_COLOR</typeId>
+	<propsId>
+		<BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_TRACKING_VALUE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_COLOR_COMMAND</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_IN_PROGRESS</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_DEFAULT_COLOR</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_DEFAULT_FADE_TIME</BacnetPropertyIds>
+	</propsId>
+</BacnetObjectDescription>
+	
+<BacnetObjectDescription>
+	<typeId>OBJECT_COLOR_TEMPERATURE</typeId>
+	<propsId>
+		<BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_TRACKING_VALUE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_COLOR_COMMAND</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_IN_PROGRESS</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_DEFAULT_COLOR_TEMPERATURE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_DEFAULT_FADE_TIME</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_DEFAULT_RAMP_RATE</BacnetPropertyIds>
+		<BacnetPropertyIds>PROP_DEFAULT_STEP_INCREMENT</BacnetPropertyIds>
+	</propsId>
 </BacnetObjectDescription>
 
 </ArrayOfBacnetObjectDescription>

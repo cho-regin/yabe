@@ -36,6 +36,7 @@ using System.Net;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
+using System.Drawing;
 
 namespace System.IO.BACnet
 {
@@ -444,6 +445,8 @@ namespace System.IO.BACnet
         SERVICE_SUPPORTED_LIFE_SAFETY_OPERATION = 37,
         SERVICE_SUPPORTED_SUBSCRIBE_COV = 5,
         SERVICE_SUPPORTED_SUBSCRIBE_COV_PROPERTY = 38,
+        //SERVICE_SUPPORTED_CONFIRMED_AUDIT_NOTIFICATION = 44,
+        //SERVICE_SUPPORTED_AUDIT_LOG_QUERY = 45,
         //SERVICE_SUPPORTED_SUBSCRIBE_COV_PROPERTY_MULTIPLE = 41,
         /* File Access Services */
         SERVICE_SUPPORTED_ATOMIC_READ_FILE = 6,
@@ -465,6 +468,8 @@ namespace System.IO.BACnet
         SERVICE_SUPPORTED_PRIVATE_TRANSFER = 18,
         SERVICE_SUPPORTED_TEXT_MESSAGE = 19,
         SERVICE_SUPPORTED_REINITIALIZE_DEVICE = 20,
+        //SERVICE_SUPPORTED_WHO_AM_I = 47,
+        //SERVICE_SUPPORTED_YOU_ARE = 48,
         /* Virtual Terminal Services */
         SERVICE_SUPPORTED_VT_OPEN = 21,
         SERVICE_SUPPORTED_VT_CLOSE = 22,
@@ -483,10 +488,11 @@ namespace System.IO.BACnet
         SERVICE_SUPPORTED_UTC_TIME_SYNCHRONIZATION = 36,
         SERVICE_SUPPORTED_WHO_HAS = 33,
         SERVICE_SUPPORTED_WHO_IS = 34,
+        //SERVICE_SUPPORTED_UNCONFIRMED_AUDIT_NOTIFICATION = 46,
         /* Other services to be added as they are defined. */
         /* All values in this production are reserved */
         /* for definition by ASHRAE. */
-        MAX_BACNET_SERVICES_SUPPORTED = 41,
+        MAX_BACNET_SERVICES_SUPPORTED = 41
     };
 
     public enum BacnetUnconfirmedServices : byte
@@ -503,13 +509,19 @@ namespace System.IO.BACnet
         SERVICE_UNCONFIRMED_UTC_TIME_SYNCHRONIZATION = 9,
         /* addendum 2010-aa */
         SERVICE_UNCONFIRMED_WRITE_GROUP = 10,
+        /* addendum 2012-aq */
+        SERVICE_UNCONFIRMED_COV_NOTIFICATION_MULTIPLE = 11,
+        /* addendum 2016-bi */
+        SERVICE_UNCONFIRMED_AUDIT_NOTIFICATION = 12,
+        /* addendum 2016-bz */
+        SERVICE_UNCONFIRMED_WHO_AM_I = 13,
+        SERVICE_UNCONFIRMED_YOU_ARE = 14,
         /* Other services to be added as they are defined. */
         /* All choice values in this production are reserved */
         /* for definition by ASHRAE. */
         /* Proprietary extensions are made by using the */
         /* UnconfirmedPrivateTransfer service. See Clause 23. */
-        UNCONFIRMED_COV_NOTIFICATION_MULTIPLE = 11,
-        MAX_BACNET_UNCONFIRMED_SERVICE = 12,
+        MAX_BACNET_UNCONFIRMED_SERVICE = 14
     };
 
     public enum BacnetConfirmedServices : byte
@@ -857,6 +869,11 @@ namespace System.IO.BACnet
         UNITS_MOLE_PERCENT = 252,
         UNITS_PASCAL_SECONDS = 253,
         UNITS_MILLION_STANDARD_CUBIC_FEET_PER_MINUTE = 254,
+        /* Enumerated values 256-47807 may be used by others
+        subject to the procedures and constraints described in Clause 23. */
+        UNITS_PROPRIETARY_RANGE_MIN = 256,
+        UNITS_PROPRIETARY_RANGE_MAX = 47807,
+        /* Enumerated values 47808-49999 are reserved for definition by ASHRAE. */
         // Since Addendum 135-2020ar
         UNITS_DEGREES_LOVIBOND = 47816,
         UNITS_ALCOHOL_BY_VOLUME = 47817,
@@ -864,11 +881,14 @@ namespace System.IO.BACnet
         UNITS_EUROPEAN_BITTERNESS_UNITS = 47819,
         UNITS_DEGREES_PLATO = 47820,
         UNITS_SPECIFIC_GRAVITY = 47821,
-        UNITS_EUROPEAN_BREWING_CONVENTION = 47822
-        /*-- Enumerated values 0-255 and 47808-49999 are reserved for definition by ASHRAE. Enumerated values
-          -- 256-47807 and 50000-65535 may be used by others subject to the procedures and constraints described
-          -- in Clause 23.*/
-
+        UNITS_EUROPEAN_BREWING_CONVENTION = 47822,
+        UNITS_PROPRIETARY_RANGE_MIN2 = 50000,
+        /* Enumerated values 50000-65535 may be used by others
+        subject to the procedures and constraints described in Clause 23. */
+        /* do the proprietary range inside of enum so that
+        compilers will allocate adequate sized datatype for enum
+        which is used to store decoding */
+        UNITS_PROPRIETARY_RANGE_MAX2 = 65535
     }
 
     public enum BacnetPolarity : byte
@@ -903,7 +923,8 @@ namespace System.IO.BACnet
         RELIABILITY_RESTART_FAILURE = 21,
         RELIABILITY_PROPRIETARY_COMMAND_FAILURE = 22,
         RELIABILITY_FAULTS_LISTED = 23,
-        RELIABILITY_REFERENCED_OBJECT_FAULT = 24
+        RELIABILITY_REFERENCED_OBJECT_FAULT = 24,
+        RELIABILITY_MULTI_STATE_OUT_OF_RANGE = 25
         /* Enumerated values 0-63 are reserved for definition by ASHRAE.  */
         /* Enumerated values 64-65535 may be used by others subject to  */
         /* the procedures and constraints described in Clause 23. */
@@ -992,11 +1013,15 @@ namespace System.IO.BACnet
         OBJECT_CHANNEL = 53,        /* Addendum 2010-aa */
         OBJECT_LIGHTING_OUTPUT = 54,        /* Addendum 2010-i */
         OBJECT_BINARY_LIGHTING_OUTPUT = 55,        /* Addendum 135-2012az */
-        OBJECT_NETWORK_PORT = 56,
-        OBJECT_ELEVATOR_GROUP = 57,
-        OBJECT_ESCALATOR = 58,
-        OBJECT_LIFT = 59,
-        OBJECT_STAGING = 60, //Addendum 135-2016bd
+        OBJECT_NETWORK_PORT = 56,           /* Addendum 135-2012az */
+        OBJECT_ELEVATOR_GROUP = 57,         /* Addendum 135-2012aq */
+        OBJECT_ESCALATOR = 58,              /* Addendum 135-2012aq */
+        OBJECT_LIFT = 59,                   /* Addendum 135-2012aq */
+        OBJECT_STAGING = 60,                /* Addendum 135-2016bd */
+        OBJECT_AUDIT_LOG = 61,              /* Addendum 135-2016bi */
+        OBJECT_AUDIT_REPORTER = 62,         /* Addendum 135-2016bi */
+        OBJECT_COLOR = 63,                  /* Addendum 135-2020ca */
+        OBJECT_COLOR_TEMPERATURE = 64,      /* Addendum 135-2020ca */
         /* Enumerated values 0-127 are reserved for definition by ASHRAE. */
         /* Enumerated values 128-1023 may be used by others subject to  */
         /* the procedures and constraints described in Clause 23. */
@@ -1006,7 +1031,7 @@ namespace System.IO.BACnet
         OBJECT_PROPRIETARY_MIN = 128,
         OBJECT_PROPRIETARY_MAX = 1023,
         MAX_BACNET_OBJECT_TYPE = 1024,
-        MAX_ASHRAE_OBJECT_TYPE = 60,
+        MAX_ASHRAE_OBJECT_TYPE = 64,
     };
 
     public enum BacnetApplicationTags
@@ -2150,6 +2175,33 @@ namespace System.IO.BACnet
 
     }
 
+    public enum BACnetColorOperation
+    {
+        NONE = 0,
+        FADE_TO_COLOR = 1,
+        FADE_TO_CCT = 2,
+        RAMP_TO_CCT = 3,
+        STEP_UP_CCT = 4,
+        STEP_DOWN_CCT = 5,
+        STOP = 6,
+    }
+
+    public enum BACnetColorOperationInProgress
+    {
+        IDLE = 0,
+        FADE_ACTIVE = 1,
+        RAMP_ACTIVE = 2,
+        NOT_CONTROLLED = 3,
+        OTHER = 4,
+    }
+
+    public enum BACnetColorTransition
+    {
+        NONE = 0,
+        FADE = 1,
+        RAMP = 2,
+    }
+
     public enum BACnetEscalatorFault
     {
         CONTROLLER_FAULT = 0,
@@ -2545,6 +2597,9 @@ namespace System.IO.BACnet
             LIFT_GROUP_MODE = 56,
             LIFT_FAULT = 57,
             PROTOCOL_LEVEL = 58,
+            COLOR_IN_PROGRESS = 59,
+            COLOR_OPERATION = 60,
+            COLOR_TRANSITION = 61,
             EXTENDED_VALUE = 63
 
         };
@@ -2813,6 +2868,18 @@ namespace System.IO.BACnet
                 case BACnetPropertyState.BACnetPropertyStates.PROTOCOL_LEVEL:
                     len += ASN1.decode_unsigned(buffer, offset + len, len_value_type, out val);
                     state = (BACnetProtocolLevel)val;
+                    break;
+                case BACnetPropertyState.BACnetPropertyStates.COLOR_IN_PROGRESS:
+                    len += ASN1.decode_unsigned(buffer, offset + len, len_value_type, out val);
+                    state = (BACnetColorOperationInProgress)val;
+                    break;
+                case BACnetPropertyState.BACnetPropertyStates.COLOR_OPERATION:
+                    len += ASN1.decode_unsigned(buffer, offset + len, len_value_type, out val);
+                    state = (BACnetColorOperation)val;
+                    break;
+                case BACnetPropertyState.BACnetPropertyStates.COLOR_TRANSITION:
+                    len += ASN1.decode_unsigned(buffer, offset + len, len_value_type, out val);
+                    state = (BACnetColorTransition)val;
                     break;
                 default:
                     len += ASN1.decode_unsigned(buffer, offset + len, len_value_type, out val);
@@ -4179,7 +4246,10 @@ namespace System.IO.BACnet
             DATE = 10,
             TIME = 11,
             OBJECT_ID = 12,
-            LIGHTING_COMMAND = 13,
+            /* not defined as primitive values */
+            LIGHTING_COMMAND,
+            XYCOLOR,
+            COLOR_COMMAND,
         }
 
         public BACnetChannelValue(ApplicationTag Tag, object Value)
@@ -8696,6 +8766,48 @@ namespace System.IO.BACnet
         PROP_TARGET_REFERENCES = 496, //Addendum 135-2016bd
 
         PROP_DEVICE_UUID = 507, // Addendum 135-2016bj
+        // enumerations 508-511 are defined in Addendum 2020cc
+        PROP_ADDITIONAL_REFERENCE_PORTS = 508,
+        PROP_CERTIFICATE_SIGNING_REQUEST_FILE = 509,
+        PROP_COMMAND_VALIDATION_RESULT = 510,
+        PROP_ISSUER_CERTIFICATE_FILES = 511,
+        PROP_PROPRIETARY_RANGE_MIN = 512,
+        PROP_PROPRIETARY_RANGE_MAX = 4194303,
+        // enumerations 4194304-4194327 are defined in Addendum 2020cc
+        PROP_MAX_BVLC_LENGTH_ACCEPTED = 4194304,
+        PROP_MAX_NPDU_LENGTH_ACCEPTED = 4194305,
+        PROP_OPERATIONAL_CERTIFICATE_FILE = 4194305,
+        PROP_CURRENT_HEALTH = 4194307,
+        PROP_SC_CONNECT_WAIT_TIMEOUT = 4194308,
+        PROP_SC_DIRECT_CONNECT_ACCEPT_ENABLE = 4194309,
+        PROP_SC_DIRECT_CONNECT_ACCEPT_URIS = 4194310,
+        PROP_SC_DIRECT_CONNECT_BINDING = 4194311,
+        PROP_SC_DIRECT_CONNECT_CONNECTION_STATUS = 4194312,
+        PROP_SC_DIRECT_CONNECT_INITIATE_ENABLE = 4194313,
+        PROP_SC_DISCONNECT_WAIT_TIMEOUT = 4194314,
+        PROP_SC_FAILED_CONNECTION_REQUESTS = 4194315,
+        PROP_SC_FAILOVER_HUB_CONNECTION_STATUS = 4194316,
+        PROP_SC_FAILOVER_HUB_URI = 4194317,
+        PROP_SC_HUB_CONNECTOR_STATE = 4194318,
+        PROP_SC_HUB_FUNCTION_ACCEPT_URIS = 4194319,
+        PROP_SC_HUB_FUNCTION_BINDING = 4194320,
+        PROP_SC_HUB_FUNCTION_CONNECTION_STATUS = 4194321,
+        PROP_SC_HUB_FUNCTION_ENABLE = 4194322,
+        PROP_SC_HEARTBEAT_TIMEOUT = 4194323,
+        PROP_SC_PRIMARY_HUB_CONNECTION_STATUS = 4194324,
+        PROP_SC_PRIMARY_HUB_URI = 4194325,
+        PROP_SC_MAXIMUM_RECONNECT_TIME = 4194326,
+        PROP_SC_MINIMUM_RECONNECT_TIME = 4194327,
+        // enumerations 4194328-4194332 are defined in Addendum 2020ca
+        PROP_COLOR_OVERRIDE = 4194328,
+        PROP_COLOR_REFERENCE = 4194329,
+        PROP_DEFAULT_COLOR = 4194330,
+        PROP_DEFAULT_COLOR_TEMPERATURE = 4194331,
+        PROP_OVERRIDE_COLOR_REFERENCE = 4194332,
+        PROP_COLOR_COMMAND = 4194334,
+        PROP_HIGH_END_TRIM = 4194335,
+        PROP_LOW_END_TRIM = 4194336,
+        PROP_TRIM_FADE_TIME = 4194337,
 
         /* The special property identifiers all, optional, and required  */
         /* are reserved for use in the ReadPropertyConditional and */
@@ -8703,10 +8815,12 @@ namespace System.IO.BACnet
         /* Enumerated values 0-511 are reserved for definition by ASHRAE.  */
         /* Enumerated values 512-4194303 may be used by others subject to the  */
         /* procedures and constraints described in Clause 23.  */
+        /* Enumerated values 4194303-16777215 are reserved
+        for definition by ASHRAE.  */
         /* do the max range inside of enum so that
            compilers will allocate adequate sized datatype for enum
            which is used to store decoding */
-        MAX_BACNET_PROPERTY_ID = 4194303,
+        MAX_BACNET_PROPERTY_ID = 16777215
     };
 
     public enum BacnetNodeTypes
@@ -8767,6 +8881,16 @@ namespace System.IO.BACnet
         NETWORK_MESSAGE_INIT_RT_TABLE_ACK = 7,
         NETWORK_MESSAGE_ESTABLISH_CONNECTION_TO_NETWORK = 8,
         NETWORK_MESSAGE_DISCONNECT_CONNECTION_TO_NETWORK = 9,
+        NETWORK_MESSAGE_CHALLENGE_REQUEST = 10,
+        NETWORK_MESSAGE_SECURITY_PAYLOAD = 11,
+        NETWORK_MESSAGE_SECURITY_RESPONSE = 12,
+        NETWORK_MESSAGE_REQUEST_KEY_UPDATE = 13,
+        NETWORK_MESSAGE_UPDATE_KEY_SET = 14,
+        NETWORK_MESSAGE_UPDATE_DISTRIBUTION_KEY = 15,
+        NETWORK_MESSAGE_REQUEST_MASTER_KEY = 16,
+        NETWORK_MESSAGE_SET_MASTER_KEY = 17,
+        NETWORK_MESSAGE_WHAT_IS_NETWORK_NUMBER = 18,
+        NETWORK_MESSAGE_NETWORK_NUMBER_IS = 19
         /* X'0A' to X'7F': Reserved for use by ASHRAE, */
         /* X'80' to X'FF': Available for vendor proprietary messages */
     } ;
@@ -10226,7 +10350,7 @@ namespace System.IO.BACnet.Serialize
                 /* Tag 3: optional propertyArrayIndex */
                 if (p_value.property.propertyArrayIndex != ASN1.BACNET_ARRAY_ALL)
                     ASN1.encode_context_unsigned(buffer, 3, p_value.property.propertyArrayIndex);
-                
+
                 if (p_value.value != null && p_value.value.Count > 0 && p_value.value[0].Value is BacnetError)
                 {
                     /* Tag 5: Error */
@@ -11740,7 +11864,7 @@ namespace System.IO.BACnet.Serialize
                 {
                     tag_len = decode_tag_number_and_value(buffer, offset + len, out sub_tag_number, out len_value_type);
                     if (tag_len < 0) return -1;
-                    
+
                     if (sub_tag_number==0 && len_value_type==0)
                     {
                         list.Add(new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL, null));
