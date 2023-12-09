@@ -36,6 +36,7 @@ using System.Net.Security;
 using System.Text;
 using System.Security.Authentication;
 using System.Linq;
+using System.Diagnostics.SymbolStore;
 
 // based on Addendum 135-2016 bj
 // and with the help of sample applications from https://sourceforge.net/projects/bacnet-sc-reference-stack/
@@ -86,11 +87,13 @@ namespace System.IO.BACnet
         private X509Chain CertValidationChain = new X509Chain();
         public BACnetTransportSecureConnect(BACnetSCConfigChannel config)
         {
+
             configuration = config;
 
             if (configuration.UseTLS)
             {
-                if ((configuration.OwnCertificateFile != null)&&(configuration.OwnCertificate==null))
+                if ((configuration.OwnCertificateFile != null) && (configuration.OwnCertificate == null))
+                {
                     try
                     {
                         // could be not given or with error if the remote device do not verify it (wrong idea)
@@ -100,14 +103,15 @@ namespace System.IO.BACnet
                     {
                         Trace.TraceError("Error with App own certificate file : " + e.Message);
                     }
-
+                }
                 if (configuration.OwnCertificate == null)
                     Trace.TraceWarning("BACnet/SC : Warning App without certificate ");
 
                 if ((configuration.OwnCertificate!=null)&&(!configuration.OwnCertificate.HasPrivateKey))
                     Trace.TraceWarning("BACnet/SC : Warning the App own certificate is without a private key");
 
-                if ((configuration.ValidateHubCertificate)&&(configuration.ThrustedCertificates == null))
+                if ((configuration.ValidateHubCertificate) && (configuration.ThrustedCertificates == null))
+                {
                     try
                     {
                         // could be not given if the direct CA share the same CA as our
@@ -119,41 +123,43 @@ namespace System.IO.BACnet
                             // So got it (single pem, der, pfx but normaly not) and after trys to read the possible multi-pem
                             configuration.ThrustedCertificates.Import(configuration.ThrustedCertificatesFile);
 
-                            // so manually cut the possible multi certificates pem !
+                            // so manually parsing the possible multi certificates pem ! rfc7468
                             // jump in catch if not
-                            StringBuilder sb =new StringBuilder();
+                            StringBuilder sb = new StringBuilder();
                             using (StreamReader sr = new StreamReader(configuration.ThrustedCertificatesFile))
                             {
                                 String l;
+                                bool begin = false;
                                 do
                                 {
                                     l = sr.ReadLine();
-                                    if ((l != null) && (l.Contains("-----")))   // Detect both ----BEGIN and ----END
+                                    if ((l != null) && (l.Contains("-----BEGIN CERTIFICATE-----")))
+                                        begin = true;
+                                    else
+                                        if ((l != null) && (l.Contains("-----END CERTIFICATE-----")))
                                     {
-                                        if (sb.Length > 0)
+                                        try
                                         {
-                                            try
-                                            {
-                                                X509Certificate2 cert = new X509Certificate2(Convert.FromBase64String(sb.ToString()));
-                                                if (!configuration.ThrustedCertificates.Contains(cert))
-                                                    configuration.ThrustedCertificates.Add(cert);
-                                            }
-                                            catch { }
-                                            sb.Clear();
+                                            X509Certificate2 cert = new X509Certificate2(Convert.FromBase64String(sb.ToString()));
+                                            if (!configuration.ThrustedCertificates.Contains(cert))
+                                                configuration.ThrustedCertificates.Add(cert);
                                         }
+                                        catch { }
+                                        sb.Clear();
+                                        begin = false;
                                     }
-                                    else if (!String.IsNullOrWhiteSpace(l))
+                                    else if ((!String.IsNullOrWhiteSpace(l)) && ((l.Length % 4) == 0) && (begin == true))
                                         sb.Append(l);
                                 } while (l != null);
                             }
                         }
                     }
                     catch { }
-
+                }
                 if (configuration.ValidateHubCertificate)
                 {
                     // The validation chain : using both the system store and the extra store we will add now
-                    // System store validation will be removed later
+                    // System store validation will be ignored later
                     CertValidationChain = new X509Chain();
                     CertValidationChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
                     CertValidationChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
@@ -223,35 +229,27 @@ namespace System.IO.BACnet
         {
             return configuration.OwnCertificate;
         }
-        // Here we accept all certificates known by the computer : SslPolicyErrors.None
-        // also the one given as a configuration parameter in config.HubCertificateFile
-        // if it's the hub certificate or one of it's signing CA in the chain (if the chain is given)
-        // REQUEST : help from a PKI-TLS-X509 specialist to validate this workflow
+        // Here we do NOT accept certificates known by the computer : SslPolicyErrors.None
+        // Only the one given as a configuration parameter in config.HubCertificateFile
+        // if it's the hub certificate or one of it's signing CA in the chain
         private bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             if (configuration.ValidateHubCertificate==false)
                 return true;    // No verification requested : always OK
 
-            // The certificate system accepted, sslPolicyErrors == SslPolicyErrors.None is not OK for BACNet/SC
+            // The certificate system accepted with sslPolicyErrors == SslPolicyErrors.None is not OK for BACNet/SC
 
-            // The chain contains (somewhere) the given authorized certficate  : CA or HUB
-            // The chain is not alway sent so not always working, but HUB own certificate is always inside, alone or not
-            foreach (X509ChainElement chainElement in chain.ChainElements)
-                foreach (X509Certificate2 cert in configuration.ThrustedCertificates)
-                    if (chainElement.Certificate.Equals(cert))
-                        return true;
+            if (configuration.ThrustedCertificates.Contains(certificate))
+                return true;
 
-            // Try if the cert share the same PKI as Yabe or the given HubCertificate is rather it's direct CA certificate
+            // Try if the cert share the same PKI as Yabe or a given additional thrusted CA certificate
             if (CertValidationChain != null)
             {
                 if (CertValidationChain.Build(certificate as X509Certificate2) == true)
-                    if (CertValidationChain.ChainElements.Count > 1)    // The certificate is link to at least another one in the 'ephemeral store'
+                    if (CertValidationChain.ChainElements.Count > 1)    // The certificate is link to at least another one in the store
                         // Reject certificats with CA in the system store, only the Extra store of the application is allowed
                         if (CertValidationChain.ChainPolicy.ExtraStore.Contains(CertValidationChain.ChainElements[CertValidationChain.ChainElements.Count - 1].Certificate))
-                        {
-                            Trace.WriteLine("\tThrusted certificate due to a known issuer");
                             return true;
-                        }
             }
 
             Trace.TraceInformation("BACnet/SC : Remote certificate rejected");
@@ -277,8 +275,20 @@ namespace System.IO.BACnet
         private void Websocket_OnClose(object sender, CloseEventArgs e)
         {
             Trace.TraceInformation("BACnet/SC Close : "+ e.Reason);
-            state = BACnetSCState.IDLE;
             OnChannelDisconnected?.Invoke(this, e);
+
+            if (configuration.AutoReconnectDelay>-1)
+            {
+                state = BACnetSCState.AWAITING_WEBSOCKET;
+                ThreadPool.QueueUserWorkItem( (__)=>
+                {
+                    Thread.Sleep(configuration.AutoReconnectDelay * 1000);
+                    Websocket.ConnectAsync();
+
+                });
+            }
+            else
+                state = BACnetSCState.IDLE;
         }
         private void Websocket_OnLog(LogData log, String Logmessage) 
         {
@@ -664,6 +674,7 @@ namespace System.IO.BACnet
             try
             {
                 ConfigOK = false;
+                configuration.AutoReconnectDelay = -1;
                 Close();
             }
             catch { }
@@ -701,6 +712,18 @@ namespace System.IO.BACnet
 
         public bool OnlyAllowsTLS13 = false;
         public bool UseTLS { get { return primaryHubURI.Contains("wss://"); } }
+
+        private int _AutoReconnectDelay=-1;
+
+        public int AutoReconnectDelay // YY.6.1 BACnet/SC Reconnect Timeout
+        {
+            get { return _AutoReconnectDelay; }
+            set {
+                _AutoReconnectDelay = value; 
+                if (_AutoReconnectDelay >= 0)
+                    _AutoReconnectDelay= Math.Min(30,Math.Max(2, _AutoReconnectDelay));
+            }
+        }
 
         [XmlIgnore]
         public String OwnCertificateFilePassword;

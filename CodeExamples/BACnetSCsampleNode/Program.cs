@@ -69,11 +69,12 @@ namespace BACnetSCsampleNode
         {
             // Bacnet SC unSecure Channel with the Hub ws://127.0.0.1:4443
             // work well with Testhub from https://sourceforge.net/projects/bacnet-sc-reference-stack/
-           
+
             BACnetSCConfigChannel config = new BACnetSCConfigChannel()
             {
                 primaryHubURI = "wss://127.0.0.1:4443",
                 UUID = "{92fb9be8-bac0-0000-0cab-171d5ec08e6c}",
+                AutoReconnectDelay = 5, // 5 seconds delay between close or error detection and re-open try, during this sended messages are queued
                 // if primaryHubURI is wss, PKI data are to be provided, otherwise not
                 ValidateHubCertificate = true,       // if you want
                 OnlyAllowsTLS13 = true,              // normally it is forced by the Hub, not working on Windows 10 without registry modification
