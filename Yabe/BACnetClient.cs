@@ -947,7 +947,7 @@ namespace System.IO.BACnet
             EncodeBuffer b = GetEncodeBuffer(m_client.HeaderLength);
             BacnetAddress broadcast = m_client.GetBroadcastAddress();
             NPDU.Encode(b, BacnetNpduControls.PriorityNormalMessage, broadcast, source);
-            APDU.EncodeUnconfirmedServiceRequest(b, BacnetPduTypes.PDU_TYPE_UNCONFIRMED_SERVICE_REQUEST, BacnetUnconfirmedServices.UNCONFIRMED_COV_NOTIFICATION_MULTIPLE);
+            APDU.EncodeUnconfirmedServiceRequest(b, BacnetPduTypes.PDU_TYPE_UNCONFIRMED_SERVICE_REQUEST, BacnetUnconfirmedServices.SERVICE_UNCONFIRMED_COV_NOTIFICATION_MULTIPLE);
             cnm.ASN1encode(b);
 
             m_client.Send(b.buffer, m_client.HeaderLength, b.offset - m_client.HeaderLength, broadcast, false, 0);
