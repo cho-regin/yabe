@@ -8731,12 +8731,12 @@ namespace System.IO.BACnet
         PROP_ENERGY_METER = 460,
         PROP_ENERGY_METER_REF = 461,
         PROP_ESCALATOR_MODE = 462,
+        PROP_FAULT_SIGNALS = 463,
         PROP_FLOOR_TEXT = 464,
         PROP_GROUP_ID = 465,
         PROP_GROUP_MODE = 467,
         PROP_HIGHER_DECK = 468,
         PROP_INSTALLATION_ID = 469,
-
         PROP_LANDING_CALLS = 470,
         PROP_LANDING_CALL_CONTROL = 471,
         PROP_LANDING_DOOR_STATUS = 472,
@@ -8764,7 +8764,10 @@ namespace System.IO.BACnet
         PROP_STAGES = 494, //Addendum 135-2016bd
         PROP_STAGE_NAMES = 495, //Addendum 135-2016bd
         PROP_TARGET_REFERENCES = 496, //Addendum 135-2016bd
-
+        PROP_AUDIT_SOURCE_REPORTER = 497,
+        PROP_AUDIT_LEVEL = 498,
+        PROP_AUDITABLE_PRIORITY_FILTER = 500,
+        PROP_AUDITABLE_OPERATIONS = 501,
         PROP_DEVICE_UUID = 507, // Addendum 135-2016bj
         // enumerations 508-511 are defined in Addendum 2020cc
         PROP_ADDITIONAL_REFERENCE_PORTS = 508,
