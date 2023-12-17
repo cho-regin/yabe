@@ -23,7 +23,12 @@ namespace HubApp
             Trace.Listeners.Add(new ConsoleTraceListener());
 
             // Hub
-            bscHub scHub=new bscHub ("wss://127.0.0.1:47808", @"..\..\PKI");
+            // Warning on Linux mono,  Raspbian GNU/Linux 9 (stretch)" :
+            //      the sample ECC certificate not working, certainly due to unsuported cypher suite, change it by an RSA one
+            //      It's also only on TLS1.0
+            //      A lot of things not working also : see bscHub.RemoteCertificateValidationCallback
+
+            bscHub scHub =new bscHub ("wss://127.0.0.1:47808", "../../PKI");
 
             // scHub.ActivateSnifferForWireshark (50000);
             // ... add a ws server channel in loopback mode on port 50000 here (with no activity).

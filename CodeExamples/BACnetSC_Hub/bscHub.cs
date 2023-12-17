@@ -64,9 +64,10 @@ namespace System.IO.BACnet
                 CertificatValidator.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
                 this.pkiDirectory = pkiDirectory;
-                try
+
+                try   
                 {
-                    ownCertificate = new X509Certificate2(pkiDirectory + "\\own\\Hub.p12", ownCertificatePassword);
+                    ownCertificate = new X509Certificate2(pkiDirectory + "/own/Yabe.p12", ownCertificatePassword);
 
                     if (!ownCertificate.HasPrivateKey)
                         // error if it's wss://
@@ -78,7 +79,7 @@ namespace System.IO.BACnet
 
                     // Using this we will accept all client with the same direct CA
                     X509Certificate2Collection collection = new X509Certificate2Collection();
-                    collection.Import(pkiDirectory + "\\own\\Hub.p12", ownCertificatePassword, X509KeyStorageFlags.DefaultKeySet);
+                    collection.Import(pkiDirectory + "/own/Yabe.p12", ownCertificatePassword, X509KeyStorageFlags.DefaultKeySet);
 
                     foreach (X509Certificate2 cert in collection)   // collection.Find nor working !
                         if (cert.Subject== ownCertificate.Issuer)
@@ -90,8 +91,9 @@ namespace System.IO.BACnet
                     ExtraChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
 
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Console.WriteLine(ex.ToString());
                     // error if it's wss://
                     Trace.WriteLine("BACnet/SC : Warning no HUB certificate found");
                 }
@@ -136,14 +138,14 @@ namespace System.IO.BACnet
             lock (rejectedCertificates)
             {
                 rejectedCertificates.Clear();
-                string[] fileEntries = Directory.GetFiles(pkiDirectory + "\\rejected");
+                string[] fileEntries = Directory.GetFiles(pkiDirectory + "/rejected");
                 foreach (string fileName in fileEntries)
                     try { rejectedCertificates.Add(new X509Certificate2(fileName)); } catch { }
             }
             lock (trustedCertificates)
             {
                 trustedCertificates.Clear();
-                string[] fileEntries = Directory.GetFiles(pkiDirectory + "\\trusted");
+                string[] fileEntries = Directory.GetFiles(pkiDirectory + "/trusted");
                 foreach (string fileName in fileEntries)
                     try 
                     {
@@ -159,7 +161,7 @@ namespace System.IO.BACnet
             {
                 issuerCertificates.Clear();
 
-                string[] fileEntries = Directory.GetFiles(pkiDirectory + "\\issuers");
+                string[] fileEntries = Directory.GetFiles(pkiDirectory + "/issuers");
                 foreach (string fileName in fileEntries)
                     try
                     {
@@ -176,8 +178,8 @@ namespace System.IO.BACnet
 
         }
 
-        // Here we accept all certificates known by the computer : SslPolicyErrors.None
-        // also all certificates in thrusted directory
+        // Here do NOT we accept certificates known by the computer : SslPolicyErrors.None
+        // All certificates in thrusted directory are OK
         // if it's the remote certificate or one of it's signing CA in the chain (if the chain is given)
         // and we reject all certificates in rejected directory
         // if it's the remote certificate or one of it's signing CA in the chain (if the chain is given)
@@ -186,6 +188,7 @@ namespace System.IO.BACnet
 
         private bool IsCertificateRejected(X509Chain chain)
         {
+
             if (chain == null) // normaly not
                 return false;
 
@@ -198,16 +201,17 @@ namespace System.IO.BACnet
                             Trace.WriteLine("\tCertificate explicitely rejected");
                             return true;
                         }
+
             return false;
         }
 
-        private bool IsCertificateThrusted(X509Certificate2 certificate)
+        private bool IsCertificateThrusted(X509Certificate certificate)
         {
-
+            Console.WriteLine("Test Thrusted "+ certificate);
             // explicitely accepted
             lock (trustedCertificates)
-                foreach (X509Certificate2 trustedcert in trustedCertificates)
-                    if (certificate.Thumbprint == trustedcert.Thumbprint)
+                foreach (X509Certificate trustedcert in trustedCertificates)
+                    if (certificate.Equals(trustedcert))
                     {
                         Trace.WriteLine("\tCertificate explicitely accepted");
                         return true;
@@ -222,11 +226,12 @@ namespace System.IO.BACnet
 
             // The certificate system accepted, sslPolicyErrors == SslPolicyErrors.None is not OK for BACNet/SC
 
-            if (IsCertificateRejected(chain)) { return false; }
+            if (IsCertificateRejected(chain)) { return false; } // chain is null on linux mono
 
-            if (IsCertificateThrusted(certificate as X509Certificate2)) { return true; }
+            if (IsCertificateThrusted(certificate)) { return true; } // cannot cast certificate to X509Certificate2 on mono
 
             //  Build the chain with our own local content in the PKI directory
+            // Not working on Linux mono, the given certificate cannot be cast as X509Certificate2
             lock (ExtraChain)
             { 
                 if (ExtraChain.Build(certificate as X509Certificate2)==true) // All Dates and sign in the chain are verified here

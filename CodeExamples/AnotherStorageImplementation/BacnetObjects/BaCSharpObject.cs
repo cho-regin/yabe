@@ -30,6 +30,7 @@ using System.Text;
 using System.IO.BACnet;
 using System.Reflection;
 using System.Diagnostics;
+using static System.IO.BACnet.BACnetCOVNotificationMultiple;
 
 namespace BaCSharp
 {
@@ -57,6 +58,8 @@ namespace BaCSharp
     //]
     public abstract class BaCSharpObject
     {
+        public object Handle;   // User handle for several usage
+
         // 3 common properties to all kind of Bacnet objects 
 
         public string m_PROP_OBJECT_NAME;
@@ -90,11 +93,12 @@ namespace BaCSharp
         // Cannot be deleted by default
         public bool AcceptDeleteObject = false;
 
-        public delegate void WriteNotificationCallbackHandler(BaCSharpObject sender, BacnetPropertyIds propId);
+        public delegate void NotificationCallbackHandler(BaCSharpObject sender, BacnetPropertyIds propId);
         // One event for each object if needed
-        public event WriteNotificationCallbackHandler OnWriteNotify;
+        public event NotificationCallbackHandler OnWriteNotify;
+        public event NotificationCallbackHandler OnBeforeReadNotify;
         // One global event for all the content
-        public static event WriteNotificationCallbackHandler OnExternalCOVNotify;
+        public static event NotificationCallbackHandler OnExternalCOVNotify;
 
         //To get back the raw buffer for specific decoding if needed
         protected BacnetClient sender;
@@ -208,6 +212,8 @@ namespace BaCSharp
 
             try
             {
+
+                if (OnBeforeReadNotify != null) OnBeforeReadNotify(this, (BacnetPropertyIds)PropRef.propertyIdentifier);
 
                 string PropName = PropRef.ToString();
                 if (PropName[0] != 'P') PropName = "PROP_"+PropName; // private property, not in the Enum list

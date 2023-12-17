@@ -90,6 +90,14 @@ namespace System.IO.BACnet
 
             configuration = config;
 
+            if ((configuration.VMAC==null)||(configuration.VMAC.Length!=6))
+            {
+                // Random VMAC creation
+                // ensure xxxx0010, § H.7.X EUI - 48 and Random-48 VMAC Address
+                new Random().NextBytes(myVMAC);
+                myVMAC[0] = (byte)((myVMAC[0] & 0xF0) | 0x02); // xxxx0010
+            }
+
             if (configuration.UseTLS)
             {
                 if ((configuration.OwnCertificateFile != null) && (configuration.OwnCertificate == null))
@@ -454,10 +462,6 @@ namespace System.IO.BACnet
 
         private void BVLC_SC_SendConnectRequest()
         {
-            // Random VMAC creation
-            // ensure xxxx0010, § H.7.X EUI - 48 and Random-48 VMAC Address
-            new Random().NextBytes(myVMAC);
-            myVMAC[0] = (byte)((myVMAC[0] & 0xF0) | 0x02); // xxxx0010
 
             byte[] b = new byte[4 + 6 + 16 + 2 + 2];
             b[0] = (byte)BacnetBvlcSCMessage.BVLC_CONNECT_REQUEST;
@@ -619,14 +623,19 @@ namespace System.IO.BACnet
             switch (function)
             {
                 case BacnetBvlcSCMessage.BVLC_RESULT:
-                    if ((buffer[offset] == (byte)BacnetBvlcSCMessage.BVLC_CONNECT_REQUEST)&&(buffer[offset+1]==0X01)&&(buffer[offset + 2]==0))
+                    if ((buffer[offset] == (byte)BacnetBvlcSCMessage.BVLC_CONNECT_REQUEST) && (buffer[offset + 1] == 0X01) && (buffer[offset + 2] == 0))
                     {
                         UInt16 ErrorClass = (UInt16)((buffer[offset + 3] << 8) | (buffer[offset + 4]));
                         UInt16 ErrorCode = (UInt16)((buffer[offset + 5] << 8) | (buffer[offset + 6]));
                         // Normaly duplicate VMAC should never occur 1.7^13 values. Redo with another random number
-                        // ... a good way to spend time to think, code and discuss for nothing
-                        if ((ErrorClass == (byte)BacnetErrorClasses.ERROR_CLASS_COMMUNICATION)&&(ErrorCode == (byte)BacnetErrorCodes.ERROR_CODE_NODE_DUPLICATE_VMAC))
+                        if ((ErrorClass == (byte)BacnetErrorClasses.ERROR_CLASS_COMMUNICATION) && (ErrorCode == (byte)BacnetErrorCodes.ERROR_CODE_NODE_DUPLICATE_VMAC))
+                        {
+                            // Random VMAC creation
+                            // ensure xxxx0010, § H.7.X EUI - 48 and Random-48 VMAC Address
+                            new Random().NextBytes(myVMAC);
+                            myVMAC[0] = (byte)((myVMAC[0] & 0xF0) | 0x02); // xxxx0010
                             BVLC_SC_SendConnectRequest();
+                        }
                     }
                     return 0;
                 case BacnetBvlcSCMessage.BVLC_ENCASULATED_NPDU:
@@ -714,6 +723,8 @@ namespace System.IO.BACnet
         public bool UseTLS { get { return primaryHubURI.Contains("wss://"); } }
 
         private int _AutoReconnectDelay=-1;
+
+        public byte[] VMAC;
 
         public int AutoReconnectDelay // YY.6.1 BACnet/SC Reconnect Timeout
         {
