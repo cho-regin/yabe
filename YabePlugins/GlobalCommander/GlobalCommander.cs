@@ -12,12 +12,17 @@ using System.IO.BACnet;
 using Newtonsoft.Json;
 using System.IO;
 using System.Reflection;
+using System.Web;
+using System.Xml.Linq;
 
 namespace GlobalCommander
 {
     public partial class GlobalCommander : Form
     {
         private const int PATIENCE_INTERVAL = 7500;
+
+        // Safer to always have confirmation I think.
+        private const int MAXIMUM_UNCONFIRMED_GLOBAL_COMMAND_COUNT = 0;
 
         private readonly object _lockObject = new object();
 
@@ -45,51 +50,18 @@ namespace GlobalCommander
 
             Icon = yabeFrm.Icon; // gets Yabe Icon
             InitializeComponent();
-            
 
+            cboPriority.SelectedIndex = 7;
         }
 
         private uint DetermineWritePriority()
         {
-            uint writePriority = (uint)8;
-
-            if (o1.Checked)
-                writePriority = (uint)1;
-            else if (o2.Checked)
-                writePriority = (uint)2;
-            else if (o3.Checked)
-                writePriority = (uint)3;
-            else if (o4.Checked)
-                writePriority = (uint)4;
-            else if (o5.Checked)
-                writePriority = (uint)5;
-            else if (o6.Checked)
-                writePriority = (uint)6;
-            else if (o7.Checked)
-                writePriority = (uint)7;
-            else if (o8.Checked)
-                writePriority = (uint)8;
-            else if (o9.Checked)
-                writePriority = (uint)9;
-            else if (o10.Checked)
-                writePriority = (uint)10;
-            else if (o11.Checked)
-                writePriority = (uint)11;
-            else if (o12.Checked)
-                writePriority = (uint)12;
-            else if (o13.Checked)
-                writePriority = (uint)13;
-            else if (o14.Checked)
-                writePriority = (uint)14;
-            else if (o15.Checked)
-                writePriority = (uint)15;
-            else if (o16.Checked)
-                writePriority = (uint)16;
+            uint writePriority = (uint)(cboPriority.SelectedIndex + 1);
 
             return writePriority;
         }
 
-        private bool SelectAllPointsAndProperties(bool selectObjInsFromAllDevices, bool doProgBar = false)
+        private bool SelectAllPointsAndProperties(bool selectObjInsFromAllDevices, bool doProgBar = false, bool suppressValueZeroCount = false)
         {
             _selectedPoints = new List<BacnetPointExport>();
             if (PointList.SelectedItem != null)
@@ -113,8 +85,6 @@ namespace GlobalCommander
             if (PropertyList.SelectedItem == null)
             {
                 propertiesSelected = false;
-                /*MessageBox.Show("No property selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return false;*/
             }
 
             _allSelectedProperties = new List<BacnetPropertyExport>();
@@ -131,7 +101,7 @@ namespace GlobalCommander
                 return false;
             }
 
-            if (propertiesSelected && _selectedProperty.Values.Count <= 0)
+            if (propertiesSelected && _selectedProperty.Values.Count <= 0 && !suppressValueZeroCount)
             {
                 MessageBox.Show("Property selected does not have a value attached to it. Unable to read/command property value.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
@@ -227,6 +197,8 @@ namespace GlobalCommander
             Cursor.Current = Cursors.Default;
             cmdCommand.Enabled = false;
             cmdViewProps.Enabled = false;
+            cboPriority.Enabled = false;
+            txtCmdVal.Enabled = false;
             txtPointFilter.Enabled = false;
             txtPointFilter.Text = "";
             txtDeviceFilter.Enabled = false;
@@ -271,6 +243,8 @@ namespace GlobalCommander
 
             cmdCommand.Enabled = false;
             cmdViewProps.Enabled = false;
+            cboPriority.Enabled = false;
+            txtCmdVal.Enabled = false;
             txtPointFilter.Enabled = false;
             txtPointFilter.Text = "";
             txtDeviceFilter.Enabled = true;
@@ -362,8 +336,23 @@ namespace GlobalCommander
 
             cmdCommand.Enabled = false;
             cmdViewProps.Enabled = false;
+            cboPriority.Enabled = false;
+            txtCmdVal.Enabled = false;
             txtPointFilter.Enabled = false;
             txtPointFilter.Text = "";
+        }
+
+        private void ResetFromPropList()
+        {
+            _selectedProperty = null;
+            _allSelectedProperties = null;
+            PropertyList.SelectedItem = null;
+            PropertyList.Items.Clear();
+
+            cmdCommand.Enabled = false;
+            cmdViewProps.Enabled = false;
+            cboPriority.Enabled = false;
+            txtCmdVal.Enabled = false;
         }
 
         private void cmdPopulatePoints_Click(object sender, EventArgs e)
@@ -464,7 +453,10 @@ namespace GlobalCommander
             Cursor.Current = Cursors.Default;
 
             cmdCommand.Enabled = false;
+            cboPriority.Enabled = false;
+            txtCmdVal.Enabled = false;
             cmdViewProps.Enabled = false;
+
             txtPointFilter.Enabled = true;
         }
 
@@ -491,6 +483,8 @@ namespace GlobalCommander
 
             _commonProperties = new List<BacnetPropertyExport>();
 
+            bool onlyCommonProperties = oComProp.Checked;
+
             if (_selectedPoints != null && _selectedPoints.Count>0 && result)
             {
                 if (result)
@@ -503,25 +497,57 @@ namespace GlobalCommander
 
                     if (_selectedPoints.Count > 1)
                     {
-                        _commonProperties.RemoveAll(x =>
-                                !_selectedPoints.All(y =>
-                                        y.Properties.Exists(z =>
-                                                z.PropertyID==x.PropertyID && x.Values.Count == z.Values.Count && (x.Values.Count == 0 ? true : (x.Values[0].Tag == z.Values[0].Tag)))));
-
-                        /*
-                        // This seems to have threading issues with large numbers of points 
-                        for (int i = 1; i < _commonProperties.Count; i++)
+                        if(onlyCommonProperties)
                         {
-                            foreach (BacnetPointExport point in _selectedPoints)
+                            _commonProperties.RemoveAll(x =>
+                                    !_selectedPoints.All(y =>
+                                            y.Properties.Exists(z =>
+                                                    // Make sure ALL "common" properties satisfy:
+                                                    // a). They exist in every selected point
+                                                    // b). They have the same array size (e.g. size 1 for single, non-array values)
+                                                    // c). They have the same Bacnet Application Tag - OR the property is the Priority Array.
+                                                    //     We except the priority from this condition for convenience mostly, and the fact that
+                                                    //     you can't actually globally command the whole priority array at once, so there will
+                                                    //     not be any issues with the "Globally Command" button. But, we can click "View All
+                                                    //     Properties In Scope" and see ALL priority arrays (assuming all selected points have
+                                                    //     one), even if they are different data types. This is useful for checking globally if
+                                                    //     something is overridden, for example, and you want to check a bunch of analog/binary/etc
+                                                    //     values all at the same time. Note that this acually should work even without this
+                                                    //     condition, however it seems the applicatio tag from the priority array is pulled from
+                                                    //     the Priority Array[0] value.so if you use the "Manual Life Safety" priority (priority 1),
+                                                    //     it wouldn't actually work.
+                                                    z.PropertyID==x.PropertyID && x.Values.Count == z.Values.Count && (x.Values.Count == 0 ? true : (x.Values[0].Tag == z.Values[0].Tag || z.PropertyID == BacnetPropertyIds.PROP_PRIORITY_ARRAY)))));
+
+                            /*
+                            // This seems to have threading issues with large numbers of points 
+                            for (int i = 1; i < _commonProperties.Count; i++)
                             {
-                                BacnetPropertyExport match = point.Properties.Find(x => x.PropertyID == _commonProperties[i].PropertyID && x.Values.Count == _commonProperties[i].Values.Count && (x.Values.Count == 0 ? true : (x.Values[0].Tag == _commonProperties[i].Values[0].Tag)));
-                                if (match == null)
+                                foreach (BacnetPointExport point in _selectedPoints)
                                 {
-                                    _commonProperties.RemoveAt(i--);
+                                    BacnetPropertyExport match = point.Properties.Find(x => x.PropertyID == _commonProperties[i].PropertyID && x.Values.Count == _commonProperties[i].Values.Count && (x.Values.Count == 0 ? true : (x.Values[0].Tag == _commonProperties[i].Values[0].Tag)));
+                                    if (match == null)
+                                    {
+                                        _commonProperties.RemoveAt(i--);
+                                    }
                                 }
                             }
+                            */
                         }
-                        */
+                        else
+                        {
+                            for(int i = 1;i<_selectedPoints.Count;i++)
+                            {
+                                foreach (BacnetPropertyExport property in _selectedPoints[i].Properties)
+                                {
+                                    if(!_commonProperties.Exists(x =>
+                                            x.PropertyID == property.PropertyID))
+                                    {
+                                        _commonProperties.Add(property);
+                                    }
+                                }
+                            }
+                            
+                        }
                     }
                 }
                 else
@@ -548,14 +574,22 @@ namespace GlobalCommander
             foreach (BacnetPropertyExport property in _commonProperties)
             {
                 ListViewItemBetterString item = new ListViewItemBetterString();
-                if(property.Values.Count<=0)
+                if(onlyCommonProperties)
                 {
-                    item.Text = String.Format("{0} [{1}]", property.Name, "NO VALUE PRESENT");
+                    if (property.Values.Count <= 0)
+                    {
+                        item.Text = String.Format("{0} [{1}]", property.Name, "NO VALUE PRESENT");
+                    }
+                    else
+                    {
+                        item.Text = String.Format("{0} [{1}]", property.Name, FormatTag(property.Values[0].Tag.ToString()));
+                    }
                 }
                 else
                 {
-                    item.Text = String.Format("{0} [{1}]", property.Name, property.Values[0].Tag.ToString());
+                    item.Text = String.Format("{0}", property.Name);
                 }
+                
                 item.Name = item.Text;
                 item.Tag = property;
                 PropertyList.Items.Add(item);
@@ -566,8 +600,24 @@ namespace GlobalCommander
             Application.DoEvents();
             Cursor.Current = Cursors.Default;
 
-            cmdCommand.Enabled = true;
+            if (onlyCommonProperties)
+            {
+                cmdCommand.Enabled = true;
+                cboPriority.Enabled = true;
+                txtCmdVal.Enabled = true;
+            }
+            else
+            {
+                cmdCommand.Enabled = false;
+                cboPriority.Enabled = false;
+                txtCmdVal.Enabled = false;
+            }
             cmdViewProps.Enabled = true;
+        }
+
+        private string FormatTag(string rawTag)
+        {
+            return System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(rawTag.Replace("BACNET_APPLICATION_TAG_", "").Replace('_',' ').ToLower());
         }
 
         private void cmdCommand_Click(object sender, EventArgs e)
@@ -594,12 +644,12 @@ namespace GlobalCommander
 
             if (_selectedProperty.Values.Count <= 0)
             {
-                MessageBox.Show("Property selected does not have a value attached to it for some reason. Unable to command.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Property selected does not have a value attached to it. The Global Commander needs a value to already be present in order to command it to something else.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             if (_selectedProperty.Values.Count>1)
             {
-                MessageBox.Show("Unfortunately, globally commanding value arrays is not supported - however you can command arrays from the \"View Properties in Scope\" window.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Unfortunately, globally commanding value arrays is not supported - however you can command individual array elements from the \"View Properties in Scope\" window.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -668,7 +718,7 @@ namespace GlobalCommander
                 return;
             }
 
-            if(_allSelectedProperties.Count > 10)
+            if(_allSelectedProperties.Count > MAXIMUM_UNCONFIRMED_GLOBAL_COMMAND_COUNT)
             {
                 int maxMessageBoxLines = 40;
 
@@ -753,25 +803,18 @@ namespace GlobalCommander
             EnableCommanding();
         }
 
+        private bool[] previousCmdStates = new bool[5];
+
         private void DisableCommanding()
         {
+            previousCmdStates[0] = cmdCommand.Enabled;
+            previousCmdStates[1] = cboPriority.Enabled;
+            previousCmdStates[2] = btnSyncTime.Enabled;
+            previousCmdStates[3] = txtCmdVal.Enabled;
+            previousCmdStates[4] = cmdViewProps.Enabled;
+
             cmdCommand.Enabled = false;
-            o1.Enabled = false;
-            o2.Enabled = false;
-            o3.Enabled = false;
-            o4.Enabled = false;
-            o5.Enabled = false;
-            o6.Enabled = false;
-            o7.Enabled = false;
-            o8.Enabled = false;
-            o9.Enabled = false;
-            o10.Enabled = false;
-            o11.Enabled = false;
-            o12.Enabled = false;
-            o13.Enabled = false;
-            o14.Enabled = false;
-            o15.Enabled = false;
-            o16.Enabled = false;
+            cboPriority.Enabled = false;
             btnSyncTime.Enabled = false;
             txtCmdVal.Enabled = false;
             cmdViewProps.Enabled = false;
@@ -779,26 +822,11 @@ namespace GlobalCommander
 
         private void EnableCommanding()
         {
-            cmdViewProps.Enabled = true;
-            txtCmdVal.Enabled = true;
-            btnSyncTime.Enabled = true;
-            o16.Enabled = true;
-            o15.Enabled = true;
-            o14.Enabled = true;
-            o13.Enabled = true;
-            o12.Enabled = true;
-            o11.Enabled = true;
-            o10.Enabled = true;
-            o9.Enabled = true;
-            o8.Enabled = true;
-            o7.Enabled = true;
-            o6.Enabled = true;
-            o5.Enabled = true;
-            o4.Enabled = true;
-            o3.Enabled = true;
-            o2.Enabled = true;
-            o1.Enabled = true;
-            cmdCommand.Enabled = true;
+            cmdViewProps.Enabled = previousCmdStates[4];
+            txtCmdVal.Enabled = previousCmdStates[3];
+            btnSyncTime.Enabled = previousCmdStates[2];
+            cboPriority.Enabled = previousCmdStates[1];
+            cmdCommand.Enabled = previousCmdStates[0];
         }
 
         private void cmdViewProps_Click(object sender, EventArgs e)
@@ -808,7 +836,7 @@ namespace GlobalCommander
             Application.DoEvents();
 
             // Once, to get the right points:
-            if (!SelectAllPointsAndProperties(radComObj.Checked, false))
+            if (!SelectAllPointsAndProperties(radComObj.Checked, false, true))
             {
                 progBar.Value = 0;
                 Application.DoEvents();
@@ -820,7 +848,7 @@ namespace GlobalCommander
             bool result = PopulatePropertyRefsForPoints(_allSelectedPoints, true);
 
             // Repeat, to get the updated point values (properties):
-            if (!SelectAllPointsAndProperties(radComObj.Checked, false))
+            if (!SelectAllPointsAndProperties(radComObj.Checked, false, true))
             {
                 progBar.Value = 0;
                 Application.DoEvents();
@@ -859,13 +887,7 @@ namespace GlobalCommander
 
         private void PointList_SelectedIndexChanged(object sender, EventArgs e)
         {
-            _selectedProperty = null;
-            _allSelectedProperties = null;
-            PropertyList.SelectedItem = null;
-            PropertyList.Items.Clear();
-
-            cmdCommand.Enabled = false;
-            cmdViewProps.Enabled = false;
+            ResetFromPropList();
         }
 
         private void DeviceList_SelectedIndexChanged(object sender, EventArgs e)
@@ -882,6 +904,8 @@ namespace GlobalCommander
 
             cmdCommand.Enabled = false;
             cmdViewProps.Enabled = false;
+            cboPriority.Enabled = false;
+            txtCmdVal.Enabled = false;
             txtPointFilter.Enabled = false;
             txtPointFilter.Text = "";
         }
@@ -1511,7 +1535,7 @@ namespace GlobalCommander
 
                         if (Values.Count < 1)
                         {
-                            MessageBox.Show(String.Format("Couldn't write property {0} of device {1}, object {2}.", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            MessageBox.Show(String.Format("Couldn't write property {0} of device {1}, object {2}. The Global Commander needs a value to already be present in order to command it to something else.", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             Cursor.Current = Cursors.Default;
                             return;
                         }
@@ -1796,15 +1820,7 @@ namespace GlobalCommander
             Cursor.Current = Cursors.WaitCursor;
             //progBar.Value = 0;
             //Application.DoEvents();
-            _selectedProperty = null;
-            _allSelectedProperties = null;
-            PropertyList.SelectedItem = null;
-            PropertyList.Items.Clear();
-
-            _selectedPoints = null;
-            _allSelectedPoints = null;
-            PointList.SelectedItem = null;
-            PointList.Items.Clear();
+            ResetFromObjectsList();
 
             _selectedDevices = null;
             DeviceList.Items.Clear();
@@ -1826,11 +1842,6 @@ namespace GlobalCommander
             //progBar.Value = 100;
             //Application.DoEvents();
             Cursor.Current = Cursors.Default;
-
-            cmdCommand.Enabled = false;
-            cmdViewProps.Enabled = false;
-            txtPointFilter.Enabled = false;
-            txtPointFilter.Text = "";
         }
 
         private void txtPointFilter_TextChanged(object sender, EventArgs e)
@@ -1841,10 +1852,7 @@ namespace GlobalCommander
             Cursor.Current = Cursors.WaitCursor;
             //progBar.Value = 0;
             //Application.DoEvents();
-            _selectedProperty = null;
-            _allSelectedProperties = null;
-            PropertyList.SelectedItem = null;
-            PropertyList.Items.Clear();
+            ResetFromPropList();
 
             _selectedPoints = null;
             _allSelectedPoints = null;
@@ -1868,9 +1876,6 @@ namespace GlobalCommander
             //progBar.Value = 100;
             //Application.DoEvents();
             Cursor.Current = Cursors.Default;
-
-            cmdCommand.Enabled = false;
-            cmdViewProps.Enabled = false;
         }
 
         private List<BacnetDeviceExport> FilterCommonDevices(string filterString)
@@ -2086,6 +2091,32 @@ namespace GlobalCommander
             progBar.Value = 100;
             ResetPatience();
             Cursor.Current = Cursors.Default;
+        }
+
+        private void oComProp_CheckedChanged(object sender, EventArgs e)
+        {
+            if(oComProp.Checked)
+            {
+                ResetFromPropList();
+                lblGlobal1.Visible = false;
+            }
+        }
+
+        private void oAnyProp_CheckedChanged(object sender, EventArgs e)
+        {
+            if (oAnyProp.Checked)
+            {
+                ResetFromPropList();
+                lblGlobal1.Visible = true;
+            }
+        }
+
+        private void PropertyList_DoubleClick(object sender, EventArgs e)
+        {
+            if(PropertyList.SelectedItem != null)
+            {
+                cmdViewProps_Click(sender, e);
+            }
         }
     }
 }

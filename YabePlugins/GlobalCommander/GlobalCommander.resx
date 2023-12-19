@@ -117,6 +117,12 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <metadata name="delimToolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>134, 19</value>
+  </metadata>
+  <metadata name="delimToolTip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>134, 19</value>
+  </metadata>
   <metadata name="PatienceTimer.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
@@ -170,6 +176,19 @@ with a). the same instance number and b). the part of the object name after the 
 matches. E.g. if delimeter is set to apostrophe, "Rm1'Temp" matches with "Rm2'Temp", but
 "Rm1'Temp" and "Rm1'Hum" do not match.
 </value>
+  </data>
+  <data name="oComProp.ToolTip" xml:space="preserve">
+    <value>In "Properties Common to ALL" mode, properties are only listed if ALL of the selected points have the property
+in their property list. Additionally, the Bacnet Application Tag must match between all properties unless
+it is the priority array (which is excluded from this condition), and any other array properties must have
+the same length.</value>
+  </data>
+  <data name="oAnyProp.ToolTip" xml:space="preserve">
+    <value>In "Properties that Exist in ANY" mode, any property that is present in ANY of the selected points will make
+it into the property list, ignoring Bacnet Application Tag and array size. Note that "Globally Command" must
+be disabled in this case, to avoid the risk of accidentally commanding two different data typed points to the
+same value. E.g. we don't want to Globally Command an analog value and a binary value both to 22.5, because
+the binary value commands would fail in this case.</value>
   </data>
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>53</value>
