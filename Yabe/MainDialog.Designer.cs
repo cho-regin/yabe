@@ -91,7 +91,6 @@
             this.createObjectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label2 = new System.Windows.Forms.Label();
             this.TbxHighlightAddress = new System.Windows.Forms.TextBox();
-            this.m_AddressSpaceTree = new CodersLab.Windows.Controls.TreeView();
             this.m_AddressSpaceMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.subscribeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.downloadFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -132,6 +131,9 @@
             this.ClearPlotterButton = new System.Windows.Forms.Button();
             this.labelDrop2 = new System.Windows.Forms.Label();
             this.CovGraph = new ZedGraph.ZedGraphControl();
+            this.ack_normal = new System.Windows.Forms.Button();
+            this.ack_fault = new System.Windows.Forms.Button();
+            this.ack_offnormal = new System.Windows.Forms.Button();
             this.manual_refresh_properties = new System.Windows.Forms.Button();
             this.m_DataGrid = new System.Windows.Forms.PropertyGrid();
             this.label1 = new System.Windows.Forms.Label();
@@ -139,6 +141,8 @@
             this.label4 = new System.Windows.Forms.Label();
             this.m_subscriptionRenewTimer = new System.Windows.Forms.Timer(this.components);
             this.SaveObjectNamesTimer = new System.Windows.Forms.Timer(this.components);
+            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.m_AddressSpaceTree = new CodersLab.Windows.Controls.TreeView();
             m_ImageList = new System.Windows.Forms.ImageList(this.components);
             this.toolStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
@@ -278,7 +282,7 @@
             // 
             this.openToolStripMenuItem.Image = global::Yabe.Properties.Resources.database_go;
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
             // 
@@ -286,7 +290,7 @@
             // 
             this.saveAsToolStripMenuItem.Image = global::Yabe.Properties.Resources.database_edit;
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
             this.saveAsToolStripMenuItem.Text = "Save As";
             this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
             // 
@@ -294,7 +298,7 @@
             // 
             this.cleanToolStripMenuItem.Image = global::Yabe.Properties.Resources.database_delete;
             this.cleanToolStripMenuItem.Name = "cleanToolStripMenuItem";
-            this.cleanToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.cleanToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
             this.cleanToolStripMenuItem.Text = "Clean all";
             this.cleanToolStripMenuItem.Click += new System.EventHandler(this.cleanToolStripMenuItem_Click);
             // 
@@ -791,24 +795,6 @@
             this.TbxHighlightAddress.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TbxHighlightTreeView_KeyDown);
             this.TbxHighlightAddress.Leave += new System.EventHandler(this.TbxHighlightTreeView_Update);
             // 
-            // m_AddressSpaceTree
-            // 
-            this.m_AddressSpaceTree.ContextMenuStrip = this.m_AddressSpaceMenuStrip;
-            this.m_AddressSpaceTree.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.m_AddressSpaceTree.ImageIndex = 0;
-            this.m_AddressSpaceTree.ImageList = m_ImageList;
-            this.m_AddressSpaceTree.Location = new System.Drawing.Point(0, 23);
-            this.m_AddressSpaceTree.Name = "m_AddressSpaceTree";
-            this.m_AddressSpaceTree.SelectedImageIndex = 0;
-            this.m_AddressSpaceTree.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            this.m_AddressSpaceTree.SelectionMode = CodersLab.Windows.Controls.TreeViewSelectionMode.MultiSelectSameLevel;
-            this.m_AddressSpaceTree.ShowNodeToolTips = true;
-            this.m_AddressSpaceTree.Size = new System.Drawing.Size(258, 521);
-            this.m_AddressSpaceTree.TabIndex = 0;
-            this.m_AddressSpaceTree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.m_AddressSpaceTree_ItemDrag);
-            this.m_AddressSpaceTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.m_AddressSpaceTree_AfterSelect);
-            this.m_AddressSpaceTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TreeView_MouseDown);
-            // 
             // m_AddressSpaceMenuStrip
             // 
             this.m_AddressSpaceMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -919,6 +905,9 @@
             // 
             // m_SplitContainerRight.Panel2
             // 
+            this.m_SplitContainerRight.Panel2.Controls.Add(this.ack_normal);
+            this.m_SplitContainerRight.Panel2.Controls.Add(this.ack_fault);
+            this.m_SplitContainerRight.Panel2.Controls.Add(this.ack_offnormal);
             this.m_SplitContainerRight.Panel2.Controls.Add(this.manual_refresh_properties);
             this.m_SplitContainerRight.Panel2.Controls.Add(this.m_DataGrid);
             this.m_SplitContainerRight.Panel2.Controls.Add(this.label1);
@@ -1253,6 +1242,45 @@
             this.CovGraph.DragDrop += new System.Windows.Forms.DragEventHandler(this.m_SubscriptionView_DragDrop);
             this.CovGraph.DragEnter += new System.Windows.Forms.DragEventHandler(this.m_SubscriptionView_DragEnter);
             // 
+            // ack_normal
+            // 
+            this.ack_normal.Image = global::Yabe.Properties.Resources.bell;
+            this.ack_normal.Location = new System.Drawing.Point(164, 13);
+            this.ack_normal.Name = "ack_normal";
+            this.ack_normal.Size = new System.Drawing.Size(23, 23);
+            this.ack_normal.TabIndex = 3;
+            this.ack_normal.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.toolTip.SetToolTip(this.ack_normal, "Acknowledge normal");
+            this.ack_normal.UseVisualStyleBackColor = true;
+            this.ack_normal.Visible = false;
+            this.ack_normal.Click += new System.EventHandler(this.ack_normal_Click);
+            // 
+            // ack_fault
+            // 
+            this.ack_fault.Image = global::Yabe.Properties.Resources.bell;
+            this.ack_fault.Location = new System.Drawing.Point(141, 13);
+            this.ack_fault.Name = "ack_fault";
+            this.ack_fault.Size = new System.Drawing.Size(23, 23);
+            this.ack_fault.TabIndex = 3;
+            this.ack_fault.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.toolTip.SetToolTip(this.ack_fault, "Acknowledge fault");
+            this.ack_fault.UseVisualStyleBackColor = true;
+            this.ack_fault.Visible = false;
+            this.ack_fault.Click += new System.EventHandler(this.ack_fault_Click);
+            // 
+            // ack_offnormal
+            // 
+            this.ack_offnormal.Image = global::Yabe.Properties.Resources.bell;
+            this.ack_offnormal.Location = new System.Drawing.Point(118, 13);
+            this.ack_offnormal.Name = "ack_offnormal";
+            this.ack_offnormal.Size = new System.Drawing.Size(23, 23);
+            this.ack_offnormal.TabIndex = 3;
+            this.ack_offnormal.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.toolTip.SetToolTip(this.ack_offnormal, "Acknowledge offnormal");
+            this.ack_offnormal.UseVisualStyleBackColor = true;
+            this.ack_offnormal.Visible = false;
+            this.ack_offnormal.Click += new System.EventHandler(this.ack_offnormal_Click);
+            // 
             // manual_refresh_properties
             // 
             this.manual_refresh_properties.Image = global::Yabe.Properties.Resources.reload;
@@ -1261,6 +1289,7 @@
             this.manual_refresh_properties.Size = new System.Drawing.Size(29, 23);
             this.manual_refresh_properties.TabIndex = 2;
             this.manual_refresh_properties.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.toolTip.SetToolTip(this.manual_refresh_properties, "Refresh");
             this.manual_refresh_properties.UseVisualStyleBackColor = true;
             this.manual_refresh_properties.Click += new System.EventHandler(this.manual_refresh_properties_Click);
             // 
@@ -1314,6 +1343,24 @@
             // 
             this.SaveObjectNamesTimer.Interval = 240000;
             this.SaveObjectNamesTimer.Tick += new System.EventHandler(this.SaveObjectNamesTimer_Tick);
+            // 
+            // m_AddressSpaceTree
+            // 
+            this.m_AddressSpaceTree.ContextMenuStrip = this.m_AddressSpaceMenuStrip;
+            this.m_AddressSpaceTree.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_AddressSpaceTree.ImageIndex = 0;
+            this.m_AddressSpaceTree.ImageList = m_ImageList;
+            this.m_AddressSpaceTree.Location = new System.Drawing.Point(0, 23);
+            this.m_AddressSpaceTree.Name = "m_AddressSpaceTree";
+            this.m_AddressSpaceTree.SelectedImageIndex = 0;
+            this.m_AddressSpaceTree.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            this.m_AddressSpaceTree.SelectionMode = CodersLab.Windows.Controls.TreeViewSelectionMode.MultiSelectSameLevel;
+            this.m_AddressSpaceTree.ShowNodeToolTips = true;
+            this.m_AddressSpaceTree.Size = new System.Drawing.Size(258, 521);
+            this.m_AddressSpaceTree.TabIndex = 0;
+            this.m_AddressSpaceTree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.m_AddressSpaceTree_ItemDrag);
+            this.m_AddressSpaceTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.m_AddressSpaceTree_AfterSelect);
+            this.m_AddressSpaceTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TreeView_MouseDown);
             // 
             // YabeMainDialog
             // 
@@ -1498,6 +1545,10 @@
         private System.Windows.Forms.ToolStripMenuItem exportEDEFilesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exportEDEFilesSelDeviceToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exportEDEFilesAllDevicesToolStripMenuItem;
+        private System.Windows.Forms.Button ack_offnormal;
+        private System.Windows.Forms.ToolTip toolTip;
+        private System.Windows.Forms.Button ack_normal;
+        private System.Windows.Forms.Button ack_fault;
     }
 }
 

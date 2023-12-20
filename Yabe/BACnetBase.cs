@@ -7716,21 +7716,31 @@ namespace System.IO.BACnet
         public void SetBit(byte bit_number, bool v)
         {
             byte byte_number = (byte)(bit_number / 8);
-            byte bit_mask = 1;
+            byte bit_mask = (byte)(1 << (bit_number % 8));
 
             if (value == null) value = new byte[System.IO.BACnet.Serialize.ASN1.MAX_BITSTRING_BYTES];
 
-            if (byte_number < System.IO.BACnet.Serialize.ASN1.MAX_BITSTRING_BYTES)
+            if (byte_number < value.Length)
             {
-                /* set max bits used */
-                if (bits_used < (bit_number + 1))
-                    bits_used = (byte)(bit_number + 1);
-                bit_mask = (byte)(bit_mask << (bit_number - (byte_number * 8)));
+
                 if (v)
                     value[byte_number] |= bit_mask;
                 else
                     value[byte_number] &= (byte)(~(bit_mask));
             }
+        }
+
+        public bool GetBit(byte bit_number)
+        {
+            if (value == null) return false;
+
+            byte byte_number = (byte)(bit_number / 8);
+            byte bit_mask = (byte)(1 << (bit_number % 8));
+
+            if (byte_number < value.Length)
+                return ((value[byte_number] & bit_mask) != 0);
+            else
+                return false;
         }
 
         public static BacnetBitString Parse(string str)

@@ -60,6 +60,11 @@ namespace Yabe
 
         List<BacnetObjectId> _structuredViewParents = null;
 
+        // 0=Offnormal
+        // 1=Fault
+        // 2=Normal
+        private DateTime[] _cachedEventTimeStampsForAcknowledgementButtons = new DateTime[3];
+
         public int DeviceCount 
         { 
             get {
@@ -2084,6 +2089,8 @@ namespace Yabe
                     }
                 }
 
+                bool[] showAlarmAck = new bool[3] {false, false, false };
+
                 //update grid
                 Utilities.DynamicPropertyGridContainer bag = new Utilities.DynamicPropertyGridContainer();
                 foreach (BacnetPropertyValue p_value in multi_value_list[0].values)
@@ -2123,6 +2130,34 @@ namespace Yabe
                             catch { }
                             bag.Add(new Utilities.CustomProperty(GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, t != null ? t : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
                             break;
+                        case BacnetPropertyIds.PROP_ACKED_TRANSITIONS:
+                            if(value is BacnetBitString ackedTrans)
+                            {
+                                if (!ackedTrans.GetBit(0))
+                                {
+                                    showAlarmAck[0] = true;
+                                }
+                                if (!ackedTrans.GetBit(1))
+                                {
+                                    showAlarmAck[1] = true;
+                                }
+                                if (!ackedTrans.GetBit(2))
+                                {
+                                    showAlarmAck[2] = true;
+                                }
+                            }
+                            bag.Add(new Utilities.CustomProperty(GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
+                            break;
+                        case BacnetPropertyIds.PROP_EVENT_TIME_STAMPS:
+                            for(int i=0;i<b_values.Length;i++)
+                            {
+                                if (b_values[i].Value is DateTime dt)
+                                {
+                                    _cachedEventTimeStampsForAcknowledgementButtons[i] = dt;
+                                }
+                            }
+                            bag.Add(new Utilities.CustomProperty(GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
+                            break;
 
                         default:
                             bag.Add(new Utilities.CustomProperty(GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
@@ -2137,6 +2172,10 @@ namespace Yabe
                 }
 
                 m_DataGrid.SelectedObject = bag;
+
+                ack_offnormal.Visible = showAlarmAck[0];
+                ack_fault.Visible = showAlarmAck[1];
+                ack_normal.Visible = showAlarmAck[2];
             }
             catch { }
 
@@ -5158,6 +5197,132 @@ namespace Yabe
             FetchEndPoints(out var endPoints);
             exportEDEFilesSelDeviceToolStripMenuItem.Enabled = FetchEndPoint(out _, out _, out _);
             exportEDEFilesAllDevicesToolStripMenuItem.Enabled = (endPoints.Count >= 1);
+        }
+
+        private void DoAck(BacnetEventNotificationData.BacnetEventStates eventState)
+        {
+            this.Cursor = Cursors.WaitCursor;
+            try
+            {
+                KeyValuePair<BacnetAddress, uint> entry;
+                BacnetAddress adr;
+                BacnetClient comm;
+
+                if (_selectedNode == null) return;
+
+                if (_selectedNode is TreeNode treeNode)
+                {
+                    //fetch end point
+                    if (_selectedDevice == null) return;
+                    else if (_selectedDevice.Tag == null) return;
+                    else if (!(_selectedDevice.Tag is KeyValuePair<BacnetAddress, uint>)) return;
+                    entry = (KeyValuePair<BacnetAddress, uint>)_selectedDevice.Tag;
+                    adr = entry.Key;
+                    if (_selectedDevice.Parent.Tag is BacnetClient)
+                        comm = (BacnetClient)_selectedDevice.Parent.Tag;
+                    else
+                        comm = (BacnetClient)_selectedDevice.Parent.Parent.Tag;  // routed node
+
+                    if (treeNode.Tag is BacnetObjectId object_id)
+                    {
+                        BacnetGenericTime ackT = new BacnetGenericTime();
+                        BacnetGenericTime evtT = new BacnetGenericTime();
+                        evtT.Tag = BacnetTimestampTags.TIME_STAMP_DATETIME;
+                        switch(eventState)
+                        {
+                            case BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_NORMAL:
+                                evtT.Time = _cachedEventTimeStampsForAcknowledgementButtons[2];
+                                break;
+                            case BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_FAULT:
+                                evtT.Time = _cachedEventTimeStampsForAcknowledgementButtons[1];
+                                break;
+                            case BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_OFFNORMAL:
+                                evtT.Time = _cachedEventTimeStampsForAcknowledgementButtons[0];
+                                break;
+                        }
+
+                        ackT.Tag = BacnetTimestampTags.TIME_STAMP_DATETIME;
+                        ackT.Time = DateTime.Now;
+                        if (comm.AlarmAcknowledgement(adr, object_id, eventState, eventState.ToString() + " acked manually in Yabe", evtT, ackT))
+                        {
+                            UpdateGrid(treeNode);
+                        }
+                        else
+                        {
+                            AckFail();
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+                else if (_selectedNode is Subscription subscription)
+                {
+                    adr = subscription.adr;
+                    comm = subscription.comm;
+
+                    BacnetObjectId object_id = subscription.object_id;
+
+                    BacnetGenericTime ackT = new BacnetGenericTime();
+                    BacnetGenericTime evtT = new BacnetGenericTime();
+                    evtT.Tag = BacnetTimestampTags.TIME_STAMP_DATETIME;
+                    switch (eventState)
+                    {
+                        case BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_NORMAL:
+                            evtT.Time = _cachedEventTimeStampsForAcknowledgementButtons[2];
+                            break;
+                        case BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_FAULT:
+                            evtT.Time = _cachedEventTimeStampsForAcknowledgementButtons[1];
+                            break;
+                        case BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_OFFNORMAL:
+                            evtT.Time = _cachedEventTimeStampsForAcknowledgementButtons[0];
+                            break;
+                    }
+
+                    ackT.Tag = BacnetTimestampTags.TIME_STAMP_DATETIME;
+                    ackT.Time = DateTime.Now;
+
+                    if (comm.AlarmAcknowledgement(adr, object_id, eventState, eventState.ToString() + " acked manually in Yabe", evtT, ackT))
+                    {
+                        UpdateGrid(subscription);
+                    }
+                    else
+                    {
+                        AckFail();
+                        return;
+                    }
+                }
+                else
+                {
+                    return;
+                }
+            }
+            finally
+            {
+                this.Cursor = Cursors.Default;
+            }
+        }
+
+        private void AckFail()
+        {
+            MessageBox.Show("Alarm acknowledge failed!","Error",MessageBoxButtons.OK,MessageBoxIcon.Warning);
+        }
+
+        private void ack_offnormal_Click(object sender, EventArgs e)
+        {
+            DoAck(BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_OFFNORMAL);
+        }
+
+        private void ack_fault_Click(object sender, EventArgs e)
+        {
+            DoAck(BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_FAULT);
+        }
+
+        private void ack_normal_Click(object sender, EventArgs e)
+        {
+            DoAck(BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_NORMAL);
         }
 
         private void searchToolStripMenuItem1_Click(object sender, EventArgs e)
