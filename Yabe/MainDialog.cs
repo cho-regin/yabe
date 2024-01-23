@@ -45,6 +45,8 @@ using System.Collections;
 using System.Reflection;
 using ZedGraph;
 using WebSocketSharp;
+using System.Net;
+using System.Globalization;
 
 namespace Yabe
 {
@@ -3673,8 +3675,19 @@ namespace Yabe
             {
                 if (m_DeviceTree.SelectedNode == null) return;
                 else if (m_DeviceTree.SelectedNode.Tag == null) return;
-                else if (!(m_DeviceTree.SelectedNode.Tag is BacnetClient)) return;
-                comm = (BacnetClient)m_DeviceTree.SelectedNode.Tag;
+
+                if ((m_DeviceTree.SelectedNode.Tag is BacnetClient))
+                {
+                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Tag;
+                }
+                else if (!(m_DeviceTree.SelectedNode.Parent.Tag is BacnetClient))
+                {
+                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Tag;
+                }
+                else
+                {
+                    return;
+                }
 
                 if (comm.Transport is BacnetIpUdpProtocolTransport) // only IPv4 today, v6 maybe a day
                 {
@@ -3703,6 +3716,110 @@ namespace Yabe
             {
                 MessageBox.Show(this, "Invalid parameter", "Wrong node or IP @", MessageBoxButtons.OK, MessageBoxIcon.Information);          
             }
+        }
+
+        private void AddRemoteIpListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //fetch end point
+            BacnetClient comm = null;
+
+            // Make sure we are connected
+            if (m_DeviceTree.SelectedNode == null) return;
+            else if (m_DeviceTree.SelectedNode.Tag == null) return;
+
+            if ((m_DeviceTree.SelectedNode.Tag is BacnetClient))
+            {
+                comm = (BacnetClient)m_DeviceTree.SelectedNode.Tag;
+            }
+            else if (!(m_DeviceTree.SelectedNode.Parent.Tag is BacnetClient))
+            {
+                comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Tag;
+            }
+            else
+            {
+                return;
+            }
+
+            comm = (BacnetClient)m_DeviceTree.SelectedNode.Tag;
+
+            if (comm.Transport is BacnetIpUdpProtocolTransport) // only IPv4 today, v6 maybe a day
+            {
+                //select file to store
+                OpenFileDialog dlg = new OpenFileDialog();
+                if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
+                Application.DoEvents();
+                string fileName = dlg.FileName;
+
+                try
+                {
+                    this.Cursor = Cursors.WaitCursor;
+
+                    string[] lines = File.ReadAllLines(fileName);
+                    foreach (string line in lines)
+                    {
+                        if (!line.StartsWith("#"))  // Comment
+                        { 
+                            Application.DoEvents();
+                            string[] entry = line.Split('-');
+                            if (entry.Length != 2)
+                            {
+                                Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: \"{0}\" is not in the correct format (DeviceId - IP1.IP2.IP3.IP4:Port).", line.Trim()));
+                                continue;
+                            }
+                            if (!uint.TryParse(entry[0].Trim(), out uint deviceIdIn))
+                            {
+                                Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: \"{0}\" is not in the correct format (DeviceId - IP1.IP2.IP3.IP4:Port).", line.Trim()));
+                                continue;
+                            }
+                            if (!TryParseIPEndPoint(entry[1].Trim(), out IPEndPoint ipIn))
+                            {
+                                Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: \"{0}\" is not in the correct format (DeviceId - IP1.IP2.IP3.IP4:Port).", line.Trim()));
+                                continue;
+                            }
+                            if (entry[0][0] == '?') entry[0] = "4194303";
+                            try
+                            {
+                                OnIam(comm, new BacnetAddress(BacnetAddressTypes.IP, entry[1].Trim()), Convert.ToUInt32(entry[0]), 0, BacnetSegmentations.SEGMENTATION_NONE, 0);
+                            }
+                            catch (Exception ex)
+                            {
+                                Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: {0} - {1}", ex.GetType().Name, ex.Message));
+                                continue;
+
+                            }
+                            Trace.TraceInformation(String.Format("Added remote IPv4 node: {0} - {1}", deviceIdIn.ToString(), ipIn.ToString()));
+                        }
+                    }
+                }
+                finally
+                {
+                    this.Cursor = Cursors.Default;
+                }
+            }
+            else
+            {
+                MessageBox.Show(this, "Please select an \"IPv4 transport\" node first", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            
+        }
+
+        private bool TryParseIPEndPoint(string inputString, out IPEndPoint endPoint)
+        {
+            endPoint = null;
+            string[] ep = inputString.Split(':');
+            if (ep.Length != 2) return false;
+            IPAddress ip;
+            if (!IPAddress.TryParse(ep[0], out ip))
+            {
+                return false;
+            }
+            int port;
+            if (!int.TryParse(ep[1], NumberStyles.None, NumberFormatInfo.CurrentInfo, out port))
+            {
+                return false;
+            }
+            endPoint =  new IPEndPoint(ip, port);
+            return true;
         }
 
         private void helpToolStripMenuItem1_Click(object sender, EventArgs e)

@@ -72,6 +72,11 @@ namespace GlobalCommander
             this.lblGlobal1 = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.grpDevices = new System.Windows.Forms.GroupBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtWhoIsHigh = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.txtWhoIsLow = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -97,6 +102,7 @@ namespace GlobalCommander
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox4.SuspendLayout();
+            this.grpDevices.SuspendLayout();
             this.SuspendLayout();
             // 
             // DeviceList
@@ -139,8 +145,7 @@ namespace GlobalCommander
             this.cmdPopulateDevices.Size = new System.Drawing.Size(140, 36);
             this.cmdPopulateDevices.TabIndex = 3;
             this.cmdPopulateDevices.Text = "Populate Devices";
-            this.delimToolTip.SetToolTip(this.cmdPopulateDevices, "Populate the list with all currently discovered\r\ndevices that are showing in the " +
-        "main window.");
+            this.delimToolTip.SetToolTip(this.cmdPopulateDevices, resources.GetString("cmdPopulateDevices.ToolTip"));
             this.cmdPopulateDevices.UseVisualStyleBackColor = true;
             this.cmdPopulateDevices.Click += new System.EventHandler(this.cmdPopulateDevices_Click);
             // 
@@ -151,6 +156,8 @@ namespace GlobalCommander
             this.cmdPopulatePoints.Size = new System.Drawing.Size(140, 36);
             this.cmdPopulatePoints.TabIndex = 5;
             this.cmdPopulatePoints.Text = "Populate Points";
+            this.delimToolTip.SetToolTip(this.cmdPopulatePoints, "Populate the objects from the selected devices.\r\nThe behaviour of this button is " +
+        "dependant on\r\nthe \"Populate Points Method\" setting to the right.");
             this.cmdPopulatePoints.UseVisualStyleBackColor = true;
             this.cmdPopulatePoints.Click += new System.EventHandler(this.cmdPopulatePoints_Click);
             // 
@@ -161,6 +168,9 @@ namespace GlobalCommander
             this.cmdPopulateProperties.Size = new System.Drawing.Size(140, 36);
             this.cmdPopulateProperties.TabIndex = 7;
             this.cmdPopulateProperties.Text = "Populate Properties";
+            this.delimToolTip.SetToolTip(this.cmdPopulateProperties, "Populate the relevant properties from the selected\r\nobjects. The behaviour of thi" +
+        "s button is dependant\r\non the \"Populate Properties Method\" setting to the\r\nright" +
+        ".\r\n");
             this.cmdPopulateProperties.UseVisualStyleBackColor = true;
             this.cmdPopulateProperties.Click += new System.EventHandler(this.cmdPopulateProperties_Click);
             // 
@@ -169,7 +179,7 @@ namespace GlobalCommander
             this.cmdCommand.Location = new System.Drawing.Point(6, 79);
             this.cmdCommand.Name = "cmdCommand";
             this.cmdCommand.Size = new System.Drawing.Size(214, 36);
-            this.cmdCommand.TabIndex = 11;
+            this.cmdCommand.TabIndex = 26;
             this.cmdCommand.Text = "Globally Command";
             this.delimToolTip.SetToolTip(this.cmdCommand, "Command/relinquish the selected property\r\non all selected objects/devices to the " +
         "specified\r\nvalue.");
@@ -182,7 +192,7 @@ namespace GlobalCommander
             this.lblCmdVal.Location = new System.Drawing.Point(6, 23);
             this.lblCmdVal.Name = "lblCmdVal";
             this.lblCmdVal.Size = new System.Drawing.Size(87, 13);
-            this.lblCmdVal.TabIndex = 7;
+            this.lblCmdVal.TabIndex = 21;
             this.lblCmdVal.Text = "Command Value:";
             // 
             // txtCmdVal
@@ -190,7 +200,7 @@ namespace GlobalCommander
             this.txtCmdVal.Location = new System.Drawing.Point(99, 20);
             this.txtCmdVal.Name = "txtCmdVal";
             this.txtCmdVal.Size = new System.Drawing.Size(120, 20);
-            this.txtCmdVal.TabIndex = 9;
+            this.txtCmdVal.TabIndex = 22;
             // 
             // progBar
             // 
@@ -206,7 +216,7 @@ namespace GlobalCommander
             this.cmdViewProps.Location = new System.Drawing.Point(6, 19);
             this.cmdViewProps.Name = "cmdViewProps";
             this.cmdViewProps.Size = new System.Drawing.Size(214, 36);
-            this.cmdViewProps.TabIndex = 12;
+            this.cmdViewProps.TabIndex = 31;
             this.cmdViewProps.Text = "View Properties in Scope";
             this.delimToolTip.SetToolTip(this.cmdViewProps, "View all the curent value of the selected property\r\non all selected objects/devic" +
         "es that would be globally\r\ncommanded. The values can also be commanded\r\none-by-o" +
@@ -233,7 +243,7 @@ namespace GlobalCommander
             this.splitContainer1.Panel2MinSize = 100;
             this.splitContainer1.Size = new System.Drawing.Size(1051, 637);
             this.splitContainer1.SplitterDistance = 691;
-            this.splitContainer1.TabIndex = 28;
+            this.splitContainer1.TabIndex = 101;
             // 
             // splitContainer2
             // 
@@ -250,7 +260,7 @@ namespace GlobalCommander
             this.splitContainer2.Panel2.Controls.Add(this.splitContainer4);
             this.splitContainer2.Size = new System.Drawing.Size(691, 637);
             this.splitContainer2.SplitterDistance = 312;
-            this.splitContainer2.TabIndex = 0;
+            this.splitContainer2.TabIndex = 100;
             // 
             // splitContainer3
             // 
@@ -364,7 +374,7 @@ namespace GlobalCommander
             this.radComObj.Location = new System.Drawing.Point(6, 19);
             this.radComObj.Name = "radComObj";
             this.radComObj.Size = new System.Drawing.Size(198, 17);
-            this.radComObj.TabIndex = 31;
+            this.radComObj.TabIndex = 51;
             this.radComObj.Text = "Common Objects (Selected Devices)";
             this.delimToolTip.SetToolTip(this.radComObj, resources.GetString("radComObj.ToolTip"));
             this.radComObj.UseVisualStyleBackColor = true;
@@ -377,7 +387,7 @@ namespace GlobalCommander
             this.radJoinObj.Location = new System.Drawing.Point(6, 42);
             this.radJoinObj.Name = "radJoinObj";
             this.radJoinObj.Size = new System.Drawing.Size(136, 17);
-            this.radJoinObj.TabIndex = 32;
+            this.radJoinObj.TabIndex = 52;
             this.radJoinObj.TabStop = true;
             this.radJoinObj.Text = "Join All Objects into List";
             this.delimToolTip.SetToolTip(this.radJoinObj, "In \"Join All Objects\" mode, all the objects of all the selected controllers are a" +
@@ -391,7 +401,7 @@ namespace GlobalCommander
             this.lblPtDelimLabel.Location = new System.Drawing.Point(3, 69);
             this.lblPtDelimLabel.Name = "lblPtDelimLabel";
             this.lblPtDelimLabel.Size = new System.Drawing.Size(59, 13);
-            this.lblPtDelimLabel.TabIndex = 131;
+            this.lblPtDelimLabel.TabIndex = 53;
             this.lblPtDelimLabel.Text = "Delimeters:";
             this.lblPtDelimLabel.Visible = false;
             // 
@@ -407,10 +417,10 @@ namespace GlobalCommander
             this.grpPointNames.Controls.Add(this.radComObj);
             this.grpPointNames.Controls.Add(this.lblPtDelimLabel);
             this.grpPointNames.Controls.Add(this.radJoinObj);
-            this.grpPointNames.Location = new System.Drawing.Point(1069, 321);
+            this.grpPointNames.Location = new System.Drawing.Point(1069, 392);
             this.grpPointNames.Name = "grpPointNames";
             this.grpPointNames.Size = new System.Drawing.Size(226, 119);
-            this.grpPointNames.TabIndex = 132;
+            this.grpPointNames.TabIndex = 50;
             this.grpPointNames.TabStop = false;
             this.grpPointNames.Text = "\"Populate Points\" Method";
             // 
@@ -421,7 +431,7 @@ namespace GlobalCommander
             this.chkHyphen.Location = new System.Drawing.Point(99, 89);
             this.chkHyphen.Name = "chkHyphen";
             this.chkHyphen.Size = new System.Drawing.Size(33, 24);
-            this.chkHyphen.TabIndex = 38;
+            this.chkHyphen.TabIndex = 59;
             this.chkHyphen.Text = "-";
             this.delimToolTip.SetToolTip(this.chkHyphen, resources.GetString("chkHyphen.ToolTip"));
             this.chkHyphen.UseVisualStyleBackColor = true;
@@ -435,7 +445,7 @@ namespace GlobalCommander
             this.chkUnderscore.Location = new System.Drawing.Point(68, 92);
             this.chkUnderscore.Name = "chkUnderscore";
             this.chkUnderscore.Size = new System.Drawing.Size(33, 19);
-            this.chkUnderscore.TabIndex = 37;
+            this.chkUnderscore.TabIndex = 58;
             this.chkUnderscore.Text = "_";
             this.delimToolTip.SetToolTip(this.chkUnderscore, resources.GetString("chkUnderscore.ToolTip"));
             this.chkUnderscore.UseVisualStyleBackColor = true;
@@ -449,7 +459,7 @@ namespace GlobalCommander
             this.chkComma.Location = new System.Drawing.Point(172, 63);
             this.chkComma.Name = "chkComma";
             this.chkComma.Size = new System.Drawing.Size(32, 24);
-            this.chkComma.TabIndex = 36;
+            this.chkComma.TabIndex = 57;
             this.chkComma.Text = ",";
             this.delimToolTip.SetToolTip(this.chkComma, resources.GetString("chkComma.ToolTip"));
             this.chkComma.UseVisualStyleBackColor = true;
@@ -465,7 +475,7 @@ namespace GlobalCommander
             this.chkColon.Location = new System.Drawing.Point(137, 63);
             this.chkColon.Name = "chkColon";
             this.chkColon.Size = new System.Drawing.Size(32, 24);
-            this.chkColon.TabIndex = 35;
+            this.chkColon.TabIndex = 56;
             this.chkColon.Text = ":";
             this.delimToolTip.SetToolTip(this.chkColon, resources.GetString("chkColon.ToolTip"));
             this.chkColon.UseVisualStyleBackColor = true;
@@ -481,7 +491,7 @@ namespace GlobalCommander
             this.chkDot.Location = new System.Drawing.Point(99, 63);
             this.chkDot.Name = "chkDot";
             this.chkDot.Size = new System.Drawing.Size(32, 24);
-            this.chkDot.TabIndex = 34;
+            this.chkDot.TabIndex = 55;
             this.chkDot.Text = ".";
             this.delimToolTip.SetToolTip(this.chkDot, resources.GetString("chkDot.ToolTip"));
             this.chkDot.UseVisualStyleBackColor = true;
@@ -497,7 +507,7 @@ namespace GlobalCommander
             this.chkApostrophe.Location = new System.Drawing.Point(68, 63);
             this.chkApostrophe.Name = "chkApostrophe";
             this.chkApostrophe.Size = new System.Drawing.Size(31, 24);
-            this.chkApostrophe.TabIndex = 33;
+            this.chkApostrophe.TabIndex = 54;
             this.chkApostrophe.Text = "\'";
             this.delimToolTip.SetToolTip(this.chkApostrophe, resources.GetString("chkApostrophe.ToolTip"));
             this.chkApostrophe.UseVisualStyleBackColor = true;
@@ -517,7 +527,7 @@ namespace GlobalCommander
             this.btnSyncTime.Location = new System.Drawing.Point(6, 19);
             this.btnSyncTime.Name = "btnSyncTime";
             this.btnSyncTime.Size = new System.Drawing.Size(214, 36);
-            this.btnSyncTime.TabIndex = 8;
+            this.btnSyncTime.TabIndex = 9;
             this.btnSyncTime.Text = "Sync Time";
             this.delimToolTip.SetToolTip(this.btnSyncTime, "Synchronize the time of the selected devices\r\nwith the PC\'s time. This will be ei" +
         "ther local\r\ntime or UTC time, depending on the setting\r\n\"TimeSynchronize_UTC\".");
@@ -531,7 +541,7 @@ namespace GlobalCommander
             this.oComProp.Location = new System.Drawing.Point(6, 20);
             this.oComProp.Name = "oComProp";
             this.oComProp.Size = new System.Drawing.Size(150, 30);
-            this.oComProp.TabIndex = 51;
+            this.oComProp.TabIndex = 61;
             this.oComProp.TabStop = true;
             this.oComProp.Text = "Properties Common to ALL\r\nSelected Points";
             this.delimToolTip.SetToolTip(this.oComProp, resources.GetString("oComProp.ToolTip"));
@@ -544,7 +554,7 @@ namespace GlobalCommander
             this.oAnyProp.Location = new System.Drawing.Point(6, 59);
             this.oAnyProp.Name = "oAnyProp";
             this.oAnyProp.Size = new System.Drawing.Size(154, 30);
-            this.oAnyProp.TabIndex = 52;
+            this.oAnyProp.TabIndex = 62;
             this.oAnyProp.Text = "Properties that Exist in ANY\r\nSelected Point";
             this.delimToolTip.SetToolTip(this.oAnyProp, resources.GetString("oAnyProp.ToolTip"));
             this.oAnyProp.UseVisualStyleBackColor = true;
@@ -574,7 +584,7 @@ namespace GlobalCommander
             this.cboPriority.Location = new System.Drawing.Point(52, 49);
             this.cboPriority.Name = "cboPriority";
             this.cboPriority.Size = new System.Drawing.Size(167, 21);
-            this.cboPriority.TabIndex = 10;
+            this.cboPriority.TabIndex = 24;
             // 
             // lblPrio
             // 
@@ -582,7 +592,7 @@ namespace GlobalCommander
             this.lblPrio.Location = new System.Drawing.Point(6, 52);
             this.lblPrio.Name = "lblPrio";
             this.lblPrio.Size = new System.Drawing.Size(41, 13);
-            this.lblPrio.TabIndex = 134;
+            this.lblPrio.TabIndex = 23;
             this.lblPrio.Text = "Priority:";
             // 
             // groupBox1
@@ -590,10 +600,10 @@ namespace GlobalCommander
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.Controls.Add(this.oComProp);
             this.groupBox1.Controls.Add(this.oAnyProp);
-            this.groupBox1.Location = new System.Drawing.Point(1069, 454);
+            this.groupBox1.Location = new System.Drawing.Point(1069, 517);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(226, 98);
-            this.groupBox1.TabIndex = 135;
+            this.groupBox1.TabIndex = 60;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "\"Populate Properties\" Method";
             // 
@@ -604,7 +614,7 @@ namespace GlobalCommander
             this.groupBox2.Location = new System.Drawing.Point(1069, 12);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(226, 69);
-            this.groupBox2.TabIndex = 132;
+            this.groupBox2.TabIndex = 8;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Device Commands";
             // 
@@ -616,7 +626,7 @@ namespace GlobalCommander
             this.lblGlobal1.Location = new System.Drawing.Point(6, 79);
             this.lblGlobal1.Name = "lblGlobal1";
             this.lblGlobal1.Size = new System.Drawing.Size(214, 39);
-            this.lblGlobal1.TabIndex = 136;
+            this.lblGlobal1.TabIndex = 25;
             this.lblGlobal1.Text = "The \"Populate Properties\" method\r\nneeds to be set to \"Common to ALL\"\r\nin order to" +
     " globally command.";
             this.lblGlobal1.Visible = false;
@@ -633,7 +643,7 @@ namespace GlobalCommander
             this.groupBox3.Location = new System.Drawing.Point(1069, 95);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Size = new System.Drawing.Size(226, 130);
-            this.groupBox3.TabIndex = 137;
+            this.groupBox3.TabIndex = 20;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Global Commanding";
             // 
@@ -641,12 +651,58 @@ namespace GlobalCommander
             // 
             this.groupBox4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox4.Controls.Add(this.cmdViewProps);
-            this.groupBox4.Location = new System.Drawing.Point(1069, 238);
+            this.groupBox4.Location = new System.Drawing.Point(1069, 231);
             this.groupBox4.Name = "groupBox4";
             this.groupBox4.Size = new System.Drawing.Size(226, 69);
-            this.groupBox4.TabIndex = 138;
+            this.groupBox4.TabIndex = 30;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Viewing";
+            // 
+            // grpDevices
+            // 
+            this.grpDevices.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.grpDevices.Controls.Add(this.label2);
+            this.grpDevices.Controls.Add(this.txtWhoIsHigh);
+            this.grpDevices.Controls.Add(this.label1);
+            this.grpDevices.Controls.Add(this.txtWhoIsLow);
+            this.grpDevices.Location = new System.Drawing.Point(1069, 306);
+            this.grpDevices.Name = "grpDevices";
+            this.grpDevices.Size = new System.Drawing.Size(226, 80);
+            this.grpDevices.TabIndex = 40;
+            this.grpDevices.TabStop = false;
+            this.grpDevices.Text = "\"Populate Devices\" Settings";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(6, 49);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(100, 13);
+            this.label2.TabIndex = 43;
+            this.label2.Text = "\"WhoIs\" Limit High:";
+            // 
+            // txtWhoIsHigh
+            // 
+            this.txtWhoIsHigh.Location = new System.Drawing.Point(137, 46);
+            this.txtWhoIsHigh.Name = "txtWhoIsHigh";
+            this.txtWhoIsHigh.Size = new System.Drawing.Size(82, 20);
+            this.txtWhoIsHigh.TabIndex = 44;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(6, 25);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(98, 13);
+            this.label1.TabIndex = 41;
+            this.label1.Text = "\"WhoIs\" Limit Low:";
+            // 
+            // txtWhoIsLow
+            // 
+            this.txtWhoIsLow.Location = new System.Drawing.Point(137, 22);
+            this.txtWhoIsLow.Name = "txtWhoIsLow";
+            this.txtWhoIsLow.Size = new System.Drawing.Size(82, 20);
+            this.txtWhoIsLow.TabIndex = 42;
             // 
             // GlobalCommander
             // 
@@ -654,6 +710,7 @@ namespace GlobalCommander
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1301, 692);
             this.Controls.Add(this.groupBox4);
+            this.Controls.Add(this.grpDevices);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.groupBox2);
@@ -661,7 +718,7 @@ namespace GlobalCommander
             this.Controls.Add(this.PatienceLabel);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.progBar);
-            this.MinimumSize = new System.Drawing.Size(1000, 641);
+            this.MinimumSize = new System.Drawing.Size(1000, 694);
             this.Name = "GlobalCommander";
             this.Text = "Yabe Global Commander";
             this.Load += new System.EventHandler(this.GlobalCommander_Load);
@@ -696,6 +753,8 @@ namespace GlobalCommander
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
             this.groupBox4.ResumeLayout(false);
+            this.grpDevices.ResumeLayout(false);
+            this.grpDevices.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -744,5 +803,10 @@ namespace GlobalCommander
         private System.Windows.Forms.Label lblGlobal1;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.GroupBox grpDevices;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox txtWhoIsHigh;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox txtWhoIsLow;
     }
 }

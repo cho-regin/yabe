@@ -21,6 +21,8 @@ namespace GlobalCommander
     {
         private const int PATIENCE_INTERVAL = 7500;
 
+        private const int MAX_BACNET_DEVICE_INSTANCE = 4194303;
+
         // Safer to always have confirmation I think.
         private const int MAXIMUM_UNCONFIRMED_GLOBAL_COMMAND_COUNT = 0;
 
@@ -222,7 +224,19 @@ namespace GlobalCommander
             PointList.SelectedItem = null;
             PointList.Items.Clear();
 
-            _commonDevices = PopulateDevicesWithNames(true);
+            int whoIsLow;
+            int whoIsHigh;
+
+            if (!int.TryParse(txtWhoIsLow.Text.Trim(), out whoIsLow))
+            {
+                whoIsLow = 0;
+            }
+            if (!int.TryParse(txtWhoIsHigh.Text.Trim(), out whoIsHigh))
+            {
+                whoIsHigh = MAX_BACNET_DEVICE_INSTANCE;
+            }
+
+            _commonDevices = PopulateDevicesWithNames(whoIsLow, whoIsHigh, true);
             _commonDevices.Sort();
 
             _selectedDevices = null;
@@ -803,7 +817,7 @@ namespace GlobalCommander
             EnableCommanding();
         }
 
-        private bool[] previousCmdStates = new bool[5];
+        private bool[] previousCmdStates = new bool[6];
 
         private void DisableCommanding()
         {
@@ -812,16 +826,21 @@ namespace GlobalCommander
             previousCmdStates[2] = btnSyncTime.Enabled;
             previousCmdStates[3] = txtCmdVal.Enabled;
             previousCmdStates[4] = cmdViewProps.Enabled;
+            previousCmdStates[5] = txtWhoIsLow.Enabled;
 
             cmdCommand.Enabled = false;
             cboPriority.Enabled = false;
             btnSyncTime.Enabled = false;
             txtCmdVal.Enabled = false;
             cmdViewProps.Enabled = false;
+            txtWhoIsLow.Enabled = false;
+            txtWhoIsHigh.Enabled = false;
         }
 
         private void EnableCommanding()
         {
+            txtWhoIsLow.Enabled = previousCmdStates[5];
+            txtWhoIsHigh.Enabled = previousCmdStates[5];
             cmdViewProps.Enabled = previousCmdStates[4];
             txtCmdVal.Enabled = previousCmdStates[3];
             btnSyncTime.Enabled = previousCmdStates[2];
@@ -977,70 +996,80 @@ namespace GlobalCommander
             }
         }
 
-        public List<BacnetDeviceExport> PopulateDevicesWithNames(bool commandProgBar = false)
+        public List<BacnetDeviceExport> PopulateDevicesWithNames(int whoIsLow, int whoIsHigh, bool commandProgBar = false)
         {
             int progTotal = YabeDiscoveredDevices.Count() + 1;
             int prog = 0;
             List<BacnetDeviceExport> deviceList = new List<BacnetDeviceExport>();
-            foreach (KeyValuePair<BacnetClient, YabeMainDialog.BacnetDeviceLine> transport in YabeDiscoveredDevices)
+
+            lock (YabeDiscoveredDevices)
             {
-                foreach (KeyValuePair<BacnetAddress, uint> address in transport.Value.Devices)
+                foreach (KeyValuePair<BacnetClient, YabeMainDialog.BacnetDeviceLine> transport in YabeDiscoveredDevices)
                 {
-                    BacnetAddress deviceAddress = address.Key;
-                    uint deviceID = address.Value;
-                    BacnetClient comm = transport.Key;
-                    BacnetDeviceExport device = new BacnetDeviceExport(comm, this, deviceID, deviceAddress);
-
-                    bool Prop_Object_NameOK = false;
-                    BacnetObjectId deviceObjectID = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceID);
-                    string identifier = null;
-
-                    lock (DevicesObjectsName)
+                    foreach (KeyValuePair<BacnetAddress, uint> address in transport.Value.Devices)
                     {
-                        Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(), deviceObjectID), out identifier);
-                    }
+                        BacnetAddress deviceAddress = address.Key;
+                        uint deviceID = address.Value;
+                        BacnetClient comm = transport.Key;
 
-                    if (Prop_Object_NameOK)
-                    {
-                        identifier = identifier + " [" + deviceObjectID.Instance.ToString() + "] ";
-                    }
-                    else
-                    {
-                        try
+                        if(deviceID < whoIsLow || deviceID > whoIsHigh)
                         {
-                            IList<BacnetValue> values;
-                            if (comm.ReadPropertyRequest(deviceAddress, deviceObjectID, BacnetPropertyIds.PROP_OBJECT_NAME, out values))
-                            {
-                                identifier = values[0].ToString();
-                                lock (DevicesObjectsName)
-                                {
-                                    Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(), deviceObjectID);
-                                    DevicesObjectsName.Remove(t);
-                                    DevicesObjectsName.Add(t, identifier);
-                                    ObjectNamesChangedFlag = true;
-                                }
-                                identifier = identifier + " [" + deviceObjectID.Instance.ToString() + "] ";
-                            }
+                            continue;
                         }
-                        catch { }
-                    }
 
-                    if (identifier != null)
+                        BacnetDeviceExport device = new BacnetDeviceExport(comm, this, deviceID, deviceAddress);
+
+                        bool Prop_Object_NameOK = false;
+                        BacnetObjectId deviceObjectID = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceID);
+                        string identifier = null;
+
+                        lock (DevicesObjectsName)
+                        {
+                            Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(), deviceObjectID), out identifier);
+                        }
+
+                        if (Prop_Object_NameOK)
+                        {
+                            identifier = identifier + " [" + deviceObjectID.Instance.ToString() + "] ";
+                        }
+                        else
+                        {
+                            try
+                            {
+                                IList<BacnetValue> values;
+                                if (comm.ReadPropertyRequest(deviceAddress, deviceObjectID, BacnetPropertyIds.PROP_OBJECT_NAME, out values))
+                                {
+                                    identifier = values[0].ToString();
+                                    lock (DevicesObjectsName)
+                                    {
+                                        Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(), deviceObjectID);
+                                        DevicesObjectsName.Remove(t);
+                                        DevicesObjectsName.Add(t, identifier);
+                                        ObjectNamesChangedFlag = true;
+                                    }
+                                    identifier = identifier + " [" + deviceObjectID.Instance.ToString() + "] ";
+                                }
+                            }
+                            catch { }
+                        }
+
+                        if (identifier != null)
+                        {
+                            device.Name = identifier;
+                        }
+
+                        if (deviceList.Find(item => item.DeviceID == deviceID) == null)
+                        {
+                            deviceList.Add(device);
+                        }
+
+                    }
+                    if (commandProgBar)
                     {
-                        device.Name = identifier;
+                        prog++;
+                        progBar.Value = (int)(100 * prog / progTotal);
+                        Application.DoEvents();
                     }
-
-                    if (deviceList.Find(item => item.DeviceID == deviceID) == null)
-                    {
-                        deviceList.Add(device);
-                    }
-
-                }
-                if(commandProgBar)
-                {
-                    prog++;
-                    progBar.Value = (int)(100 * prog / progTotal);
-                    Application.DoEvents();
                 }
             }
             return deviceList;
