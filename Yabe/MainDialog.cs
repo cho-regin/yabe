@@ -1535,37 +1535,42 @@ namespace Yabe
         {
             System.Threading.ThreadPool.QueueUserWorkItem((o) =>
             {
-                IList<BacnetValue> value_list;
-                try
+                AddObjectListOneByOne(comm, adr, device_id, count, AsynchRequestId);
+            });
+        }
+
+        private void AddObjectListOneByOne(BacnetClient comm, BacnetAddress adr, uint device_id, uint count, int AsynchRequestId)
+        {
+            IList<BacnetValue> value_list;
+            try
+            {
+                for (int i = 1; i <= count; i++)
                 {
-                    for (int i = 1; i <= count; i++)
+                    value_list = null;
+                    if (!comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list, 0, (uint)i))
                     {
-                        value_list = null;
-                        if (!comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list, 0, (uint)i))
-                        {
-                            MessageBox.Show("Couldn't fetch object list index", "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
+                        MessageBox.Show("Couldn't fetch object list index", "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
 
-                        if (AsynchRequestId != this.AsynchRequestId) return; // Selected device is no more the good one
+                    if (AsynchRequestId != this.AsynchRequestId) return; // Selected device is no more the good one
 
-                        //add to tree
-                        foreach (BacnetValue value in value_list)
+                    //add to tree
+                    foreach (BacnetValue value in value_list)
+                    {
+                        this.Invoke((MethodInvoker)delegate
                         {
-                            this.Invoke((MethodInvoker)delegate
-                            {
-                                if (AsynchRequestId != this.AsynchRequestId) return;  // another test in the GUI thread
-                                AddObjectEntry(comm, adr, null, (BacnetObjectId)value.Value, m_AddressSpaceTree.Nodes);
-                            });
-                        }
+                            if (AsynchRequestId != this.AsynchRequestId) return;  // another test in the GUI thread
+                            AddObjectEntry(comm, adr, null, (BacnetObjectId)value.Value, m_AddressSpaceTree.Nodes);
+                        });
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error during read: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-            });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error during read: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
         }
 
         public List<BacnetObjectId> SortBacnetObjects(IList<BacnetValue> RawList)
@@ -1735,7 +1740,13 @@ namespace Yabe
                             {
                                 uint list_count = (uint)(ulong)value_list[0].Value;
                                 AddSpaceLabel.Text = "Address Space : " + list_count.ToString() + " objects";
-                                AddObjectListOneByOneAsync(comm, adr, device_id, list_count, AsynchRequestId);
+
+                                // The only time sender should be a TextWriter is from the edeExport function:
+                                if(sender is TextWriter)
+                                    AddObjectListOneByOne(comm, adr, device_id, list_count, AsynchRequestId);
+                                else
+                                    AddObjectListOneByOneAsync(comm, adr, device_id, list_count, AsynchRequestId);
+
                                 _selectedDevice = node;
                                 return;
                             }
@@ -4108,6 +4119,7 @@ namespace Yabe
                 return false;
             }
         }
+
         private TreeNode GetTreeNodeFromDeviceId(uint deviceId)
         {
             // Enumerate each Transport Layer:
@@ -4118,11 +4130,18 @@ namespace Yabe
                 {
                     if ((node.Tag is KeyValuePair<BacnetAddress, uint> endPoint) && (endPoint.Value == deviceId))
                         return (node);
+
+                    foreach(TreeNode routedNode in node.Nodes)
+                    {
+                        if ((routedNode.Tag is KeyValuePair<BacnetAddress, uint> routedEndPoint) && (routedEndPoint.Value == deviceId))
+                            return (routedNode);
+                    }
                         
                 }
             }
             throw new KeyNotFoundException($"Failed to determine node of device with ID {deviceId}!");
         }
+
         private void FetchEndPoint(out List<(BacnetClient Client, BacnetAddress Address, uint DeviceId)> endPoints)
         {
             endPoints = new List<(BacnetClient Client, BacnetAddress Address, uint DeviceId)>();
@@ -4345,11 +4364,20 @@ namespace Yabe
         /// </summary>
         private void exportDeviceEDEFile(BacnetClient client, BacnetAddress address, uint deviceId, StreamWriter edeWriter, List<string> stateTextReferences)
         {
+            // If the device doesn't support Read Prop. Multiple, or if the object list exceeds the max. APDU (common
+            // for MSTP devices), we will end up in the AddObjectListOneByOneAsync method. But this method would otherwise
+            // continue and try and export the EDE without any objects in the list... so we must wait for the One by One
+            // to complete. This is achieved by checking the object sender parameter in m)DeviceTree_Afterselect - if it is
+            // edeWriter, then we will NOT use AddObjectListOneByOneAsync, but we use AddObjectListOneByOne instead.
+            // This is kind of a dirty hack, however moth other easy ways to achieve this will be dirty as well, and introduce
+            // a lot of code to handle the aggregation of data between the UI thread and ThreadPool threads.
+
             // update devices
-            m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(GetTreeNodeFromDeviceId(deviceId)));
+            m_DeviceTree_AfterSelect(edeWriter, new TreeViewEventArgs(GetTreeNodeFromDeviceId(deviceId)));
 
             this.Cursor = Cursors.WaitCursor;
             Application.DoEvents();
+
             try
             {
                 // Read 6 properties even if not existing in the given object
