@@ -156,7 +156,7 @@ namespace AnotherStorageImplementation
             );
             s.AddBacnetObject(b); // Put it in the view
 
-            b.OnWriteNotify += new BaCSharpObject.WriteNotificationCallbackHandler(handler_OnWriteNotify);
+            b.OnWriteNotify += new BaCSharpObject.NotificationCallbackHandler(handler_OnWriteNotify);
 
             // ANALOG_OUTPUT:1 float with Priority Array on Present Value
             b = new AnalogOutput<float>
@@ -169,7 +169,7 @@ namespace AnotherStorageImplementation
             );
             s.AddBacnetObject(b); // Put it in the view
 
-            b.OnWriteNotify += new BaCSharpObject.WriteNotificationCallbackHandler(handler_OnWriteNotify);
+            b.OnWriteNotify += new BaCSharpObject.NotificationCallbackHandler(handler_OnWriteNotify);
 
             // MULTI_STATE_OUTPUT:4 with 6 states
             MultiStateOutput m = new MultiStateOutput
