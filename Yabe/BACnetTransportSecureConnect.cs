@@ -247,7 +247,7 @@ namespace System.IO.BACnet
 
             // The certificate system accepted with sslPolicyErrors == SslPolicyErrors.None is not OK for BACNet/SC
 
-            if (configuration.ThrustedCertificates.Contains(certificate))
+            if ((configuration.ThrustedCertificates!=null)&&(configuration.ThrustedCertificates.Contains(certificate)))
                 return true;
 
             // Try if the cert share the same PKI as Yabe or a given additional thrusted CA certificate
