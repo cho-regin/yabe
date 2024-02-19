@@ -70,7 +70,7 @@ namespace BACnetSCsampleNode
 
             BACnetSCConfigChannel config = new BACnetSCConfigChannel()
             {
-                primaryHubURI = "wss://127.0.0.1:4443",
+                primaryHubURI = "wss://127.0.0.1:47808",
 
                 UUID = "{92fb9be8-bac0-0000-0cab-171d5ec08e6c}",    // unique, invariant, universal
                 VMAC = new byte[6] { 1, 2, 3, 4, 5, 6 },            // if not given a random VMAC is used. 6 bytes exactly, not all 0 nor 0xFF
@@ -79,10 +79,11 @@ namespace BACnetSCsampleNode
                 
                 // if primaryHubURI is wss, PKI data are to be provided, otherwise not
                 ValidateHubCertificate = true,       // if you want, true to respect the standard and the real security
-                OnlyAllowsTLS13 = true,              // normally it is forced by the Hub, not working on Windows 10 without registry modification
+                OnlyAllowsTLS13 = false,              // normally it is forced by the Hub, but should be done also on this side
+                // MUST be set to false on Windows 10 even if TLS 1.3 is activated, it crach. Let the Hub force the TLS version
                 OwnCertificateFile = "Yabe.p12",     // own certificate with private key, others formats than p12, pfx suppported
                 OwnCertificateFilePassword = null,   // if certfile is password protected put it here (see DPAPI to hide it)
-                ThrustedCertificatesFile = "Hub_And_CA.pem",  // hub certificate and or CAs, pem or other format, not required if the Hub share the same PKI as own
+                //ThrustedCertificatesFile = "Hub_And_CA.pem",  // hub certificate and or CAs, pem or other format, not required if the Hub share the same PKI as own
                 // pem file format is required for concatenation of several certificates, see the sample Hub_And_CA.pem
             };
             bacnet_client = new BacnetClient(new BACnetTransportSecureConnect(config));
