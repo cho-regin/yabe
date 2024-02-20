@@ -718,7 +718,6 @@ could be 'ovveride' by an optional external file
 		<BacnetPropertyIds>PROP_AUDIT_LEVEL</BacnetPropertyIds>
 		<BacnetPropertyIds>PROP_AUDIT_SOURCE_REPORTER</BacnetPropertyIds>
 		<BacnetPropertyIds>PROP_AUDITABLE_OPERATIONS</BacnetPropertyIds>
-		<BacnetPropertyIds>PROP_AUDIT_PRIORITY_FILTER</BacnetPropertyIds>
 		<BacnetPropertyIds>PROP_ISSUE_CONFIRMED_NOTIFICATIONS</BacnetPropertyIds>
 	</propsId>
 </BacnetObjectDescription>
