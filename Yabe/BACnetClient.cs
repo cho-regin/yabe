@@ -1487,8 +1487,9 @@ namespace System.IO.BACnet
                     ex = new Exception("Decode");
                 // can occur with a lot of timeout if the number of requests is very high : one response got the same invoke_id as another request awaiting
                 // this is true for a lot of services, not checked everywhere, and cannot be verified for a lot (rep with Simple Ack for instance)
-                if ((response_object_id.CompareTo(object_id)!=0) || (response_property.propertyIdentifier != (int)property_id))
-                    value_list = null;
+                if (!(object_id.type==BacnetObjectTypes.OBJECT_DEVICE)&&(response_object_id.type==BacnetObjectTypes.OBJECT_DEVICE)&&(object_id.Instance==0x3FFFFF))  // Do not filter response where deviceId is unknow
+                    if ((response_object_id.CompareTo(object_id)!=0) || (response_property.propertyIdentifier != (int)property_id))
+                        value_list = null;
             }
             else
             {

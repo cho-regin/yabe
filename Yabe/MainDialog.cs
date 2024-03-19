@@ -102,7 +102,7 @@ namespace Yabe
         Color[] GraphColor = {Color.Red, Color.Blue, Color.Green, Color.Violet, Color.Chocolate, Color.Orange};
         GraphPane Pane;
         private ManualResetEvent _plotterPause;
-        private bool _plotterPauseFlag = true; // Change this one initial value to make the graphs start paused (false) or in play mode (true).
+        private bool _plotterRunningFlag = true; // Change this one initial value to make the graphs start paused (false) or in play mode (true).
         private const string PLAY_BUTTON_TEXT_WHEN_RUNNING = "Pause Plotter";
         private const string PLAY_BUTTON_TEXT_WHEN_PAUSED = "Resume Plotter";
         private Random _rand = new Random();
@@ -257,7 +257,7 @@ namespace Yabe
 
             LoadProprietaryProperties();
 
-            if (_plotterPauseFlag)
+            if (_plotterRunningFlag)
             {
                 btnPlay.Text = PLAY_BUTTON_TEXT_WHEN_RUNNING;
             }
@@ -292,7 +292,7 @@ namespace Yabe
             CovGraph.AxisChange();
             CovGraph.IsAutoScrollRange = true;
 
-            _plotterPause = new ManualResetEvent(_plotterPauseFlag);
+            _plotterPause = new ManualResetEvent(_plotterRunningFlag);
             CovGraph.PointValueEvent += new ZedGraphControl.PointValueHandler(CovGraph_PointValueEvent);
 
             //load splitter setup & SubsciptionView columns order&size
@@ -440,74 +440,35 @@ namespace Yabe
                 return;
             }
 
-            string sub_key = EventData.initiatingObjectIdentifier.instance + ":" + EventData.eventObjectIdentifier.type + ":" + EventData.eventObjectIdentifier.instance;
-           
-            ListViewItem itm=null;
-            // find the Event in the View
-            foreach (ListViewItem l in m_SubscriptionView.Items)
-            {
-                if (l.Tag.ToString() == sub_key)
+            if (_plotterRunningFlag) {
+                string sub_key = EventData.initiatingObjectIdentifier.instance + ":" + EventData.eventObjectIdentifier.type + ":" + EventData.eventObjectIdentifier.instance;
+
+                ListViewItem itm = null;
+                // find the Event in the View
+                foreach (ListViewItem l in m_SubscriptionView.Items)
                 {
-                    itm = l;
-                    break;
-                }
-            }
-
-            uint deviceInstance = EventData.initiatingObjectIdentifier.instance;
-            BacnetObjectId objectId = EventData.eventObjectIdentifier;
-
-            if (itm == null)
-            {
-                itm = m_SubscriptionView.Items.Add("");//device_id.ToString());
-                // Always a blank on [0] to allow for the "Show" Column
-
-                itm.Tag = sub_key;
-
-                // device id is index [1]
-                itm.SubItems.Add(deviceInstance.ToString()); // device instance
-                itm.SubItems.Add(ShortenObjectId(objectId.ToString())); // object ID [2]
-
-                string name = objectId.ToString();
-
-                lock (DevicesObjectsName)
-                {
-                    Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), objectId);
-                    if (DevicesObjectsName.ContainsKey(t))
+                    if (l.Tag.ToString() == sub_key)
                     {
-                        name = DevicesObjectsName[t];
-                    }
-                    else
-                    {
-                        name = GetObjectName(sender, adr, objectId);
-                        if(string.IsNullOrWhiteSpace(name) || name.StartsWith("["))
-                        {
-                            name = objectId.ToString();
-                        }
+                        itm = l;
+                        break;
                     }
                 }
 
-                itm.SubItems.Add(name);   //name [3]
-                itm.SubItems.Add(EventTypeNiceName(EventData.fromState) + " to " + EventTypeNiceName(EventData.toState)); //value [4]
-                itm.SubItems.Add(EventData.timeStamp.Time.ToString(Properties.Settings.Default.COVTimeFormater));   //time [5]
-                itm.SubItems.Add(EventData.notifyType.ToString());   //status [6]
+                uint deviceInstance = EventData.initiatingObjectIdentifier.instance;
+                BacnetObjectId objectId = EventData.eventObjectIdentifier;
 
+                if (itm == null)
+                {
+                    itm = m_SubscriptionView.Items.Add("");//device_id.ToString());
+                    // Always a blank on [0] to allow for the "Show" Column
 
-                if (Properties.Settings.Default.ShowDescriptionWhenUseful)
-                {
-                    itm.SubItems.Add("Yabe received an event notification");   // Description [7]
-                }
-                else
-                {
-                    itm.SubItems.Add(""); // Description [7]
-                }
-            }
-            else
-            {
-                string tempName = objectId.ToString();
+                    itm.Tag = sub_key;
 
-                if (itm.SubItems[3].Text.Equals(tempName))
-                {
-                    string name = null;
+                    // device id is index [1]
+                    itm.SubItems.Add(deviceInstance.ToString()); // device instance
+                    itm.SubItems.Add(ShortenObjectId(objectId.ToString())); // object ID [2]
+
+                    string name = objectId.ToString();
 
                     lock (DevicesObjectsName)
                     {
@@ -526,17 +487,58 @@ namespace Yabe
                         }
                     }
 
-                    if(name!=null)
-                        itm.SubItems[3].Text = name;
+                    itm.SubItems.Add(name);   //name [3]
+                    itm.SubItems.Add(EventTypeNiceName(EventData.fromState) + " to " + EventTypeNiceName(EventData.toState)); //value [4]
+                    itm.SubItems.Add(EventData.timeStamp.Time.ToString(Properties.Settings.Default.COVTimeFormater));   //time [5]
+                    itm.SubItems.Add(EventData.notifyType.ToString());   //status [6]
 
+
+                    if (Properties.Settings.Default.ShowDescriptionWhenUseful)
+                    {
+                        itm.SubItems.Add("Yabe received an event notification");   // Description [7]
+                    }
+                    else
+                    {
+                        itm.SubItems.Add(""); // Description [7]
+                    }
+                }
+                else
+                {
+                    string tempName = objectId.ToString();
+
+                    if (itm.SubItems[3].Text.Equals(tempName))
+                    {
+                        string name = null;
+
+                        lock (DevicesObjectsName)
+                        {
+                            Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), objectId);
+                            if (DevicesObjectsName.ContainsKey(t))
+                            {
+                                name = DevicesObjectsName[t];
+                            }
+                            else
+                            {
+                                name = GetObjectName(sender, adr, objectId);
+                                if (string.IsNullOrWhiteSpace(name) || name.StartsWith("["))
+                                {
+                                    name = objectId.ToString();
+                                }
+                            }
+                        }
+
+                        if (name != null)
+                            itm.SubItems[3].Text = name;
+
+                    }
+
+                    itm.SubItems[4].Text = EventTypeNiceName(EventData.fromState) + " to " + EventTypeNiceName(EventData.toState);
+                    itm.SubItems[5].Text = EventData.timeStamp.Time.ToString(Properties.Settings.Default.COVTimeFormater);   //time
+                    itm.SubItems[6].Text = EventData.notifyType.ToString();   //status
                 }
 
-                itm.SubItems[4].Text = EventTypeNiceName(EventData.fromState) + " to " + EventTypeNiceName(EventData.toState);
-                itm.SubItems[5].Text = EventData.timeStamp.Time.ToString(Properties.Settings.Default.COVTimeFormater);   //time
-                itm.SubItems[6].Text = EventData.notifyType.ToString();   //status
+                AddLogAlarmEvent(itm);
             }
-
-            AddLogAlarmEvent(itm);
 
             //send ack
             if (need_confirm)
@@ -550,99 +552,105 @@ namespace Yabe
         {
             string sub_key = adr.ToString() + ":" + initiatingDeviceIdentifier.instance + ":" + subscriberProcessIdentifier;
 
-            this.BeginInvoke((MethodInvoker)delegate
+            // The changing of the bool value _plotterPauseFlag should naturally be thread
+            // safe (atomic operation?), so I don't think any locks are needed here. Otherwise,
+            // instead we could check the state of the ManualResetEvent that is used in the
+            // polling loop if explicit thread safety is desired.
+            if (_plotterRunningFlag)
             {
-                try
+                this.BeginInvoke((MethodInvoker)delegate
                 {
-                    ListViewItem itm;
-                    lock (m_subscription_list)
+                    try
                     {
-                        if(m_subscription_list.ContainsKey(sub_key))
+                        ListViewItem itm;
+                        lock (m_subscription_list)
                         {
-                            itm = m_subscription_list[sub_key];
+                            if (m_subscription_list.ContainsKey(sub_key))
+                            {
+                                itm = m_subscription_list[sub_key];
+                            }
+                            else
+                            {
+                                return;
+                            }
                         }
-                        else
+                        foreach (BacnetPropertyValue value in values)
                         {
-                            return;
+
+                            switch ((BacnetPropertyIds)value.property.propertyIdentifier)
+                            {
+                                case BacnetPropertyIds.PROP_PRESENT_VALUE:
+                                    itm.SubItems[4].Text = ConvertToText(value.value);
+                                    itm.SubItems[5].Text = DateTime.Now.ToString(Properties.Settings.Default.COVTimeFormater);
+                                    if (itm.SubItems[6].Text == "Not started") itm.SubItems[6].Text = "OK";
+                                    try
+                                    {
+                                        //  try convert from string
+                                        bool Ybool;
+                                        bool isBool = bool.TryParse(itm.SubItems[4].Text, out Ybool);
+                                        double Y = double.NaN;
+                                        if (isBool)
+                                        {
+                                            Y = Ybool ? 1.0 : 0.0;
+                                        }
+                                        else
+                                        {
+                                            Y = Convert.ToDouble(itm.SubItems[4].Text);
+                                        }
+                                        XDate X = new XDate(DateTime.Now);
+                                        //if (!String.IsNullOrWhiteSpace(itm.SubItems[9].Text) && bool.Parse(itm.SubItems[9].Text))
+                                        //{
+                                        Pane.Title.Text = "";
+
+                                        if ((Properties.Settings.Default.GraphLineStep) && (m_subscription_points[sub_key].Count != 0))
+                                        {
+                                            PointPair p = m_subscription_points[sub_key].Peek();
+                                            m_subscription_points[sub_key].Add(X, p.Y);
+                                        }
+                                        m_subscription_points[sub_key].Add(X, Y);
+                                        CovGraph.AxisChange();
+                                        CovGraph.Invalidate();
+                                        //}
+                                    }
+                                    catch { }
+                                    break;
+                                case BacnetPropertyIds.PROP_STATUS_FLAGS:
+                                    if (value.value != null && value.value.Count > 0)
+                                    {
+                                        BacnetStatusFlags status = (BacnetStatusFlags)((BacnetBitString)value.value[0].Value).ConvertToInt();
+                                        string status_text = "";
+                                        if ((status & BacnetStatusFlags.STATUS_FLAG_FAULT) == BacnetStatusFlags.STATUS_FLAG_FAULT)
+                                            status_text += "FAULT,";
+                                        else if ((status & BacnetStatusFlags.STATUS_FLAG_IN_ALARM) == BacnetStatusFlags.STATUS_FLAG_IN_ALARM)
+                                            status_text += "ALARM,";
+                                        else if ((status & BacnetStatusFlags.STATUS_FLAG_OUT_OF_SERVICE) == BacnetStatusFlags.STATUS_FLAG_OUT_OF_SERVICE)
+                                            status_text += "OOS,";
+                                        else if ((status & BacnetStatusFlags.STATUS_FLAG_OVERRIDDEN) == BacnetStatusFlags.STATUS_FLAG_OVERRIDDEN)
+                                            status_text += "OR,";
+                                        if (status_text != "")
+                                        {
+                                            status_text = status_text.Substring(0, status_text.Length - 1);
+                                            itm.SubItems[6].Text = status_text;
+                                        }
+                                        else
+                                            itm.SubItems[6].Text = "OK";
+                                    }
+
+                                    break;
+                                default:
+                                    //got something else? ignore it
+                                    break;
+                            }
                         }
+
+                        AddLogAlarmEvent(itm);
                     }
-                    foreach (BacnetPropertyValue value in values)
+                    catch (Exception ex)
                     {
-
-                        switch ((BacnetPropertyIds)value.property.propertyIdentifier)
-                        {
-                            case BacnetPropertyIds.PROP_PRESENT_VALUE:
-                                itm.SubItems[4].Text = ConvertToText(value.value);
-                                itm.SubItems[5].Text = DateTime.Now.ToString(Properties.Settings.Default.COVTimeFormater);
-                                if (itm.SubItems[6].Text == "Not started") itm.SubItems[6].Text = "OK";
-                                try
-                                {
-                                    //  try convert from string
-                                    bool Ybool;
-                                    bool isBool = bool.TryParse(itm.SubItems[4].Text, out Ybool);
-                                    double Y = double.NaN;
-                                    if (isBool)
-                                    {
-                                        Y = Ybool ? 1.0 : 0.0;
-                                    }
-                                    else
-                                    {
-                                        Y = Convert.ToDouble(itm.SubItems[4].Text);
-                                    }
-                                    XDate X = new XDate(DateTime.Now);
-                                    //if (!String.IsNullOrWhiteSpace(itm.SubItems[9].Text) && bool.Parse(itm.SubItems[9].Text))
-                                    //{
-                                    Pane.Title.Text = "";
-
-                                    if ((Properties.Settings.Default.GraphLineStep) && (m_subscription_points[sub_key].Count != 0))
-                                    {
-                                        PointPair p = m_subscription_points[sub_key].Peek();
-                                        m_subscription_points[sub_key].Add(X, p.Y);
-                                    }
-                                    m_subscription_points[sub_key].Add(X, Y);
-                                    CovGraph.AxisChange();
-                                    CovGraph.Invalidate();
-                                    //}
-                                }
-                                catch { }
-                                break;
-                            case BacnetPropertyIds.PROP_STATUS_FLAGS:
-                                if (value.value != null && value.value.Count > 0)
-                                {
-                                    BacnetStatusFlags status = (BacnetStatusFlags)((BacnetBitString)value.value[0].Value).ConvertToInt();
-                                    string status_text = "";
-                                    if ((status & BacnetStatusFlags.STATUS_FLAG_FAULT) == BacnetStatusFlags.STATUS_FLAG_FAULT)
-                                        status_text += "FAULT,";
-                                    else if ((status & BacnetStatusFlags.STATUS_FLAG_IN_ALARM) == BacnetStatusFlags.STATUS_FLAG_IN_ALARM)
-                                        status_text += "ALARM,";
-                                    else if ((status & BacnetStatusFlags.STATUS_FLAG_OUT_OF_SERVICE) == BacnetStatusFlags.STATUS_FLAG_OUT_OF_SERVICE)
-                                        status_text += "OOS,";
-                                    else if ((status & BacnetStatusFlags.STATUS_FLAG_OVERRIDDEN) == BacnetStatusFlags.STATUS_FLAG_OVERRIDDEN)
-                                        status_text += "OR,";
-                                    if (status_text != "")
-                                    {
-                                        status_text = status_text.Substring(0, status_text.Length - 1);
-                                        itm.SubItems[6].Text = status_text;
-                                    }
-                                    else
-                                        itm.SubItems[6].Text = "OK";
-                                }
-
-                                break;
-                            default:
-                                //got something else? ignore it
-                                break;
-                        }
+                        Trace.TraceError("Exception in subcribed value: " + ex.Message);
                     }
-
-                    AddLogAlarmEvent(itm);
-                }
-                catch (Exception ex)
-                {
-                    Trace.TraceError("Exception in subcribed value: " + ex.Message);
-                }
-            });
-
+                });
+            }
             //send ack
             if (need_confirm)
             {
@@ -2845,7 +2853,7 @@ namespace Yabe
             public BacnetObjectId device_id, object_id;
             public string sub_key;
             public uint subscribe_id;
-            public bool is_active_subscription = true; // false if subscription is refused
+            public bool is_COV_subscription = true; // false if subscription is refused (fallback to polling) or polling is specified explicitly.
 
             public Subscription(BacnetClient comm, BacnetAddress adr, BacnetObjectId device_id, BacnetObjectId object_id, string sub_key, uint subscribe_id)
             {
@@ -2928,38 +2936,27 @@ namespace Yabe
 
                 CurveToolTip = GetObjectName(comm, adr, object_id);
 
-                DialogResult useCov;
+                bool useCov;
                 
+                // If pollPeriod is <0, it means we are deciding NOW whether we want polling or using COV, depending
+                // on which of the option buttons is checked.
+                //
+                // If pollPeriod is >=0, it means the subscription came from a file that had previously been exported
+                // from the COV graph, where either the polling period or COV selection (i.e., polling period == 0) is
+                // recorded. So we override the setting of the option buttons in this case.
+                //
                 if (pollPeriod<0)
                 {
-                    /*useCov = MessageBox.Show(String.Format("Do you want to use COV notifications for {0}?", CurveToolTip), "COV Subscription", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                    if (useCov == DialogResult.Cancel)
-                    {
-                        return false;
-                    }*/
-
-                    if(CovOpn.Checked)
-                    {
-                        useCov = DialogResult.Yes;
-                    }
-                    else
-                    {
-                        useCov = DialogResult.No;
-                    }
-
-                }
-                else if(pollPeriod==0)
-                {
-                    useCov = DialogResult.Yes;
+                    useCov = CovOpn.Checked;
                 }
                 else
                 {
-                    useCov = DialogResult.No;
+                    useCov = (pollPeriod == 0);
                 }
 
 
                 //add to list
-                ListViewItem itm = m_SubscriptionView.Items.Add("");//device_id.ToString());
+                ListViewItem itm = m_SubscriptionView.Items.Add("");
                 // Always a blank on [0] to allow for the "Show" Column
 
 
@@ -3002,41 +2999,30 @@ namespace Yabe
                     itm.SubItems[8].BackColor = color;
                     itm.UseItemStyleForSubItems = false;
                     CovGraph.Invalidate();
-                    //}
                 }
 
-                //add to device
-
+                // Now either subscribe to the data point, or set up a polling thread.
                 bool SubscribeOK = false;
 
-                if (useCov == DialogResult.Yes)
+                if (useCov)
                 {
                     try
                     {
                         SubscribeOK = comm.SubscribeCOVRequest(adr, object_id, m_next_subscription_id, false, Properties.Settings.Default.Subscriptions_IssueConfirmedNotifies, Properties.Settings.Default.Subscriptions_Lifetime);
                     }
-                    catch { }
+                    catch(Exception ex) { Trace.TraceWarning("The COV subscription request generated an error: {0} - {1}", ex.GetType().Name, ex.Message); }
+
+                    if(!SubscribeOK)
+                    {
+                        string prompt = String.Format("Failed to subscribe to COV for {0}. Point will be polled instead.", CurveToolTip);
+                        Trace.TraceWarning(prompt);
+                    }
                 }
 
-                if (SubscribeOK == false) // echec : launch period acquisiton in the ThreadPool
+                if (!SubscribeOK) // echec : launch period acquisiton in the ThreadPool
                 {
-                    //double boxSize = 1.0;
-                    string prompt = String.Empty;
-                    if(useCov == DialogResult.No)
-                    {
-                        prompt = String.Format("Point will be polled - enter poll period in milliseconds.", CurveToolTip);
-                        //boxSize = 2.0;
-                    }
-                    else
-                    {
-                        prompt = String.Format("Failed to subscribe to COV for {0}. Point will be polled instead - enter poll period in milliseconds.", CurveToolTip);
-                        Trace.TraceWarning(String.Format("Failed to subscribe to COV for {0}. Point will be polled instead - enter poll period in milliseconds.", CurveToolTip));
-                        //boxSize = 4.0;
-                    }
-                    sub.is_active_subscription = false;
+                    sub.is_COV_subscription = false;
 
-                    //DialogResult rep;
-                    //GenericInputBox<NumericUpDown> Qst = null;
                     int period = -1;
                     if (pollPeriod>0)
                     {
@@ -3044,63 +3030,24 @@ namespace Yabe
                     }
                     else
                     {
-                        /*Qst = new GenericInputBox<NumericUpDown>("Polling period (ms)",prompt,
-                              (o) =>
-                              {
-                                  o.Minimum = MIN_POLL_PERIOD; o.Maximum = MAX_POLL_PERIOD; o.Value = Math.Max(Math.Min(Properties.Settings.Default.Subscriptions_ReplacementPollingPeriod, MAX_POLL_PERIOD), MIN_POLL_PERIOD);
-                              },
-                              boxSize);
-
-                        rep = Qst.ShowDialog();*/
-
                         period = (int)pollRateSelector.Value;
-                        //Properties.Settings.Default.Subscriptions_ReplacementPollingPeriod = (uint)period;
-
-                        /*if (rep == DialogResult.OK)
-                        {
-                            if (Qst != null) { period = (int)Qst.genericInput.Value; }
-                            Properties.Settings.Default.Subscriptions_ReplacementPollingPeriod = (uint)period;
-
-                        }
-                        else
-                        {
-                            lock (m_subscription_list)
-                            {
-                                m_subscription_list.Remove(sub_key);
-                                //remove from interface
-                                m_SubscriptionView.Items.Remove(itm);
-                                //if (WithGraph)
-                                //{
-                                try
-                                {
-                                    RollingPointPairList points = m_subscription_points[sub_key];
-                                    foreach (LineItem l in Pane.CurveList)
-                                        if (l.Points == points)
-                                        {
-                                            Pane.CurveList.Remove(l);
-                                            break;
-                                        }
-
-                                    m_subscription_points.Remove(sub_key);
-                                }
-                                catch { }
-                                //}
-                            }
-
-                            return false;
-                        }*/
                     }
 
+                    // Polling - set the period data field to the period we are using.
+                    // Note that this field can be displayed as a column on the subscription
+                    // table if needed in future.
                     lock (m_subscription_list)
                     {
                         itm.SubItems[10].Text = period.ToString();
                     }
 
-                    ThreadPool.QueueUserWorkItem(a => ReadPropertyPoolingRemplacementToCOV(sub, period));
+                    ThreadPool.QueueUserWorkItem(a => ReadPropertySubscriptionPollingInsteadOfCOV(sub, period));
                 }
                 else
                 {
-                    // COV - set period indicator to 0
+                    // COV - set period indicator to 0.
+                    // Note that this field can be displayed as a column on the subscription
+                    // table if needed in future.
                     lock (m_subscription_list)
                     {
                         itm.SubItems[10].Text = "0";
@@ -3119,13 +3066,13 @@ namespace Yabe
             return true;
         }
 
-        // COV echec, PROP_PRESENT_VALUE read replacement method
-        // x seconds poolling period
-        private void ReadPropertyPoolingRemplacementToCOV(Subscription sub, int period)
+        // COV echec, PROP_PRESENT_VALUE polling method (alternative to COV).
+        // The polling period is in milliseconds.
+        private void ReadPropertySubscriptionPollingInsteadOfCOV(Subscription sub, int period)
         {
             int errorCount = 0;
             bool readPropertyMultipleFailedPreviously = false;
-            bool wasPaused = !_plotterPauseFlag;
+            bool wasPaused = !_plotterRunningFlag;
             bool firstIteration = true;
 
             // Save this for later so maybe we can notify the user when polling has crashed/stopped
@@ -3330,15 +3277,15 @@ namespace Yabe
         private void TogglePlotter()
         {
 
-            if (_plotterPauseFlag)
+            if (_plotterRunningFlag)
             {
-                _plotterPauseFlag = false;
+                _plotterRunningFlag = false;
                 btnPlay.Text = PLAY_BUTTON_TEXT_WHEN_PAUSED;
                 _plotterPause.Reset();
             }
             else
             {
-                _plotterPauseFlag = true;
+                _plotterRunningFlag = true;
                 btnPlay.Text = PLAY_BUTTON_TEXT_WHEN_RUNNING;
                 _plotterPause.Set();
             }
@@ -3620,7 +3567,7 @@ namespace Yabe
                             //remove from device
                             try
                             {
-                                if (sub.is_active_subscription)
+                                if (sub.is_COV_subscription)
                                     if (!sub.comm.SubscribeCOVRequest(sub.adr, sub.object_id, sub.subscribe_id, true, false, 0))
                                     {
                                         MessageBox.Show(this, "Couldn't unsubscribe", "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -4024,7 +3971,7 @@ namespace Yabe
                     {
                         Subscription sub = (Subscription)itm.Tag;
 
-                        if (sub.is_active_subscription == false) // not needs to renew, periodic pooling in operation (or nothing) due to COV subscription refused by the remote device
+                        if (sub.is_COV_subscription == false) // not needs to renew, periodic pooling in operation (or nothing) due to COV subscription refused by the remote device, or "polling" selected in the UI.
                             return;
 
                         if (!sub.comm.SubscribeCOVRequest(sub.adr, sub.object_id, sub.subscribe_id, false, Properties.Settings.Default.Subscriptions_IssueConfirmedNotifies, Properties.Settings.Default.Subscriptions_Lifetime))

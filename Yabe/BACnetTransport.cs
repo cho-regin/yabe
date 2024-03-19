@@ -188,6 +188,15 @@ namespace System.IO.BACnet
                     local_buffer = conn.EndReceive(asyncResult, ref ep);
                     rx = local_buffer.Length;
                 }
+                catch(ObjectDisposedException)
+                {
+                    // I believe this is the official way to handle an aborted socket - OnReceive is called and
+                    // we are forced to capture and swallow an exception... there is no way (without reflection)
+                    // to check the m_CleanedUp property.
+                    Trace.TraceWarning("Transport disposed (at EndReceive): " + m_local_endpoint.ToString());
+                    return;
+
+                }
                 catch (Exception) // ICMP port unreachable
                 {
                     //restart data receive
@@ -250,10 +259,10 @@ namespace System.IO.BACnet
                             if ((MessageRecieved != null) && (rx > HEADER_LENGTH)) MessageRecieved(this, local_buffer, HEADER_LENGTH, rx - HEADER_LENGTH, remote_address);
                     }
                 }
-                catch (ObjectDisposedException ex)
+                catch (ObjectDisposedException)
                 {
-                    //Transport is probably being deleted, so ignore and swallow exception
-                    Trace.TraceWarning("ObjectDisposedException while receiving data in Udp OnRecieveData - Transport is probably being deleted: " + ex.Message);
+                    // I'm not sure how we get here, maybe due to threads racing each other. Potentially could still be a normal termination condition.
+                    Trace.TraceWarning("Transport disposed (at BeginReceive): " + m_local_endpoint.ToString());
                 }
                 catch (Exception ex)
                 {
@@ -262,8 +271,8 @@ namespace System.IO.BACnet
             }
             catch (ObjectDisposedException ex)
             {
-                //Transport is probably being deleted, so ignore and swallow exception
-                Trace.TraceWarning("ObjectDisposedException while receiving data in Udp OnRecieveData - Transport is probably being deleted: " + ex.Message);
+                // I'm not sure how we get here, maybe due to threads racing each other. Potentially could still be a normal termination condition.
+                Trace.TraceWarning("Transport disposed (at BeginReceive retry): " + m_local_endpoint.ToString());
             }
             catch (Exception ex)
             {
