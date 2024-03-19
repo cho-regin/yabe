@@ -31,6 +31,11 @@ using System.Text;
 using System.Windows.Forms;
 using DemoServer;
 using System.IO.BACnet;
+using System.IO.BACnet.Storage;
+using System.Diagnostics;
+using System.Linq;
+using System.Net.NetworkInformation;
+using System.Threading;
 
 namespace Bacnet.Room.Simulator
 {
@@ -70,12 +75,41 @@ namespace Bacnet.Room.Simulator
             NivClim = new PictureBox[3] { Clim1, Clim2, Clim3};
             NivChauf = new PictureBox[3] {Chauf1, Chauf2, Chauf3 };
 
+            AddressSelection();
+
+            BacnetActivity.m_local_ip_endpoint = networkInterfaces.SelectedItem.ToString();
+
             bacnetid.Text = "Bacnet device Id :  " + BacnetActivity.deviceId.ToString();
 
             AdaptationFarenheit();
 
             AnimateData();
             UpdateIhm();            
+        }
+
+        private void AddressSelection()
+        {
+            var selectedInterface = (from netiface in NetworkInterface.GetAllNetworkInterfaces()
+                                     where (netiface.OperationalStatus == OperationalStatus.Up) &&
+                                           (netiface.NetworkInterfaceType == NetworkInterfaceType.Ethernet ||
+                                            netiface.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+                                     let props = netiface.GetIPProperties()
+                                     let ipv4Address = props.UnicastAddresses.FirstOrDefault(addr => addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                                     where ipv4Address != null
+                                     select ipv4Address.Address.ToString()).ToList();
+
+            // Clear existing items in the ComboBox
+            networkInterfaces.Items.Clear();
+            networkInterfaces.Items.Add("Default");
+
+            // Add the results to the ComboBox
+            foreach (var address in selectedInterface)
+            {
+                networkInterfaces.Items.Add(address);
+            }
+
+            networkInterfaces.Text = Program.IPAddress;
+            
         }
 
         private void AdaptationFarenheit()
@@ -333,6 +367,25 @@ namespace Bacnet.Room.Simulator
                     }
                 }
             }
+
+        }
+
+        private void networkInterfaces_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+            BacnetActivity.m_local_ip_endpoint = networkInterfaces.Text;
+
+            BacnetActivity.ReInitialize();
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label1_Click_1(object sender, EventArgs e)
+        {
 
         }
 

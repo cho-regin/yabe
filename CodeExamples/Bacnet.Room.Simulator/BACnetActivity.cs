@@ -41,22 +41,25 @@ namespace DemoServer
 
     static class BacnetActivity
     {
+        public static string m_local_ip_endpoint;
+
         public static DeviceStorage m_storage;
         private static BacnetClient m_ip_server;
-
+        
         private static Dictionary<BacnetObjectId, List<Subscription>> m_subscriptions = new Dictionary<BacnetObjectId, List<Subscription>>();
         private static object m_lockObject = new object();
         private static BacnetSegmentations m_supported_segmentation = BacnetSegmentations.SEGMENTATION_BOTH;
 
         internal static uint deviceId = 1234;
 
-        static BacnetActivity()
+        public static void ReInitialize()
         {
-
             try
             {
                 //init
-                
+                if (m_ip_server!=null)
+                    m_ip_server.Dispose();
+
                 PhysicalAddress macAddr =
                 (
                     from netiface in NetworkInterface.GetAllNetworkInterfaces()
@@ -77,16 +80,18 @@ namespace DemoServer
                 else
                     deviceId = (uint)Program.DeviceId;
 
-                if (Application.CurrentCulture.TwoLetterISOLanguageName=="fr")
-                    m_storage = DeviceStorage.Load("Bacnet.Room.Simulator.DeviceStorage.xml", deviceId);    
+                Program.DeviceId = (int)deviceId;
+
+                if (Application.CurrentCulture.TwoLetterISOLanguageName == "fr")
+                    m_storage = DeviceStorage.Load("Bacnet.Room.Simulator.DeviceStorage.xml", deviceId);
                 else
-                    m_storage = DeviceStorage.Load("Bacnet.Room.Simulator.DeviceStorageUs.xml", deviceId);    
+                    m_storage = DeviceStorage.Load("Bacnet.Room.Simulator.DeviceStorageUs.xml", deviceId);
 
                 m_storage.ChangeOfValue += new DeviceStorage.ChangeOfValueHandler(m_storage_ChangeOfValue);
                 m_storage.ReadOverride += new DeviceStorage.ReadOverrideHandler(m_storage_ReadOverride);
-                                
+
                 //create udp service point
-                BacnetIpUdpProtocolTransport udp_transport = new BacnetIpUdpProtocolTransport(0xBAC0, false);       //set to true to force "single socket" usage
+                BacnetIpUdpProtocolTransport udp_transport = new BacnetIpUdpProtocolTransport(port: 0xBAC0, use_exclusive_port: false, local_endpoint_ip: m_local_ip_endpoint);       //set to true to force "single socket" usage
                 m_ip_server = new BacnetClient(udp_transport);
 
                 m_ip_server.OnWhoIs += new BacnetClient.WhoIsHandler(OnWhoIs);
@@ -101,14 +106,13 @@ namespace DemoServer
                 m_ip_server.Start();
 
                 //send greeting
-                 m_ip_server.Iam(m_storage.DeviceId, m_supported_segmentation);
+                m_ip_server.Iam(m_storage.DeviceId, m_supported_segmentation);
 
             }
-            catch 
+            catch
             {
 
             }
-
         }
 
         public static BacnetValue GetBacObjectPresentValue(BacnetObjectId id)

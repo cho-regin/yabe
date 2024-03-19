@@ -39,6 +39,7 @@ namespace Bacnet.Room.Simulator
     {
         public static int Count;
         public static int DeviceId=-1;
+        public static string IPAddress = "Default";
 
         /// <summary>
         /// Point d'entrée principal de l'application.
@@ -47,11 +48,13 @@ namespace Bacnet.Room.Simulator
         static void Main(string[] args)
         {
 
-            if ((args != null) && (args.Length == 1))
+            if ((args != null) && (args.Length >= 1))
             {
                 if (Int32.TryParse(args[0], out DeviceId) == false)
                     DeviceId = -1;
             }
+            if ((args != null) && (args.Length == 2))
+                IPAddress = args[1];
 
             // Le semaphore sert a donner un id unqiue au noeud Bacnet si DeviceId=-1
             Semaphore s = new Semaphore(63, 63, "Bacnet.Room{FAED-FAED}");

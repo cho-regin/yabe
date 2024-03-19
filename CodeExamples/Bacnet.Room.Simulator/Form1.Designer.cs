@@ -55,6 +55,8 @@
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.panel2 = new System.Windows.Forms.Panel();
             this.bacnetid = new System.Windows.Forms.Label();
+            this.networkInterfaces = new System.Windows.Forms.ComboBox();
+            this.IP = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureModeArret)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureModeChaud)).BeginInit();
@@ -338,11 +340,34 @@
             this.bacnetid.Text = "label1";
             this.bacnetid.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
+            // networkInterfaces
+            // 
+            this.networkInterfaces.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.networkInterfaces.FormattingEnabled = true;
+            this.networkInterfaces.Location = new System.Drawing.Point(12, 330);
+            this.networkInterfaces.Name = "networkInterfaces";
+            this.networkInterfaces.Size = new System.Drawing.Size(247, 21);
+            this.networkInterfaces.TabIndex = 16;
+            this.networkInterfaces.SelectedIndexChanged += new System.EventHandler(this.networkInterfaces_SelectedIndexChanged);
+            // 
+            // IP
+            // 
+            this.IP.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.IP.Location = new System.Drawing.Point(10, 308);
+            this.IP.Name = "IP";
+            this.IP.Size = new System.Drawing.Size(247, 18);
+            this.IP.TabIndex = 17;
+            this.IP.Text = "Bound IP Address";
+            this.IP.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.IP.Click += new System.EventHandler(this.label1_Click_1);
+            // 
             // BacForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(270, 312);
+            this.ClientSize = new System.Drawing.Size(270, 357);
+            this.Controls.Add(this.IP);
+            this.Controls.Add(this.networkInterfaces);
             this.Controls.Add(this.bacnetid);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.ScreenOnOff);
@@ -399,6 +424,8 @@
         private System.Windows.Forms.PictureBox pictureModeFroid;
         private System.Windows.Forms.PictureBox pictureModeChaud;
         private System.Windows.Forms.PictureBox pictureModeArret;
+        private System.Windows.Forms.ComboBox networkInterfaces;
+        private System.Windows.Forms.Label IP;
     }
 }
 
