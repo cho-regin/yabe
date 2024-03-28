@@ -3781,8 +3781,11 @@ namespace System.IO.BACnet
 
                     break;
 
+                case BACnetFaultType.NONE:
+                    return len;
+
                 default:
-                    return len - 1;
+                    return len;
             }
             len++;
             return len;
