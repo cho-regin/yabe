@@ -1183,6 +1183,11 @@ namespace System.IO.BACnet
                 m_send_queue.AddLast(new MessageFrame(frame_type, destination_address, null, 0));
         }
 
+        private void QueueFrame(MessageFrame frame)
+        {
+            lock (m_send_queue)
+                m_send_queue.AddLast(frame);
+        }
         private void SendFrame(BacnetMstpFrameTypes frame_type, byte destination_address)
         {
             SendFrame(new MessageFrame(frame_type, destination_address, null, 0));
@@ -1540,13 +1545,17 @@ namespace System.IO.BACnet
                                     }
                                     break;
                                 case BacnetMstpFrameTypes.FRAME_TYPE_TEST_REQUEST:
-                                    if (destination_address == 0xFF)
-                                        QueueFrame(BacnetMstpFrameTypes.FRAME_TYPE_TEST_RESPONSE, source_address);
-                                    else
+                                    //respond to test
+                                    byte[] RepBuf = null;
+                                    if (msg_length>0)
                                     {
-                                        //respond to test
-                                        SendFrame(BacnetMstpFrameTypes.FRAME_TYPE_TEST_RESPONSE, source_address);
+                                        RepBuf=new byte[msg_length];
+                                        Array.Copy(m_local_buffer, MSTP.MSTP_HEADER_LENGTH, RepBuf, 0, msg_length);
                                     }
+                                    if (destination_address == 0xFF)
+                                        QueueFrame(new MessageFrame(BacnetMstpFrameTypes.FRAME_TYPE_TEST_RESPONSE, source_address, RepBuf, msg_length));
+                                    else
+                                        SendFrame(new MessageFrame(BacnetMstpFrameTypes.FRAME_TYPE_TEST_RESPONSE, source_address, RepBuf, msg_length));
                                     break;
                                 case BacnetMstpFrameTypes.FRAME_TYPE_BACNET_DATA_NOT_EXPECTING_REPLY:
                                 case BacnetMstpFrameTypes.FRAME_TYPE_BACNET_DATA_EXPECTING_REPLY:
