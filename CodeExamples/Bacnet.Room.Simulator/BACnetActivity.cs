@@ -123,7 +123,7 @@ namespace DemoServer
             lock (m_lockObject)
             {
                 IList<BacnetValue> val = null;
-                m_storage.ReadProperty(id, BacnetPropertyIds.PROP_PRESENT_VALUE, 1, out val);
+                m_storage.ReadProperty(id, BacnetPropertyIds.PROP_PRESENT_VALUE, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL, out val);
                 return val[0];
             }
         }
@@ -140,7 +140,7 @@ namespace DemoServer
             lock (m_lockObject)
             {
                 IList<BacnetValue> val = new BacnetValue[1] { bv };
-                m_storage.WriteProperty(id, BacnetPropertyIds.PROP_PRESENT_VALUE, 1, val, true);
+                m_storage.WriteProperty(id, BacnetPropertyIds.PROP_PRESENT_VALUE, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL, val, true);
             }
         }
 
