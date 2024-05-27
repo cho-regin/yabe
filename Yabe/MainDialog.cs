@@ -252,6 +252,21 @@ namespace Yabe
         {
             yabeFrm = this;
 
+            try
+            {
+                if (Properties.Settings.Default.SettingsUpgradeRequired)
+                {
+                    Properties.Settings.Default.Upgrade();
+                    Properties.Settings.Default.SettingsUpgradeRequired = false;
+                    Properties.Settings.Default.Save();
+                }
+            }
+            catch   // Corrupted xml file
+            { 
+                Properties.Settings.Default.Reset();
+                Properties.Settings.Default.Save();
+            }
+
             InitializeComponent();
             Trace.Listeners.Add(new MyTraceListener(this));
 
@@ -298,13 +313,6 @@ namespace Yabe
             //load splitter setup & SubsciptionView columns order&size
             try
             {
-
-                if (Properties.Settings.Default.SettingsUpgradeRequired)
-                {
-                    Properties.Settings.Default.Upgrade();
-                    Properties.Settings.Default.SettingsUpgradeRequired = false;
-                    Properties.Settings.Default.Save();
-                }
 
                 if (Properties.Settings.Default.GUI_FormSize != new Size(0, 0))
                     this.Size = Properties.Settings.Default.GUI_FormSize;
