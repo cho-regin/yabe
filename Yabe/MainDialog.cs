@@ -264,6 +264,7 @@ namespace Yabe
             catch   // Corrupted xml file
             { 
                 Properties.Settings.Default.Reset();
+                Properties.Settings.Default.SettingsUpgradeRequired = false;    // could be previous version
                 Properties.Settings.Default.Save();
             }
 
