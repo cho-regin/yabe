@@ -349,9 +349,17 @@ namespace Yabe
         internal SettingsDialog(Properties.Settings instance)
         {
             InitializeComponent();
-
+            // Adjust the grid by writing into a private field, no need to try catch
+            try
+            {
+		// Encapsulation principle violation, but why labelRatio or size is not accessible ?
+                Control view = (Control)m_SettingsGrid.GetType().GetField("gridView", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(m_SettingsGrid);
+                FieldInfo fi = view.GetType().GetField("labelRatio", BindingFlags.Instance | BindingFlags.Public);
+                fi.SetValue(view, 2.5); 
+            } catch {}
             // Create settings wrapper
             m_SettingsGrid.SelectedObject = new SettingsDescriptor(instance);
+
         }
 
         private void SettingsDialog_Load(object sender, EventArgs e)
