@@ -423,7 +423,7 @@ could be 'ovveride' by an optional external file
     <BacnetPropertyIds>PROP_REASON_FOR_DISABLE</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_AUTHENTICATION_FACTORS</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_ACTIVATION_TIME</BacnetPropertyIds>
-    <BacnetPropertyIds>PROP_EXPIRY_TIME</BacnetPropertyIds>
+    <BacnetPropertyIds>PROP_EXPIRATION_TIME</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_CREDENTIAL_DISABLE</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_ASSIGNED_ACCESS_RIGHTS</BacnetPropertyIds>
     </propsId>
