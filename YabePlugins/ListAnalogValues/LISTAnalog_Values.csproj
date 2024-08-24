@@ -11,6 +11,7 @@
     <RootNamespace>LISTAnalog_Values</RootNamespace>
     <AssemblyName>LISTAnalog_Values</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+	<LangVersion>9</LangVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>

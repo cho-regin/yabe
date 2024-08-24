@@ -11,6 +11,7 @@
     <RootNamespace>CheckStatusFlags</RootNamespace>
     <AssemblyName>CheckStatusFlags</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+	<LangVersion>9</LangVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
