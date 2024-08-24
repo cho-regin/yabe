@@ -43,7 +43,7 @@ namespace GlobalCommander
 
         private Dictionary<Tuple<String, BacnetObjectId>, String> DevicesObjectsName { get { return _yabeFrm.DevicesObjectsName; } }
         private bool ObjectNamesChangedFlag { get { return _yabeFrm.objectNamesChangedFlag; } set { _yabeFrm.objectNamesChangedFlag = value; } }
-        public IEnumerable<KeyValuePair<BacnetClient, YabeMainDialog.BacnetDeviceLine>> YabeDiscoveredDevices { get { return _yabeFrm.DiscoveredDevices; } }
+        public BACnetDevice[] YabeDiscoveredDevices { get { return _yabeFrm.DiscoveredDevices; } }
 
         public GlobalCommander(YabeMainDialog yabeFrm)
         {
@@ -772,22 +772,17 @@ namespace GlobalCommander
             Application.DoEvents();
 
             //write
-            BacnetClient comm;
-            BacnetAddress adr;
-            BacnetObjectId object_id;
-
             DisableCommanding();
 
             foreach (BacnetPropertyExport propertyToCommand in _allSelectedProperties)
             {
-                comm = propertyToCommand.ParentPoint.ParentDevice.Comm;
-                adr = propertyToCommand.ParentPoint.ParentDevice.DeviceAddress;
-                object_id = propertyToCommand.ParentPoint.ObjectID;
+                BACnetDevice device = propertyToCommand.ParentPoint.ParentDevice.Device;
+                BacnetObjectId object_id = propertyToCommand.ParentPoint.ObjectID;
 
                 try
                 {
-                    comm.WritePriority = writePriority;
-                    if (!comm.WritePropertyRequest(adr, object_id, propertyToCommand.PropertyID, new_b_vals))
+                    device.Client.WritePriority = writePriority;
+                    if (!device.WritePropertyAsync(object_id, propertyToCommand.PropertyID, new_b_vals).Result)
                     {
                         MessageBox.Show(String.Format("Couldn't write property {0} to device {1}, object {2}. Commanding will not continue", _selectedProperty.PropertyID.ToString(), propertyToCommand.ParentPoint.ParentDevice.Name, propertyToCommand.ParentPoint.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         progBar.Value = 0;
@@ -1001,75 +996,51 @@ namespace GlobalCommander
             int progTotal = YabeDiscoveredDevices.Count() + 1;
             int prog = 0;
             List<BacnetDeviceExport> deviceList = new List<BacnetDeviceExport>();
-
-            lock (YabeDiscoveredDevices)
+            foreach (BACnetDevice device in YabeDiscoveredDevices)
             {
-                foreach (KeyValuePair<BacnetClient, YabeMainDialog.BacnetDeviceLine> transport in YabeDiscoveredDevices)
+                BacnetDeviceExport devExport = new BacnetDeviceExport(device, this);
+                bool Prop_Object_NameOK = false;
+                string identifier = null;
+
+                lock (DevicesObjectsName)
                 {
-                    foreach (KeyValuePair<BacnetAddress, uint> address in transport.Value.Devices)
+                    Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.Address.FullHashString(), device.DeviceId), out identifier);
+                }
+
+                if (Prop_Object_NameOK)
+                {
+                    identifier = identifier + " [" + device.InstanceId.ToString() + "] ";
+                }
+                else
+                {
+                    try
                     {
-                        BacnetAddress deviceAddress = address.Key;
-                        uint deviceID = address.Value;
-                        BacnetClient comm = transport.Key;
-
-                        if(deviceID < whoIsLow || deviceID > whoIsHigh)
-                        {
-                            continue;
-                        }
-
-                        BacnetDeviceExport device = new BacnetDeviceExport(comm, this, deviceID, deviceAddress);
-
-                        bool Prop_Object_NameOK = false;
-                        BacnetObjectId deviceObjectID = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceID);
-                        string identifier = null;
-
+                        identifier = device.ReadPropertyAsync<string>(device.DeviceId, BacnetPropertyIds.PROP_OBJECT_NAME).Result;
                         lock (DevicesObjectsName)
                         {
-                            Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(), deviceObjectID), out identifier);
+                            Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(device.Address.FullHashString(), device.DeviceId);
+                            DevicesObjectsName.Remove(t);
+                            DevicesObjectsName.Add(t, identifier);
+                            ObjectNamesChangedFlag = true;
                         }
-
-                        if (Prop_Object_NameOK)
-                        {
-                            identifier = identifier + " [" + deviceObjectID.Instance.ToString() + "] ";
-                        }
-                        else
-                        {
-                            try
-                            {
-                                IList<BacnetValue> values;
-                                if (comm.ReadPropertyRequest(deviceAddress, deviceObjectID, BacnetPropertyIds.PROP_OBJECT_NAME, out values))
-                                {
-                                    identifier = values[0].ToString();
-                                    lock (DevicesObjectsName)
-                                    {
-                                        Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(), deviceObjectID);
-                                        DevicesObjectsName.Remove(t);
-                                        DevicesObjectsName.Add(t, identifier);
-                                        ObjectNamesChangedFlag = true;
-                                    }
-                                    identifier = identifier + " [" + deviceObjectID.Instance.ToString() + "] ";
-                                }
-                            }
-                            catch { }
-                        }
-
-                        if (identifier != null)
-                        {
-                            device.Name = identifier;
-                        }
-
-                        if (deviceList.Find(item => item.DeviceID == deviceID) == null)
-                        {
-                            deviceList.Add(device);
-                        }
-
+                        identifier = identifier + " [" + device.InstanceId.ToString() + "] ";
                     }
-                    if (commandProgBar)
-                    {
-                        prog++;
-                        progBar.Value = (int)(100 * prog / progTotal);
-                        Application.DoEvents();
-                    }
+                    catch { }
+                }
+                if (identifier != null)
+                {
+                    devExport.Name = identifier;
+                }
+                if (deviceList.Find(item => item.Device == device) == null)
+                {
+                    deviceList.Add(devExport);
+                }
+
+                if (commandProgBar)
+                {
+                    prog++;
+                    progBar.Value = (int)(100 * prog / progTotal);
+                    Application.DoEvents();
                 }
             }
             return deviceList;
@@ -1098,99 +1069,19 @@ namespace GlobalCommander
             return result;
         }
 
-        public bool PopulatePointsForDevice(BacnetDeviceExport device)
+        public bool PopulatePointsForDevice(BacnetDeviceExport devExport)
         {
-            BacnetClient comm = device.Comm;
-            BacnetAddress adr = device.DeviceAddress;
-            uint device_id = device.DeviceID;
+            var device = devExport.Device;
+            var adr = device.Address.FullHashString();
+            var objList = device.GetObjectListAsync().Result;
 
-            //int old_timeout = comm.Timeout;
-            IList<BacnetValue> value_list = null;
-            try
-            {
-                if (!comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list))
-                {
-                    Trace.TraceWarning(String.Format("Didn't get response from 'Object List' for device {0}.", device.Name));
-                    value_list = null;
-                }
-            }
-            catch (Exception)
-            {
-                Trace.TraceWarning(String.Format("Got exception from 'Object List' for device {0}", device.Name));
-                value_list = null;
-            }
-
-
-            //fetch list one-by-one
-            if (value_list == null)
-            {
-                IList<BacnetValue> temp_value_list;
-                try
-                {
-                    //fetch object list count
-                    if (!comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out temp_value_list, 0, 0))
-                    {
-                        ResetPatience();
-                        MessageBox.Show(this, String.Format("Couldn't fetch objects for device {0}.", device.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ResetPatience();
-                    MessageBox.Show(this, String.Format("Failed to read object list of device {0}: {1}", device.Name, ex.Message), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return false;
-                }
-
-                if (temp_value_list != null && temp_value_list.Count == 1 && temp_value_list[0].Value is ulong)
-                {
-                    uint list_count = (uint)(ulong)temp_value_list[0].Value;
-                    value_list = temp_value_list;
-                    value_list.Clear();
-                    try
-                    {
-                        for (int i = 1; i <= list_count; i++)
-                        {
-                            temp_value_list = null;
-                            if (comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out temp_value_list, 0, (uint)i))
-                            {
-                                //add to actual list for returning
-                                foreach (BacnetValue value in temp_value_list)
-                                {
-                                    value_list.Add(value);
-                                }
-                            }
-                            else
-                            {
-                                ResetPatience();
-                                MessageBox.Show(this, String.Format("Couldn't fetch object list index {1} for device {0}.", device.Name, i), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                return false;
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        ResetPatience();
-                        MessageBox.Show(this, String.Format("Failed to read object list for device {0}: {1}", device.Name, ex.Message), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return false;
-                    }
-                }
-                else
-                {
-                    ResetPatience();
-                    MessageBox.Show(this, String.Format("Couldn't read object list for device {0}.", device.Name), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return false;
-                }
-            }
-
-            List<BacnetObjectId> objectList = SortBacnetObjects(value_list);
-            device.Points.Clear();
-            foreach (BacnetObjectId bobj_id in objectList)
+            devExport.Points.Clear();
+            foreach (BacnetObjectId bobj_id in objList)
             {
                 if(true) // if (bobj_id.type != BacnetObjectTypes.OBJECT_DEVICE || bobj_id.instance != device.DeviceID)
                 {
 
-                    BacnetPointExport point = new BacnetPointExport(device, bobj_id);
+                    BacnetPointExport point = new BacnetPointExport(devExport, bobj_id);
 
                     // If the Device name not set, try to update it
                     bool Prop_Object_NameOK = false;
@@ -1199,7 +1090,7 @@ namespace GlobalCommander
 
                     lock (DevicesObjectsName)
                     {
-                        Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id), out objectName);
+                        Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr, bobj_id), out objectName);
                     }
                     if (Prop_Object_NameOK)
                     {
@@ -1209,19 +1100,15 @@ namespace GlobalCommander
                     {
                         try
                         {
-                            IList<BacnetValue> values;
-                            if (comm.ReadPropertyRequest(adr, bobj_id, BacnetPropertyIds.PROP_OBJECT_NAME, out values))
+                            objectName = device.ReadPropertyAsync<string>(bobj_id, BacnetPropertyIds.PROP_OBJECT_NAME).Result;
+                            lock (DevicesObjectsName)
                             {
-                                objectName = values[0].ToString();
-                                lock (DevicesObjectsName)
-                                {
-                                    Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id);
-                                    //DevicesObjectsName.Remove(t);
-                                    DevicesObjectsName[t]=objectName;
-                                    ObjectNamesChangedFlag = true;
-                                }
-                                identifier = objectName + " [" + bobj_id.ToString() + "] ";
+                                Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr, bobj_id);
+                                //DevicesObjectsName.Remove(t);
+                                DevicesObjectsName[t] = objectName;
+                                ObjectNamesChangedFlag = true;
                             }
+                            identifier = objectName + " [" + bobj_id.ToString() + "] ";
                         }
                         catch { }
                     }
@@ -1232,9 +1119,9 @@ namespace GlobalCommander
                         point.ObjectName = objectName;
                     }
 
-                    if (device.Points.Find(item => item.ObjectID.Equals(bobj_id)) == null)
+                    if (devExport.Points.Find(item => item.ObjectID.Equals(bobj_id)) == null)
                     {
-                        device.Points.Add(point);
+                        devExport.Points.Add(point);
                     }
                 }
             }
@@ -1267,9 +1154,7 @@ namespace GlobalCommander
 
         public bool PopulatePropertiesForPoint(BacnetPointExport point)
         {
-            BacnetClient comm = point.ParentDevice.Comm;
-            BacnetAddress adr = point.ParentDevice.DeviceAddress;
-            uint device_id = point.ParentDevice.DeviceID;
+            BACnetDevice device = point.ParentDevice.Device;
 
             BacnetObjectId object_id = point.ObjectID;
             BacnetPropertyReference[] properties = new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_ALL, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL) };
@@ -1277,10 +1162,16 @@ namespace GlobalCommander
             try
             {
                 //fetch properties. This might not be supported (ReadMultiple) or the response might be too long.
-                if (!comm.ReadPropertyMultipleRequest(adr, object_id, properties, out multi_value_list))
+                var res1 = device.ReadPropertyMultipleRequestAsync(object_id, properties).Result;
+                if (res1.Succeeded)
+                    multi_value_list = res1.Value;
+                else
                 {
                     Trace.TraceWarning(String.Format("Couldn't perform ReadPropertyMultiple for property list on device {0}, object {1} ... Trying ReadProperty instead", point.ParentDevice.Name, point.Name));
-                    if (!ReadAllPropertiesBySingle(comm, adr, object_id, out multi_value_list))
+                    var res2 = ReadAllPropertiesBySingle(device, object_id);
+                    if (res2.Succeeded)
+                        multi_value_list = res2.Value;
+                    else
                     {
                         ResetPatience();
                         MessageBox.Show(this, String.Format("Couldn't get property list using ReadProperty loop (single properties at a time) of device {0}, object {1} ... Trying ReadProperty instead", point.ParentDevice.Name, point.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1294,7 +1185,10 @@ namespace GlobalCommander
                 try
                 {
                     //fetch properties with single calls
-                    if (!ReadAllPropertiesBySingle(comm, adr, object_id, out multi_value_list))
+                    var res = ReadAllPropertiesBySingle(device, object_id);
+                    if (res.Succeeded)
+                        multi_value_list = res.Value;
+                    else
                     {
                         ResetPatience();
                         MessageBox.Show(this, String.Format("Couldn't get property list using ReadProperty loop (single properties at a time) of device {0}, object {1} ... Trying ReadProperty instead", point.ParentDevice.Name, point.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1333,26 +1227,19 @@ namespace GlobalCommander
         }
 
         // ----- The below methods were exposed and stolen from Yabe -------
-        private List<BacnetObjectId> SortBacnetObjects(IList<BacnetValue> value_list)
+        private (bool Succeeded, BacnetReadAccessResult[] Value) ReadAllPropertiesBySingle(BACnetEndpoint endpoint, BacnetObjectId object_id)
         {
-            return _yabeFrm.SortBacnetObjects(value_list);
-        }
-
-        private bool ReadAllPropertiesBySingle(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id, out IList<BacnetReadAccessResult> multi_value_list)
-        {
-            return _yabeFrm.ReadAllPropertiesBySingle(comm, adr, object_id, out multi_value_list);
+            return _yabeFrm.ReadAllPropertiesBySingleAsync(endpoint, object_id).Result;
         }
         // ------------------------------------------------------------------
 
         public class BacnetDeviceExport : IEquatable<BacnetDeviceExport>, IComparable<BacnetDeviceExport>
         {
-            public uint DeviceID { get; }
             private string _name;
             public string Name { get { return _name; } set { _nameIsSet = true; _name = value; } }
             private bool _nameIsSet;
             public bool NameIsSet { get { return _nameIsSet; } }
-            public BacnetAddress DeviceAddress { get; }
-            public BacnetClient Comm { get; }
+            public BACnetDevice Device { get; }
             public GlobalCommander ParentWindow { get; }
             public List<BacnetPointExport> Points { get; }
 
@@ -1371,15 +1258,12 @@ namespace GlobalCommander
                 return Name.CompareTo(other.Name);
             }
 
-            public BacnetDeviceExport(BacnetClient comm, GlobalCommander parentWindow, uint deviceID, BacnetAddress deviceAddress)
+            public BacnetDeviceExport(BACnetDevice device, GlobalCommander parentWindow)
             {
-                Comm = comm;
+                Device = device;
                 ParentWindow = parentWindow;
-                DeviceID = deviceID;
-                BacnetObjectId deviceObjectID = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceID);
-                _name = deviceObjectID.ToString();
+                _name = Device.DeviceId.ToString();
                 _nameIsSet = false;
-                DeviceAddress = deviceAddress;
                 Points = new List<BacnetPointExport>();
             }
         }
@@ -1549,8 +1433,7 @@ namespace GlobalCommander
                 }
                 set
                 {
-                    BacnetClient comm = ParentPoint.ParentDevice.Comm;
-                    BacnetAddress adr = ParentPoint.ParentDevice.DeviceAddress;
+                    BACnetDevice device = ParentPoint.ParentDevice.Device;
                     BacnetObjectId object_id = ParentPoint.ObjectID;
 
                     if (ExportAsJSON)
@@ -1689,13 +1572,14 @@ namespace GlobalCommander
                                     {
                                         try
                                         {
-                                            if (!comm.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, out IList<BacnetValue> presentValueList))
+                                            var res = device.ReadPropertyAsync(object_id, BacnetPropertyIds.PROP_PRESENT_VALUE).Result;
+                                            if (!res.Succeeded)
                                             {
                                                 Trace.TraceError(String.Format("Couldn't read the data type of the present value of device {0}, object {1}", ParentPoint.ParentDevice.Name, ParentPoint.Name));
                                             }
                                             else
                                             {
-                                                dataType = presentValueList[0].Tag;
+                                                dataType = res.Value[0].Tag;
                                                 if (dataType != BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL)
                                                 {
                                                     gotDatatype = true;
@@ -1751,8 +1635,8 @@ namespace GlobalCommander
                                     }
                                     try
                                     {
-                                        comm.WritePriority = priority;
-                                        if (!comm.WritePropertyRequest(adr, object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, new BacnetValue[1] { new_b_vals[i] }))
+                                        device.Client.WritePriority = priority;
+                                        if (!device.WritePropertyAsync(object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, new BacnetValue[1] { new_b_vals[i] }).Result)
                                         {
                                             MessageBox.Show(String.Format("Couldn't write property {0} at priority {1} of device {2}, object {3}", PropertyID.ToString(), priority, ParentPoint.ParentDevice.Name, ParentPoint.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                         }
@@ -1766,8 +1650,8 @@ namespace GlobalCommander
                             }
                             else
                             {
-                                comm.WritePriority = writePriority;
-                                if (!comm.WritePropertyRequest(adr, object_id, PropertyID, new_b_vals))
+                                device.Client.WritePriority = writePriority;
+                                if (!device.WritePropertyAsync(object_id, PropertyID, new_b_vals).Result)
                                 {
                                     MessageBox.Show(String.Format("Couldn't write property {0} of device {1}, object {2}", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                     Cursor.Current = Cursors.Default;
@@ -1785,13 +1669,14 @@ namespace GlobalCommander
 
                     try
                     {
-                        if(!comm.ReadPropertyRequest(adr, object_id, PropertyID, out IList<BacnetValue> valueList))
+                        var res = device.ReadPropertyAsync(object_id, PropertyID).Result;
+                        if (!res.Succeeded)
                         {
                             MessageBox.Show(String.Format("Couldn't read back property {0} of device {1}, object {2}", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             Cursor.Current = Cursors.Default;
                             return;
                         }
-                        Values = valueList.ToList<BacnetValue>();
+                        Values = res.Value.ToList<BacnetValue>();
                     }
                     catch (Exception ex)
                     {
@@ -2094,16 +1979,13 @@ namespace GlobalCommander
             {
                 for (int i = 0; i < _selectedDevices.Count; i++)
                 {
-
-                    BacnetClient comm = _selectedDevices[i].Comm;
-                    BacnetAddress adr = _selectedDevices[i].DeviceAddress;
-                    uint device_id = _selectedDevices[i].DeviceID;
+                    var export = _selectedDevices[i];
                     try
                     {
                         if (_yabeFrm.GetSetting_TimeSynchronize_UTC())
-                            comm.SynchronizeTime(adr, DateTime.Now.ToUniversalTime(), true);
+                            export.Device.SynchronizeTime(DateTime.Now.ToUniversalTime(), true);
                         else
-                            comm.SynchronizeTime(adr, DateTime.Now, false);
+                            export.Device.SynchronizeTime(DateTime.Now, false);
                     }
                     catch(Exception ex)
                     {
@@ -2112,7 +1994,7 @@ namespace GlobalCommander
 
                     progBar.Value = (int)(100 * i / _selectedDevices.Count);
                     Application.DoEvents();
-                    
+
                 }
 
             }

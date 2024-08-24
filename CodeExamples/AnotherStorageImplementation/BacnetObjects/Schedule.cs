@@ -352,12 +352,12 @@ namespace BaCSharp
                 }
                 else
                 {
-                    KeyValuePair<BacnetClient, BacnetAddress>? recipient = null;
+                    BACnetEndpoint recipient = null;
 
                     try
                     {
-                        // SuroundingDevices is updated with Iam messages
-                        recipient = Mydevice.SuroundingDevices[reference.deviceIndentifier.instance];
+                        // SurroundingDevices is updated with Iam messages
+                        recipient = Mydevice.SurroundingDevices[reference.deviceIndentifier.instance];
                     }
                     catch { }
                     if (recipient == null)
@@ -367,8 +367,8 @@ namespace BaCSharp
                     uint wp = m_PROP_PRIORITY;
                     System.Threading.ThreadPool.QueueUserWorkItem((o) =>
                         {
-                            recipient.Value.Key.WritePriority = wp;
-                            recipient.Value.Key.BeginWritePropertyRequest(recipient.Value.Value, reference.objectIdentifier, (BacnetPropertyIds)reference.propertyIdentifier, value, false);
+                            recipient.Client.WritePriority = wp;
+                            recipient.Client.BeginWritePropertyRequest(recipient.Address, reference.objectIdentifier, (BacnetPropertyIds)reference.propertyIdentifier, value, false);
                         }
                         , null);
                 }

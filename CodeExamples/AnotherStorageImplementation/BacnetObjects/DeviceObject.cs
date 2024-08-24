@@ -161,8 +161,8 @@ namespace BaCSharp
 
         // Two element used by Notification & Scheduling to send external data
         // All the known devices on the net
-        public Dictionary<uint, KeyValuePair<BacnetClient, BacnetAddress>> SuroundingDevices = new Dictionary<uint, KeyValuePair<BacnetClient, BacnetAddress>>();
-        public bool ShouldSerializeSuroundingDevices() { return false; } // for NewtonJson
+        public Dictionary<uint, BACnetEndpoint> SurroundingDevices = new Dictionary<uint, BACnetEndpoint>();
+        public bool ShouldSerializeSurroundingDevices() { return false; } // for NewtonJson
         // We assume here that direct Ip are sent using only one endpoint 
         public BacnetClient DirectIp;
         public bool ShouldSerializeDirectIp() { return false; } // for NewtonJson
@@ -316,8 +316,8 @@ namespace BaCSharp
         }
         public void ReceivedIam(BacnetClient client, BacnetAddress Bacdevice, uint device_id)
         {
-            SuroundingDevices.Remove(device_id);    // this will renew the registration, if already exists
-            SuroundingDevices.Add(device_id, new KeyValuePair<BacnetClient, BacnetAddress>(client, Bacdevice));
+            SurroundingDevices.Remove(device_id);    // this will renew the registration, if already exists
+            SurroundingDevices.Add(device_id, new BACnetEndpoint(client, Bacdevice, device_id));
         }
     }
 }

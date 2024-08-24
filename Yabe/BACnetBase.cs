@@ -1642,15 +1642,18 @@ namespace System.IO.BACnet
         }
     }
     [Serializable]
-    public struct BacnetObjectId : IComparable<BacnetObjectId>
+    public struct BacnetObjectId : IComparable<BacnetObjectId>, IEquatable<BacnetObjectId>
     {
         public BacnetObjectTypes type;
         public UInt32 instance;
+
         public BacnetObjectId(BacnetObjectTypes type, UInt32 instance)
         {
             this.type = type;
             this.instance = instance;
         }
+
+
         public BacnetObjectTypes Type
         {
             get { return type; }
@@ -1661,18 +1664,17 @@ namespace System.IO.BACnet
             get { return instance; }
             set { instance = value; }
         }
-        public override string ToString()
-        {
-            return type.ToString() + ":" + instance;
-        }
-        public override int GetHashCode()
-        {
-            return ToString().GetHashCode();
-        }
+
+
+        public override string ToString() => $"{type}:{instance}";
+        public override int GetHashCode() => ToString().GetHashCode();
+        public bool Equals(BacnetObjectId obj) => this.Equals(obj as object);
         public override bool Equals(object obj)
         {
-            if (obj == null) return false;
-            else return obj.ToString().Equals(this.ToString());
+            if (obj == null)
+                return false;
+            else
+                return obj.ToString().Equals(this.ToString());
         }
         public int CompareTo(BacnetObjectId other)
         {
@@ -1705,6 +1707,7 @@ namespace System.IO.BACnet
     {
         public UInt32 propertyIdentifier;
         public UInt32 propertyArrayIndex;        /* optional */
+        public BacnetPropertyReference(BacnetPropertyIds property, uint array_index = ASN1.BACNET_ARRAY_ALL) : this((uint)property, array_index) { }
         public BacnetPropertyReference(uint id, uint array_index)
         {
             propertyIdentifier = id;
@@ -1714,18 +1717,27 @@ namespace System.IO.BACnet
         {
             return ((BacnetPropertyIds)propertyIdentifier).ToString();
         }
+
+
+        public static implicit operator BacnetPropertyReference(BacnetPropertyIds id) => new BacnetPropertyReference(id);
     };
 
     public struct BacnetPropertyValue
     {
+        public BacnetPropertyValue(BacnetPropertyIds propertyId, BacnetValue value) : this(new BacnetPropertyReference(propertyId), value) { }
+        public BacnetPropertyValue(BacnetPropertyReference property, BacnetValue value)
+        {
+            this.property = property;
+            this.value = new BacnetValue[] { value };
+            this.priority = default;
+        }
+
+
         public BacnetPropertyReference property;
         public IList<BacnetValue> value;
         public byte priority;
 
-        public override string ToString()
-        {
-            return property.ToString();
-        }
+        public override string ToString() => property.ToString();
     }
 
     public struct BacnetGenericTime
@@ -8159,11 +8171,11 @@ namespace System.IO.BACnet
             }
         }
 
-        public String ToString(bool SourceOnly)
+        public String ToString(bool sourceOnly)
         {
             if (this.RoutedSource == null)
                 return ToString();
-            if (SourceOnly)
+            if (sourceOnly)
                 return this.RoutedSource.ToString();
             else
                 return this.RoutedSource.ToString() + " via " + ToString();

@@ -91,6 +91,7 @@
             this.readPropertiesNameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.createObjectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label2 = new System.Windows.Forms.Label();
+            this.manual_refresh_objects = new System.Windows.Forms.Button();
             this.TbxHighlightAddress = new System.Windows.Forms.TextBox();
             this.m_AddressSpaceTree = new CodersLab.Windows.Controls.TreeView();
             this.m_AddressSpaceMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -640,6 +641,7 @@
             // 
             // splitContainer4.Panel2
             // 
+            this.splitContainer4.Panel2.Controls.Add(this.manual_refresh_objects);
             this.splitContainer4.Panel2.Controls.Add(this.TbxHighlightAddress);
             this.splitContainer4.Panel2.Controls.Add(this.m_AddressSpaceTree);
             this.splitContainer4.Panel2.Controls.Add(this.AddSpaceLabel);
@@ -790,6 +792,18 @@
             this.label2.Size = new System.Drawing.Size(46, 23);
             this.label2.TabIndex = 2;
             this.label2.Text = "Devices";
+            // 
+            // manual_refresh_objects
+            // 
+            this.manual_refresh_objects.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.manual_refresh_objects.Image = global::Yabe.Properties.Resources.reload;
+            this.manual_refresh_objects.Location = new System.Drawing.Point(110, 8);
+            this.manual_refresh_objects.Name = "manual_refresh_objects";
+            this.manual_refresh_objects.Size = new System.Drawing.Size(29, 23);
+            this.manual_refresh_objects.TabIndex = 3;
+            this.manual_refresh_objects.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.manual_refresh_objects.UseVisualStyleBackColor = true;
+            this.manual_refresh_objects.Click += new System.EventHandler(this.manual_refresh_objects_Click);
             // 
             // TbxHighlightAddress
             // 
@@ -1559,6 +1573,7 @@
         private System.Windows.Forms.ToolTip toolTip;
         private System.Windows.Forms.Button ack_normal;
         private System.Windows.Forms.Button ack_fault;
+        private System.Windows.Forms.Button manual_refresh_objects;
         private System.Windows.Forms.ToolStripMenuItem addRemoteBacnetIPNodeListToolStripMenuItem;
     }
 }
