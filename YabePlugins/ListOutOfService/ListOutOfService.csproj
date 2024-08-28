@@ -62,10 +62,6 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Yabe">
-      <HintPath>..\..\Yabe\bin\Debug\Yabe.exe</HintPath>
-      <Private>False</Private>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ListOutOfService.cs" />
@@ -76,6 +72,12 @@
     <Compile Include="OutOfService.Designer.cs">
       <DependentUpon>OutOfService.cs</DependentUpon>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Yabe\Yabe.csproj">
+      <Project>{ee493b17-8185-406c-881f-1144092f01cb}</Project>
+      <Name>Yabe</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="OutOfService.resx">

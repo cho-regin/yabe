@@ -11,7 +11,7 @@
     <RootNamespace>Bacnet.Room.Simulator</RootNamespace>
     <AssemblyName>Bacnet.Room.Simulator</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-	<LangVersion>9</LangVersion>
+    <LangVersion>9</LangVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -87,21 +87,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\DemoServer\DeviceStorage.cs">
-      <Link>DeviceStorage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Yabe\BACnetBase.cs">
-      <Link>BACnetBase.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Yabe\BACnetClient.cs">
-      <Link>BACnetClient.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Yabe\BACnetTransport.cs">
-      <Link>BACnetTransport.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Yabe\BACnetTransportIPv6.cs">
-      <Link>BACnetTransportIPv6.cs</Link>
-    </Compile>
     <Compile Include="BACnetActivity.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
@@ -151,6 +136,12 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <Content Include="nuage-soleil-meteo-icone-8152.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Yabe\Yabe.csproj">
+      <Project>{ee493b17-8185-406c-881f-1144092f01cb}</Project>
+      <Name>Yabe</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

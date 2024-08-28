@@ -11,7 +11,7 @@
     <RootNamespace>Mstp.BacnetCapture</RootNamespace>
     <AssemblyName>Mstp.BacnetCapture</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-	<LangVersion>9</LangVersion>
+    <LangVersion>9</LangVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -49,15 +49,6 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\Yabe\BACnetBase.cs">
-      <Link>BACnetBase.cs</Link>
-    </Compile>
-    <Compile Include="..\Yabe\BACnetTransport.cs">
-      <Link>BACnetTransport.cs</Link>
-    </Compile>
-    <Compile Include="..\Yabe\BacnetTransportSerial.cs">
-      <Link>BacnetTransportSerial.cs</Link>
-    </Compile>
     <Compile Include="BacnetNode.cs" />
     <Compile Include="BacnetCapture.cs">
       <SubType>Form</SubType>
@@ -91,6 +82,12 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Yabe\Yabe.csproj">
+      <Project>{ee493b17-8185-406c-881f-1144092f01cb}</Project>
+      <Name>Yabe</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

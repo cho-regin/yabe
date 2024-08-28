@@ -11,8 +11,9 @@
     <RootNamespace>BasicAlarmListener</RootNamespace>
     <AssemblyName>BasicAlarmListener</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-	<LangVersion>9</LangVersion>
-    <TargetFrameworkProfile></TargetFrameworkProfile>
+    <LangVersion>9</LangVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -52,24 +53,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\DemoServer\DeviceStorage.cs">
-      <Link>DeviceStorage.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Yabe\BACnetBase.cs">
-      <Link>BACnetBase.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Yabe\BACnetClient.cs">
-      <Link>BACnetClient.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Yabe\BACnetTransport.cs">
-      <Link>BACnetTransport.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Yabe\BACnetTransportEthernet.cs">
-      <Link>BACnetTransport.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Yabe\BACnetTransportIPv6.cs">
-      <Link>BACnetTransportIPv6.cs</Link>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -77,6 +60,12 @@
     <EmbeddedResource Include="DeviceDescriptor.xml">
       <SubType>Designer</SubType>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Yabe\Yabe.csproj">
+      <Project>{ee493b17-8185-406c-881f-1144092f01cb}</Project>
+      <Name>Yabe</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

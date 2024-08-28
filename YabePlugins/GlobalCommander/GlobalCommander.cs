@@ -1073,14 +1073,14 @@ namespace GlobalCommander
         {
             var device = devExport.Device;
             var adr = device.Address.FullHashString();
-            var objList = device.GetObjectListAsync().Result;
+            var objList = device.GetObjectListAsync().Result.Values.SelectMany(x => x);
 
             devExport.Points.Clear();
-            foreach (BacnetObjectId bobj_id in objList)
+            foreach (var obj in objList)
             {
-                if(true) // if (bobj_id.type != BacnetObjectTypes.OBJECT_DEVICE || bobj_id.instance != device.DeviceID)
+                var bobj_id = obj.ObjectId;
+                if (true) // if (bobj_id.type != BacnetObjectTypes.OBJECT_DEVICE || bobj_id.instance != device.DeviceID)
                 {
-
                     BacnetPointExport point = new BacnetPointExport(devExport, bobj_id);
 
                     // If the Device name not set, try to update it
@@ -1090,7 +1090,7 @@ namespace GlobalCommander
 
                     lock (DevicesObjectsName)
                     {
-                        Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr, bobj_id), out objectName);
+                        Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr, obj.ObjectId), out objectName);
                     }
                     if (Prop_Object_NameOK)
                     {
@@ -1158,49 +1158,12 @@ namespace GlobalCommander
 
             BacnetObjectId object_id = point.ObjectID;
             BacnetPropertyReference[] properties = new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_ALL, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL) };
-            IList<BacnetReadAccessResult> multi_value_list;
-            try
+            IList<BacnetReadAccessResult> multi_value_list = device.ReadPropertiesAsync(object_id, properties).Result;
+            if (multi_value_list is null)
             {
-                //fetch properties. This might not be supported (ReadMultiple) or the response might be too long.
-                var res1 = device.ReadPropertyMultipleRequestAsync(object_id, properties).Result;
-                if (res1.Succeeded)
-                    multi_value_list = res1.Value;
-                else
-                {
-                    Trace.TraceWarning(String.Format("Couldn't perform ReadPropertyMultiple for property list on device {0}, object {1} ... Trying ReadProperty instead", point.ParentDevice.Name, point.Name));
-                    var res2 = ReadAllPropertiesBySingle(device, object_id);
-                    if (res2.Succeeded)
-                        multi_value_list = res2.Value;
-                    else
-                    {
-                        ResetPatience();
-                        MessageBox.Show(this, String.Format("Couldn't get property list using ReadProperty loop (single properties at a time) of device {0}, object {1} ... Trying ReadProperty instead", point.ParentDevice.Name, point.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return false;
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                Trace.TraceWarning(String.Format("Couldn't perform ReadPropertyMultiple for property list on device {0}, object {1} ... Trying ReadProperty instead", point.ParentDevice.Name, point.Name));
-                try
-                {
-                    //fetch properties with single calls
-                    var res = ReadAllPropertiesBySingle(device, object_id);
-                    if (res.Succeeded)
-                        multi_value_list = res.Value;
-                    else
-                    {
-                        ResetPatience();
-                        MessageBox.Show(this, String.Format("Couldn't get property list using ReadProperty loop (single properties at a time) of device {0}, object {1} ... Trying ReadProperty instead", point.ParentDevice.Name, point.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ResetPatience();
-                    MessageBox.Show(this, String.Format("Error reading properties one-at-a-time from device {1}, object {2}: {0}", ex.Message, point.ParentDevice.Name, point.Name), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return false;
-                }
+                ResetPatience();
+                MessageBox.Show(this, String.Format("Failed to read property list on device {0}, object {1} ...", point.ParentDevice.Name, point.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
             }
 
             point.Properties.Clear();
@@ -1225,13 +1188,6 @@ namespace GlobalCommander
             }
             return true;
         }
-
-        // ----- The below methods were exposed and stolen from Yabe -------
-        private (bool Succeeded, BacnetReadAccessResult[] Value) ReadAllPropertiesBySingle(BACnetEndpoint endpoint, BacnetObjectId object_id)
-        {
-            return _yabeFrm.ReadAllPropertiesBySingleAsync(endpoint, object_id).Result;
-        }
-        // ------------------------------------------------------------------
 
         public class BacnetDeviceExport : IEquatable<BacnetDeviceExport>, IComparable<BacnetDeviceExport>
         {
@@ -1573,13 +1529,13 @@ namespace GlobalCommander
                                         try
                                         {
                                             var res = device.ReadPropertyAsync(object_id, BacnetPropertyIds.PROP_PRESENT_VALUE).Result;
-                                            if (!res.Succeeded)
+                                            if (res is null)
                                             {
                                                 Trace.TraceError(String.Format("Couldn't read the data type of the present value of device {0}, object {1}", ParentPoint.ParentDevice.Name, ParentPoint.Name));
                                             }
                                             else
                                             {
-                                                dataType = res.Value[0].Tag;
+                                                dataType = res[0].Tag;
                                                 if (dataType != BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL)
                                                 {
                                                     gotDatatype = true;
@@ -1670,13 +1626,13 @@ namespace GlobalCommander
                     try
                     {
                         var res = device.ReadPropertyAsync(object_id, PropertyID).Result;
-                        if (!res.Succeeded)
+                        if (res is null)
                         {
                             MessageBox.Show(String.Format("Couldn't read back property {0} of device {1}, object {2}", PropertyID.ToString(), ParentPoint.ParentDevice.Name, ParentPoint.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             Cursor.Current = Cursors.Default;
                             return;
                         }
-                        Values = res.Value.ToList<BacnetValue>();
+                        Values = res.ToList<BacnetValue>();
                     }
                     catch (Exception ex)
                     {
