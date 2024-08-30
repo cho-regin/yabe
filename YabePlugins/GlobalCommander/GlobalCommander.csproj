@@ -10,7 +10,7 @@
     <RootNamespace>GlobalCommander</RootNamespace>
     <AssemblyName>GlobalCommander</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-	<LangVersion>9</LangVersion>
+    <LangVersion>9</LangVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
@@ -49,6 +49,10 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="Yabe, Version=1.3.3.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Yabe\bin\Debug\Yabe.exe</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PropertyValueListForm.cs">
@@ -66,12 +70,6 @@
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StringExtensions.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Yabe\Yabe.csproj">
-      <Project>{ee493b17-8185-406c-881f-1144092f01cb}</Project>
-      <Name>Yabe</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="PropertyValueListForm.resx">
