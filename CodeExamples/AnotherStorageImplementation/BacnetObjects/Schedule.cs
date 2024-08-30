@@ -33,7 +33,7 @@ using System.Threading;
 
 namespace BaCSharp
 {
-    class Schedule : BaCSharpObject
+    public class Schedule : BaCSharpObject
     {
         protected int tmrId;
         protected object lockObj=new object();
@@ -454,7 +454,7 @@ namespace BaCSharp
     }
 
     [Serializable]
-    class DaySchedule
+    public class DaySchedule
     {
         public DateTime dt;
         public object Value;
@@ -467,7 +467,7 @@ namespace BaCSharp
     }
 
     [Serializable]
-    class BacnetWeeklySchedule : ASN1.IASN1encode
+    public class BacnetWeeklySchedule : ASN1.IASN1encode
     {
         public List<DaySchedule>[] days = new List<DaySchedule>[7];
 
@@ -491,7 +491,7 @@ namespace BaCSharp
         }
     }
     [Serializable]
-    class BacnetDeviceObjectPropertyReferenceList : ASN1.IASN1encode
+    public class BacnetDeviceObjectPropertyReferenceList : ASN1.IASN1encode
     {
         public List<BacnetDeviceObjectPropertyReference> references = null;
 

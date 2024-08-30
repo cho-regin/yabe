@@ -33,7 +33,7 @@ namespace BaCSharp
 {
     // Shows how to customize a base class
 
-    class TrendLogCustom : TrendLog
+    public class TrendLogCustom : TrendLog
     {
         // first a constructor calling the parent constructor
         public TrendLogCustom(int ObjId, String ObjName, String Description, uint Logsize, BacnetTrendLogValueType DefaultValueType)

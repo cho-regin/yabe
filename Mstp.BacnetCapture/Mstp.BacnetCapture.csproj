@@ -84,6 +84,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CodeExamples\AnotherStorageImplementation\AnotherStorageImplementation.csproj">
+      <Project>{ee8e3c58-371e-4164-93da-13d055d5bdde}</Project>
+      <Name>AnotherStorageImplementation</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Yabe\Yabe.csproj">
       <Project>{ee493b17-8185-406c-881f-1144092f01cb}</Project>
       <Name>Yabe</Name>

@@ -11,7 +11,7 @@
     <RootNamespace>LibBacnet</RootNamespace>
     <AssemblyName>LibBacnet</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-	<LangVersion>9</LangVersion>
+    <LangVersion>9</LangVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -58,6 +58,9 @@
     <Compile Include="..\..\Yabe\BACnetClient.cs">
       <Link>BACnetClient.cs</Link>
     </Compile>
+    <Compile Include="..\..\Yabe\BACnetDevice.cs">
+      <Link>BACnetDevice.cs</Link>
+    </Compile>
     <Compile Include="..\..\Yabe\BACnetTransport.cs">
       <Link>BACnetTransport.cs</Link>
     </Compile>
@@ -69,6 +72,9 @@
     </Compile>
     <Compile Include="..\..\Yabe\BacnetTransportSerial.cs">
       <Link>BacnetTransportSerial.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Yabe\Utilities.cs">
+      <Link>Utilities.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

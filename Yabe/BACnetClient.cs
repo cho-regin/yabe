@@ -34,8 +34,8 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
-using Utilities;
 using System.Collections;
+using Utilities;
 
 namespace System.IO.BACnet
 {
