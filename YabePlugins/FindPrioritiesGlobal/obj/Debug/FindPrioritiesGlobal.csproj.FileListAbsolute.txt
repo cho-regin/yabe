@@ -1,9 +1,0 @@
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\Yabe\bin\Debug\FindPrioritiesGlobal.dll
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\Yabe\bin\Debug\FindPrioritiesGlobal.pdb
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPrioritiesGlobal\obj\Debug\FindPrioritiesGlobal.Properties.Resources.resources
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPrioritiesGlobal\obj\Debug\FindPrioritiesGlobal.FindPrioritiesGlobal.resources
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPrioritiesGlobal\obj\Debug\FindPrioritiesGlobal.csproj.GenerateResource.cache
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPrioritiesGlobal\obj\Debug\FindPrioritiesGlobal.csproj.CoreCompileInputs.cache
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPrioritiesGlobal\obj\Debug\FindPrioritiesGlobal.csproj.CopyComplete
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPrioritiesGlobal\obj\Debug\FindPrioritiesGlobal.dll
-C:\Users\Moni\Desktop\YABE_Source_Workcopy\trunk\YabePlugins\FindPrioritiesGlobal\obj\Debug\FindPrioritiesGlobal.pdb
