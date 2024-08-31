@@ -41,9 +41,6 @@ namespace FindPrioritiesGlobal
         public string GUI_LastFilename = "";
         private Dictionary<Tuple<String, BacnetObjectId>, String> DevicesObjectsName { get { return _yabeFrm.DevicesObjectsName; } }
         private bool ObjectNamesChangedFlag { get { return _yabeFrm.objectNamesChangedFlag; } set { _yabeFrm.objectNamesChangedFlag = value; } }
-/*********************************************
-        public IEnumerable<KeyValuePair<BacnetClient, YabeMainDialog.BacnetDeviceLine>> YabeDiscoveredDevices { get { return _yabeFrm.DiscoveredDevices; } }
-***********************************************/
         public BACnetDevice[] YabeDiscoveredDevices { get { return _yabeFrm.DiscoveredDevices; } }
 
         public FindPrioritiesGlobal(YabeMainDialog yabeFrm)
@@ -60,77 +57,6 @@ namespace FindPrioritiesGlobal
             Cursor.Current = Cursors.WaitCursor;
             UpdatePrioFilter(sender, e);
         }
-
-        /*************************old
-                public List<BacnetDeviceExport> PopulateDevicesWithNames(bool commandProgBar = false)
-                {
-                    int progTotal = YabeDiscoveredDevices.Count() + 1;
-                    int prog = 0;
-                    List<BacnetDeviceExport> deviceList = new List<BacnetDeviceExport>();
-                    foreach (KeyValuePair<BacnetClient, YabeMainDialog.BacnetDeviceLine> transport in YabeDiscoveredDevices)
-                    {
-                        foreach (KeyValuePair<BacnetAddress, uint> address in transport.Value.Devices)
-                        {
-                            BacnetAddress deviceAddress = address.Key;
-                            uint deviceID = address.Value;
-                            BacnetClient comm = transport.Key;
-                            BacnetDeviceExport device = new BacnetDeviceExport(comm, this, deviceID, deviceAddress);
-
-                            bool Prop_Object_NameOK = false;
-                            BacnetObjectId deviceObjectID = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceID);
-                            string identifier = null;
-
-                            lock (DevicesObjectsName)
-                            {
-                                Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(), deviceObjectID), out identifier);
-                            }
-
-                            if (Prop_Object_NameOK)
-                            {
-                                identifier = identifier + " [" + deviceObjectID.Instance.ToString() + "] ";
-                            }
-                            else
-                            {
-                                try
-                                {
-                                    IList<BacnetValue> values;
-                                    if (comm.ReadPropertyRequest(deviceAddress, deviceObjectID, BacnetPropertyIds.PROP_OBJECT_NAME, out values))
-                                    {
-                                        identifier = values[0].ToString();
-                                        lock (DevicesObjectsName)
-                                        {
-                                            Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(), deviceObjectID);
-                                            DevicesObjectsName.Remove(t);
-                                            DevicesObjectsName.Add(t, identifier);
-                                            ObjectNamesChangedFlag = true;
-                                        }
-                                        identifier = identifier + " [" + deviceObjectID.Instance.ToString() + "] ";
-                                    }
-                                }
-                                catch { }
-                            }
-
-                            if (identifier != null)
-                            {
-                                device.Name = identifier;
-                            }
-
-                            if (deviceList.Find(item => item.DeviceID == deviceID) == null)
-                            {
-                                deviceList.Add(device);
-                            }
-
-                        }
-                        if (commandProgBar)
-                        {
-                            prog++;
-                            progBar.Value = (int)(100 * prog / progTotal);
-                            Application.DoEvents();
-                        }
-                    }
-                    return deviceList;
-                }
-        ********************/
         public List<BacnetDeviceExport> PopulateDevicesWithNames(bool commandProgBar = false)
         {
             int progTotal = YabeDiscoveredDevices.Count() + 1;
@@ -310,7 +236,6 @@ namespace FindPrioritiesGlobal
                     bool bFound = false;
                     try
                     {
-//                        IList<BacnetValue> value;
                         var res = device.ReadPropertyAsync(bobj_id, BacnetPropertyIds.PROP_PRIORITY_ARRAY).Result;
                         if (res.Count == 16)
                         {
@@ -318,12 +243,10 @@ namespace FindPrioritiesGlobal
                             for (i = 0; i < 16; i++)
                             {
                                 point.aPriosSet[i] = false; // initialize with false as default, no priority set at this level
-//                                if (null != value[i].Value && aPrioFilter[i])
                                     if (null != res[i].Value && aPrioFilter[i])
                                     {
                                         bFound = true; // if any prio is set and not filtered, item will be displayed in the list
                                         point.aPriosSet[i] = true; // if there is a value remember this slot
-//                                point.aValues[i] = value[i];
                                 point.aValues[i] = res[i].Value.ToString();
                                 }
                             }
@@ -386,7 +309,6 @@ namespace FindPrioritiesGlobal
         public class BacnetPointExport : IEquatable<BacnetPointExport>, IComparable<BacnetPointExport>
         {
             public bool[] aPriosSet = new bool[16];
-//            public BacnetValue[] aValues = new BacnetValue[16];
             public string[] aValues = new string[16];
 
             public BacnetDeviceExport ParentDevice { get; }
@@ -620,7 +542,6 @@ namespace FindPrioritiesGlobal
                         if (IncludePriorityLevelNames.Checked)
                             sItem = sItem + " " + sPrioNames[i];
                         if (PrintValues.Checked)
-//                            sItem = sItem + " Value: " + point.aValues[i].Value.ToString();
                             sItem = sItem + " Value: " + point.aValues[i];
                         treeView1.Nodes[nNodeNumber].Nodes.Add(sItem);
                     }
@@ -803,7 +724,6 @@ namespace FindPrioritiesGlobal
                         if (point.aPriosSet[i])
                         {
                             if(PrintValues.Checked)
-    //                            sItem += point.aValues[i].Value.ToString();
                                 sItem += point.aValues[i];
                             else
                                 sItem += "x";
