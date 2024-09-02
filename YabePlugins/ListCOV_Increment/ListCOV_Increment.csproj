@@ -8,8 +8,8 @@
     <ProjectGuid>{3B36FC22-7F04-477E-91F2-176A2BEF95C0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LISTCOV_Increment</RootNamespace>
-    <AssemblyName>LISTCOV_Increment</AssemblyName>
+    <RootNamespace>ListCOV_Increment</RootNamespace>
+    <AssemblyName>ListCOV_Increment</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <LangVersion>9</LangVersion>
     <FileAlignment>512</FileAlignment>
@@ -19,7 +19,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\Yabe\bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>

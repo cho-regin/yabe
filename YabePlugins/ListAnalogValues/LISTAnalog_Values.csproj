@@ -8,8 +8,8 @@
     <ProjectGuid>{ACA20523-D24E-41BA-BF78-6C2A125BD1F3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LISTAnalog_Values</RootNamespace>
-    <AssemblyName>LISTAnalog_Values</AssemblyName>
+    <RootNamespace>ListAnalog_Values</RootNamespace>
+    <AssemblyName>ListAnalog_Values</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <LangVersion>9</LangVersion>
     <FileAlignment>512</FileAlignment>
@@ -19,7 +19,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\..\Yabe\bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -64,7 +64,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LISTAnalog_Values.cs" />
+    <Compile Include="ListAnalog_Values.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Analog_Values.cs">
       <SubType>Form</SubType>
