@@ -391,7 +391,8 @@ namespace Yabe
             
             SaveObjectNamesTimer.Enabled = true;
 
-            AddDebugMenu();
+            // no longer needed
+            // AddDebugMenu();
         }
 
         string CovGraph_PointValueEvent(ZedGraphControl sender, GraphPane pane, CurveItem curve, int iPt)
@@ -4630,31 +4631,32 @@ namespace Yabe
             }
         }
 
+        /********************************
+         * was used for testing the async interface, no longer needed 
+                /// <summary>
+                /// Adds debug menu for test and developing purposes to the main menu.
+                /// </summary>
+                [Conditional("DEBUG")]
+                public void AddDebugMenu()
+                {
+                    var debugMenu = new ToolStripMenuItem("Debug");
+                    debugMenu.DropDownItems.AddRange(new ToolStripItem[] {
+                        new ToolStripMenuItem("Cancel communication", null, (sender, args) => SelectedDevice?.Client.CommunicationToken.Cancel()),
+                        new ToolStripSeparator(),
+                        new ToolStripMenuItem("Test", null, (sender, args) => {
+                            var device = SelectedDevice;
 
-        /// <summary>
-        /// Adds debug menu for test and developing purposes to the main menu.
-        /// </summary>
-        [Conditional("DEBUG")]
-        public void AddDebugMenu()
-        {
-            var debugMenu = new ToolStripMenuItem("Debug");
-            debugMenu.DropDownItems.AddRange(new ToolStripItem[] {
-                new ToolStripMenuItem("Cancel communication", null, (sender, args) => SelectedDevice?.Client.CommunicationToken.Cancel()),
-                new ToolStripSeparator(),
-                new ToolStripMenuItem("Test", null, (sender, args) => {
-                    var device = SelectedDevice;
+                            var objList = device.GetObjectListAsync().Result;
+                            //var obj = objList.Values.First().First();
+                            var obj = objList.Values.ElementAt(13).First();
+                            var props = obj.GetPropertiesAsync().Result;
 
-                    var objList = device.GetObjectListAsync().Result;
-                    //var obj = objList.Values.First().First();
-                    var obj = objList.Values.ElementAt(13).First();
-                    var props = obj.GetPropertiesAsync().Result;
-
-                })
-            }); ;
-            menuStrip1.Items.Add(debugMenu);
-        }
+                        })
+                    }); ;
+                    menuStrip1.Items.Add(debugMenu);
+                }
+        **************************************************/
     }
-
     // Used to sort the devices Tree by device_id
     public class NodeSorter : IComparer
     {
