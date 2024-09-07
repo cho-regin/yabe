@@ -434,7 +434,7 @@ namespace Yabe.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("CheckReliability, CheckStatusFlags, ListOutOfService, GlobalCommander, FindPriori" +
-            "ties")]
+            "tiesGllobal")]
         public string Plugins {
             get {
                 return ((string)(this["Plugins"]));

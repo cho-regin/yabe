@@ -11,7 +11,7 @@
     <RootNamespace>OfflineStackDebug</RootNamespace>
     <AssemblyName>StackDebug</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-	<LangVersion>9</LangVersion>
+    <LangVersion>9</LangVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -70,8 +70,8 @@
     <Compile Include="..\Yabe\BACnetBase.cs">
       <Link>BACnetBase.cs</Link>
     </Compile>
-    <Compile Include="..\Yabe\BACnetClient.cs">
-      <Link>BACnetClient.cs</Link>
+    <Compile Include="..\Yabe\BACnetClientV1.cs">
+      <Link>BACnetClientV1.cs</Link>
     </Compile>
     <Compile Include="..\Yabe\BACnetTransport.cs">
       <Link>BACnetTransport.cs</Link>

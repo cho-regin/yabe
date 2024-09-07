@@ -9,8 +9,10 @@
     <Compile Include="..\..\DemoServer\DeviceStorage.cs" Link="DeviceStorage.cs" />
     <Compile Include="..\..\Yabe\BACnetBase.cs" Link="BACnetBase.cs" />
     <Compile Include="..\..\Yabe\BACnetClient.cs" Link="BACnetClient.cs" />
+    <Compile Include="..\..\Yabe\BACnetDevice.cs" Link="BACnetDevice.cs" />
     <Compile Include="..\..\Yabe\BACnetTransport.cs" Link="BACnetTransport.cs" />
     <Compile Include="..\..\Yabe\BACnetTransportIPv6.cs" Link="BACnetTransportIPv6.cs" />
+    <Compile Include="..\..\Yabe\Utilities.cs" Link="Utilities.cs" />
   </ItemGroup>
 
   <ItemGroup>

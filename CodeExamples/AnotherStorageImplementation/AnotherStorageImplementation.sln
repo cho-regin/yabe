@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30907.101
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33110.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnotherStorageImplementation", "AnotherStorageImplementation.csproj", "{EE8E3C58-371E-4164-93DA-13D055D5BDDE}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yabe", "..\..\Yabe\Yabe.csproj", "{EE493B17-8185-406C-881F-1144092F01CB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +15,6 @@ Global
 		{EE8E3C58-371E-4164-93DA-13D055D5BDDE}.Debug|x86.Build.0 = Debug|x86
 		{EE8E3C58-371E-4164-93DA-13D055D5BDDE}.Release|x86.ActiveCfg = Release|x86
 		{EE8E3C58-371E-4164-93DA-13D055D5BDDE}.Release|x86.Build.0 = Release|x86
-		{EE493B17-8185-406C-881F-1144092F01CB}.Debug|x86.ActiveCfg = Debug|x86
-		{EE493B17-8185-406C-881F-1144092F01CB}.Debug|x86.Build.0 = Debug|x86
-		{EE493B17-8185-406C-881F-1144092F01CB}.Release|x86.ActiveCfg = Release|x86
-		{EE493B17-8185-406C-881F-1144092F01CB}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

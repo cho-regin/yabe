@@ -35,6 +35,8 @@ using System.Net.NetworkInformation;
 using System.Threading;
 using System.Windows.Forms;
 using Bacnet.Room.Simulator;
+using System.IO;
+using System.Reflection;
 
 namespace DemoServer
 {

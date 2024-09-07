@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -11,7 +11,6 @@
     <RootNamespace>DemoBBMD</RootNamespace>
     <AssemblyName>DemoBBMD</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <LangVersion>9</LangVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -25,6 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -34,6 +34,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -45,6 +46,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\DemoServer\DeviceStorage.cs">
+      <Link>DeviceStorage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Yabe\BACnetBase.cs">
+      <Link>BACnetBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Yabe\BACnetClient.cs">
+      <Link>BACnetClient.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Yabe\BACnetDevice.cs">
+      <Link>BACnetDevice.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Yabe\BACnetTransport.cs">
+      <Link>BACnetTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Yabe\BACnetTransportIPv6.cs">
+      <Link>BACnetTransportIPv6.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Yabe\Utilities.cs">
+      <Link>Utilities.cs</Link>
+    </Compile>
     <Compile Include="BACnetActivity.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -61,12 +83,6 @@
     <Content Include="Config.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Yabe\Yabe.csproj">
-      <Project>{ee493b17-8185-406c-881f-1144092f01cb}</Project>
-      <Name>Yabe</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
