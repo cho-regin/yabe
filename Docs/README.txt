@@ -375,3 +375,13 @@
 8.  MISC
 	Project web page is located at: 
 	https://sourceforge.net/projects/yetanotherbacnetexplorer/
+
+9.  CONTRIBUTORS, in order of apearance
+	Morten Kvistgaard	2014-2016
+	Frédéric Chaxel		2015-2024	University of Lorraine/France
+	Adam Guzik		2015
+	Christopher Günther	2015, 2019
+	Thamer Al-Salek		2016
+	Lance Tollenaar		2022-2024
+	Frank Schubert		2022-2024	Beckhoff Automation/Germany 
+	Marco Diekmann		2024		Beckhoff Automation/Germany
