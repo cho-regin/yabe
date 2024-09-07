@@ -797,11 +797,11 @@
             // 
             this.manual_refresh_objects.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.manual_refresh_objects.Image = global::Yabe.Properties.Resources.reload;
-            this.manual_refresh_objects.Location = new System.Drawing.Point(110, 8);
+            this.manual_refresh_objects.Location = new System.Drawing.Point(115, -2);
             this.manual_refresh_objects.Name = "manual_refresh_objects";
             this.manual_refresh_objects.Size = new System.Drawing.Size(29, 23);
             this.manual_refresh_objects.TabIndex = 3;
-            this.manual_refresh_objects.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.manual_refresh_objects.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.manual_refresh_objects.UseVisualStyleBackColor = true;
             this.manual_refresh_objects.Click += new System.EventHandler(this.manual_refresh_objects_Click);
             // 
