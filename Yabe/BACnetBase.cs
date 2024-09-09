@@ -8799,8 +8799,12 @@ namespace System.IO.BACnet
         PROP_CERTIFICATE_SIGNING_REQUEST_FILE = 509,
         PROP_COMMAND_VALIDATION_RESULT = 510,
         PROP_ISSUER_CERTIFICATE_FILES = 511,
-        PROP_PROPRIETARY_RANGE_MIN = 512,
-        PROP_PROPRIETARY_RANGE_MAX = 4194303,
+
+        // do not use the prefix PROP_ here, because YabeMainDialog.GetNiceName()
+        // handles this prefix specially
+        MIN_PROPRIETARY_RANGE = 512,
+        MAX_PROPRIETARY_RANGE = 4194303,
+
         // enumerations 4194304-4194327 are defined in Addendum 2020cc
         PROP_MAX_BVLC_LENGTH_ACCEPTED = 4194304,
         PROP_MAX_NPDU_LENGTH_ACCEPTED = 4194305,

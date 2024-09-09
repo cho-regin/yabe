@@ -47,6 +47,7 @@ using ZedGraph;
 using WebSocketSharp;
 using System.Net;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Utilities;
 
@@ -131,7 +132,71 @@ namespace Yabe
 
         YabeMainDialog yabeFrm; // Ref to itself, already affected, usefull for plugin developpmenet inside this code, before exporting it
 
-        private Dictionary<int, string> _proprietaryPropertyMappings = new Dictionary<int, string>();
+        private Dictionary<long, string> _proprietaryPropertyMappings = new Dictionary<long, string>();
+
+        private bool LoadVendorPropertyMapping(string path)
+        {
+            // get all lines from the file
+            var lines = File.ReadAllLines(path, Encoding.UTF8);
+            bool firstLine = true;
+
+            // helper function to log erros
+            void LogError(string message)
+            {
+                Trace.TraceError($"Invalid line in vendor proprietary BACnet properties file \"{path}\". {message}");
+            }
+
+            // parse each line
+            foreach (var line in lines)
+            {
+                // use the first line to detect the format
+                if (firstLine)
+                {
+                    // check the first line strictly so that we can verify that it is the new format
+                    if (!Regex.Match(line, @"^Vendor ID[,;]Property ID[,;]Property Name$").Success)
+                    {
+                        // return an indication that we do not have handled this file
+                        return false;
+                    }
+                    firstLine = false;
+                    continue;
+                }
+
+                // parse a line with a vendor property mapping
+                var match = Regex.Match(line, @"^(\d+)[,;](\d+)[,;]([^,;]+)"); // Allow here more than 3 columns, e.g. for an editorial comment in the file
+                if (!match.Success)
+                {
+                    LogError($"The row \"'{line}\" is not a valid mapping.");
+                    continue;
+                }
+
+                // parse the vendor ID
+                if (!ushort.TryParse(match.Groups[1].Value, out var vendorId))
+                {
+                    LogError($"The value {match.Groups[1].Value} is not a valid vendor ID number.");
+                    continue;
+                }
+
+                // parse the property ID
+                if (!uint.TryParse(match.Groups[2].Value, out var propertyId))
+                {
+                    LogError($"The value {match.Groups[2].Value} is not a valid property ID number.");
+                    continue;
+                }
+
+                // combine the vendor ID and the property ID so that be can store it in our central mapping list
+                var vendorPropertyNumber = ((long)vendorId << 32) | propertyId;
+                if (_proprietaryPropertyMappings.ContainsKey(vendorPropertyNumber))
+                {
+                    LogError($"The property ID {propertyId} of vendor ID {vendorId} is already defined as \"{_proprietaryPropertyMappings[vendorPropertyNumber]}\".");
+                    continue;
+                }
+                _proprietaryPropertyMappings.Add(vendorPropertyNumber, match.Groups[3].Value);
+            }
+
+            // return an indication that be have handled this file
+            return true;
+        }
 
 
         /// <summary>
@@ -167,6 +232,12 @@ namespace Yabe
                     if (!File.Exists(filePath))
                     {
                         Trace.TraceError(String.Format("Failed to open proprietary Bacnet properties file \"{0}\": {1}", filePath, "The file does not exist."));
+                        continue;
+                    }
+
+                    // attempt to load the mapping in the new format
+                    if (LoadVendorPropertyMapping(filePath))
+                    {
                         continue;
                     }
 
@@ -257,7 +328,7 @@ namespace Yabe
 
         private int AsynchRequestId=0;
 
-        private class BACnetDeviceLine
+        public class BACnetDeviceLine
         {
             public BACnetDeviceLine(BacnetClient client)
             {
@@ -962,9 +1033,35 @@ namespace Yabe
             }
         }
 
+        private Dictionary<uint, ushort> deviceVendorMap = new Dictionary<uint, ushort>();
+
+        private ushort? GetCurrentVendorId()
+        {
+            // Here we try to determine the current vendor ID of the selected device. Note that
+            // this could possibly be better integrated into YABE. But for now, this should work.
+            if (SelectedDevice != null)
+            {
+                lock (deviceVendorMap)
+                {
+                    if (deviceVendorMap.TryGetValue(SelectedDevice.DeviceId.Instance, out var vendorId))
+                    {
+                        return vendorId;
+                    }
+                }
+            }
+            Trace.TraceWarning("Cannot retrieve vendor information of the selected device.");
+            return null;
+        }
+
         void OnIam(BacnetClient sender, BacnetAddress adr, uint device_id, uint max_apdu, BacnetSegmentations segmentation, ushort vendor_id)
         {
             DoReceiveIamImplementation(sender, adr, device_id);
+
+            // remember the vendor ID of the device
+            lock (deviceVendorMap)
+            {
+                deviceVendorMap[device_id] = vendor_id;
+            }
         }
 
         private void DoReceiveIamImplementation(BacnetClient sender, BacnetAddress adr, uint device_id)
@@ -1653,6 +1750,18 @@ namespace Yabe
             else
             {
                 name = GetProprietaryPropertyName((int)property);
+
+                // try to resolve the vendor specific mapping
+                var vendorId = GetCurrentVendorId();
+                if (vendorId.HasValue)
+                {
+                    var vendorPropertyNumber = ((long)vendorId << 32) | (uint)property;
+                    if (_proprietaryPropertyMappings.TryGetValue(vendorPropertyNumber, out var vendorPropertyName))
+                    {
+                        name = vendorPropertyName;
+                    }
+                }
+
                 if(name!=null)
                 {
                     if (prependNumber)

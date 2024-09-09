@@ -1,0 +1,1003 @@
+Vendor ID,Property ID,Property Name
+197,512,(Bosch) Custom_Items
+197,513,(Bosch) Vendor_Object_Name
+197,514,(Bosch) Signal_Id
+197,515,(Bosch) Read_Level
+197,516,(Bosch) Write_Level
+197,517,(Bosch) Decimal_Places
+197,518,(Bosch) Hidden
+197,519,(Bosch) Application_Start_Delay
+197,520,(Bosch) Application_State
+197,521,(Bosch) Adjustment_Offset
+197,522,(Bosch) Filter_Constant
+197,523,(Bosch) Enabling_Delay
+197,524,(Bosch) Output_Deadband
+415,512,(Beckhoff) Scale_Offset (REAL)
+415,513,(Beckhoff) Io_Bus_Nr (Unsigned)
+415,514,(Beckhoff) Io_Module_Nr (Unsigned)
+415,515,(Beckhoff) Io_Channel_Nr (Unsigned)
+415,516,(Beckhoff) Persist_Data (Enumerated)
+415,517,(Beckhoff) Active_Priority (Unsigned)
+415,518,(Beckhoff) LastConfirmedServiceAccess (Character String)
+415,519,(Beckhoff) Data_Request_Mode (Enumerated)
+415,520,(Beckhoff) Data_Polling_Interval (Unsigned)
+415,521,(Beckhoff) EnrollmentCov_Resubscription_Interval (Unsigned)
+415,522,(Beckhoff) File_Name (Character String)
+415,523,(Beckhoff) Process_Id (Unsigned)
+415,524,(Beckhoff) PLC_SymbolName (Character String)
+415,525,(Beckhoff) UseUnconfirmedCoV (Boolean)
+9,3000,(Siemens) User designation
+9,3001,(Siemens) Reference to higher object
+9,3002,(Siemens) Interface list
+9,3003,(Siemens) Local list
+9,3004,(Siemens) Hierarchy list
+9,3005,(Siemens) Element type
+9,3006,(Siemens) Object tag
+9,3007,(Siemens) Function name
+9,3008,(Siemens) Low value
+9,3009,(Siemens) High value
+9,3010,(Siemens) Parameter kind
+9,3011,(Siemens) Alarm enable
+9,3013,(Siemens) Locked
+9,3014,(Siemens) Time of acknowledgement
+9,3015,(Siemens) Acknowledgement signature
+9,3016,(Siemens) Message text
+9,3017,(Siemens) Slope
+9,3018,(Siemens) Intercept
+9,3019,(Siemens) Input/Output address
+9,3021,(Siemens) Commissioning state
+9,3022,(Siemens) Name reference
+9,3023,(Siemens) Feedback address
+9,3025,(Siemens) Destination list
+9,3026,(Siemens) Site name
+9,3028,(Siemens) Primary device
+9,3029,(Siemens) Last engineering time for global objects
+9,3030,(Siemens) Last online modification time for global objects
+9,3033,(Siemens) Synchronisation request period
+9,3034,(Siemens) Program modification time
+9,3035,(Siemens) Minimum cycle time
+9,3036,(Siemens) Maximum cycle time
+9,3037,(Siemens) Cycle time statistics
+9,3038,(Siemens) Memory statistics
+9,3039,(Siemens) Communication statistics
+9,3040,(Siemens) Serial line statistics
+9,3041,(Siemens) Diagnostics
+9,3042,(Siemens) Main value
+9,3043,(Siemens) Access class
+9,3044,(Siemens) Maximum size
+9,3045,(Siemens) Minimum size
+9,3046,(Siemens) Enable operating hours count
+9,3047,(Siemens) Limit value for operating hours
+9,3048,(Siemens) Total operating hours
+9,3049,(Siemens) Shadow device-object ID
+9,3050,(Siemens) Shadow device-object name
+9,3052,(Siemens) Maintenance date
+9,3053,(Siemens) Feedback polarity
+9,3054,(Siemens) Feedback slope
+9,3055,(Siemens) Feedback intercept
+9,3056,(Siemens) Exception
+9,3057,(Siemens) Next value
+9,3058,(Siemens) Next time
+9,3059,(Siemens) Parameter list
+9,3060,(Siemens) List of name references
+9,3061,(Siemens) Start date for daylight saving time
+9,3062,(Siemens) Start time for daylight saving time
+9,3063,(Siemens) End date for daylight saving time
+9,3064,(Siemens) End time for daylight saving time
+9,3066,(Siemens) Operating hours message
+9,3067,(Siemens) Maintenance indication
+9,3068,(Siemens) Pres.operating hours
+9,3069,(Siemens) Maximum count of instructions
+9,3070,(Siemens) Reclaim time
+9,3072,(Siemens) Yesterday's value
+9,3073,(Siemens) Next date
+9,3074,(Siemens) Visibility
+9,3075,(Siemens) Server type
+9,3076,(Siemens) Name resolution interval
+9,3077,(Siemens) Shadow for APDU segment timeout
+9,3078,(Siemens) Shadow for APDU timeout
+9,3079,(Siemens) Shadow for maximum APDU length accepted
+9,3080,(Siemens) Shadow for number of APDU retries
+9,3081,(Siemens) Global
+9,3082,(Siemens) Startup statistics
+9,3083,(Siemens) Date and time subtype
+9,3084,(Siemens) Users
+9,3085,(Siemens) User groups
+9,3086,(Siemens) Scope of access
+9,3087,(Siemens) Last modification
+9,3088,(Siemens) Group reference
+9,3089,(Siemens) Maximum number of call repetitions
+9,3090,(Siemens) Termination time setting
+9,3091,(Siemens) Remote access password
+9,3092,(Siemens) Comm. interface list
+9,3093,(Siemens) Connection list
+9,3094,(Siemens) Modem statistics
+9,3095,(Siemens) Modem settings
+9,3096,(Siemens) Modem status
+9,3097,(Siemens) Manual connection request
+9,3098,(Siemens) Network number
+9,3099,(Siemens) Alarm priority limit
+9,3100,(Siemens) Tomorrow
+9,3101,(Siemens) Day after tomorrow
+9,3102,(Siemens) Interval
+9,3103,(Siemens) Last alarm or event message
+9,3104,"(Siemens) Group members, list of commanded group objects"
+9,3105,"(Siemens) Room members, list of commanded rooms"
+9,3106,(Siemens) Favorites menu line
+9,3107,(Siemens) Monitoring time switch-on
+9,3108,(Siemens) Monitoring time switch-off
+9,3109,(Siemens) I/O statistics
+9,3110,(Siemens) Switch-on delay
+9,3111,(Siemens) Switch-off delay
+9,3113,(Siemens) Common alarm reference
+9,3114,(Siemens) Alarm class
+9,3115,(Siemens) Step up
+9,3116,(Siemens) Step down
+9,3117,(Siemens) Present power
+9,3118,(Siemens) Controlled power
+9,3119,(Siemens) IP parameters
+9,3120,(Siemens) Substitution value
+9,3121,(Siemens) Description list
+9,3122,(Siemens) Alarm function
+9,3123,(Siemens) Heartbeat
+9,3124,(Siemens) Output threshold
+9,3125,(Siemens) Error list
+9,3126,(Siemens) Polling time
+9,3127,(Siemens) Event count
+9,3132,(Siemens) Extended notify
+9,3133,(Siemens) Log status
+9,3134,(Siemens) Set value
+9,3135,(Siemens) Integral action time Tn
+9,3136,(Siemens) Neutral zone Nz
+9,3137,(Siemens) Derivative action time Tv
+9,3138,(Siemens) Rise time from 0 to 100%
+9,3139,(Siemens) Fall time from 100 to 0%
+9,3140,(Siemens) Loop state
+9,3141,(Siemens) Setpoint resolution
+9,3142,(Siemens) Setpoint high value
+9,3143,(Siemens) Setpoint low value
+9,3144,(Siemens) Logging enabled
+9,3145,(Siemens) Alarm class text
+9,3146,(Siemens) Safety command enable
+9,3148,(Siemens) File operation
+9,3149,(Siemens) Pulse count
+9,3150,(Siemens) Content change time stamp
+9,3151,(Siemens) File data source
+9,3152,(Siemens) Serialization in process
+9,3153,(Siemens) Available file storage
+9,3154,(Siemens) Device infrmation object reference
+9,3155,(Siemens) Serial number
+9,3200,(Siemens) Conversion factor
+9,3201,(Siemens) Pulse count
+9,3202,(Siemens) Pulse count: Before correction
+9,3203,(Siemens) COV period
+9,3204,(Siemens) Correction time
+9,3205,(Siemens) Correction value
+9,3206,(Siemens) Pulse count: Total
+9,3207,(Siemens) Pulse count: Update time
+9,3210,(Siemens) Transient
+9,3211,(Siemens) Feedback value analog
+9,3212,(Siemens) Resolution for display
+9,3213,(Siemens) Engineering units
+9,3214,(Siemens) Inactive state text
+9,3215,(Siemens) Active state text
+9,3216,(Siemens) Number of present value states
+9,3217,(Siemens) State texts
+9,3218,(Siemens) Device recipients list
+9,3219,(Siemens) Alarm buffer size
+9,3220,(Siemens) Alarm record count
+9,3221,(Siemens) Alarm notification threshold
+9,3222,(Siemens) Backup servers
+9,3224,(Siemens) Device operation mode
+9,3225,(Siemens) Operating hours
+9,3226,(Siemens) Time stamp reset of operating hours
+9,3227,(Siemens) Minimum switch-on time
+9,3228,(Siemens) Minimum switch-off time
+9,3229,(Siemens) COV resubscription interval
+9,3230,(Siemens) Actual value
+9,3231,(Siemens) Reliability state
+9,3232,(Siemens) Status flags
+9,3233,(Siemens) Enable change-of-state count
+9,3234,(Siemens) Technical designation
+9,3236,(Siemens) Event suppression active
+9,3238,(Siemens) Out of service
+9,3239,(Siemens) Enable repeat command
+9,3240,(Siemens) Maximum number of device instance
+9,3241,(Siemens) Minimum number of device instance
+9,3242,(Siemens) Device instance number function selector
+9,3243,(Siemens) Notification function selector
+9,3293,(Siemens) Low limit scaled
+9,3294,(Siemens) High limit scaled
+9,3295,(Siemens) Pulse rate scaled
+9,3296,(Siemens) Set value scaled
+9,3297,(Siemens) Value before correction scaled
+9,3298,(Siemens) Present maximum value scaled
+9,3299,(Siemens) Present value scaled
+9,3300,(Siemens) Input Peer to Peer
+9,4099,(Siemens) Client representation references (ISA)
+9,4100,(Siemens) Timer state (ISA)
+9,4101,(Siemens) Timer running (ISA)
+9,4102,(Siemens) Last state change (ISA)
+9,4103,(Siemens) Initial timeout (ISA)
+9,4104,(Siemens) Default timeout (ISA)
+9,4108,(Siemens) French CH
+9,4109,"(Siemens) French (CA, short)"
+9,4392,(Siemens) DALI-2 Application Control Device Short Address
+9,4393,(Siemens) Name extension path
+9,4395,(Siemens) Event publishing
+9,4396,(Siemens) COV property compatibility
+9,4397,(Siemens) Description path
+9,4398,(Siemens) Naming parent
+9,4399,(Siemens) OpenTherm master message type
+9,4400,(Siemens) OpenTherm product type version
+9,4401,(Siemens) OpenTherm protocol version
+9,4402,(Siemens) OpenTherm manufacturer ID
+9,4403,(Siemens) OpenTherm brand specific version
+9,4404,(Siemens) OpenTherm brand name
+9,4405,(Siemens) OpenTherm data field
+9,4406,(Siemens) OpenTherm slave message type
+9,4407,(Siemens) Measured time
+9,4408,(Siemens) Counter value
+9,4409,(Siemens) Extension by settings for integration of BACnet devices
+9,4410,(Siemens) Total runtime
+9,4411,(Siemens) Old start value
+9,4412,(Siemens) Raw value high
+9,4413,(Siemens) Raw value low
+9,4414,(Siemens) Persistent value
+9,4415,(Siemens) Extension by MS/TP
+9,4416,(Siemens) Translation library
+9,4417,(Siemens) Has function charts
+9,4418,(Siemens) Extension by persistency
+9,4419,(Siemens) Supervised devices
+9,4420,(Siemens) Failed devices
+9,4421,(Siemens) Post loading action
+9,4422,(Siemens) Extension by time master
+9,4423,(Siemens) Time source
+9,4424,(Siemens) NTP server address
+9,4425,(Siemens) Meta data link
+9,4426,(Siemens) Firmware revision (S1)
+9,4427,(Siemens) Connection URLs
+9,4428,(Siemens) Retry attempts
+9,4429,(Siemens) Last connected
+9,4430,(Siemens) Master alive timeout
+9,4431,"(Siemens) Change of value, COV increment"
+9,4432,(Siemens) Present value truncated
+9,4433,(Siemens) Present value scaled
+9,4434,(Siemens) Allow http
+9,4435,(Siemens) Name extension rule
+9,4436,(Siemens) Object naming rule
+9,4437,(Siemens) Name extension
+9,4438,(Siemens) Name
+9,4439,(Siemens) WLAN band
+9,4440,(Siemens) WLAN channel
+9,4441,(Siemens) WLAN 802.11 standard
+9,4442,(Siemens) WLAN mode
+9,4443,(Siemens) WPA2 password
+9,4444,(Siemens) WLAN SSID
+9,4445,(Siemens) WLAN on
+9,4446,(Siemens) IP address mode
+9,4447,(Siemens) Proxy server authentication
+9,4448,(Siemens) Proxy server address
+9,4449,(Siemens) Use proxy server
+9,4450,(Siemens) Enable BACnet tunnel
+9,4451,(Siemens) Registration URL
+9,4452,(Siemens) Engineering data on device
+9,4453,(Siemens) Last action
+9,4454,(Siemens) Lock for edit
+9,4455,(Siemens) HTTP port
+9,4456,(Siemens) HTTPS port
+9,4457,(Siemens) Segmentation window size
+9,4458,(Siemens) BACnet routing mode
+9,4459,(Siemens) Number of states
+9,4460,(Siemens) State text
+9,4461,(Siemens) Inactive text
+9,4462,(Siemens) Active text
+9,4463,(Siemens) Units
+9,4464,(Siemens) Supported Apogee character set
+9,4465,(Siemens) Supported Desigo character set
+9,4466,(Siemens) COV categories
+9,4467,(Siemens) Reserved number of COV
+9,4468,(Siemens) Reserved number of COV clients
+9,4469,(Siemens) Backup value
+9,4470,(Siemens) Mapping kind
+9,4471,(Siemens) Switchover time
+9,4472,(Siemens) Compare method
+9,4473,(Siemens) Active value
+9,4474,(Siemens) Inactive value
+9,4475,(Siemens) Expiration warning
+9,4476,(Siemens) Expiration warning time
+9,4477,(Siemens) Switch-on count per state
+9,4478,(Siemens) Switch-on count per state previous period
+9,4479,(Siemens) Switch-on count per state present period
+9,4480,(Siemens) Time of active time reset
+9,4481,(Siemens) Deviation unit
+9,4482,(Siemens) Maintenance state
+9,4483,(Siemens) Elapsed active time per state previous period
+9,4484,(Siemens) Elapsed active time per state present period
+9,4485,(Siemens) Elapsed active time per state
+9,4486,(Siemens) Elapsed active time per range previous period
+9,4487,(Siemens) Elapsed active time per range present period
+9,4488,(Siemens) Elapsed active time per range
+9,4489,(Siemens) Number of ranges
+9,4490,(Siemens) Elapsed active time
+9,4491,(Siemens) Deviation high value previous period
+9,4492,(Siemens) Deviation low value previous period
+9,4493,(Siemens) Deviation high value present period
+9,4494,(Siemens) Deviation low value present period
+9,4495,(Siemens) Reference high value for deviation
+9,4496,(Siemens) Reference low value for deviation
+9,4497,(Siemens) Average value previous period
+9,4498,(Siemens) Maximum value previous period
+9,4499,(Siemens) Minimum value previous period
+9,4500,(Siemens) Average value present period
+9,4501,(Siemens) Maximum value present period
+9,4502,(Siemens) Minimum value present period
+9,4503,(Siemens) Switch-on count limit present period
+9,4504,(Siemens) Switch-on count limit
+9,4505,(Siemens) Time of switch-on count reset
+9,4506,(Siemens) Switch-on count
+9,4507,(Siemens) Switch-on count previous period
+9,4508,(Siemens) Switch-on count present period
+9,4509,(Siemens) Elapsed active time limit present period
+9,4510,(Siemens) Elapsed active time limit
+9,4511,(Siemens) Elapsed active time previous period
+9,4512,(Siemens) Elapsed active time present period
+9,4513,(Siemens) Aggregation period
+9,4514,(Siemens) Enable aggregation
+9,4515,(Siemens) Prefer IPv6 name resolution
+9,4516,(Siemens) IPv6 enable
+9,4517,(Siemens) IPv6 DNS server
+9,4518,(Siemens) IPv6 multicast address
+9,4519,(Siemens) IPv6 default gateway
+9,4520,(Siemens) Auto addressing enable
+9,4521,(Siemens) IPv6 prefix length
+9,4522,(Siemens) IPv6 address
+9,4523,(Siemens) Modbus slave object reference
+9,4524,(Siemens) Update behavior field bus
+9,4525,(Siemens) TCP close connection
+9,4526,(Siemens) TCP connect timeout
+9,4527,(Siemens) Maximum APDU length
+9,4528,(Siemens) Network port identification
+9,4529,(Siemens) Last overridden object reference
+9,4530,(Siemens) Last out of service object reference
+9,4531,(Siemens) Last commanded object reference
+9,4532,(Siemens) Last unacknowledged object reference
+9,4533,(Siemens) Last alarm object reference
+9,4534,(Siemens) Last extended fault object reference
+9,4535,(Siemens) Last fault object reference
+9,4536,(Siemens) Created by
+9,4537,(Siemens) Modified by
+9,4538,(Siemens) Version info
+9,4539,(Siemens) Acknowledge
+9,4540,(Siemens) Extended fault objects list
+9,4541,(Siemens) Extended fault object count
+9,4542,(Siemens) Certificate reference
+9,4543,(Siemens) Warning limit enable
+9,4544,(Siemens) High warning limit
+9,4545,(Siemens) Low warning limit
+9,4546,(Siemens) Certificate chain
+9,4547,(Siemens) Subject alternative names
+9,4548,(Siemens) Subject common name
+9,4549,(Siemens) Subject
+9,4550,(Siemens) Issuer chain
+9,4551,(Siemens) Issuer
+9,4552,(Siemens) Valid to
+9,4553,(Siemens) Valid from
+9,4554,(Siemens) X509 serial number
+9,4555,(Siemens) Signature algorithm
+9,4556,(Siemens) X509 version
+9,4557,(Siemens) Time master reference
+9,4558,(Siemens) Extension by event configuration
+9,4559,(Siemens) Turnaround time
+9,4560,(Siemens) Token timeout
+9,4561,(Siemens) Reply timeout
+9,4562,(Siemens) MS/TP timing mode
+9,4563,(Siemens) Rail length
+9,4564,(Siemens) Foreign device subscription lifetime
+9,4565,(Siemens) Foreign device BBMD address
+9,4566,(Siemens) BBMD foreign device table
+9,4567,(Siemens) BBMD accept FD registrations
+9,4568,(Siemens) BBMD broadcast distribution table
+9,4569,(Siemens) IP mode
+9,4570,(Siemens) Allowed priority C
+9,4571,(Siemens) Allowed priority B
+9,4572,(Siemens) Allowed priority A
+9,4573,(Siemens) Default priority
+9,4574,(Siemens) Mapping kind
+9,4575,(Siemens) Data access
+9,4576,(Siemens) Register block interface version
+9,4577,(Siemens) Start register address
+9,4578,(Siemens) Register type
+9,4579,(Siemens) Modbus slave interface extension
+9,4580,(Siemens) Extension by data aggregation
+9,4581,(Siemens) Port extension
+9,4582,(Siemens) Serial port number
+9,4583,(Siemens) Domain ID
+9,4584,(Siemens) Node ID
+9,4585,(Siemens) Subnet ID
+9,4586,(Siemens) Time synchronization command
+9,4587,(Siemens) Initial startup
+9,4588,(Siemens) Substitution name 33
+9,4589,(Siemens) Substitution name 32
+9,4590,(Siemens) Substitution name 31
+9,4591,(Siemens) Substitution name 30
+9,4592,(Siemens) Substitution name 29
+9,4593,(Siemens) Substitution name 28
+9,4594,(Siemens) Substitution name 27
+9,4595,(Siemens) Substitution name 26
+9,4596,(Siemens) Substitution name 25
+9,4597,(Siemens) Substitution name 24
+9,4598,(Siemens) Substitution name 23
+9,4599,(Siemens) Substitution name 22
+9,4600,(Siemens) Substitution name 21
+9,4601,(Siemens) Substitution name 20
+9,4602,(Siemens) Substitution name 19
+9,4603,(Siemens) Substitution name 18
+9,4604,(Siemens) Substitution name 17
+9,4605,(Siemens) Substitution name 16
+9,4606,(Siemens) Substitution name 15
+9,4607,(Siemens) Substitution name 14
+9,4608,(Siemens) Substitution name 13
+9,4609,(Siemens) Substitution name 12
+9,4610,(Siemens) Substitution name 11
+9,4611,(Siemens) Present coil current
+9,4612,"(Siemens) Stuck determination, calculated average current"
+9,4613,"(Siemens) Stuck determination, present event count"
+9,4614,"(Siemens) Stuck determination, total event count"
+9,4615,"(Siemens) Stuck determination, present current limit"
+9,4616,"(Siemens) Stuck determination, average current limit"
+9,4617,"(Siemens) Stuck determination, retry threshold"
+9,4618,"(Siemens) Stuck determination, calculation time"
+9,4619,"(Siemens) Motor stuck, stop before retry"
+9,4620,(Siemens) Server communication buffer
+9,4621,(Siemens) Member COV data send time slot
+9,4622,(Siemens) Valve application mode
+9,4623,(Siemens) Design signal value correction for cooling
+9,4624,(Siemens) Design signal value correction for heating
+9,4625,(Siemens) Design signal value for cooling
+9,4626,(Siemens) Design signal value for heating
+9,4627,(Siemens) Signal value for cooling
+9,4628,(Siemens) Signal value for heating
+9,4629,(Siemens) Backup mode activation delay
+9,4630,(Siemens) Member collected data send time slot
+9,4631,(Siemens) Pulse time
+9,4632,"(Siemens) Power failure, power-down mode"
+9,4633,(Siemens) LED active indication
+9,4634,"(Siemens) Power failure, backup mode"
+9,4635,(Siemens) COV repetition time
+9,4636,(Siemens) COV increment signal value
+9,4637,(Siemens) Rail type
+9,4638,(Siemens) COV repetition time 1
+9,4639,(Siemens) COV repetition time 2
+9,4640,(Siemens) COV repetition time 3
+9,4641,(Siemens) Polling timeout
+9,4642,(Siemens) Feature presentation order
+9,4643,(Siemens) Configured device address binding
+9,4644,(Siemens) Heartbeat timer T2
+9,4645,(Siemens) Heartbeat timer T1
+9,4646,(Siemens) Polling timer T3
+9,4647,(Siemens) Polling timer T2
+9,4648,(Siemens) Polling timer T1
+9,4649,(Siemens) Uploaded differential pressure adjustment to nominal air volume flow
+9,4650,(Siemens) Uploaded control action
+9,4651,(Siemens) Uploaded nominal flow
+9,4652,(Siemens) Time constant of room temperature during stop time
+9,4653,(Siemens) Start time if no temperature change
+9,4654,(Siemens) Start time for weekend conditions
+9,4655,(Siemens) Start time for low load conditions
+9,4656,(Siemens) Start time for design conditions
+9,4657,(Siemens) Enable adaptation
+9,4658,(Siemens) Enable domestic hot water screen
+9,4659,(Siemens) Enable display heating functions
+9,4660,(Siemens) Enable fume hood
+9,4661,(Siemens) Enable fireplace
+9,4662,(Siemens) Enable rapid ventilation
+9,4663,(Siemens) Enable weekly schedule
+9,4664,(Siemens) Enable clock setting
+9,4665,(Siemens) Presentation format
+9,4666,(Siemens) Remote device version
+9,4667,(Siemens) Device type family
+9,4668,(Siemens) In use objects list
+9,4669,(Siemens) Annotations for URL favorites
+9,4670,(Siemens) Flow direction
+9,4671,(Siemens) Cooling valve position maximum
+9,4672,(Siemens) Cooling valve position minimum
+9,4673,(Siemens) Closed valve position
+9,4674,(Siemens) Heating valve position minimum
+9,4675,(Siemens) Heating valve position maximum
+9,4676,(Siemens) State flags
+9,4677,(Siemens) Configurable property reference
+9,4678,(Siemens) Home URL
+9,4679,(Siemens) Enable virtual network computing
+9,4680,(Siemens) Screen brightness mode
+9,4681,(Siemens) Screen brightness
+9,4682,(Siemens) Screen orientation
+9,4683,(Siemens) Keep user logged in
+9,4684,(Siemens) URL favorites
+9,4685,(Siemens) Screensaver timeout
+9,4686,(Siemens) Screensaver
+9,4687,(Siemens) Keyboard
+9,4688,(Siemens) Enable secure shell (SSH)
+9,4689,(Siemens) Link status
+9,4690,(Siemens) DNS servers
+9,4691,(Siemens) Domain name
+9,4692,(Siemens) Host name
+9,4693,(Siemens) SNMP read community string
+9,4694,(Siemens) Enable SNMP
+9,4695,(Siemens) UDP port for local group communication
+9,4696,(Siemens) Busload integration time
+9,4697,(Siemens) Message count measurement interval
+9,4698,(Siemens) Line termination
+9,4699,(Siemens) Calibration error
+9,4700,(Siemens) Remaining calibration time
+9,4701,(Siemens) Number of valid calibration points
+9,4702,(Siemens) Measuring period
+9,4703,(Siemens) Hold time
+9,4704,(Siemens) Search attempts
+9,4705,(Siemens) View extension
+9,4706,(Siemens) Command
+9,4707,(Siemens) Include 3rd party devices
+9,4708,(Siemens) Max. device instance number
+9,4709,(Siemens) Min. device instance number
+9,4710,(Siemens) Discovery scope
+9,4711,(Siemens) TCP port
+9,4712,(Siemens) Drive operating hours
+9,4713,(Siemens) PWM frequency
+9,4714,(Siemens) Signal value 3
+9,4715,(Siemens) Process value 3
+9,4716,(Siemens) Feature evaluation results
+9,4717,"(Siemens) Enable pushbutton, mode manual"
+9,4718,(Siemens) Info page 5
+9,4719,(Siemens) Info page 4
+9,4720,(Siemens) Info page 3
+9,4721,(Siemens) Info page 2
+9,4722,(Siemens) Info page 1
+9,4723,(Siemens) Alarm display time
+9,4724,(Siemens) Timeout user operation
+9,4725,(Siemens) Timeout to default page
+9,4726,"(Siemens) Enable fume hood operation, mode high"
+9,4727,"(Siemens) Enable fume hood op., mode medium"
+9,4728,"(Siemens) Enable fume hood operation, mode low"
+9,4729,"(Siemens) Enable fume hood operation, mode auto"
+9,4730,"(Siemens) Enable fume hood operation, mode off"
+9,4731,(Siemens) Enable automatic sash positioning
+9,4732,(Siemens) Enable fume hood integrated light
+9,4734,(Siemens) Air volume flow units (SI)
+9,4735,(Siemens) Setpoint display time
+9,4736,(Siemens) Area 1 text display time
+9,4737,(Siemens) Enable key beep
+9,4738,(Siemens) Backlight brightness
+9,4739,(Siemens) Backlight timeout
+9,4740,(Siemens) Assignment URL
+9,4741,(Siemens) Connection status
+9,4742,(Siemens) Connection URL
+9,4743,(Siemens) Activation key
+9,4744,(Siemens) Reconnect delay
+9,4745,(Siemens) Enable connectivity
+9,4746,"(Siemens) Motor stuck, retry interval"
+9,4747,"(Siemens) Motor stuck, retry number"
+9,4748,(Siemens) Motor state
+9,4749,(Siemens) Present speed
+9,4750,(Siemens) Decay mode
+9,4751,(Siemens) Micro step
+9,4752,(Siemens) Stepping mode
+9,4753,(Siemens) Coil frequency base
+9,4754,(Siemens) Coil impedance
+9,4755,(Siemens) Coil maximum current
+9,4756,(Siemens) Stepping angle
+9,4757,(Siemens) Motor direction
+9,4759,(Siemens) Deceleration time
+9,4760,(Siemens) Acceleration time
+9,4761,(Siemens) Motor characteristics in rpm (Y-Axis)
+9,4762,(Siemens) Motor characteristics in % (X-Axis)
+9,4763,(Siemens) Minimum speed
+9,4764,(Siemens) Maximum speed
+9,4765,(Siemens) Air volume flow units
+9,4766,(Siemens) Active valve position
+9,4767,(Siemens) Active air flow
+9,4768,(Siemens) Inactive valve position
+9,4769,(Siemens) Inactive air flow
+9,4773,(Siemens) Inter frame time
+9,4774,(Siemens) Inter character timeout
+9,4775,(Siemens) Stop bits
+9,4776,(Siemens) Parity
+9,4777,(Siemens) Baud rate
+9,4778,(Siemens) Response timeout
+9,4779,(Siemens) Polling timers
+9,4780,(Siemens) Heartbeat timers
+9,4781,(Siemens) Communication mode
+9,4782,(Siemens) Last update time
+9,4783,(Siemens) Output value 2
+9,4784,(Siemens) Output value 1
+9,4785,(Siemens) Number of elements
+9,4786,(Siemens) COV increment field bus
+9,4787,(Siemens) Input value 2
+9,4788,(Siemens) Input value 1
+9,4789,(Siemens) Min repetition time
+9,4790,(Siemens) Heartbeat timer
+9,4791,(Siemens) Mapping table
+9,4792,(Siemens) Number of bits
+9,4793,(Siemens) Polling timer
+9,4794,(Siemens) Bit-Offset
+9,4795,(Siemens) Data type
+9,4796,(Siemens) Licensed
+9,4797,(Siemens) Challenge response
+9,4798,(Siemens) Alarm distribution schedule
+9,4799,"(Siemens) Email address, sender"
+9,4800,"(Siemens) Email address, recipients"
+9,4801,"(Siemens) Email server, password"
+9,4802,"(Siemens) Email server, user name"
+9,4803,"(Siemens) Email server, login required"
+9,4804,"(Siemens) Email server, connection security"
+9,4805,(Siemens) Email server
+9,4806,"(Siemens) SMS Gateway, TAP password"
+9,4807,(Siemens) SMS gateway protocol
+9,4808,"(Siemens) SMS recipients, phone number"
+9,4809,"(Siemens) SMS gateway, phone number"
+9,4810,(Siemens) Enable alarm
+9,4811,(Siemens) Update command
+9,4812,(Siemens) Time to next value
+9,4813,(Siemens) Next value
+9,4814,(Siemens) Pulse integration time
+9,4815,(Siemens) Pressure deviation hold time
+9,4816,(Siemens) Pressure deviation
+9,4817,(Siemens) Disable auto-zero mode
+9,4818,(Siemens) Samples for average sensors calculation
+9,4819,(Siemens) Infinite impulse resp.filter time
+9,4820,"(Siemens) Auto-zero mode, zero value"
+9,4821,"(Siemens) Auto-zero mode, timer"
+9,4822,(Siemens) Auto-zero mode
+9,4823,(Siemens) Feature selection state
+9,4824,(Siemens) Enable LED state indication
+9,4825,(Siemens) Unacknowledged object count
+9,4826,(Siemens) Unacknowledged objects list
+9,4827,(Siemens) Model information
+9,4828,(Siemens) Remote ping interval
+9,4829,(Siemens) Local ping interval
+9,4830,(Siemens) Switch-off delay
+9,4831,(Siemens) Switch-on delay
+9,4832,(Siemens) Device instance number
+9,4833,(Siemens) Device name
+9,4834,(Siemens) Field bus restart
+9,4835,(Siemens) Application architecture style
+9,4836,(Siemens) Fault object count
+9,4837,(Siemens) Commanded object count
+9,4838,(Siemens) Alarm object count
+9,4839,(Siemens) Overridden object count
+9,4840,(Siemens) Out of service object count
+9,4841,(Siemens) Out of service objects list
+9,4842,(Siemens) Overridden objects list
+9,4843,"(Siemens) Room operator unit, manual operation locked"
+9,4844,"(Siemens) Room operator unit, LED indication"
+9,4845,(Siemens) Present application version
+9,4846,(Siemens) Present application description
+9,4847,(Siemens) Present application name
+9,4848,(Siemens) KNXnetIP tunneling individual address
+9,4849,(Siemens) KNX individual address (IA)
+9,4850,(Siemens) Units for differential value
+9,4851,(Siemens) Number of stages
+9,4852,(Siemens) Switch delay
+9,4853,(Siemens) Hysteresis switch-off
+9,4854,(Siemens) Hysteresis switch-on
+9,4855,(Siemens) Controller type
+9,4856,(Siemens) Configuration files (S1)
+9,4857,(Siemens) Group member tag
+9,4858,(Siemens) Time slot for date and time synchronization
+9,4859,(Siemens) Differential pressure adjustment to nominal air volume flow
+9,4860,(Siemens) Enable configuration modification
+9,4861,(Siemens) Substitution name 10
+9,4862,(Siemens) Substitution name 9
+9,4863,(Siemens) Substitution name 8
+9,4864,(Siemens) Substitution name 7
+9,4865,(Siemens) Substitution name 6
+9,4866,(Siemens) Substitution name 5
+9,4867,(Siemens) Substitution name 4
+9,4868,(Siemens) Substitution name 3
+9,4869,(Siemens) Substitution name 2
+9,4870,(Siemens) Substitution name 1
+9,4871,(Siemens) Mains frequency
+9,4872,(Siemens) Suggested feature
+9,4873,(Siemens) Network type
+9,4874,(Siemens) Enable (IP) DHCP
+9,4875,(Siemens) IP default gateway
+9,4876,(Siemens) IP subnet mask
+9,4877,(Siemens) IP address
+9,4878,(Siemens) UDP port
+9,4879,(Siemens) Network number
+9,4880,(Siemens) Link speed auto-negotiation
+9,4881,(Siemens) Link speeds
+9,4882,(Siemens) Link speed
+9,4883,(Siemens) BACnet MAC address
+9,4884,(Siemens) Controller state
+9,4885,(Siemens) Controller mode
+9,4886,(Siemens) Select application
+9,4887,(Siemens) Application type version
+9,4888,(Siemens) Application type description
+9,4889,(Siemens) Application type name
+9,4890,(Siemens) Application template version
+9,4891,(Siemens) Application template description
+9,4892,(Siemens) Application template name
+9,4893,(Siemens) Command process state
+9,4894,(Siemens) Command
+9,4895,(Siemens) Equipment identifier
+9,4896,(Siemens) Rapid ventilation
+9,4897,(Siemens) Number of fan speeds
+9,4898,(Siemens) Programming mode
+9,4899,(Siemens) Enable operation: green leaf
+9,4900,(Siemens) Engineering load context
+9,4901,(Siemens) Enable memorize
+9,4902,(Siemens) Enable operation: room op.mode
+9,4903,(Siemens) Enable operation: temporary comfort
+9,4904,(Siemens) Enable operation: presence button
+9,4905,(Siemens) Enable operation: air quality setpoint
+9,4906,(Siemens) Enable operation: room humidity setpoint
+9,4907,(Siemens) Enable operation: fan speed setpoint
+9,4908,"(Siemens) Room unit, room temp. setpoint display"
+9,4909,(Siemens) Enable operation: room temperature setpoint
+9,4910,"(Siemens) Room unit, display heating/cooling status"
+9,4911,"(Siemens) Room unit, air quality display"
+9,4912,"(Siemens) Room unit, display air quality"
+9,4913,"(Siemens) Room unit, display windows status"
+9,4914,"(Siemens) Room unit, display humidity"
+9,4915,"(Siemens) Room unit, display temperature"
+9,4916,(Siemens) Swap button pair 2 (CD)
+9,4917,(Siemens) Swap button pair 1 (AB)
+9,4918,"(Siemens) Blinds position 4,(Siemens)  open"
+9,4919,"(Siemens) Blinds position 3,(Siemens)  sun altitude high"
+9,4920,"(Siemens) Blinds position 2,(Siemens)  sun altitude low"
+9,4921,"(Siemens) Blinds position 1,(Siemens)  visual protection"
+9,4922,"(Siemens) Blinds position 0,(Siemens)  closed"
+9,4923,(Siemens) Calibration status
+9,4924,(Siemens) Calibration command
+9,4925,(Siemens) Group master context
+9,4926,(Siemens) Group members context
+9,4927,(Siemens) Context reference
+9,4928,(Siemens) Data collection link
+9,4929,(Siemens) Commanded objects list
+9,4930,(Siemens) Object usage
+9,4931,(Siemens) Number of slat steps
+9,4932,(Siemens) Slat rotation maximum time
+9,4933,(Siemens) Move completion time
+9,4934,(Siemens) Move down time
+9,4935,(Siemens) Move up time
+9,4936,(Siemens) End position detection
+9,4937,(Siemens) Acknowledgement credentials
+9,4938,(Siemens) Prewarning level
+9,4939,(Siemens) Prewarning active
+9,4940,(Siemens) Access object list
+9,4941,(Siemens) Object access level
+9,4942,(Siemens) Configuration extension version
+9,4943,(Siemens) Configuration extension
+9,4944,(Siemens) Enable local bus power supply
+9,4945,(Siemens) Calculated bus power
+9,4946,(Siemens) Object naming convention
+9,4947,(Siemens) System of units
+9,4948,(Siemens) Supported system languages
+9,4949,(Siemens) Active system language
+9,4950,(Siemens) FW-Internal: Alarm
+9,4951,(Siemens) Required feature
+9,4952,(Siemens) Excluded feature
+9,4953,(Siemens) Feature names
+9,4954,(Siemens) Feature descriptions
+9,4955,(Siemens) Feature type
+9,4956,(Siemens) Present feature
+9,4957,(Siemens) Damper move counter
+9,4958,(Siemens) Motor operating hours
+9,4959,(Siemens) Enable angle adaptation
+9,4960,(Siemens) Minimum switch on/off time
+9,4961,"(Siemens) Units for altitude, over sea level"
+9,4962,(Siemens) Altitude
+9,4963,(Siemens) Output level 2
+9,4964,(Siemens) Output level 1
+9,4965,(Siemens) Signal value 2
+9,4966,(Siemens) Signal value 1
+9,4967,(Siemens) Supported signal types
+9,4968,(Siemens) Signal type
+9,4969,(Siemens) Boost time
+9,4970,(Siemens) Output position
+9,4971,(Siemens) Configured event enable
+9,4972,(Siemens) Suppress event notification
+9,4973,(Siemens) Time of acknowledgement
+9,4974,(Siemens) Monitoring time deviation to fault
+9,4975,(Siemens) Automatic switch-off time
+9,4976,(Siemens) Automatic switch-off function
+9,4977,(Siemens) Prewarning time
+9,4978,(Siemens) Prewarning function
+9,4979,(Siemens) Calibration
+9,4980,(Siemens) Command reason
+9,4981,(Siemens) Number of channels
+9,4982,(Siemens) Maximum pulse rate
+9,4983,(Siemens) Minimum pulse rate
+9,4984,(Siemens) Pulse period
+9,4985,(Siemens) Pulse function
+9,4986,(Siemens) Switchover delay
+9,4987,(Siemens) Reaction time
+9,4988,(Siemens) Control action
+9,4989,(Siemens) Hysteresis
+9,4990,(Siemens) Function command
+9,4991,(Siemens) End position synchronization
+9,4992,(Siemens) Startup synchronization
+9,4993,(Siemens) Minimum switch-on time
+9,4994,(Siemens) Minimum switch-off time
+9,4995,(Siemens) Fall time from 100 to 0%
+9,4996,(Siemens) Rise time from 0 to 100%
+9,4997,(Siemens) Neutral zone
+9,4998,(Siemens) Process value 2
+9,4999,(Siemens) Process value 1
+9,5000,(Siemens) Extension by subsystem
+9,5001,(Siemens) Error list
+9,5002,(Siemens) DALI device number
+9,5003,(Siemens) Emergency lighting level
+9,5004,(Siemens) Emergency luminaire type
+9,5005,(Siemens) Switch-on delay for mains supply
+9,5006,(Siemens) Short test time
+9,5007,(Siemens) Total lamp operating hours
+9,5008,(Siemens) Emergency lamp operating hours
+9,5009,(Siemens) Tested emergency lamp operating hours
+9,5010,(Siemens) Expected emergency operating hours
+9,5011,(Siemens) Test state
+9,5012,(Siemens) Last test mode
+9,5013,(Siemens) Last test state
+9,5014,(Siemens) Last test result
+9,5015,(Siemens) Last test end
+9,5016,(Siemens) Last test start
+9,5017,(Siemens) Test period
+9,5018,(Siemens) Battery state
+9,5019,(Siemens) Battery charge
+9,5020,(Siemens) Control command result
+9,5021,(Siemens) Program configuration extension
+9,5022,(Siemens) Synchronization request
+9,5023,(Siemens) Configuration data master
+9,5024,(Siemens) Fault objects list
+9,5025,(Siemens) Alarm objects list
+9,5026,(Siemens) Node reference
+9,5027,(Siemens) Diagnostics description
+9,5028,(Siemens) Diagnostics values
+9,5029,(Siemens) Diagnostics
+9,5030,(Siemens) Main value index
+9,5032,(Siemens) Actuator type
+9,5033,"(Siemens) Runtime state data, modification counter"
+9,5034,(Siemens) FW-Internal: Last writing error code
+9,5035,"(Siemens) Resolution, for display"
+9,5036,(Siemens) Present min. value
+9,5037,(Siemens) Present max. value
+9,5038,(Siemens) Reason for system state
+9,5039,(Siemens) Network address
+9,5040,(Siemens) Time zone
+9,5041,(Siemens) FW-Internal: Always re-command
+9,5042,(Siemens) Related object reliability
+9,5043,(Siemens) Substitute priority
+9,5044,(Siemens) Group operation
+9,5045,(Siemens) Related property ID
+9,5046,(Siemens) Substitute value
+9,5047,(Siemens) Collected data sequence number
+9,5048,(Siemens) Data collection interval
+9,5049,(Siemens) Command sequence number
+9,5050,(Siemens) Transmission repeat
+9,5051,(Siemens) Transmission timeout
+9,5052,(Siemens) Present command kind
+9,5053,(Siemens) Reliability
+9,5054,(Siemens) Operation URL
+9,5055,(Siemens) Group data tag
+9,5056,(Siemens) Related object name
+9,5057,(Siemens) Related object reference
+9,5058,(Siemens) Group master reference
+9,5059,(Siemens) Group members
+9,5060,(Siemens) Synchronization interval members
+9,5061,(Siemens) Group command
+9,5062,(Siemens) Group number
+9,5063,(Siemens) Group category
+9,5064,(Siemens) Group category number
+9,5065,(Siemens) Source property identifier
+9,5066,(Siemens) Source object tag
+9,5067,(Siemens) Memorize scene
+9,5068,(Siemens) Ramp rate
+9,5069,(Siemens) Threshold for binary lighting
+9,5070,(Siemens) Binary present value
+9,5071,(Siemens) Burn-in operating hours
+9,5072,(Siemens) Fade time
+9,5073,(Siemens) In progress
+9,5074,(Siemens) Operating hours state
+9,5075,(Siemens) Expected operating hours
+9,5076,(Siemens) Minimum actual value
+9,5077,(Siemens) Maximum actual value
+9,5078,(Siemens) Compression
+9,5079,(Siemens) Checksum
+9,5080,(Siemens) File features
+9,5081,"(Siemens) Configuration data, modification counter"
+9,5082,"(Siemens) Engineering data, modification counter"
+9,5083,(Siemens) Progress value
+9,5084,(Siemens) Control command
+9,5085,(Siemens) Default command kind
+9,5086,(Siemens) Subordinate attributes
+9,5087,(Siemens) Field device type
+9,5088,(Siemens) Cancel command
+9,5089,(Siemens) Last moving direction
+9,5090,(Siemens) Lighting value
+9,5091,(Siemens) Lighting state
+9,5092,(Siemens) I/O address
+9,5093,(Siemens) Present priority
+9,5094,(Siemens) Update count
+9,5095,(Siemens) Device command
+9,5096,(Siemens) Orphan list
+9,5097,(Siemens) Field bus info
+9,5098,(Siemens) Device command result
+9,5099,(Siemens) Field bus command
+9,5100,(Siemens) Serial number
+9,5101,(Siemens) Device info
+9,5102,(Siemens) Building automation profile
+9,5103,(Siemens) Commissioning information
+9,5104,(Siemens) Commissioning state
+9,5105,(Siemens) Correction factor
+9,5106,(Siemens) Correction offset
+9,5107,(Siemens) Tracking value
+9,5108,(Siemens) Proprietary device features
+9,5109,(Siemens) Item list
+9,5110,(Siemens) Configuration data timestamp
+9,5111,(Siemens) Fume hood mode icon type
+9,5112,(Siemens) FW-Internal: Override
+9,5113,(Siemens) Available Flash-memory
+9,5114,(Siemens) Available RAM memory
+9,5115,(Siemens) FW-Internal: Group command
+9,5116,(Siemens) FW-Internal: Group collected data
+9,5117,(Siemens) Event message texts (ISA)
+9,5118,(Siemens) Function sets (ISA)
+9,5119,(Siemens) Version (ISA)
+9,5120,(Siemens) PPCL statements
+80,8207,(Sauter) MAC-Address
+80,8208,(Sauter) Hardware-Revision
+80,8227,(Sauter) IOunit-Idx
+80,8228,(Sauter) Plugged-In
+80,8230,(Sauter) Serial-Number-Actual
+80,8233,(Sauter) OP-Unit-Id-Actual
+80,8234,(Sauter) OP-Unit-Id-Expected
+80,8235,(Sauter) OP-Unit-Serial-Number-Expected
+80,8236,(Sauter) OP-Unit-Serial-Number-Actual
+80,8237,(Sauter) Model-Name-Expected
+80,8238,(Sauter) Model-Name-Actual
+80,8239,(Sauter) Channel-Values
+80,8240,(Sauter) Channel-Types
+80,8244,(Sauter) Event-Suppress-Reference
+80,8245,(Sauter) Event-Suppress-Active
+80,8246,(Sauter) Event-Suppress-Cascade-Active
+80,8248,(Sauter) Min-Hardware-Value
+80,8249,(Sauter) Max-Hardware-Value
+80,8250,(Sauter) Offset
+80,8251,(Sauter) Slope
+80,8252,(Sauter) Log-Object-List
+80,8255,(Sauter) Firmware-Index
+80,8262,(Sauter) Controller-Deadband
+80,8263,(Sauter) Hardware-Input-Module-Id
+80,8264,(Sauter) Hardware-Input-Channel-Id
+80,8265,(Sauter) Hardware-Output-Module-Id
+80,8266,(Sauter) Hardware-Output-Channel-Id
+80,8269,(Sauter) CM-Protocol-ID-Actual
+80,8270,(Sauter) CM-Protocol-ID-Expected
+80,8271,(Sauter) CM-Protocol-Version
+80,8276,(Sauter) CM-Status
+80,8277,(Sauter) Serial-Number
+80,8278,(Sauter) Production-Date
+80,8281,(Sauter) PC-Limit-Monitoring-Interval
+80,8282,(Sauter) PC-Pulse-Rate
+80,8300,(Sauter) Status-Flag-Sum
+80,8301,(Sauter) Number-Of-Active-Transition
+80,8302,(Sauter) Number-Of-Open-Transition
+80,8303,(Sauter) CM-Statistics
+80,8309,(Sauter) Priority-Array-Reset
+80,8313,(Sauter) MSP-Version
+80,8314,(Sauter) COV-Synchronization-Period
+80,8322,(Sauter) Download-User
+80,8323,(Sauter) Download-Comment
+80,8332,(Sauter) Min-Range-Value
+80,8333,(Sauter) Max-Range-Value
+80,8334,(Sauter) Hardware-Output-Value
+80,8338,(Sauter) On-Delay
+80,8351,(Sauter) Character-Set
+80,8352,(Sauter) DST-Start-Date
+80,8353,(Sauter) DST-End-Date
+80,8354,(Sauter) DST-Start-Offset
+80,8355,(Sauter) DST-End-Offset
+80,8357,(Sauter) Software-Product
+80,8358,(Sauter) Disable-Event-Message-Text
+80,8369,(Sauter) IOUnit-Object-List
+80,8370,(Sauter) Date_of_Compilation

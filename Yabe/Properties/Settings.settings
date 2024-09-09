@@ -144,7 +144,7 @@
       <Value Profile="(Default)">BACnetSCConfig.config</Value>
     </Setting>
     <Setting Name="Proprietary_Properties_Files" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Proprietary-properties.csv</Value>
+      <Value Profile="(Default)">VendorPropertyMapping.csv</Value>
     </Setting>
     <Setting Name="Show_Property_Id_Numbers" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
