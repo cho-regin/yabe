@@ -65,19 +65,26 @@
     <Reference Include="System.Text.Encoding.CodePages, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>packages\System.Text.Encoding.CodePages.6.0.0\lib\net461\System.Text.Encoding.CodePages.dll</HintPath>
     </Reference>
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\Yabe\BACnetBase.cs">
       <Link>BACnetBase.cs</Link>
     </Compile>
-    <Compile Include="..\Yabe\BACnetClientV1.cs">
-      <Link>BACnetClientV1.cs</Link>
+    <Compile Include="..\Yabe\BACnetClient.cs">
+      <Link>BACnetClient.cs</Link>
+    </Compile>
+    <Compile Include="..\Yabe\BACnetDevice.cs">
+      <Link>BACnetDevice.cs</Link>
     </Compile>
     <Compile Include="..\Yabe\BACnetTransport.cs">
       <Link>BACnetTransport.cs</Link>
     </Compile>
     <Compile Include="..\Yabe\BACnetTransportIPv6.cs">
       <Link>BACnetTransportIPv6.cs</Link>
+    </Compile>
+    <Compile Include="..\Yabe\Utilities.cs">
+      <Link>Utilities.cs</Link>
     </Compile>
     <Compile Include="Program.cs" />
   </ItemGroup>
