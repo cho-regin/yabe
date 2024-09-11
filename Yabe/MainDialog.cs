@@ -1556,7 +1556,7 @@ namespace Yabe
             }
 
             var target = (parent?.Nodes ??m_AddressSpaceTree.Nodes);
-            foreach (var obj in objects)
+            foreach (var obj in objects.OrderBy())
             {
                 // Add object:
                 var objNode = CreateObjectNode(obj);

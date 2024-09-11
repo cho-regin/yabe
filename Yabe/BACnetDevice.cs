@@ -429,7 +429,6 @@ namespace System.IO.BACnet
                 var objIds = await ReadPropertyAsync<List<BacnetObjectId>>(DeviceId, BacnetPropertyIds.PROP_OBJECT_LIST).ConfigureAwait(false);
                 objList = objIds
                     .Select(id => ObjectFactory.Create(this, id))
-                    .OrderBy()
                     .ToList();
 
                 // Initialize objects:
@@ -514,7 +513,6 @@ namespace System.IO.BACnet
                             .Select(sub => TryResolveSubordinate(sub))      // Skip bad (phantom-) subordinates.
                             .Where(obj => (obj != null))
                             .Where(obj => !TryPopDuplicate(obj.ObjectId))   // Skip duplicates.
-                            .OrderBy()
                             .ToArray();
                         viewList[i].SetChildren(subordinates);
                     }
@@ -524,7 +522,6 @@ namespace System.IO.BACnet
                         .SelectMany(objects => objects)
                         .Where(obj => obj.IsRoot)
                         .Cast<BACnetObject>()
-                        .OrderBy()
                         .ToList();
 
                     Debug.Assert(structObjList.Count > 0);

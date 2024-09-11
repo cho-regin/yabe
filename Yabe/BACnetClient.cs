@@ -2901,7 +2901,11 @@ namespace System.IO.BACnet
 
         public static IEnumerable<BACnetObject> OrderBy(this IEnumerable<BACnetObject> source, BACnetObjectSorting order = BACnetObjectSorting.ByIdentifier)
         {
-            return (source); // (BETA) ... TODO: Implement sorting here
+            switch (order)
+            {
+                case BACnetObjectSorting.ByIdentifier: return (source.OrderBy(obj => obj.ObjectId));
+            }
+            throw new NotImplementedException($"Failed order by not implemented sorting of '{order}'!");
         }
         public static IEnumerable<BACnetObject> OfObjectType(this IEnumerable<BACnetObject> source, BacnetObjectTypes type) => source.Where(obj => obj.ObjectId.Type == type);
         public static IEnumerable<BACnetObject> OfRootObjects(this IEnumerable<BACnetObject> source) => source.Where(obj => obj.IsRoot);
