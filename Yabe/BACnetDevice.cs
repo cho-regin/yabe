@@ -205,7 +205,7 @@ namespace System.IO.BACnet
                 {
                     return (await Client.ReadPropertyRequestAsync(Address, objectId, property, default, arrayIndex).ConfigureAwait(false));
                 }
-                catch (TimeoutException)
+                catch (Exception)
                 {
                     // Unable to read per single request.
                     // > Turn over to split request.
