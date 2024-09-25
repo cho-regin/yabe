@@ -8335,12 +8335,12 @@ namespace System.IO.BACnet
             if (adr == null && d.adr == null) return true;
             else if (adr == null || d.adr == null) return false;
             else if (adr.Length != d.adr.Length) return false;
+            else if (net != d.net) return false;
             else
             {
                 for (int i = 0; i < adr.Length; i++)
                     if (adr[i] != d.adr[i]) return false;
 
-                // Modif FC
                 if ((RoutedSource == null) && (d.RoutedSource != null))
                     return false;
                 if ((d.RoutedSource==null)&&(RoutedSource == null)) return true;
