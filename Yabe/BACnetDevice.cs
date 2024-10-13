@@ -205,29 +205,25 @@ namespace System.IO.BACnet
                 {
                     return (await Client.ReadPropertyRequestAsync(Address, objectId, property, default, arrayIndex).ConfigureAwait(false));
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // Unable to read per single request.
-                    // > Turn over to split request.
+                    if (property.IsListType())
+                        ; // Retry (Turn over to split request).
+                    else
+                        throw;
                 }
 
                 // Try 2) Split request and read property one by one:
-                if (property.IsListType())
-                {
-                    var res = await Client.ReadPropertyRequestAsync(Address, objectId, property, default, 0).ConfigureAwait(false);
-                    var objCount = res.Unwrap<ulong>();
+                var res = await Client.ReadPropertyRequestAsync(Address, objectId, property, default, 0).ConfigureAwait(false);
+                var objCount = res.Unwrap<ulong>();
 
-                    var result = new List<BacnetValue>();
-                    for (ulong i = 1; i <= objCount; i++)
-                    {
-                        res = await Client.ReadPropertyRequestAsync(Address, objectId, property, default, (uint)i).ConfigureAwait(false);
-                        result.Add(res.Single());
-                    }
-                    return (result);
+                var result = new List<BacnetValue>();
+                for (ulong i = 1; i <= objCount; i++)
+                {
+                    res = await Client.ReadPropertyRequestAsync(Address, objectId, property, default, (uint)i).ConfigureAwait(false);
+                    result.Add(res.Single());
                 }
-                else
-                    // State failed request:
-                    throw new BACnetCommunicationException($"Failed to read {property}!");
+                return (result);
             }
             catch (TaskCanceledException)
             {
@@ -704,6 +700,8 @@ namespace System.IO.BACnet
             {
                 // Read all properties:
                 var res = await Device.ReadPropertiesAsync(ObjectId, properties).ConfigureAwait(false);
+                if (res is null)
+                    return;
                 var propRes = res.Single();
                 lock (this)
                 {
@@ -728,6 +726,8 @@ namespace System.IO.BACnet
         public async Task UpdatePropertyAsync(BacnetPropertyIds property, uint arrayIndex = ASN1.BACNET_ARRAY_ALL)
         {
             var res = await Device.ReadPropertyAsync(ObjectId, property, arrayIndex).ConfigureAwait(false);
+            if (res is null)
+                return;
             lock (this)
             {
                 this.properties.AddOrUpdate(property, res.Unwrap());

@@ -2917,7 +2917,9 @@ namespace System.IO.BACnet
         /// <returns>Unwrapped value.</returns>
         public static T Unwrap<T>(this IEnumerable<BacnetValue> source)
         {
-            object res = Unwrap(source);
+            var res = Unwrap(source);
+            if (res is null)
+                return (default(T));
 
             var resType = res.GetType();
             var targetType = typeof(T);
@@ -2987,6 +2989,8 @@ namespace System.IO.BACnet
             {
                 switch (source)
                 {
+                    case null:
+                        return (null);
                     case IList<BacnetValue> val:
                         switch (val.Count)
                         {
@@ -3008,7 +3012,6 @@ namespace System.IO.BACnet
                                     .ToList(type));
                         }
 
-                    case null: throw new ArgumentNullException("Failed to unwrap null-value!");
                     default: throw new NotSupportedException($"Failed to unwrap value of unexpected type '{source.GetType().Name}'!");
                 }
             }

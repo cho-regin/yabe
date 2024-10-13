@@ -1663,24 +1663,24 @@ namespace Yabe
                 // Update device:
                 if (node.ToolTipText == "")
                 {
-                    var devObj = await device.GetDeviceObjectAsync();
-                    if (devObj != null)
+                    try
                     {
-                        bool Prop_Object_NameOK = false;
-                        String Identifier;
+                        var devObj = await device.GetDeviceObjectAsync();
+                        if (devObj != null)
+                        {
+                            bool Prop_Object_NameOK = false;
+                            String Identifier;
 
-                        lock (DevicesObjectsName)
-                            Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.Address.FullHashString(), devObj.ObjectId), out Identifier);
-                        if (Prop_Object_NameOK)
-                        {
-                            node.ToolTipText = node.Text;
-                            node.Text = Identifier + " [" + devObj.ObjectId.Instance.ToString() + "] ";
-                        }
-                        else
-                        {
-                            this.Cursor = Cursors.WaitCursor;
-                            try
+                            lock (DevicesObjectsName)
+                                Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.Address.FullHashString(), devObj.ObjectId), out Identifier);
+                            if (Prop_Object_NameOK)
                             {
+                                node.ToolTipText = node.Text;
+                                node.Text = Identifier + " [" + devObj.ObjectId.Instance.ToString() + "] ";
+                            }
+                            else
+                            {
+                                this.Cursor = Cursors.WaitCursor;
                                 var devName = await device.GetDeviceNameAsync();
 
                                 node.ToolTipText = node.Text;   // IP or MSTP node id -> in the Tooltip
@@ -1704,9 +1704,9 @@ namespace Yabe
                                     }
                                 }
                             }
-                            catch { }
                         }
                     }
+                    catch { }
                 }
                 _selectedDevice = node;
 
