@@ -1854,19 +1854,33 @@ namespace System.IO.BACnet
     {
         public UInt32 propertyIdentifier;
         public UInt32 propertyArrayIndex;        /* optional */
+
+
         public BacnetPropertyReference(BacnetPropertyIds property, uint array_index = ASN1.BACNET_ARRAY_ALL) : this((uint)property, array_index) { }
-        public BacnetPropertyReference(uint id, uint array_index)
+        public BacnetPropertyReference(uint id, uint array_index = ASN1.BACNET_ARRAY_ALL)
         {
             propertyIdentifier = id;
             propertyArrayIndex = array_index;
         }
-        public override string ToString()
+
+
+        public override string ToString() => ((BacnetPropertyIds)propertyIdentifier).ToString();
+        public override int GetHashCode() => propertyIdentifier.GetHashCode();
+        public override bool Equals(object obj)
         {
-            return ((BacnetPropertyIds)propertyIdentifier).ToString();
+            if (obj is not BacnetPropertyReference o)
+                return (false);
+            else if (this.propertyIdentifier != o.propertyIdentifier)
+                return (false);
+            else if (this.propertyArrayIndex != o.propertyArrayIndex)
+                return (false);
+            else
+                return (true);
         }
 
 
         public static implicit operator BacnetPropertyReference(BacnetPropertyIds id) => new BacnetPropertyReference(id);
+        public static implicit operator BacnetPropertyReference(uint id) => new BacnetPropertyReference(id);
     };
 
     public struct BacnetPropertyValue

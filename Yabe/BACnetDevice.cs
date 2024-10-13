@@ -179,14 +179,14 @@ namespace System.IO.BACnet
         /// <summary>
         /// Returns a read property as <see cref="BacnetPropertyValue"/>.
         /// </summary>
-        public async Task<BacnetPropertyValue> ReadPropertyValueAsync(BacnetObjectId objectId, BacnetPropertyIds property, uint arrayIndex = ASN1.BACNET_ARRAY_ALL)
+        public Task<BacnetPropertyValue> ReadPropertyValueAsync(BacnetObjectId objectId, BacnetPropertyIds property, uint arrayIndex = ASN1.BACNET_ARRAY_ALL) => ReadPropertyValueAsync(objectId, new BacnetPropertyReference((uint)property, arrayIndex));
+        /// <inheritdoc cref="ReadPropertyValueAsync(BacnetObjectId, BacnetPropertyIds, uint)"/>
+        public async Task<BacnetPropertyValue> ReadPropertyValueAsync(BacnetObjectId objectId, BacnetPropertyReference property) => new BacnetPropertyValue()
         {
-            return (new BacnetPropertyValue()
-            {
-                property = new BacnetPropertyReference((uint)property, arrayIndex),
-                value = await ReadPropertyAsync(objectId, property, arrayIndex).ConfigureAwait(false)
-            });
-        }
+            property = property,
+            value = await ReadPropertyAsync(objectId, (BacnetPropertyIds)property.propertyIdentifier, property.propertyArrayIndex).ConfigureAwait(false)
+        };
+
         /// <inheritdoc cref="ReadPropertyAsync(BacnetObjectId, BacnetPropertyIds, uint)"/>
         public async Task<T> ReadPropertyAsync<T>(BacnetObjectId objectId, BacnetPropertyIds property, uint arrayIndex = ASN1.BACNET_ARRAY_ALL)
         {
@@ -271,29 +271,35 @@ namespace System.IO.BACnet
                 }
 
                 // Try 2) Read per properties one by one:
-                if (object.ReferenceEquals(properties, AllProperties))
+                // We don't want to spend too much time on non existing properties:
+                int _retries = Client.Retries;
+                Client.Retries = 1;
+
+                try
                 {
-                    // We don't want to spend too much time on non existing properties:
-                    int _retries = Client.Retries;
-                    Client.Retries = 1;
+                    var values = new List<BacnetPropertyValue>();
+                    var readPropList = new HashSet<BacnetPropertyReference>();
 
-                    try
+                    if (object.ReferenceEquals(properties, AllProperties))
                     {
-                        var values = new List<BacnetPropertyValue>();
-                        var readPropList = new HashSet<BacnetPropertyIds>();
-
                         // The 'PROP_LIST' property was added as an addendum to 135-2010.
                         // Test to see if it is supported, otherwise fall back to the the predefined delault property list.
-                        var res = await ReadPropertyAsync(objectId, BacnetPropertyIds.PROP_PROPERTY_LIST).ConfigureAwait(false);
-                        var propListSupported = res.TryUnwrap<List<uint>>(out var propList);
-                        if (propListSupported)
-                            readPropList.AddRange(propList.ChangeType<uint, BacnetPropertyIds>());
-                        else
+                        var propListSupported = false;
+                        try
+                        {
+                            var res = await ReadPropertyAsync(objectId, BacnetPropertyIds.PROP_PROPERTY_LIST).ConfigureAwait(false);
+                            if (propListSupported = res.TryUnwrap<List<uint>>(out var propList))
+                                readPropList.AddRange(propList.Select(id => (BacnetPropertyReference)id));
+                        }
+                        catch (Exception)
+                        {
+                        }
+                        if (!propListSupported)
                         {
                             // Get property description from internal or external XML file:
                             var propDesc = GetPropertyDescription();
                             if (propDesc.TryGetValue(objectId.type, out var propIds))
-                                readPropList.AddRange(propIds);
+                                readPropList.AddRange(propIds.Select(p => (BacnetPropertyReference)p));
                         }
 
                         // Three mandatory common properties to all objects (PROP_OBJECT_IDENTIFIER, PROP_OBJECT_TYPE, PROP_OBJECT_NAME).
@@ -301,43 +307,56 @@ namespace System.IO.BACnet
                         values.Add(new BacnetPropertyValue(BacnetPropertyIds.PROP_OBJECT_IDENTIFIER, new BacnetValue(objectId)));
                         values.Add(new BacnetPropertyValue(BacnetPropertyIds.PROP_OBJECT_TYPE, new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_ENUMERATED, (uint)objectId.type)));
                         // Add unknown values:
-                        readPropList.Add(BacnetPropertyIds.PROP_OBJECT_IDENTIFIER);
-
-                        // Read property values:
-                        foreach (var prop in readPropList)
-                            values.Add(await ReadPropertyValueAsync(objectId, prop));
-
-                        return (new BacnetReadAccessResult[] { new BacnetReadAccessResult(objectId, values) });
+                        readPropList.Add(BacnetPropertyIds.PROP_OBJECT_NAME);
                     }
-                    finally
-                    {
-                        Client.Retries = _retries;
-                    }
-                }
-                else
-                {
-                    var requests = properties.Select(prop => (
-                        Property: prop,
-                        Task: this.ReadPropertyAsync(objectId, (BacnetPropertyIds)prop.propertyIdentifier, prop.propertyArrayIndex)
-                    )).ToArray();
-                    var results = await Task
-                        .WhenAll(requests.Select(req => req.Task))
-                        .ConfigureAwait(false);
+                    else
+                        readPropList.AddRange(properties);
 
-                    Debug.Assert(requests.Length == results.Length);
-                    var resValues = new List<BacnetPropertyValue>();
-                    for (int i = 0; i < results.Length; i++)
+#if true
+                    // Read property values (sequencial requests):
+                    var aggEx = new List<Exception>();
+                    foreach (var prop in readPropList)
                     {
-                        resValues.Add(new BacnetPropertyValue()
+                        try
                         {
-                            property = requests[i].Property,
-                            value = results[i],
-                            priority = default // (BETA) ... TODO: Wich priority to chose here!?
-                        });
+                            values.Add(await ReadPropertyValueAsync(objectId, prop));
+                            aggEx = null;
+                        }
+                        catch (Exception ex)
+                        {
+                            aggEx?.Add(ex);
+                        }
                     }
-                    return (new List<BacnetReadAccessResult>() {
-                        new BacnetReadAccessResult(objectId, resValues)
-                    });
+                    if (aggEx is null)
+                        ; // One or more requests succeeded (Assume that failed requests are caused by reading non-existing properties).
+                    else
+                        throw new AggregateException(aggEx);
+#else
+                    // Read property values (parallel requests):
+                    var requests = readPropList.Select(prop => (
+                            Property: prop,
+                            Task: this.ReadPropertyAsync(objectId, (BacnetPropertyIds)prop.propertyIdentifier, prop.propertyArrayIndex)
+                        )).ToArray();
+                        var results = await Task
+                            .WhenAll(requests.Select(req => req.Task))
+                            .ConfigureAwait(false);
+
+                        Debug.Assert(requests.Length == results.Length);
+                        for (int i = 0; i < results.Length; i++)
+                        {
+                            values.Add(new BacnetPropertyValue()
+                            {
+                                property = requests[i].Property,
+                                value = results[i],
+                                priority = default // (BETA) ... TODO: Wich priority to chose here!?
+                            });
+                        }
+#endif
+                    return (new BacnetReadAccessResult[] { new BacnetReadAccessResult(objectId, values) });
+                }
+                finally
+                {
+                    Client.Retries = _retries;
                 }
             }
             catch (TaskCanceledException)
@@ -347,7 +366,7 @@ namespace System.IO.BACnet
             }
         }
         public Task<bool> WritePropertyAsync(BacnetObjectId objectId, BacnetPropertyIds property, IEnumerable<BacnetValue> values) => Client.WritePropertyRequestAsync(Address, objectId, property, values);
-        #endregion
+#endregion
 
 
         private RequestModeSwitch rpmMode = new RequestModeSwitch(1);
@@ -357,7 +376,7 @@ namespace System.IO.BACnet
     /// </summary>
     public class BACnetDevice : BACnetEndpoint
     {
-        #region Types
+#region Types
         private sealed class ObjectFactory
         {
             public static BACnetObject Create(BACnetDevice device, BacnetObjectId objectId)
@@ -369,7 +388,7 @@ namespace System.IO.BACnet
                 return (new BACnetObject(device, objectId));
             }
         }
-        #endregion
+#endregion
 
 
         public BACnetDevice(BacnetClient client, BacnetAddress address, uint deviceId = 0xFFFFFFFF) : base(client, address, deviceId)
@@ -377,7 +396,7 @@ namespace System.IO.BACnet
         }
 
 
-        #region Properties.Services
+#region Properties.Services
         /// <summary>
         /// Time of last object list update.
         /// </summary>
@@ -388,13 +407,13 @@ namespace System.IO.BACnet
         /// </summary>
         public DateTime StructuredObjectListUpdated { private set; get; }
         private List<BACnetObject> structuredObjectList = new List<BACnetObject>();
-        #endregion
-        #region Properties
+#endregion
+#region Properties
         public BACnetObject this[BacnetObjectId id] => (objectList.TryGetObject(id, out var obj) ? obj : null);
-        #endregion
+#endregion
 
 
-        #region Services
+#region Services
         public async Task<BACnetObject> GetDeviceObjectAsync(bool forceUpdate = false)
         {
             if ((forceUpdate) || (this.objectList.Count == 0))
@@ -536,14 +555,14 @@ namespace System.IO.BACnet
                 return (this.structuredObjectList.ToArray());
             }
         }
-        #endregion
+#endregion
     }
     /// <summary>
     /// Represents a BACnet object.
     /// </summary>
     public class BACnetObject
     {
-        #region Constants
+#region Constants
         /// <summary>
         /// Placeholder to imply <i>to use for all object types</i>.
         /// </summary>
@@ -557,7 +576,7 @@ namespace System.IO.BACnet
 
             { BacnetObjectTypes.OBJECT_GROUP, new BacnetPropertyIds[] { BacnetPropertyIds.PROP_LIST_OF_GROUP_MEMBERS } }
         };
-        #endregion
+#endregion
 
 
         protected BACnetObject() { }
@@ -568,12 +587,12 @@ namespace System.IO.BACnet
         }
 
 
-        #region Properties.Management
+#region Properties.Management
         public bool IsRoot => (Parent == null);
 
         public BACnetView Parent { internal set; get; }
-        #endregion
-        #region Properties.Services
+#endregion
+#region Properties.Services
         /// <summary>
         /// Returns the the value of the specified <paramref name="property"/>.
         /// </summary>
@@ -585,17 +604,17 @@ namespace System.IO.BACnet
             get { lock (this) { return (properties[property]); } }
         }
         private Dictionary<BacnetPropertyIds, object> properties = new Dictionary<BacnetPropertyIds, object>();
-        #endregion
-        #region Properties
+#endregion
+#region Properties
         public BACnetDevice Device { get; }
         public BacnetObjectId ObjectId { get; }
-        #endregion
+#endregion
 
 
         public override string ToString() => ObjectId.ToString();
 
 
-        #region Initialization
+#region Initialization
         /// <summary>
         /// Initialize common properties.
         /// </summary>
@@ -611,8 +630,8 @@ namespace System.IO.BACnet
                 .Select(id => new BacnetPropertyReference(id))
                 .ToArray()));
         }
-        #endregion
-        #region Management
+#endregion
+#region Management
         public bool Contains(BacnetPropertyIds property)
         {
             lock (this)
@@ -620,10 +639,10 @@ namespace System.IO.BACnet
                 return (properties.ContainsKey(property));
             }
         }
-        #endregion
+#endregion
 
 
-        #region Services
+#region Services
         /// <summary>
         /// Returns the values of all of this objects properties by use of the most efficient request.
         /// </summary>
@@ -733,7 +752,7 @@ namespace System.IO.BACnet
                 this.properties.AddOrUpdate(property, res.Unwrap());
             }
         }
-        #endregion
+#endregion
     }
     /// <summary>
     /// Represents a BACnet structured view object.
@@ -746,20 +765,20 @@ namespace System.IO.BACnet
         }
 
 
-        #region Properties
+#region Properties
         public BACnetObject[] Children
         {
             get { lock (this) { return (children.ToArray()); } }
         }
         private List<BACnetObject> children = new List<BACnetObject>();
-        #endregion
+#endregion
 
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
         public IEnumerator<BACnetObject> GetEnumerator() => children.GetEnumerator();
 
 
-        #region Management
+#region Management
         internal void SetChildren(IEnumerable<BACnetObject> subordinates)
         {
             // Clear old subordinates:
@@ -775,14 +794,14 @@ namespace System.IO.BACnet
                 children.Add(obj);
             }
         }
-        #endregion
+#endregion
     }
-    #endregion
+#endregion
 
 
     public static partial class Extensions
     {
-        #region Debug
+#region Debug
         /// <summary>
         /// Writes <paramref name="source"/> to log for debugging purposes.
         /// </summary>
@@ -808,6 +827,6 @@ namespace System.IO.BACnet
                     Dump(obj, ref index, true, level);
             }
         }
-        #endregion
+#endregion
     }
 }
