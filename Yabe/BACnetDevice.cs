@@ -188,15 +188,18 @@ namespace System.IO.BACnet
         };
 
         /// <inheritdoc cref="ReadPropertyAsync(BacnetObjectId, BacnetPropertyIds, uint)"/>
-        public async Task<T> ReadPropertyAsync<T>(BacnetObjectId objectId, BacnetPropertyIds property, uint arrayIndex = ASN1.BACNET_ARRAY_ALL)
+        public async Task<T?> ReadPropertyAsync<T>(BacnetObjectId objectId, BacnetPropertyIds property, uint arrayIndex = ASN1.BACNET_ARRAY_ALL)
         {
             var res = await ReadPropertyAsync(objectId, property, arrayIndex).ConfigureAwait(false);
-            return (res.Unwrap<T>());
+            if (res is null)
+                return (default);
+            else
+                return (res.Unwrap<T>());
         }
         /// <summary>
         /// Reads a property value by use of the most efficient request(s).
         /// </summary>
-        public async Task<IList<BacnetValue>> ReadPropertyAsync(BacnetObjectId objectId, BacnetPropertyIds property, uint arrayIndex = ASN1.BACNET_ARRAY_ALL)
+        public async Task<IList<BacnetValue>?> ReadPropertyAsync(BacnetObjectId objectId, BacnetPropertyIds property, uint arrayIndex = ASN1.BACNET_ARRAY_ALL)
         {
             try
             {
@@ -206,22 +209,30 @@ namespace System.IO.BACnet
                 {
                     return (await Client.ReadPropertyRequestAsync(Address, objectId, property, default, arrayIndex).ConfigureAwait(false));
                 }
-                catch (Exception ex) when (!listProp)
+                catch (Exception ex)
                 {
-                    throw;
+                    if (listProp)
+                        ; // Continue with fallback.
+                    else
+                        throw;
                 }
 
                 // Try 2) Split request and read list-property one by one:
                 var res = await Client.ReadPropertyRequestAsync(Address, objectId, property, default, 0).ConfigureAwait(false);
-                var objCount = res.Unwrap<ulong>();
-
-                var result = new List<BacnetValue>();
-                for (ulong i = 1; i <= objCount; i++)
+                if (res is null)
+                    return (null);
+                else
                 {
-                    res = await Client.ReadPropertyRequestAsync(Address, objectId, property, default, (uint)i).ConfigureAwait(false);
-                    result.Add(res.Single());
+                    var objCount = res.Unwrap<ulong>();
+
+                    var result = new List<BacnetValue>();
+                    for (ulong i = 1; i <= objCount; i++)
+                    {
+                        res = await Client.ReadPropertyRequestAsync(Address, objectId, property, default, (uint)i).ConfigureAwait(false);
+                        result.Add(res.Single());
+                    }
+                    return (result);
                 }
-                return (result);
             }
             catch (TaskCanceledException)
             {
@@ -236,15 +247,15 @@ namespace System.IO.BACnet
         /// <summary>
         /// Reads all of an objects properties by use of the most efficient request.
         /// </summary>
-        public Task<IList<BacnetReadAccessResult>> ReadPropertiesAsync(BacnetObjectId objectId) => ReadPropertiesAsync(objectId, AllProperties);
+        public Task<IList<BacnetReadAccessResult>?> ReadPropertiesAsync(BacnetObjectId objectId) => ReadPropertiesAsync(objectId, AllProperties);
         /// <summary>
         /// Reads several properties by use of the most efficient request.
         /// </summary>
-        public Task<IList<BacnetReadAccessResult>> ReadPropertiesAsync(BacnetObjectId objectId, params BacnetPropertyIds[] properties) => ReadPropertiesAsync(objectId, properties
+        public Task<IList<BacnetReadAccessResult>?> ReadPropertiesAsync(BacnetObjectId objectId, params BacnetPropertyIds[] properties) => ReadPropertiesAsync(objectId, properties
             .Select(prop => (BacnetPropertyReference)prop)
             .ToList());
         /// <inheritdoc cref="ReadPropertiesAsync(BacnetObjectId, BacnetPropertyIds[])"/>
-        public async Task<IList<BacnetReadAccessResult>> ReadPropertiesAsync(BacnetObjectId objectId, IList<BacnetPropertyReference> properties)
+        public async Task<IList<BacnetReadAccessResult>?> ReadPropertiesAsync(BacnetObjectId objectId, IList<BacnetPropertyReference> properties)
         {
             try
             {
@@ -290,7 +301,7 @@ namespace System.IO.BACnet
                         try
                         {
                             var res = await ReadPropertyAsync(objectId, BacnetPropertyIds.PROP_PROPERTY_LIST).ConfigureAwait(false);
-                            if (propListSupported = res.TryUnwrap<List<uint>>(out var propList))
+                            if ((res is not null) && (propListSupported = res.TryUnwrap<List<uint>>(out var propList)))
                                 readPropList.AddRange(propList.Select(id => (BacnetPropertyReference)id));
                         }
                         catch (Exception)
@@ -341,7 +352,7 @@ namespace System.IO.BACnet
                     {
                         try
                         {
-                            values.Add(await ReadPropertyValueAsync(objectId, prop));
+                            values.Add(await ReadPropertyValueAsync(objectId, prop).ConfigureAwait(false));
                             aggEx = null;
                         }
                         catch (Exception ex)
@@ -370,6 +381,32 @@ namespace System.IO.BACnet
             }
 
             return (null);
+        }
+        /// <summary>
+        /// Reads several objects properties.
+        /// </summary>
+        public async Task<IList<BacnetPropertyValue>> ReadPropertiesAsync(IEnumerable<BacnetObjectId> objectIds, BacnetPropertyReference property)
+        {
+            var values = new List<BacnetPropertyValue>();
+            var aggEx = new List<Exception>();
+            foreach (var obj in objectIds)
+            {
+                try
+                {
+                    values.Add(await ReadPropertyValueAsync(obj, property.propertyIdentifier).ConfigureAwait(false));
+                    aggEx = null;
+                }
+                catch (Exception ex)
+                {
+                    aggEx?.Add(ex);
+                }
+            }
+            if (aggEx is null)
+                ; // One or more requests succeeded (Assume that failed requests are caused by reading non-existing properties).
+            else
+                throw new AggregateException(aggEx);
+
+            return (values);
         }
         public Task<bool> WritePropertyAsync(BacnetObjectId objectId, BacnetPropertyIds property, IEnumerable<BacnetValue> values) => Client.WritePropertyRequestAsync(Address, objectId, property, values);
 #endregion
@@ -448,20 +485,23 @@ namespace System.IO.BACnet
             if ((forceUpdate) || (this.objectList.Count == 0))
             {
                 var objIds = await ReadPropertyAsync<List<BacnetObjectId>>(DeviceId, BacnetPropertyIds.PROP_OBJECT_LIST).ConfigureAwait(false);
-                objList = objIds
-                    .Select(id => ObjectFactory.Create(this, id))
-                    .ToList();
+                if (objIds is not null)
+                {
+                    objList = objIds?
+                        .Select(id => ObjectFactory.Create(this, id))
+                        .ToList();
 
-                // Initialize objects:
+                    // Initialize objects:
 #if PARALLEL_REQUESTS
                 await Task.WhenAll(objList.Select(obj => obj.InitAsync())).ConfigureAwait(false);
 #else
-                foreach (var obj in objList)
-                    await obj.InitAsync().ConfigureAwait(false);
+                    foreach (var obj in objList)
+                        await obj.InitAsync().ConfigureAwait(false);
 #endif
 
-                Debug.Assert(objList.Count > 0);
-                ObjectListUpdated = DateTime.Now;
+                    Debug.Assert(objList?.Count > 0);
+                    ObjectListUpdated = DateTime.Now;
+                }
             }
 
             lock (this)
@@ -488,14 +528,21 @@ namespace System.IO.BACnet
                 // Update object list:
                 var objList = await GetObjectListAsync(forceUpdate).ConfigureAwait(false);
 
-                if (objList.ContainsKey(BacnetObjectTypes.OBJECT_STRUCTURED_VIEW))
+                if (objList?.ContainsKey(BacnetObjectTypes.OBJECT_STRUCTURED_VIEW) == true)
                 {
                     // Read subordinate lists of all view objects:
                     var viewList = objList[BacnetObjectTypes.OBJECT_STRUCTURED_VIEW]
                         .Cast<BACnetView>()
                         .ToArray();
-                    var res = await Task.WhenAll(viewList.Select(viewObj => ReadPropertyAsync(viewObj.ObjectId, BacnetPropertyIds.PROP_SUBORDINATE_LIST))).ConfigureAwait(false);
-                    var subordinateLists = res.Select(list => list.Unwrap<List<BacnetObjectId>>()).ToArray();
+
+                    IList<BacnetPropertyValue> res;
+#if PARALLEL_REQUESTS
+                    throw new NotImplementedException("Failed to read structured object lists as parallel requests!");
+                    //var res = await Task.WhenAll(viewList.Select(viewObj => ReadPropertyAsync(viewObj.ObjectId, BacnetPropertyIds.PROP_SUBORDINATE_LIST))).ConfigureAwait(false);
+#else
+                    res = await ReadPropertiesAsync(viewList.Select(v => v.ObjectId), BacnetPropertyIds.PROP_SUBORDINATE_LIST).ConfigureAwait(false);
+#endif
+                    var subordinateLists = res.Select(list => list.value.Unwrap<List<BacnetObjectId>>()).ToArray();
 
                     // Find may recursive subordinates:
                     var objIds = subordinateLists.SelectMany(list => list).ToArray();

@@ -585,7 +585,7 @@ namespace Yabe
                         }
                         else
                         {
-                            name = dev.ReadPropertyAsync<string>(objectId, BacnetPropertyIds.PROP_OBJECT_NAME).Result;
+                            name = dev.ReadPropertyAsync<string>(objectId, BacnetPropertyIds.PROP_OBJECT_NAME)?.Result;
                             if (string.IsNullOrWhiteSpace(name) || name.StartsWith("["))
                             {
                                 name = objectId.ToString();
@@ -625,7 +625,7 @@ namespace Yabe
                             }
                             else
                             {
-                                name = dev.ReadPropertyAsync<string>(objectId, BacnetPropertyIds.PROP_OBJECT_NAME).Result;
+                                name = dev.ReadPropertyAsync<string>(objectId, BacnetPropertyIds.PROP_OBJECT_NAME)?.Result;
                                 if (string.IsNullOrWhiteSpace(name) || name.StartsWith("["))
                                 {
                                     name = objectId.ToString();
@@ -1804,8 +1804,6 @@ namespace Yabe
             string ReturnPROP_OBJECT_NAME = null;
             try
             {
-                m_DataGrid.SelectedObject = null;   //clear
-
                 // (BETA) ... TODO UpdateGrid
                 // > Resume when created meta information map (Too much missing information to be displayed in 'Utilities.CustomProperty' for now).
                 //   e.g. "BacnetPropertyIds -> BacnetApplicationTags = ??"
@@ -1813,6 +1811,10 @@ namespace Yabe
                 // var properties = await obj.GetPropertiesAsync(true);
 
                 var res = await device.ReadPropertiesAsync(object_id);
+                if (res is null)
+                    return "";
+
+                m_DataGrid.SelectedObject = null;   //clear
 
                 bool[] showAlarmAck = new bool[3] {false, false, false };
 
@@ -2603,7 +2605,7 @@ namespace Yabe
                 if (Properties.Settings.Default.ShowDescriptionWhenUseful)
                 {
                     var descr = await device.ReadPropertyAsync<string>(object_id, BacnetPropertyIds.PROP_DESCRIPTION);
-                    if (descr != default)
+                    if (!string.IsNullOrEmpty(descr))
                     {
                         itm.SubItems.Add(descr);   // Description [7]
                         CurveToolTip = CurveToolTip + Environment.NewLine + descr;
@@ -2750,6 +2752,8 @@ namespace Yabe
                     // We have no real way of checking wheter sub.comm has been disposed other than catching the exception?
                     // I suppose hopefully sub.is_active_subscription will be false by the time that happens...
                     var res = await sub.device.ReadPropertiesAsync(sub.object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, BacnetPropertyIds.PROP_STATUS_FLAGS);
+                    if (res is null)
+                        break;
 
                     lock (m_subscription_list)
                     {
