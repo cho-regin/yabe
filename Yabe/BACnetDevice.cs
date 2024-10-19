@@ -226,8 +226,12 @@ namespace System.IO.BACnet
             catch (TaskCanceledException)
             {
                 Trace.WriteLine($"Canceled reading {property}!");
-                return (null);
             }
+            catch (Exception)
+            {
+            }
+
+            return (null);
         }
         /// <summary>
         /// Reads all of an objects properties by use of the most efficient request.
@@ -360,8 +364,12 @@ namespace System.IO.BACnet
             catch (TaskCanceledException)
             {
                 Trace.WriteLine($"Canceled reading {properties.Count} properties!");
-                return (null);
             }
+            catch (Exception)
+            {
+            }
+
+            return (null);
         }
         public Task<bool> WritePropertyAsync(BacnetObjectId objectId, BacnetPropertyIds property, IEnumerable<BacnetValue> values) => Client.WritePropertyRequestAsync(Address, objectId, property, values);
 #endregion
