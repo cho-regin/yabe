@@ -28,11 +28,6 @@ namespace System.IO.BACnet
     [DebuggerDisplay("{this.ToString(true)} {Client}")]
     public class BACnetEndpoint : IDisposable
     {
-        #region Constants
-        internal static readonly BacnetPropertyReference[] AllProperties = new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_ALL, ASN1.BACNET_ARRAY_ALL) };
-        #endregion
-
-
         #region Types
         private class RequestModeSwitch
         {
@@ -247,7 +242,7 @@ namespace System.IO.BACnet
         /// <summary>
         /// Reads all of an objects properties by use of the most efficient request.
         /// </summary>
-        public Task<IList<BacnetReadAccessResult>?> ReadPropertiesAsync(BacnetObjectId objectId) => ReadPropertiesAsync(objectId, AllProperties);
+        public Task<IList<BacnetReadAccessResult>?> ReadPropertiesAsync(BacnetObjectId objectId) => ReadPropertiesAsync(objectId, BacnetPropertyReference.AllProperties);
         /// <summary>
         /// Reads several properties by use of the most efficient request.
         /// </summary>
@@ -293,7 +288,7 @@ namespace System.IO.BACnet
                     var values = new List<BacnetPropertyValue>();
                     var readPropList = new HashSet<BacnetPropertyReference>();
 
-                    if (object.ReferenceEquals(properties, AllProperties))
+                    if (properties.IsAllProperties())
                     {
                         // The 'PROP_LIST' property was added as an addendum to 135-2010.
                         // Test to see if it is supported, otherwise fall back to the the predefined delault property list.
@@ -708,7 +703,7 @@ namespace System.IO.BACnet
         public Task<IDictionary<BacnetPropertyIds, object>> GetPropertiesAsync(bool forceUpdate = false, params BacnetPropertyIds[] properties)
         {
             if (properties.IsEmpty())
-                return (GetPropertiesAsync(BACnetEndpoint.AllProperties));
+                return (GetPropertiesAsync(BacnetPropertyReference.AllProperties));
             else
                 return (GetPropertiesAsync(properties
                     .Select(prop => (BacnetPropertyReference)prop)
@@ -726,7 +721,7 @@ namespace System.IO.BACnet
 
             lock (this)
             {
-                if (object.ReferenceEquals(properties, BACnetEndpoint.AllProperties))
+                if (properties.IsAllProperties())
                     return (this.properties.ToDictionary(item => item.Key, item => item.Value));
                 else
                     return (properties
@@ -764,7 +759,7 @@ namespace System.IO.BACnet
         public Task UpdatePropertiesAsync(params BacnetPropertyIds[] properties)
         {
             if (properties.IsEmpty())
-                return (UpdatePropertiesAsync(BACnetEndpoint.AllProperties));
+                return (UpdatePropertiesAsync(BacnetPropertyReference.AllProperties));
             else
                 return (UpdatePropertiesAsync(properties
                     .Select(prop => (BacnetPropertyReference)prop)
@@ -773,7 +768,7 @@ namespace System.IO.BACnet
         /// <inheritdoc cref="UpdatePropertiesAsync(BacnetPropertyIds[])"/>
         public async Task UpdatePropertiesAsync(IList<BacnetPropertyReference> properties)
         {
-            if ((properties.Count > 1) || (object.ReferenceEquals(properties, BACnetEndpoint.AllProperties)))
+            if ((properties.Count > 1) || (properties.IsAllProperties()))
             {
                 // Read all properties:
                 var res = await Device.ReadPropertiesAsync(ObjectId, properties).ConfigureAwait(false);
