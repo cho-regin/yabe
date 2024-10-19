@@ -201,19 +201,17 @@ namespace System.IO.BACnet
             try
             {
                 // Try 1) Read per 'ReadProperty' request:
+                var listProp = property.IsListType();
                 try
                 {
                     return (await Client.ReadPropertyRequestAsync(Address, objectId, property, default, arrayIndex).ConfigureAwait(false));
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (!listProp)
                 {
-                    if (property.IsListType())
-                        ; // Retry (Turn over to split request).
-                    else
-                        throw;
+                    throw;
                 }
 
-                // Try 2) Split request and read property one by one:
+                // Try 2) Split request and read list-property one by one:
                 var res = await Client.ReadPropertyRequestAsync(Address, objectId, property, default, 0).ConfigureAwait(false);
                 var objCount = res.Unwrap<ulong>();
 
@@ -312,7 +310,27 @@ namespace System.IO.BACnet
                     else
                         readPropList.AddRange(properties);
 
-#if true
+#if PARALLEL_REQUESTS
+                    // Read property values (parallel requests):
+                    var requests = readPropList.Select(prop => (
+                            Property: prop,
+                            Task: this.ReadPropertyAsync(objectId, (BacnetPropertyIds)prop.propertyIdentifier, prop.propertyArrayIndex)
+                        )).ToArray();
+                    var results = await Task
+                        .WhenAll(requests.Select(req => req.Task))
+                        .ConfigureAwait(false);
+
+                    Debug.Assert(requests.Length == results.Length);
+                    for (int i = 0; i < results.Length; i++)
+                    {
+                        values.Add(new BacnetPropertyValue()
+                        {
+                            property = requests[i].Property,
+                            value = results[i],
+                            priority = default // (BETA) ... TODO: Wich priority to chose here!?
+                        });
+                    }
+#else
                     // Read property values (sequencial requests):
                     var aggEx = new List<Exception>();
                     foreach (var prop in readPropList)
@@ -331,26 +349,6 @@ namespace System.IO.BACnet
                         ; // One or more requests succeeded (Assume that failed requests are caused by reading non-existing properties).
                     else
                         throw new AggregateException(aggEx);
-#else
-                    // Read property values (parallel requests):
-                    var requests = readPropList.Select(prop => (
-                            Property: prop,
-                            Task: this.ReadPropertyAsync(objectId, (BacnetPropertyIds)prop.propertyIdentifier, prop.propertyArrayIndex)
-                        )).ToArray();
-                        var results = await Task
-                            .WhenAll(requests.Select(req => req.Task))
-                            .ConfigureAwait(false);
-
-                        Debug.Assert(requests.Length == results.Length);
-                        for (int i = 0; i < results.Length; i++)
-                        {
-                            values.Add(new BacnetPropertyValue()
-                            {
-                                property = requests[i].Property,
-                                value = results[i],
-                                priority = default // (BETA) ... TODO: Wich priority to chose here!?
-                            });
-                        }
 #endif
                     return (new BacnetReadAccessResult[] { new BacnetReadAccessResult(objectId, values) });
                 }
@@ -447,7 +445,12 @@ namespace System.IO.BACnet
                     .ToList();
 
                 // Initialize objects:
+#if PARALLEL_REQUESTS
                 await Task.WhenAll(objList.Select(obj => obj.InitAsync())).ConfigureAwait(false);
+#else
+                foreach (var obj in objList)
+                    await obj.InitAsync().ConfigureAwait(false);
+#endif
 
                 Debug.Assert(objList.Count > 0);
                 ObjectListUpdated = DateTime.Now;
