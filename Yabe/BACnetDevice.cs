@@ -678,10 +678,22 @@ namespace System.IO.BACnet
             CommonProperties.TryGetValue(AnyType, out var commonAllTypes);
             CommonProperties.TryGetValue(ObjectId.Type, out var commonThisType);
 
+            // I do not like this at all. This causes all sorts of errors from some devices (even ones with
+            // moderately high computing power) to return all sorts of buffer overflow aborts. It takes several
+            // minutes to see the object list in this case as you have to wait for all the Exceptions to pass.
+            // I propose to just return Task.CompletedTask (and later just return void and change to non-async
+            // call). This more closely mimics the behaviour of Yabe prior to the async rebase.
+            // LT, October 2024
+#if AUTO_LOAD_PROPERTIES
             return (UpdatePropertiesAsync(commonAllTypes
                 .Union(commonThisType ?? new BacnetPropertyIds[0])
                 .Select(id => new BacnetPropertyReference(id))
                 .ToArray()));
+#else
+            return Task.CompletedTask;
+#endif
+
+
         }
 #endregion
 #region Management
