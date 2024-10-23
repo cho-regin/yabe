@@ -468,7 +468,7 @@ namespace System.IO.BACnet
             if (devObj is null)
                 return (null);
             else
-                return (await devObj.GetPropertyAsync<string>(BacnetPropertyIds.PROP_OBJECT_NAME, default, forceUpdate).ConfigureAwait(false));
+                return (await devObj.GetPropertyAsync<string>(BacnetPropertyIds.PROP_OBJECT_NAME, ASN1.BACNET_ARRAY_ALL, forceUpdate).ConfigureAwait(false));
         }
         /// <summary>
         /// Returns the list of containing objects.
