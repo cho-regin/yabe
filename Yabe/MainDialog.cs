@@ -1740,7 +1740,7 @@ namespace Yabe
                 name = name.Replace('_', ' ');
                 if(prependNumber)
                 {
-                    name = String.Format("{0} - {1}", (int)property, System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()));
+                    name = String.Format("{0}: {1}", (int)property, System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()));
                 }
                 else
                 {
@@ -1766,16 +1766,16 @@ namespace Yabe
                 {
                     if (prependNumber)
                     {
-                        name = String.Format("Proprietary {0} - {1}", (int)property, System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()));
+                        name = String.Format("Prop. {0}: {1}", (int)property, System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()));
                     }
                     else
                     {
-                        name = "Proprietary - " + System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower());
+                        name = "Proprietary: " + System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower());
                     }
                 }
                 else
                 {
-                    name = String.Format("Proprietary - {0}", (int)property);
+                    name = String.Format("Proprietary: {0}", (int)property);
                 }
             }
             return name;
