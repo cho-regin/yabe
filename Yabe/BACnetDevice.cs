@@ -454,14 +454,28 @@ namespace System.IO.BACnet
 #region Services
         public async Task<BACnetObject> GetDeviceObjectAsync(bool forceUpdate = false)
         {
-            if ((forceUpdate) || (this.objectList.Count == 0))
+            if ((forceUpdate) || (this.objectList.IsEmpty()))
+            {
+#if INIT_OBJECT_LIST
                 await GetObjectListAsync().ConfigureAwait(false);
+#else
+                if ((forceUpdate) || (tempDeviceObject is null))
+                {
+                    // Create temporary device object to be used until object list will be loaded:
+                    tempDeviceObject = ObjectFactory.Create(this, DeviceId);
+
+                    await tempDeviceObject.InitAsync().ConfigureAwait(false);
+                }
+                return (tempDeviceObject);
+#endif
+            }
 
             if (!objectList.TryGetValue(BacnetObjectTypes.OBJECT_DEVICE, out var devices))
                 return (null);
             else
                 return (devices.SingleOrDefault());
         }
+        private BACnetObject? tempDeviceObject = null;
         public async Task<string> GetDeviceNameAsync(bool forceUpdate = false)
         {
             var devObj = await GetDeviceObjectAsync().ConfigureAwait(false);
@@ -477,7 +491,7 @@ namespace System.IO.BACnet
         public async Task<IReadOnlyDictionary<BacnetObjectTypes, BACnetObject[]>> GetObjectListAsync(bool forceUpdate = false)
         {
             List<BACnetObject> objList = null;
-            if ((forceUpdate) || (this.objectList.Count == 0))
+            if ((forceUpdate) || (this.objectList.IsEmpty()))
             {
                 var objIds = await ReadPropertyAsync<List<BacnetObjectId>>(DeviceId, BacnetPropertyIds.PROP_OBJECT_LIST).ConfigureAwait(false);
                 if (objIds is not null)
@@ -507,6 +521,9 @@ namespace System.IO.BACnet
                         .GroupBy(obj => obj.ObjectId.Type)
                         .ToDictionary(grp => grp.Key, grp => grp.ToArray());
                     this.structuredObjectList.Clear();
+
+                    // Tempoarary device object not used anymore:
+                    tempDeviceObject = null;
                 }
                 return (this.objectList.ToDictionary(item => item.Key, item => item.Value));
             }
@@ -518,7 +535,7 @@ namespace System.IO.BACnet
         public async Task<IReadOnlyCollection<BACnetObject>> GetStructuredObjectListAsync(bool forceUpdate = false)
         {
             List<BACnetObject> structObjList = null;
-            if ((forceUpdate) || (this.structuredObjectList.Count == 0))
+            if ((forceUpdate) || (this.structuredObjectList.IsEmpty()))
             {
                 // Update object list:
                 var objList = await GetObjectListAsync(forceUpdate).ConfigureAwait(false);
@@ -644,8 +661,8 @@ namespace System.IO.BACnet
         public bool IsRoot => (Parent == null);
 
         public BACnetView Parent { internal set; get; }
-        #endregion
-        #region Properties.Services
+#endregion
+#region Properties.Services
         /// <inheritdoc cref="GetProperty(BacnetPropertyIds)"/>
         public object this[BacnetPropertyIds property] => GetProperty(property);
         private Dictionary<BacnetPropertyIds, object> properties = new Dictionary<BacnetPropertyIds, object>();
@@ -734,10 +751,10 @@ namespace System.IO.BACnet
                     return (null);
             }
         }
-        #endregion
+#endregion
 
 
-        #region Services
+#region Services
         /// <summary>
         /// Returns the values of all of this objects properties by use of the most efficient request.
         /// </summary>
