@@ -488,7 +488,7 @@ namespace System.IO.BACnet
 
                     // Initialize objects:
 #if PARALLEL_REQUESTS
-                await Task.WhenAll(objList.Select(obj => obj.InitAsync())).ConfigureAwait(false);
+                    await Task.WhenAll(objList.Select(obj => obj.InitAsync())).ConfigureAwait(false);
 #else
                     foreach (var obj in objList)
                         await obj.InitAsync().ConfigureAwait(false);
@@ -644,18 +644,10 @@ namespace System.IO.BACnet
         public bool IsRoot => (Parent == null);
 
         public BACnetView Parent { internal set; get; }
-#endregion
-#region Properties.Services
-        /// <summary>
-        /// Returns the the value of the specified <paramref name="property"/>.
-        /// </summary>
-        /// <remarks>
-        /// Fails if <paramref name="property"/> does not exist!
-        /// </remarks>
-        public object this[BacnetPropertyIds property]
-        {
-            get { lock (this) { return (properties[property]); } }
-        }
+        #endregion
+        #region Properties.Services
+        /// <inheritdoc cref="GetProperty(BacnetPropertyIds)"/>
+        public object this[BacnetPropertyIds property] => GetProperty(property);
         private Dictionary<BacnetPropertyIds, object> properties = new Dictionary<BacnetPropertyIds, object>();
 #endregion
 #region Properties
@@ -704,10 +696,48 @@ namespace System.IO.BACnet
                 return (properties.ContainsKey(property));
             }
         }
-#endregion
+
+        /// <summary>
+        /// Returns the the value of the specified <paramref name="property"/>.
+        /// </summary>
+        /// <remarks>
+        /// Fails if <paramref name="property"/> does not exist!
+        /// </remarks>
+        public object GetProperty(BacnetPropertyIds property)
+        {
+            lock (this)
+            {
+                return (properties[property]);
+            }
+        }
+        public bool TryGetProperty<T>(BacnetPropertyIds property, out T? value)
+        {
+            var res = TryGetProperty(property, out var val);
+            {
+                value = (T)val;
+            }
+            return (res);
+        }
+        public bool TryGetProperty(BacnetPropertyIds property, out object? value)
+        {
+            value = TryGetProperty(property);
+            return (value is not null);
+        }
+        public T? TryGetProperty<T>(BacnetPropertyIds property) => (T)TryGetProperty(property);
+        public object? TryGetProperty(BacnetPropertyIds property)
+        {
+            lock (this)
+            {
+                if (properties.TryGetValue(property, out var val))
+                    return (val);
+                else
+                    return (null);
+            }
+        }
+        #endregion
 
 
-#region Services
+        #region Services
         /// <summary>
         /// Returns the values of all of this objects properties by use of the most efficient request.
         /// </summary>

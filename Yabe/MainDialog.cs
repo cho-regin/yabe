@@ -1565,11 +1565,11 @@ namespace Yabe
                 // Add child nodes:
                 if (obj.ObjectId.Type == BacnetObjectTypes.OBJECT_GROUP)
                 {
-                    var members = (IList<BacnetReadAccessSpecification>)obj[BacnetPropertyIds.PROP_LIST_OF_GROUP_MEMBERS];
-                    foreach (var member in members)
-                        member.propertyReferences
-                            .Select(prop => $"{member.objectIdentifier}:{((BacnetPropertyIds)prop.propertyIdentifier)}")
-                            .ForEach(name => objNode.Nodes.Add(CreateObjectNode(obj.Device[member.objectIdentifier], name, objNode)));
+                    if (obj.TryGetProperty<IList<BacnetReadAccessSpecification>>(BacnetPropertyIds.PROP_LIST_OF_GROUP_MEMBERS, out var members))
+                        foreach (var member in members)
+                            member.propertyReferences
+                                .Select(prop => $"{member.objectIdentifier}:{((BacnetPropertyIds)prop.propertyIdentifier)}")
+                                .ForEach(name => objNode.Nodes.Add(CreateObjectNode(obj.Device[member.objectIdentifier], name, objNode)));
                 }
                 else if ((recursive) && (obj is BACnetView view))
                     AddObjectNodes(view.Children, objNode);
