@@ -1535,14 +1535,20 @@ namespace Yabe
                     break;
             }
 
-            // Update GUI:
-            AddObjectNodes(objList);
+            if (SelectedDevice != device)
+                ; // Skip (Device is no longer selected)
+            else
+            {
+                // Update GUI:
+                m_AddressSpaceTree.Nodes.Clear();
+                AddObjectNodes(objList);
 
-            AddSpaceLabel.Text = $"Address Space : {m_AddressSpaceTree.Nodes.Count} objects";
+                AddSpaceLabel.Text = $"Address Space : {m_AddressSpaceTree.Nodes.Count} objects";
 
-            this.Cursor = Cursors.Default;
-            _selectedNode = null;
-            m_DataGrid.SelectedObject = null;
+                this.Cursor = Cursors.Default;
+                _selectedNode = null;
+                m_DataGrid.SelectedObject = null;
+            }
         }
         private void AddObjectNodes(IEnumerable<BACnetObject> objects, TreeNode parent = null)
         {
@@ -1629,7 +1635,6 @@ namespace Yabe
             BACnetDevice device = e.Node.Tag as BACnetDevice;
             if (device != null)
             {
-                m_AddressSpaceTree.Nodes.Clear();   //clear
                 AddSpaceLabel.Text = "Address Space";
 
                 //unconfigured MSTP?
