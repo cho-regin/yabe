@@ -3665,7 +3665,7 @@ namespace Yabe
         {
             var stateTextReferences = new List<string>();
 
-            using (var edeWriter = new StreamWriter($"{fileName}_EDE.csv"))
+            using (var edeWriter = new StreamWriter($"{fileName}_EDE.csv", false, Encoding.UTF8))
             {
                 edeWriter.WriteLine("#Engineering-Data-Exchange - B.I.G.-EU");
                 edeWriter.WriteLine("PROJECT_NAME");

@@ -37,6 +37,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
 using System.Linq;
+using Utilities;
 
 namespace System.IO.BACnet
 {
@@ -15141,7 +15142,7 @@ namespace System.IO.BACnet.Serialize
     #region Extensions
     internal static partial class Ext
     {
-        public static bool IsAllProperties(this IEnumerable<BacnetPropertyReference> source) => IsAllProperties(source.SingleOrDefault());
+        public static bool IsAllProperties(this IEnumerable<BacnetPropertyReference> source) => IsAllProperties(source.SingleWhenOnly());
         public static bool IsAllProperties(this BacnetPropertyReference source) => (source.propertyIdentifier == (uint)BacnetPropertyIds.PROP_ALL);
     }
     #endregion

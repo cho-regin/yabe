@@ -2910,7 +2910,7 @@ namespace System.IO.BACnet
         public static IEnumerable<BACnetObject> OfObjectType(this IEnumerable<BACnetObject> source, BacnetObjectTypes type) => source.Where(obj => obj.ObjectId.Type == type);
         public static IEnumerable<BACnetObject> OfRootObjects(this IEnumerable<BACnetObject> source) => source.Where(obj => obj.IsRoot);
 
-        public static IEnumerable<BacnetPropertyValue> OfSucceeded(this IEnumerable<BacnetPropertyValue> source) => source.Where(val => (val.value.Count != 1) || (val.value.First().Tag != BacnetApplicationTags.BACNET_APPLICATION_TAG_ERROR));
+        public static IEnumerable<BacnetPropertyValue> OfSucceeded(this IEnumerable<BacnetPropertyValue> source) => source.Where(val => (val.value is null) || (val.value.Count != 1) || (val.value.First().Tag != BacnetApplicationTags.BACNET_APPLICATION_TAG_ERROR));
         /// <summary>
         /// Unwraps an enumeration of <see cref="BacnetValue">values</see> to return a value that is <i>ready to use</i>.
         /// </summary>

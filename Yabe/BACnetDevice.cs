@@ -771,7 +771,7 @@ namespace System.IO.BACnet
         /// <inheritdoc cref="GetPropertiesAsync(bool, BacnetPropertyIds[])"/>
         public async Task<IDictionary<BacnetPropertyIds, object>> GetPropertiesAsync(IList<BacnetPropertyReference> properties, bool forceUpdate = false)
         {
-            if ((forceUpdate) || (!this.properties.IsEmpty()))
+            if ((forceUpdate) || (this.properties.IsEmpty()))
                 await UpdatePropertiesAsync(properties).ConfigureAwait(false);
 
             // (BETA) ...

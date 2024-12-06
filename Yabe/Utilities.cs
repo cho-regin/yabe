@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace Utilities
 {
@@ -44,6 +45,16 @@ namespace Utilities
         {
             return ((source == null) || (!source.Any()));
         }
+
+        public static T SingleWhenOnly<T>(this IEnumerable<T> source)
+        {
+            if (source is null)
+                throw new ArgumentNullException("source");
+
+            var results = source.Take(2).ToArray();
+            return results.Length == 1 ? results[0] : default(T);
+        }
+
         public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
             foreach (T item in source)
