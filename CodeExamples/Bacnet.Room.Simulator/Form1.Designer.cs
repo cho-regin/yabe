@@ -359,7 +359,6 @@
             this.IP.TabIndex = 17;
             this.IP.Text = "Bound IP Address";
             this.IP.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.IP.Click += new System.EventHandler(this.label1_Click_1);
             // 
             // BacForm
             // 

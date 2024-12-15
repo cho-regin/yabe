@@ -32,7 +32,7 @@ using System.Threading;
 
 namespace BaCSharp
 {
-    public class Calendar : BaCSharpObject
+    class Calendar: BaCSharpObject
     { 
 
         public bool m_PROP_PRESENT_VALUE=false;

@@ -31,7 +31,7 @@ using System.IO.BACnet;
 
 namespace BaCSharp
 {
-    public class BacnetDateTime :BaCSharpObject
+    class BacnetDateTime:BaCSharpObject
     {
         public DateTime m_PresentValue = new DateTime(1, 1, 1);
         [BaCSharpType(BacnetApplicationTags.BACNET_APPLICATION_TAG_DATETIME)]

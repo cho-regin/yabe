@@ -373,19 +373,12 @@ namespace Bacnet.Room.Simulator
         private void networkInterfaces_SelectedIndexChanged(object sender, EventArgs e)
         {
 
-            BacnetActivity.m_local_ip_endpoint = networkInterfaces.Text;
+            if (networkInterfaces.Text != "Default")
+                BacnetActivity.m_local_ip_endpoint = networkInterfaces.Text;
+            else
+                BacnetActivity.m_local_ip_endpoint = "";
 
             BacnetActivity.ReInitialize();
-
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label1_Click_1(object sender, EventArgs e)
-        {
 
         }
 

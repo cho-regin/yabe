@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CheckStatusFlags", "CheckSt
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FindPriorities", "FindPriorities\FindPriorities.csproj", "{8C333BD2-5757-4C58-861F-CC8B2C3E1D04}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FindPrioritiesGlobal", "FindPrioritiesGlobal\FindPrioritiesGlobal.csproj", "{36429DAC-D69B-46E9-8B70-983E49A4B4FA}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetDevicesNames", "GetDevicesNames\GetDevicesNames.csproj", "{8CB359A2-E53F-4669-8296-B9F14487268B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlobalCommander", "GlobalCommander\GlobalCommander.csproj", "{8261BB54-2D72-4BD9-975E-69704C458D30}"

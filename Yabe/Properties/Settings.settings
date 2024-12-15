@@ -105,7 +105,7 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="Plugins" Type="System.String" Scope="User">
-      <Value Profile="(Default)">CheckReliability, CheckStatusFlags, ListOutOfService, GlobalCommander, FindPrioritiesGlobal</Value>
+      <Value Profile="(Default)">CheckReliability, CheckStatusFlags, ListOutOfService, GlobalCommander</Value>
     </Setting>
     <Setting Name="GraphDotStyle" Type="ZedGraph.SymbolType" Scope="User">
       <Value Profile="(Default)">Square</Value>
@@ -157,6 +157,9 @@
     </Setting>
     <Setting Name="EDE_CommonFiles" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="EDE_Separator" Type="System.Char" Scope="User">
+      <Value Profile="(Default)">;</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -33,7 +33,7 @@ using System.Threading;
 
 namespace BaCSharp
 {
-    public class Schedule : BaCSharpObject
+    class Schedule : BaCSharpObject
     {
         protected int tmrId;
         protected object lockObj=new object();
@@ -352,12 +352,12 @@ namespace BaCSharp
                 }
                 else
                 {
-                    BACnetEndpoint recipient = null;
+                    KeyValuePair<BacnetClient, BacnetAddress>? recipient = null;
 
                     try
                     {
-                        // SurroundingDevices is updated with Iam messages
-                        recipient = Mydevice.SurroundingDevices[reference.deviceIndentifier.instance];
+                        // SuroundingDevices is updated with Iam messages
+                        recipient = Mydevice.SuroundingDevices[reference.deviceIndentifier.instance];
                     }
                     catch { }
                     if (recipient == null)
@@ -367,8 +367,8 @@ namespace BaCSharp
                     uint wp = m_PROP_PRIORITY;
                     System.Threading.ThreadPool.QueueUserWorkItem((o) =>
                         {
-                            recipient.Client.WritePriority = wp;
-                            recipient.Client.BeginWritePropertyRequest(recipient.Address, reference.objectIdentifier, (BacnetPropertyIds)reference.propertyIdentifier, value, false);
+                            recipient.Value.Key.WritePriority = wp;
+                            recipient.Value.Key.BeginWritePropertyRequest(recipient.Value.Value, reference.objectIdentifier, (BacnetPropertyIds)reference.propertyIdentifier, value, false);
                         }
                         , null);
                 }
@@ -454,7 +454,7 @@ namespace BaCSharp
     }
 
     [Serializable]
-    public class DaySchedule
+    class DaySchedule
     {
         public DateTime dt;
         public object Value;
@@ -467,7 +467,7 @@ namespace BaCSharp
     }
 
     [Serializable]
-    public class BacnetWeeklySchedule : ASN1.IASN1encode
+    class BacnetWeeklySchedule : ASN1.IASN1encode
     {
         public List<DaySchedule>[] days = new List<DaySchedule>[7];
 
@@ -491,7 +491,7 @@ namespace BaCSharp
         }
     }
     [Serializable]
-    public class BacnetDeviceObjectPropertyReferenceList : ASN1.IASN1encode
+    class BacnetDeviceObjectPropertyReferenceList : ASN1.IASN1encode
     {
         public List<BacnetDeviceObjectPropertyReference> references = null;
 

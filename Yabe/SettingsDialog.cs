@@ -182,6 +182,10 @@ namespace Yabe
             [Description("Generate files for objecttypes and units (known as common files).")]
             [Category(CAT_EDEEXPORT)]
             public bool EDE_CommonFiles { set { instance.EDE_CommonFiles = value; } get { return instance.EDE_CommonFiles; } }
+            [DisplayName("EDE Separator")]
+            [Description("EDE Columns separator")]
+            [Category(CAT_EDEEXPORT)]
+            public char EDE_Separator { set { instance.EDE_Separator = value; } get { return instance.EDE_Separator; } }
 
             [DisplayName("Issue confirmed notifies")]
             [Description("By default notifications will be sent 'unconfirmed'. If you think your notifications are important set this to 'true' instead.")]

@@ -269,7 +269,7 @@ namespace System.IO.BACnet
                     Trace.TraceError("Unhandled exception in Udp OnRecieveData - receive loop cannot continue: " + ex.Message);
                 }
             }
-            catch (ObjectDisposedException ex)
+            catch (ObjectDisposedException)
             {
                 // I'm not sure how we get here, maybe due to threads racing each other. Potentially could still be a normal termination condition.
                 Trace.TraceWarning("Transport disposed (at BeginReceive retry): " + m_local_endpoint.ToString());

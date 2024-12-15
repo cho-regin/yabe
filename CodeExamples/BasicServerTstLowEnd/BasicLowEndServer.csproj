@@ -55,14 +55,8 @@
     <Compile Include="..\..\Yabe\BACnetClient.cs">
       <Link>BACnetClient.cs</Link>
     </Compile>
-    <Compile Include="..\..\Yabe\BACnetDevice.cs">
-      <Link>BACnetDevice.cs</Link>
-    </Compile>
     <Compile Include="..\..\Yabe\BACnetTransport.cs">
       <Link>BACnetTransport.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Yabe\Utilities.cs">
-      <Link>Utilities.cs</Link>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

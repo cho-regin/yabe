@@ -171,13 +171,18 @@ namespace BaCSharp
                     DoASend = false;
 
                 // Find the receiver endPoint
-                BACnetEndpoint recipient = null;
+                KeyValuePair<BacnetClient, BacnetAddress>? recipient = null;
+
                 if ((devReportEntry.adr != null)&&(Mydevice.DirectIp!=null))
-                    recipient = new BACnetEndpoint(Mydevice.DirectIp, devReportEntry.adr, devReportEntry.Id.instance);
+                    recipient = new KeyValuePair<BacnetClient, BacnetAddress>
+                        (
+                        Mydevice.DirectIp,
+                        devReportEntry.adr
+                        );
                 else
                     try
                     {
-                        recipient = Mydevice.SurroundingDevices[devReportEntry.Id.instance];
+                        recipient = Mydevice.SuroundingDevices[devReportEntry.Id.instance];
                     }
                     catch { }
 
@@ -194,7 +199,7 @@ namespace BaCSharp
                         lock (bacnetEventlock)
                         {
                             bacnetEvent.processIdentifier = processIdentifier;
-                            recipient.Client.SendUnconfirmedEventNotification(recipient.Address, bacnetEvent);
+                            recipient.Value.Key.SendUnconfirmedEventNotification(recipient.Value.Value, bacnetEvent);
                         }
 
                     }, null);

@@ -32,7 +32,7 @@ using System.IO.BACnet;
 namespace BaCSharp
 {
     //INTRINSIC_REPORTING part on AnalogObject
-    public abstract partial class AnalogObject<T> : BaCSharpObject
+    abstract partial class AnalogObject<T> : BaCSharpObject
     {        
         public uint m_PROP_NOTIFICATION_CLASS;
         [BaCSharpType(BacnetApplicationTags.BACNET_APPLICATION_TAG_UNSIGNED_INT)]
