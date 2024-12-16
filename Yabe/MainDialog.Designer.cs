@@ -555,7 +555,7 @@
             // 
             this.settingsToolStripMenuItem.Image = global::Yabe.Properties.Resources.application_form;
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.settingsToolStripMenuItem.Text = "Settings";
             this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
             // 
@@ -563,7 +563,7 @@
             // 
             this.pluginsToolStripMenuItem.Image = global::Yabe.Properties.Resources.plugin;
             this.pluginsToolStripMenuItem.Name = "pluginsToolStripMenuItem";
-            this.pluginsToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            this.pluginsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.pluginsToolStripMenuItem.Text = "Plugins";
             // 
             // helpToolStripMenuItem
@@ -579,7 +579,7 @@
             // 
             this.helpToolStripMenuItem1.Image = global::Yabe.Properties.Resources.information;
             this.helpToolStripMenuItem1.Name = "helpToolStripMenuItem1";
-            this.helpToolStripMenuItem1.Size = new System.Drawing.Size(107, 22);
+            this.helpToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
             this.helpToolStripMenuItem1.Text = "Help";
             this.helpToolStripMenuItem1.Click += new System.EventHandler(this.helpToolStripMenuItem1_Click);
             // 
@@ -587,7 +587,7 @@
             // 
             this.aboutToolStripMenuItem.Image = global::Yabe.Properties.Resources.information;
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.aboutToolStripMenuItem.Text = "About";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
@@ -797,7 +797,7 @@
             // 
             this.manual_refresh_objects.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.manual_refresh_objects.Image = global::Yabe.Properties.Resources.reload;
-            this.manual_refresh_objects.Location = new System.Drawing.Point(115, -2);
+            this.manual_refresh_objects.Location = new System.Drawing.Point(115, 0);
             this.manual_refresh_objects.Name = "manual_refresh_objects";
             this.manual_refresh_objects.Size = new System.Drawing.Size(29, 23);
             this.manual_refresh_objects.TabIndex = 3;
