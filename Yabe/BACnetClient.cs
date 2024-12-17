@@ -573,7 +573,7 @@ namespace System.IO.BACnet
         {
             try
             {
-                Trace.WriteLine("Error", null);
+               // Trace.WriteLine("Error", null);
 
                 BacnetErrorClasses error_class;
                 BacnetErrorCodes error_code;

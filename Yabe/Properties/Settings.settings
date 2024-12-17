@@ -161,5 +161,8 @@
     <Setting Name="EDE_Separator" Type="System.Char" Scope="User">
       <Value Profile="(Default)">;</Value>
     </Setting>
+    <Setting Name="UseObjectsCache" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

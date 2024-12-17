@@ -86,9 +86,9 @@ namespace GetDevicesNames // namespace should have the same name as the dll file
                 {
                     try
                     {
-                        KeyValuePair<BacnetAddress, uint>? entry = tn.Tag as KeyValuePair<BacnetAddress, uint>?;
-                        BacnetAddress adr = entry.Value.Key;
-                        uint device_id = entry.Value.Value;
+                        BACnetDevice entry = tn.Tag as BACnetDevice;
+                        BacnetAddress adr = entry.BacAdr;
+                        uint device_id = entry.deviceId;
 
                         IList<BacnetValue> values;
                         BacnetObjectId bobj_id = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id);

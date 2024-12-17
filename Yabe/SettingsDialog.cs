@@ -317,6 +317,10 @@ namespace Yabe
             [Description("Filename of the CSV-file containing a description of proprietary properties from different vendors. The file is located in the YABE program folder.")]
             [Category(CAT_GENERAL)]
             public string Proprietary_Properties_Files { set { instance.Proprietary_Properties_Files = value; } get { return instance.Proprietary_Properties_Files; } }
+            [DisplayName("Use Objects cache when useful")]
+            [Description("Queries the dictionary via a cache if available. The Refresh button forces a real reading.")]
+            [Category(CAT_GENERAL)]
+            public bool UseObjectsCache { set { instance.UseObjectsCache = value; } get { return instance.UseObjectsCache; } }
             [DisplayName("Show property ID numbers")]
             [Description("Displays the properties ID with there names.")]
             [Category(CAT_GENERAL)]

@@ -658,5 +658,17 @@ namespace Yabe.Properties {
                 this["EDE_Separator"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool UseObjectsCache {
+            get {
+                return ((bool)(this["UseObjectsCache"]));
+            }
+            set {
+                this["UseObjectsCache"] = value;
+            }
+        }
     }
 }

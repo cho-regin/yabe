@@ -98,6 +98,7 @@
     </Compile>
     <Compile Include="BACnetBase.cs" />
     <Compile Include="BACnetClient.cs" />
+    <Compile Include="BACnetDevice.cs" />
     <Compile Include="BACnetTransport.cs" />
     <Compile Include="BacnetTransportEthernet.cs" />
     <Compile Include="BACnetTransportIPv6.cs" />
