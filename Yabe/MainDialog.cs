@@ -48,8 +48,6 @@ using WebSocketSharp;
 using System.Net;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using System.IO.BACnet.Serialize;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar;
 
 namespace Yabe
 {
@@ -74,9 +72,9 @@ namespace Yabe
         { 
             get {
                 int count = 0;
-
-                foreach (var entry in m_devices)
-                    count = count + entry.Value.Devices.Count;
+                lock (m_devices)
+                    foreach (var entry in m_devices)
+                        count +=  entry.Value.Devices.Count;
 
                 return count; 
             }
@@ -126,35 +124,7 @@ namespace Yabe
         YabeMainDialog yabeFrm; // Ref to itself, already affected, usefull for plugin developpmenet inside this code, before exporting it
 
         private Dictionary<long, string> _proprietaryPropertyMappings = new Dictionary<long, string>();
-        private Dictionary<uint, ushort> deviceVendorMap = new Dictionary<uint, ushort>();
 
-        
-        private ushort? GetCurrentVendorId()
-        {
-
-            // Here we try to determine the current vendor ID of the selected device. Note that
-            // this could possibly be better integrated into YABE. But for now, this should work.
-            if (_selectedDevice != null)
-            {
-
-                try
-                {
-                    lock (deviceVendorMap)
-                    {
-                        uint deviceId = ((BACnetDevice)_selectedDevice.Tag).deviceId;
-
-                        if (deviceVendorMap.TryGetValue(deviceId, out var vendorId))
-                        {
-                            return vendorId;
-                        }
-                    }
-                }
-                catch { }
-            }
-
-            return null;
-            
-        }
         private bool LoadVendorPropertyMapping()
         {
             string path = Properties.Settings.Default.Proprietary_Properties_Files;
@@ -930,11 +900,6 @@ namespace Yabe
         void OnIam(BacnetClient sender, BacnetAddress adr, uint device_id, uint max_apdu, BacnetSegmentations segmentation, ushort vendor_id)
         {
             DoReceiveIamImplementation(sender, adr, device_id, vendor_id);
-             // remember the vendor ID of the device
-            lock (deviceVendorMap)
-            {
-                deviceVendorMap[device_id] = vendor_id;
-            }
         }
 
         private void DoReceiveIamImplementation(BacnetClient sender, BacnetAddress adr, uint device_id, uint vendor_id)
@@ -1589,7 +1554,7 @@ namespace Yabe
             }
         }
 
-        public List<BacnetObjectId> SortBacnetObjects(IList<BacnetValue> RawList)
+        public List<BacnetObjectId> SortBacnetObjects(IList<BacnetValue> RawList, bool Sort=true)
         {
 
             List<BacnetObjectId> SortedList = new List<BacnetObjectId>();
@@ -1602,7 +1567,8 @@ namespace Yabe
                     SortedList.Add(v.objectIdentifier); // ignore deviceIdentifier
                 }
 
-            SortedList.Sort();
+            if (Sort)
+                SortedList.Sort();
 
             return SortedList;
         }
@@ -1743,7 +1709,7 @@ namespace Yabe
 
                         }
 
-                        List<BacnetObjectId> objectList = SortBacnetObjects(value_list);
+                        IList<BacnetObjectId>  objectList = SortBacnetObjects(value_list, entry.SortableDictionnary);
 
                         AddSpaceLabel.Text = "Address Space : " + objectList.Count.ToString() + " objects";
                         //add to tree
@@ -1840,7 +1806,6 @@ namespace Yabe
                 Trace.TraceError("Couldn't fetch view members: " + ex.Message);
             }
         }
-
         
         private void FetchGroupProperties(BACnetDevice dev, BacnetObjectId object_id, TreeNodeCollection nodes, bool ForceRead=false)
         {
@@ -1881,6 +1846,16 @@ namespace Yabe
             removeDeviceToolStripMenuItem_Click(this, null);
         }
 
+        private ushort GetCurrentVendorId()
+        {
+            // Here we try to determine the current vendor ID of the selected device. 
+            if (_selectedDevice != null)
+            {
+                BACnetDevice dev = (_selectedDevice.Tag as BACnetDevice);
+                if (dev != null) return (ushort)dev.vendor_Id;
+            }
+            return ushort.MaxValue;
+        }
         public string GetNiceName(BacnetPropertyIds property, bool forceShowNumber = false)
         {
             bool prependNumber = forceShowNumber || Properties.Settings.Default.Show_Property_Id_Numbers;
@@ -1900,16 +1875,15 @@ namespace Yabe
             }
             else
             {
-                // try to resolve the vendor specific mapping
+                // resolve the vendor specific mapping
                 var vendorId = GetCurrentVendorId();
-                if (vendorId.HasValue)
+
+                var vendorPropertyNumber = ((long)vendorId << 32) | (uint)property;
+                if (_proprietaryPropertyMappings.TryGetValue(vendorPropertyNumber, out var vendorPropertyName))
                 {
-                    var vendorPropertyNumber = ((long)vendorId << 32) | (uint)property;
-                    if (_proprietaryPropertyMappings.TryGetValue(vendorPropertyNumber, out var vendorPropertyName))
-                    {
-                        name = vendorPropertyName;
-                    }
+                    name = vendorPropertyName;
                 }
+                
                 if (name!=null)
                 {
                     if (prependNumber)

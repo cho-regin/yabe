@@ -52,6 +52,9 @@ namespace Yabe
 
         bool ReadListOneShort = true;
 
+        // Don't sort it or it will be displayed two different ways
+        public bool SortableDictionnary { get { return ReadListOneShort; } }    
+
         // PROP_OBJECT_LIST  cache
         uint ListCountExpected;
         IList<BacnetValue> Prop_ObjectList; 
@@ -91,6 +94,7 @@ namespace Yabe
             ObjectList = null;
             Count = 0;
 
+            // Already in the cache ?
             if (ForceRead == false)
             {
                 if ((Prop_ObjectList != null) && (Prop_ObjectList.Count == ListCountExpected)) // Already in the cache ?
@@ -145,6 +149,7 @@ namespace Yabe
         {
             value_list = null;
 
+            // Already in the cache ?
             if (ForceRead==false)
             {
                 if ((Prop_ObjectList != null) && (Prop_ObjectList.Count >= Count))
@@ -158,7 +163,7 @@ namespace Yabe
             if (Prop_ObjectList==null) Prop_ObjectList=new List<BacnetValue>();
 
             if (Prop_ObjectList.Count != Count - 1)
-                return false;   // Bad order, today not accepted
+                return false;   // Wrong sequence, today not required, not accepted
 
             value_list = null;
 
@@ -181,6 +186,7 @@ namespace Yabe
         {
             value_list = null;
 
+            // Already in the cache ?
             if (ForceRead == false)
             {
                 foreach (BACObjectPropertyValue v in Prop_Cached)
@@ -200,6 +206,7 @@ namespace Yabe
             }
             catch { }
 
+            // Push it in the cache
             foreach (BACObjectPropertyValue v in Prop_Cached)
             {
                 if ((v.objid.Equals(object_id)) && (v.PropertyIds == PropertyId))
