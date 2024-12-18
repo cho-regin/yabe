@@ -57,6 +57,7 @@ namespace Yabe
         private const int MAX_POLL_PERIOD = 120000; //ms
 
         private Dictionary<BacnetClient, BacnetDeviceLine> m_devices = new Dictionary<BacnetClient, BacnetDeviceLine>();
+        public Dictionary<BacnetClient, BacnetDeviceLine> DiscoveredDevices { get { return m_devices; } }
 
         private object _selectedNode = null;
         private TreeNode _selectedDevice = null;
@@ -89,14 +90,12 @@ namespace Yabe
                     //Enumerate each Parent Device:
                     foreach (TreeNode node in transport.Nodes)
                     {
-                        Debug.Assert(node.Tag != null);
                         yield return (node);
                     }
                 }
                 yield break;
             }
         }
-
 
         private Dictionary<string, ListViewItem> m_subscription_list = new Dictionary<string, ListViewItem>();
         private Dictionary<string, RollingPointPairList> m_subscription_points = new Dictionary<string, RollingPointPairList>();        
@@ -114,8 +113,6 @@ namespace Yabe
 
         public bool objectNamesChangedFlag = false;
 
-        public Dictionary<BacnetClient, BacnetDeviceLine> DiscoveredDevices { get { return m_devices; } }
-
         private uint m_next_subscription_id = 0;
 
         private static DeviceStorage m_storage;
@@ -127,16 +124,28 @@ namespace Yabe
 
         private bool LoadVendorPropertyMapping()
         {
+
             string path = Properties.Settings.Default.Proprietary_Properties_Files;
 
-            // get all lines from the file
-            var lines = File.ReadAllLines(path, Encoding.UTF8);
-            bool firstLine = true;
             // helper function to log erros
             void LogError(string message)
             {
                 Trace.TraceError($"Invalid line in vendor proprietary BACnet properties file \"{path}\". {message}");
             }
+
+            string[] lines;
+            try
+            {
+                // get all lines from the file
+                lines = File.ReadAllLines(path, Encoding.UTF8);
+            }
+            catch 
+            {
+                Trace.TraceError("Cannot read Vendor proprietary BACnet file");
+                return false; 
+            }
+
+            bool firstLine = true;
 
             // parse each line
             foreach (var line in lines)
@@ -186,7 +195,7 @@ namespace Yabe
                 _proprietaryPropertyMappings.Add(vendorPropertyNumber, match.Groups[3].Value);
             }
 
-            // return an indication that be have handled this file
+            // return an indication that we have handled this file
             return true;
         }
         
@@ -1011,7 +1020,7 @@ namespace Yabe
                 product = this.GetType().Assembly.GetName().Name;
             }
 
-            MessageBox.Show(this, product + "\nVersion " + this.GetType().Assembly.GetName().Version + "\nBy Morten Kvistgaard - Copyright 2014-2017\nBy Frederic Chaxel - Copyright 2015-2022\n" +
+            MessageBox.Show(this, product + "\nVersion " + this.GetType().Assembly.GetName().Version + "\nBy Morten Kvistgaard - Copyright 2014-2017\nBy Frederic Chaxel - Copyright 2015-2024\n" +
                 "\nReferences:"+
                 "\nhttp://bacnet.sourceforge.net/" + 
                 "\nhttp://www.unified-automation.com/products/development-tools/uaexpert.html" +
@@ -1435,7 +1444,7 @@ namespace Yabe
             {
                 FetchGroupProperties(dev, object_id, node.Nodes, ForceRead);
             }
-            else if ((object_id.type == BacnetObjectTypes.OBJECT_STRUCTURED_VIEW) && (Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Structured || Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Both))
+            else if ((object_id.type == BacnetObjectTypes.OBJECT_STRUCTURED_VIEW)) // && (Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Structured || Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Both))
             {
                 if (recursionDetected)
                 {
@@ -1489,7 +1498,7 @@ namespace Yabe
             try
             {
                 dev.channel.Retries = 1;       //only do 1 retry
-                if (!dev.ReadPropertyRequest(out ret, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id),BacnetPropertyIds.PROP_STRUCTURED_OBJECT_LIST, ForceRead))
+                if (!dev.ReadCachablePropertyRequest(out ret, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id),BacnetPropertyIds.PROP_STRUCTURED_OBJECT_LIST, ForceRead))
                 {
                     Trace.TraceInformation("Didn't get response from 'Structured Object List'");
                     return null;
@@ -1543,6 +1552,10 @@ namespace Yabe
                         {
                             if (AsynchRequestId != this.AsynchRequestId) return;  // another test in the GUI thread
                             AddObjectEntry(dev, null, (BacnetObjectId)value.Value, m_AddressSpaceTree.Nodes, ForceRead);
+                            if (i != count)
+                                AddSpaceLabel.Text = "Address Space : " + i + " objects / " + count + " expected";
+                            else
+                                AddSpaceLabel.Text = "Address Space : " + i + " objects";
                         });
                     }
                 }
@@ -1575,214 +1588,215 @@ namespace Yabe
 
         private void m_DeviceTree_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            bool ForceRead = !Properties.Settings.Default.UseObjectsCache;
-            if (sender == manual_refresh_objects)
-                ForceRead = true;
 
             AsynchRequestId++; // disabled a possible thread pool work (update) on the AddressSpaceTree
             TreeNode node = e.Node;
             //_selectedDevice = null;
             BACnetDevice entry = e.Node.Tag as BACnetDevice;
-            if (entry != null)
+
+            if (entry == null) return;  // Not a TreeNode linked to a device
+
+            if ((sender == manual_refresh_objects)||(!Properties.Settings.Default.UseObjectsCache))
+                entry.ClearCache();
+
+            m_AddressSpaceTree.Nodes.Clear();   //clear
+            AddSpaceLabel.Text = "Address Space";
+
+            BacnetClient comm = entry.channel;
+            BacnetAddress adr = entry.BacAdr;
+            uint device_id = entry.deviceId;
+
+            //unconfigured MSTP?
+            if (comm.Transport is BacnetMstpProtocolTransport && ((BacnetMstpProtocolTransport)comm.Transport).SourceAddress == -1)
             {
-                m_AddressSpaceTree.Nodes.Clear();   //clear
-                AddSpaceLabel.Text = "Address Space";
+                if (MessageBox.Show("The MSTP transport is not yet configured. Would you like to set source_address now?", "Set Source Address", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.No) return;
 
-                BacnetClient comm = entry.channel;
-                BacnetAddress adr = entry.BacAdr;
-                uint device_id = entry.deviceId;
-
-                //unconfigured MSTP?
-                if (comm.Transport is BacnetMstpProtocolTransport && ((BacnetMstpProtocolTransport)comm.Transport).SourceAddress == -1)
+                //find suggested address
+                byte address = 0xFF;
+                BacnetDeviceLine line = m_devices[comm];
+                lock (line.mstp_sources_seen)
                 {
-                    if (MessageBox.Show("The MSTP transport is not yet configured. Would you like to set source_address now?", "Set Source Address", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.No) return;
-
-                    //find suggested address
-                    byte address = 0xFF;
-                    BacnetDeviceLine line = m_devices[comm];
-                    lock (line.mstp_sources_seen)
+                    foreach (byte s in line.mstp_pfm_destinations_seen)
                     {
-                        foreach (byte s in line.mstp_pfm_destinations_seen)
-                        {
-                            if (s < address && !line.mstp_sources_seen.Contains(s))
-                                address = s;
-                        }
+                        if (s < address && !line.mstp_sources_seen.Contains(s))
+                            address = s;
                     }
-
-                    //display choice
-                    SourceAddressDialog dlg = new SourceAddressDialog();
-                    dlg.SourceAddress = address;
-                    if( dlg.ShowDialog(this) == System.Windows.Forms.DialogResult.Cancel) return;
-                    ((BacnetMstpProtocolTransport)comm.Transport).SourceAddress = dlg.SourceAddress;
-                    Application.DoEvents();     //let the interface relax
                 }
 
-                //update "address space"?
-                this.Cursor = Cursors.WaitCursor;
-                Application.DoEvents();
-                int old_timeout = comm.Timeout;
-                IList<BacnetValue> value_list = null;
+                //display choice
+                SourceAddressDialog dlg = new SourceAddressDialog();
+                dlg.SourceAddress = address;
+                if( dlg.ShowDialog(this) == System.Windows.Forms.DialogResult.Cancel) return;
+                ((BacnetMstpProtocolTransport)comm.Transport).SourceAddress = dlg.SourceAddress;
+                Application.DoEvents();     //let the interface relax
+            }
 
-                try
+            //update "address space"?
+            this.Cursor = Cursors.WaitCursor;
+            Application.DoEvents();
+            int old_timeout = comm.Timeout;
+            IList<BacnetValue> value_list = null;
+
+            try
+            {
+                if (Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Structured)
                 {
-                    if (Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Structured)
+                    value_list = FetchStructuredObjects(entry, device_id, m_AddressSpaceTree.Nodes);
+
+                    BacnetObjectId bobj_id = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id);
+
+                    // If the Device name not set, try to update it
+                    if (node.ToolTipText == "")   // already update with the device name
                     {
-                        value_list = FetchStructuredObjects(entry, device_id, m_AddressSpaceTree.Nodes);
+                        bool Prop_Object_NameOK = false;
+                        String Identifier;
 
-                        BacnetObjectId bobj_id = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id);
-
-                        // If the Device name not set, try to update it
-                        if (node.ToolTipText == "")   // already update with the device name
+                        lock (DevicesObjectsName)
+                            Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id), out Identifier);
+                        if (Prop_Object_NameOK)
                         {
-                            bool Prop_Object_NameOK = false;
-                            String Identifier;
-
-                            lock (DevicesObjectsName)
-                                Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id), out Identifier);
-                            if (Prop_Object_NameOK)
+                            node.ToolTipText = node.Text;
+                            node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
+                        }
+                        else
+                            try
                             {
-                                node.ToolTipText = node.Text;
-                                node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
-                            }
-                            else
-                                try
-                                {
-                                    IList<BacnetValue> values;
+                                IList<BacnetValue> values;
 
-                                    if (entry.ReadPropertyRequest(out values, bobj_id, BacnetPropertyIds.PROP_OBJECT_NAME, ForceRead))
+                                if (entry.ReadCachablePropertyRequest(out values, bobj_id, BacnetPropertyIds.PROP_OBJECT_NAME))
+                                {
+                                    node.ToolTipText = node.Text;   // IP or MSTP node id -> in the Tooltip
+                                    node.Text = values[0].ToString() + " [" + bobj_id.Instance.ToString() + "] ";  // change @ by the Name    
+                                    lock (DevicesObjectsName)
                                     {
-                                        node.ToolTipText = node.Text;   // IP or MSTP node id -> in the Tooltip
-                                        node.Text = values[0].ToString() + " [" + bobj_id.Instance.ToString() + "] ";  // change @ by the Name    
-                                        lock (DevicesObjectsName)
+                                        Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id);
+                                        if (DevicesObjectsName.ContainsKey(t))
                                         {
-                                            Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id);
-                                            if (DevicesObjectsName.ContainsKey(t))
+                                            if (!DevicesObjectsName[t].Equals(values[0].ToString()))
                                             {
-                                                if (!DevicesObjectsName[t].Equals(values[0].ToString()))
-                                                {
-                                                    DevicesObjectsName.Remove(t);
-                                                    DevicesObjectsName.Add(t, values[0].ToString());
-                                                    objectNamesChangedFlag = true;
-                                                }
-                                            }
-                                            else
-                                            {
+                                                DevicesObjectsName.Remove(t);
                                                 DevicesObjectsName.Add(t, values[0].ToString());
                                                 objectNamesChangedFlag = true;
                                             }
                                         }
+                                        else
+                                        {
+                                            DevicesObjectsName.Add(t, values[0].ToString());
+                                            objectNamesChangedFlag = true;
+                                        }
                                     }
                                 }
-                                catch { }
-                        }
+                            }
+                            catch { }
+                    }
                         
-                    }
-                    if (value_list != null)
-                    {
-                        AddSpaceLabel.Text = "Address Space : " + value_list.Count.ToString() + " objects";
-                    }
-                    else
-                    {
-                        //fetch normal list
-                        uint list_count;
+                }
+                if (value_list != null) // Without PROP_STRUCTURED_OBJECT_LIST we fall back to a flat view of the dictionnary
+                {
+                   AddSpaceLabel.Text = "Address Space : " + value_list.Count.ToString() + " objects";
+                }
+                else
+                {
+                    //fetch normal list
+                    uint list_count;
 
-                        if (!entry.ReadObjectList(out value_list, out list_count, ForceRead))
-                        {
-                            Trace.TraceWarning("Didn't get response from 'Object List'");
-                            return;
-                        }
+                    if (!entry.ReadObjectList(out value_list, out list_count))
+                    {
+                        Trace.TraceWarning("Didn't get response from 'Object List'");
+                        return;
+                    }
 
-                        //fetch list one-by-one
-                        if ((value_list == null)&&(list_count != 0))
-                        {
+                    //fetch list one-by-one
+                    if ((value_list == null)&&(list_count != 0))
+                    {
                             
-                            AddSpaceLabel.Text = "Address Space : " + list_count.ToString() + " objects";
+                        AddSpaceLabel.Text = "Address Space : 0 objects / " + list_count.ToString() + " expected";
 
-                            // The only time sender should be a TextWriter is from the edeExport function:
-                            if(sender is TextWriter)
-                                AddObjectListOneByOne(entry, list_count, AsynchRequestId, ForceRead);
-                            else
-                                AddObjectListOneByOneAsync(entry, list_count, AsynchRequestId, ForceRead);
+                        // The only time sender should be a TextWriter is from the edeExport function:
+                        if(sender is TextWriter)
+                            AddObjectListOneByOne(entry, list_count, AsynchRequestId);
+                        else
+                            AddObjectListOneByOneAsync(entry, list_count, AsynchRequestId);
 
-                            _selectedDevice = node;
-                            return;
+                        _selectedDevice = node;
+                        return;
 
-                        }
+                    }
 
-                        IList<BacnetObjectId>  objectList = SortBacnetObjects(value_list, entry.SortableDictionnary);
+                    IList<BacnetObjectId>  objectList = SortBacnetObjects(value_list, entry.SortableDictionnary);
 
-                        AddSpaceLabel.Text = "Address Space : " + objectList.Count.ToString() + " objects";
-                        //add to tree
-                        foreach (BacnetObjectId bobj_id in objectList)
+                    AddSpaceLabel.Text = "Address Space : " + objectList.Count.ToString() + " objects";
+                    //add to tree
+                    foreach (BacnetObjectId bobj_id in objectList)
+                    {
+                        // Add FC
+                        // If the Device name not set, try to update it
+                        if (bobj_id.type == BacnetObjectTypes.OBJECT_DEVICE)
                         {
-                            // Add FC
                             // If the Device name not set, try to update it
-                            if (bobj_id.type == BacnetObjectTypes.OBJECT_DEVICE)
+                            if (node.ToolTipText == "")   // already update with the device name
                             {
-                                // If the Device name not set, try to update it
-                                if (node.ToolTipText == "")   // already update with the device name
-                                {
-                                    bool Prop_Object_NameOK = false;
-                                    String Identifier;
+                                bool Prop_Object_NameOK = false;
+                                String Identifier;
 
-                                    lock (DevicesObjectsName)
-                                        Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id), out Identifier);
-                                    if (Prop_Object_NameOK)
+                                lock (DevicesObjectsName)
+                                    Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id), out Identifier);
+                                if (Prop_Object_NameOK)
+                                {
+                                    node.ToolTipText = node.Text;
+                                    node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
+                                }
+                                else
+                                {
+                                    this.Cursor = Cursors.WaitCursor;
+                                    try
                                     {
-                                        node.ToolTipText = node.Text;
-                                        node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
-                                    }
-                                    else
-                                    {
-                                        this.Cursor = Cursors.WaitCursor;
-                                        try
+                                        IList<BacnetValue> values;
+                                        if (entry.ReadCachablePropertyRequest(out values, bobj_id, BacnetPropertyIds.PROP_OBJECT_NAME))
                                         {
-                                            IList<BacnetValue> values;
-                                            if (entry.ReadPropertyRequest(out values, bobj_id, BacnetPropertyIds.PROP_OBJECT_NAME, ForceRead))
+                                            node.ToolTipText = node.Text;   // IP or MSTP node id -> in the Tooltip
+                                            node.Text = values[0].ToString() + " [" + bobj_id.Instance.ToString() + "] ";  // change @ by the Name    
+                                            lock (DevicesObjectsName)
                                             {
-                                                node.ToolTipText = node.Text;   // IP or MSTP node id -> in the Tooltip
-                                                node.Text = values[0].ToString() + " [" + bobj_id.Instance.ToString() + "] ";  // change @ by the Name    
-                                                lock (DevicesObjectsName)
+                                                Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id);
+                                                if (DevicesObjectsName.ContainsKey(t))
                                                 {
-                                                    Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id);
-                                                    if (DevicesObjectsName.ContainsKey(t))
+                                                    if (!DevicesObjectsName[t].Equals(values[0].ToString()))
                                                     {
-                                                        if (!DevicesObjectsName[t].Equals(values[0].ToString()))
-                                                        {
-                                                            DevicesObjectsName.Remove(t);
-                                                            DevicesObjectsName.Add(t, values[0].ToString());
-                                                            objectNamesChangedFlag = true;
-                                                        }
-                                                    }
-                                                    else
-                                                    {
+                                                        DevicesObjectsName.Remove(t);
                                                         DevicesObjectsName.Add(t, values[0].ToString());
                                                         objectNamesChangedFlag = true;
                                                     }
                                                 }
+                                                else
+                                                {
+                                                    DevicesObjectsName.Add(t, values[0].ToString());
+                                                    objectNamesChangedFlag = true;
+                                                }
                                             }
                                         }
-                                        catch { }
                                     }
+                                    catch { }
                                 }
                             }
-                            AddObjectEntry(entry, null, bobj_id, m_AddressSpaceTree.Nodes, ForceRead);
                         }
+                        AddObjectEntry(entry, null, bobj_id, m_AddressSpaceTree.Nodes);
                     }
-                    _selectedDevice = node;
                 }
-                finally
-                {
-                    this.Cursor = Cursors.Default;
-                    _selectedNode = null;
-                    m_DataGrid.SelectedObject = null;
-                }
-
-                if ((!TbxHighlightDevice.Text.IsNullOrEmpty()) && (node.Text.ToLower().Contains(TbxHighlightDevice.Text.ToLower())))
-                    node.ForeColor = Color.Red;
-                else
-                    node.ForeColor = Color.Black;
+                _selectedDevice = node;
             }
+            finally
+            {
+                this.Cursor = Cursors.Default;
+                _selectedNode = null;
+                m_DataGrid.SelectedObject = null;
+            }
+
+            if ((!TbxHighlightDevice.Text.IsNullOrEmpty()) && (node.Text.ToLower().Contains(TbxHighlightDevice.Text.ToLower())))
+                node.ForeColor = Color.Red;
+            else
+                node.ForeColor = Color.Black;
+        
         }
 
         private void FetchViewObjects(BACnetDevice dev, BacnetObjectId object_id, TreeNodeCollection nodes, bool ForceRead=false)
@@ -1790,7 +1804,7 @@ namespace Yabe
             try
             {
                 IList<BacnetValue> values;
-                if (dev.ReadPropertyRequest(out values, object_id, BacnetPropertyIds.PROP_SUBORDINATE_LIST, ForceRead))
+                if (dev.ReadCachablePropertyRequest(out values, object_id, BacnetPropertyIds.PROP_SUBORDINATE_LIST, ForceRead))
                 {
                     List<BacnetObjectId> objectList = SortBacnetObjects(values);
                     foreach (BacnetObjectId objid in objectList)
@@ -1812,7 +1826,7 @@ namespace Yabe
             try
             {
                 IList<BacnetValue> values;
-                if (dev.ReadPropertyRequest(out values, object_id, BacnetPropertyIds.PROP_LIST_OF_GROUP_MEMBERS, ForceRead))
+                if (dev.ReadCachablePropertyRequest(out values, object_id, BacnetPropertyIds.PROP_LIST_OF_GROUP_MEMBERS, ForceRead))
                 {
                     foreach (BacnetValue value in values)
                     {
@@ -3362,12 +3376,7 @@ namespace Yabe
                 else if (!(_selectedDevice.Tag is BACnetDevice)) return;
                 BACnetDevice entry = (BACnetDevice)_selectedDevice.Tag;
                 BacnetAddress adr = entry.BacAdr;
-
-                BacnetClient comm;
-                if (_selectedDevice.Parent.Tag is BacnetClient)
-                    comm = (BacnetClient)_selectedDevice.Parent.Tag;
-                else  // a routed device
-                    comm = (BacnetClient)_selectedDevice.Parent.Parent.Tag;
+                BacnetClient comm = entry.channel;
 
                 //fetch object_id
                 var nodes = (CodersLab.Windows.Controls.NodesCollection)e.Data.GetData("CodersLab.Windows.Controls.NodesCollection");
@@ -3995,7 +4004,7 @@ namespace Yabe
         }
 
         /// <summary>
-        /// Retreive the BacnetClient, BacnetAddress, device id of the selected node,
+        /// Retreive the BacnetClient, BacnetAddress, device id of the selected node, all way before BACnetDevice object as TreeNode Tag
         /// </summary>
         private bool FetchEndPoint(out BacnetClient comm, out BacnetAddress adr, out uint device_id) => FetchEndPoint(m_DeviceTree.SelectedNode, out comm, out adr, out device_id);
         /// <summary>
@@ -4004,24 +4013,17 @@ namespace Yabe
         private bool FetchEndPoint(TreeNode node, out BacnetClient comm, out BacnetAddress adr, out uint device_id)
         {
             comm = null; adr = null; device_id = 0;
-            try
-            {
-                if (node == null) return false;
-                else if (node.Tag == null) return false;
-                else if (!(node.Tag is BACnetDevice)) return false;
-                BACnetDevice entry = (BACnetDevice)node.Tag;
-                adr = entry.BacAdr;
-                device_id = entry.deviceId;
-                if (node.Parent.Tag is BacnetClient)
-                    comm = (BacnetClient)node.Parent.Tag;
-                else
-                    comm = (BacnetClient)node.Parent.Parent.Tag; // When device is under a Router
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+
+            if (node == null) return false;
+            else if (node.Tag == null) return false;
+            else if (!(node.Tag is BACnetDevice)) return false;
+
+            BACnetDevice entry = (BACnetDevice)node.Tag;
+            adr = entry.BacAdr;
+            device_id = entry.deviceId;
+            comm = entry.channel;
+            return true;
+
         }
 
         private TreeNode GetTreeNodeFromDeviceId(uint deviceId)

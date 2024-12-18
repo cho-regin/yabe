@@ -26,9 +26,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO.BACnet;
+using System.Linq;
 
 namespace Yabe
 {
+    // One object per discovered device on the network. Referenced at least by the TreeNode.Tag in the DeviceTreeview 
+    // Used to cache some properties values & the object dictionnary
     public class BACnetDevice : IComparable<BACnetDevice>
     {
         class BACObjectPropertyValue
@@ -52,7 +55,7 @@ namespace Yabe
 
         bool ReadListOneShort = true;
 
-        // Don't sort it or it will be displayed two different ways
+        // Don't sort it if ReadListOneShort or it will be displayed on two different ways when getting back the cache
         public bool SortableDictionnary { get { return ReadListOneShort; } }    
 
         // PROP_OBJECT_LIST  cache
@@ -89,6 +92,13 @@ namespace Yabe
         }
         public override int GetHashCode() { return (int)deviceId; } // deviceId should be unique in the network 
 
+        public void ClearCache()
+        {
+            Prop_Cached.Clear();
+            Prop_ObjectList = null;
+            ListCountExpected = 0;
+
+        }
         public bool ReadObjectList(out IList<BacnetValue> ObjectList, out uint Count, bool ForceRead = false)
         {
             ObjectList = null;
@@ -103,15 +113,16 @@ namespace Yabe
                     Count = ListCountExpected;
                     return true;
                 }
+
+                if (ListCountExpected != 0)  // Quantity in the PROP_LIST is already known, don't read it again
+                {
+                    Count = ListCountExpected;
+                    return true;
+                }
             }
 
-            if ((ListCountExpected != 0) && (ForceRead == false)) // already done
+            if (ReadListOneShort == true) // If a previous test without success was done, no way to try it this way
             {
-                Count = ListCountExpected;
-                return true;
-            }
-
-            if (ReadListOneShort==true) // If a previous test without success was done, no way to try it this way
                 try
                 {
                     if (channel.ReadPropertyRequest(BacAdr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceId), BacnetPropertyIds.PROP_OBJECT_LIST, out Prop_ObjectList))
@@ -126,6 +137,7 @@ namespace Yabe
 
                 }
                 catch { ReadListOneShort = false; }
+            }
 
             try // Unfortunatly get List count for a One by One operation after
             {
@@ -163,7 +175,7 @@ namespace Yabe
             if (Prop_ObjectList==null) Prop_ObjectList=new List<BacnetValue>();
 
             if (Prop_ObjectList.Count != Count - 1)
-                return false;   // Wrong sequence, today not required, not accepted
+                return false;   // Wrong sequence, should be 1..n in order, today not required / not accepted
 
             value_list = null;
 
@@ -182,21 +194,18 @@ namespace Yabe
             return false;
         }
 
-        public bool ReadPropertyRequest(out IList<BacnetValue> value_list, BacnetObjectId object_id, BacnetPropertyIds PropertyId, bool ForceRead = false)
+        public bool ReadCachablePropertyRequest(out IList<BacnetValue> value_list, BacnetObjectId object_id, BacnetPropertyIds PropertyId, bool ForceRead = false)
         {
             value_list = null;
+            BACObjectPropertyValue Property = null;
+
+            try {Property = Prop_Cached.First(o => (o.PropertyIds == PropertyId)&&(o.objid.Equals(object_id))); } catch { }
 
             // Already in the cache ?
-            if (ForceRead == false)
+            if ((ForceRead == false)&&(Property != null))
             {
-                foreach (BACObjectPropertyValue v in Prop_Cached)
-                {
-                    if ((v.objid.Equals(object_id)) && (v.PropertyIds == PropertyId))
-                    {
-                        value_list = v.Value_Cache;// also null
-                        return true;
-                    }
-                }
+                value_list = Property.Value_Cache;// also null
+                return true;
             }
 
             bool ret=false;
@@ -206,16 +215,12 @@ namespace Yabe
             }
             catch { }
 
-            // Push it in the cache
-            foreach (BACObjectPropertyValue v in Prop_Cached)
-            {
-                if ((v.objid.Equals(object_id)) && (v.PropertyIds == PropertyId))
-                {
-                    v.Value_Cache = value_list;   // change the value
-                    return ret;
-                }
-            }
-            Prop_Cached.Add(new BACObjectPropertyValue(object_id, PropertyId, value_list));
+            // Change the value or Push it in the cache
+            if (Property != null)
+                Property.Value_Cache = value_list;   // change the value
+            else
+                Prop_Cached.Add(new BACObjectPropertyValue(object_id, PropertyId, value_list));
+
             return ret;
 
         }
