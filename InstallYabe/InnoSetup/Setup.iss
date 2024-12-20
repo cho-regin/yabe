@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Yabe"
-#define MyAppVersion "1.3.3"
+#define MyAppVersion "1.4.0"
 #define MyAppPublisher "Yabe Authors"
 #define MyAppURL "http://sourceforge.net/projects/yetanotherbacnetexplorer"
 #define MyAppExeName "Yabe.exe"
@@ -107,22 +107,4 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, "&", "&&")}}"; Flags: nowait postinstall skipifsilent
 
-[Code]
-
-function InitializeSetup(): Boolean;
-begin
-  Result := true;
-  if not RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\NET Framework Setup\NDP\v4') then
-  begin
-    MsgBox('Microsoft .NET 4.0 required', mbInformation, MB_OK);
-  end
-  else
-  begin
-    if FileExists('C:\Program Files (x86)\YabeAuthors\Yabe\Yabe.exe') then
-    begin
-      MsgBox('Very old Yabe version detected : it should be manually uninstalled from the control panel', mbInformation, MB_OK);
-      Result := false;
-    end
-  end
-end;
 

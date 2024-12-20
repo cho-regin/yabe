@@ -81,7 +81,7 @@ namespace BasicLowEndServer
             var BacObjects = m_storage.Objects;
             Array.Resize(ref BacObjects, NbObj);
 
-            var original = m_storage.Objects[1]; // the first object after DEVICE
+            var original = m_storage.Objects[2]; // the first object after DEVICE & GROUP
 
             for (int i = 0; i < NbObj-2; i++)
             {

@@ -41,7 +41,7 @@ namespace CheckReliability
     public partial class Reliability : Form
     {
         YabeMainDialog yabeFrm;
-        BacnetClient client; BacnetAddress adr; BacnetObjectId objId;
+        BacnetClient client; BacnetAddress adr; BacnetObjectId objId; uint device_id;
 
         public Reliability(YabeMainDialog yabeFrm)
         {
@@ -72,7 +72,7 @@ namespace CheckReliability
 
             try
             {
-                yabeFrm.GetObjectLink(out client, out adr, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
+                yabeFrm.GetObjectLink(out client, out adr, out device_id, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE) ;
                 Devicename.Text = adr.ToString();
 
                 CheckAllObjects(yabeFrm.m_AddressSpaceTree.Nodes);
@@ -101,7 +101,7 @@ namespace CheckReliability
                 String Identifier = null;
 
                 lock (yabeFrm.DevicesObjectsName) // translate to it's name if already known
-                    yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), object_id), out Identifier);
+                    yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(device_id), object_id), out Identifier);
 
                 try
                 {

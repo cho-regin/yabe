@@ -189,7 +189,7 @@ namespace AnotherStorageImplementation
 
             // TREND_LOG:0 with int values
             // new TrendLog can be changed by new TrendLogCustom
-            trend0 = new TrendLog(0, "Trend signed int", "Trend signed int", 200, BacnetTrendLogValueType.TL_TYPE_SIGN);
+            trend0 = new TrendLogCustom(0, "Trend signed int", "Trend signed int", 200, BacnetTrendLogValueType.TL_TYPE_SIGN);
             s2.AddBacnetObject(trend0); // in the second level view
             // fill Log with more values than the size
             for (int i = 0; i < 300; i++)

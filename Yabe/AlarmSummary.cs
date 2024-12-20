@@ -34,23 +34,23 @@ using System.Windows.Forms;
 using System.IO.BACnet;
 using System.IO.BACnet.Serialize;
 using System.Diagnostics;
+using SharpPcap;
 
 namespace Yabe
 {
     public partial class AlarmSummary : Form
     {
-        BacnetClient comm; BacnetAddress adr;
+        BACnetDevice device;
 
         Dictionary<Tuple<String, BacnetObjectId>, String> DevicesObjectsName;
 
         IList<BacnetGetEventInformationData> Alarms=new List<BacnetGetEventInformationData>();
 
-        public AlarmSummary(ImageList img_List, BacnetClient comm, BacnetAddress adr, uint device_id, Dictionary<Tuple<String, BacnetObjectId>, String> DevicesObjectsName)
+        public AlarmSummary(ImageList img_List, BACnetDevice device, Dictionary<Tuple<String, BacnetObjectId>, String> DevicesObjectsName)
         {
             InitializeComponent();
-            this.Text = "Active Alarms on Device Id " + device_id.ToString();
-            this.comm = comm;
-            this.adr = adr;
+            this.Text = "Active Alarms on Device Id " + device.deviceId.ToString();
+            this.device = device;
 
             this.DevicesObjectsName = DevicesObjectsName;
 
@@ -77,10 +77,10 @@ namespace Yabe
             // Addentum 135-2012av-1 : Deprecate Execution of GetAlarmSummary, GetEVentInformation instead
             // -> parameter 2 in the method call
             bool Ret;
-            Ret = comm.GetAlarmSummaryOrEventRequest(adr, true, ref Alarms); // try GetEVentInformation
+            Ret = device.channel.GetAlarmSummaryOrEventRequest(device.BacAdr, true, ref Alarms); // try GetEVentInformation
 
             if (!Ret)
-                Ret = comm.GetAlarmSummaryOrEventRequest(adr, false, ref Alarms); // try GetAlarmSummary
+                Ret = device.channel.GetAlarmSummaryOrEventRequest(device.BacAdr, false, ref Alarms); // try GetAlarmSummary
 
             if (Ret)
             {
@@ -119,8 +119,8 @@ namespace Yabe
             TAlarmList.BeginUpdate();
 
             // Only one network read request to get the object name
-            int _retries = comm.Retries;
-            comm.Retries = 1;
+            int _retries = device.channel.Retries;
+            device.channel.Retries = 1;
 
             // fill the Treenode
             foreach (BacnetGetEventInformationData alarm in Alarms)
@@ -132,19 +132,19 @@ namespace Yabe
                     String nameStr = null;
 
                     lock (DevicesObjectsName)
-                        DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), alarm.objectIdentifier), out nameStr);
+                        DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.FullHashString(), alarm.objectIdentifier), out nameStr);
 
                     if (nameStr == null)
                     {
                         // Get the property Name, network activity, time consuming
                         IList<BacnetValue> name;
-                        bool retcode = comm.ReadPropertyRequest(adr, alarm.objectIdentifier, BacnetPropertyIds.PROP_OBJECT_NAME, out name);
+                        bool retcode = device.channel.ReadPropertyRequest(device.BacAdr, alarm.objectIdentifier, BacnetPropertyIds.PROP_OBJECT_NAME, out name);
 
                         if (retcode)
                         {
                             nameStr = name[0].Value.ToString();
                             lock (DevicesObjectsName)
-                                DevicesObjectsName.Add(new Tuple<String, BacnetObjectId>(adr.FullHashString(), alarm.objectIdentifier), nameStr);
+                                DevicesObjectsName.Add(new Tuple<String, BacnetObjectId>(device.FullHashString(), alarm.objectIdentifier), nameStr);
                         }
                     }
 
@@ -171,7 +171,7 @@ namespace Yabe
                         {
                             // Get the Description, network activity, time consuming
                             IList<BacnetValue> name;
-                            bool retcode = comm.ReadPropertyRequest(adr, alarm.objectIdentifier, BacnetPropertyIds.PROP_DESCRIPTION, out name);
+                            bool retcode = device.channel.ReadPropertyRequest(device.BacAdr, alarm.objectIdentifier, BacnetPropertyIds.PROP_DESCRIPTION, out name);
 
                             if (retcode)
                                 Descr = name[0].Value.ToString();
@@ -204,7 +204,7 @@ namespace Yabe
             }
 
             // set back the request retries number
-            comm.Retries = _retries;
+            device.channel.Retries = _retries;
 
             TAlarmList.EndUpdate();
 
@@ -232,7 +232,7 @@ namespace Yabe
                     {
                         // Read the event time stamp, we do not have it 
                         IList<BacnetValue> values;
-                        if (comm.ReadPropertyRequest(adr, alarm.objectIdentifier, BacnetPropertyIds.PROP_EVENT_TIME_STAMPS, out values, 0, (uint)i) == false)
+                        if (device.channel.ReadPropertyRequest(device.BacAdr, alarm.objectIdentifier, BacnetPropertyIds.PROP_EVENT_TIME_STAMPS, out values, 0, (uint)i) == false)
                         {
                             Trace.TraceWarning("Error reading PROP_EVENT_TIME_STAMPS");
                             return false;
@@ -246,7 +246,7 @@ namespace Yabe
                     // something to clarify : BacnetEventStates or BacnetEventEnable !!!
                     BacnetEventNotificationData.BacnetEventStates eventstate = (BacnetEventNotificationData.BacnetEventStates)(2 - i);
 
-                    if (comm.AlarmAcknowledgement(adr, alarm.objectIdentifier, eventstate, AckText.Text, bgt,
+                    if (device.channel.AlarmAcknowledgement(device.BacAdr, alarm.objectIdentifier, eventstate, AckText.Text, bgt,
                                 new BacnetGenericTime(DateTime.Now, BacnetTimestampTags.TIME_STAMP_DATETIME)) == true)
                     {
                         alarm.acknowledgedTransitions.SetBit((byte)i, true);
@@ -290,7 +290,7 @@ namespace Yabe
                 BacnetGetEventInformationData alarm = (BacnetGetEventInformationData)tn.Tag;
                 IList<BacnetValue> name;
 
-                comm.ReadPropertyRequest(adr, alarm.objectIdentifier, BacnetPropertyIds.PROP_OBJECT_NAME, out name);
+                device.channel.ReadPropertyRequest(device.BacAdr, alarm.objectIdentifier, BacnetPropertyIds.PROP_OBJECT_NAME, out name);
                 
                 tn.ToolTipText = tn.Text;
 

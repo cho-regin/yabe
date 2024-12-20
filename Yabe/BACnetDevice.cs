@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using System.IO.BACnet;
 using System.Linq;
+using System.Text;
 
 namespace Yabe
 {
@@ -65,7 +66,7 @@ namespace Yabe
         // Several Properties Caches (Device Name, View List, Group List, ...), only needed to displays the Dictionnary
         List<BACObjectPropertyValue> Prop_Cached=new List<BACObjectPropertyValue>();    
 
-        public BACnetDevice(BacnetClient sender, BacnetAddress addr, uint Id, uint vendor_id=uint.MaxValue)
+        public BACnetDevice(BacnetClient sender, BacnetAddress addr, uint Id, uint vendor_id = System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE)
         {
             channel = sender;
             BacAdr = addr;
@@ -84,7 +85,7 @@ namespace Yabe
             {
                 if (!BacAdr.Equals(other.BacAdr)) return false;
                 if (this.deviceId != other.deviceId) return false;
-                if (vendor_Id!=uint.MaxValue) 
+                if (vendor_Id != System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE) 
                     if (this.vendor_Id != other.vendor_Id)  return false;
                 return true;
             }
@@ -92,6 +93,42 @@ namespace Yabe
         }
         public override int GetHashCode() { return (int)deviceId; } // deviceId should be unique in the network 
 
+        // Same as in BacnetAddress moving it here
+        public string FullHashString() // It's not a hash but a kind of unique Id. Normaly deviceId is enough on a correct network
+        {
+            StringBuilder s = new StringBuilder(deviceId.ToString() + "_" + BacAdr.type.ToString() + BacAdr.net.ToString() + "_");
+
+            if (BacAdr.RoutedSource != null)
+                s.Append("R"); // Just add an indication
+
+            int Adrsize;
+            switch (BacAdr.type)
+            {
+                case BacnetAddressTypes.IP:
+                    Adrsize = 4;    // without Port it can be change (with this Stack)
+                    break;
+                case BacnetAddressTypes.Ethernet:
+                    Adrsize = 6;
+                    break;
+                case BacnetAddressTypes.IPV6:
+                    Adrsize = 16; // without Port it can be change (with this Stack)
+                    break;
+                case BacnetAddressTypes.MSTP:
+                    Adrsize = 1;
+                    break;
+                case BacnetAddressTypes.SC: // SC (RandomVMAC no sens, values never the same)
+                default:
+                    Adrsize = 0;
+                    break;
+            }
+
+            if (BacAdr.adr != null) // Normaly never null
+                for (int i = 0; i < Adrsize; i++)
+                    s.Append(BacAdr.adr[i].ToString("X2"));
+
+            return s.ToString();
+
+        }
         public void ClearCache()
         {
             Prop_Cached.Clear();

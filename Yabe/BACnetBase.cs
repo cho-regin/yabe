@@ -8212,17 +8212,6 @@ namespace System.IO.BACnet
             ASN1.encode_closing_tag(buffer, 1);
         }
 
-        public string FullHashString()
-        {
-            StringBuilder s = new StringBuilder(((uint)type).ToString()+"." + net.ToString()+".");
-            for (int i=0;i<adr.Length;i++)
-                s.Append(adr[i].ToString("X2"));
-            if (RoutedSource != null)
-                s.Append(":"+RoutedSource.FullHashString());
-
-            return s.ToString();
-
-        }
     }
 
     public enum BacnetPtpFrameTypes : byte

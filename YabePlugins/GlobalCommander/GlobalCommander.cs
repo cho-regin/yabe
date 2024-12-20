@@ -1006,10 +1006,10 @@ namespace GlobalCommander
             {
                 foreach (KeyValuePair<BacnetClient, YabeMainDialog.BacnetDeviceLine> transport in YabeDiscoveredDevices)
                 {
-                    foreach (KeyValuePair<BacnetAddress, uint> address in transport.Value.Devices)
+                    foreach (BACnetDevice dev in transport.Value.Devices)
                     {
-                        BacnetAddress deviceAddress = address.Key;
-                        uint deviceID = address.Value;
+                        BacnetAddress deviceAddress = dev.BacAdr;
+                        uint deviceID = dev.deviceId;
                         BacnetClient comm = transport.Key;
 
                         if(deviceID < whoIsLow || deviceID > whoIsHigh)
@@ -1025,7 +1025,7 @@ namespace GlobalCommander
 
                         lock (DevicesObjectsName)
                         {
-                            Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(), deviceObjectID), out identifier);
+                            Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(deviceID), deviceObjectID), out identifier);
                         }
 
                         if (Prop_Object_NameOK)
@@ -1042,7 +1042,7 @@ namespace GlobalCommander
                                     identifier = values[0].ToString();
                                     lock (DevicesObjectsName)
                                     {
-                                        Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(), deviceObjectID);
+                                        Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(deviceID), deviceObjectID);
                                         DevicesObjectsName.Remove(t);
                                         DevicesObjectsName.Add(t, identifier);
                                         ObjectNamesChangedFlag = true;
@@ -1199,7 +1199,7 @@ namespace GlobalCommander
 
                     lock (DevicesObjectsName)
                     {
-                        Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id), out objectName);
+                        Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(device_id), bobj_id), out objectName);
                     }
                     if (Prop_Object_NameOK)
                     {
@@ -1215,7 +1215,7 @@ namespace GlobalCommander
                                 objectName = values[0].ToString();
                                 lock (DevicesObjectsName)
                                 {
-                                    Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id);
+                                    Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(device_id), bobj_id);
                                     //DevicesObjectsName.Remove(t);
                                     DevicesObjectsName[t]=objectName;
                                     ObjectNamesChangedFlag = true;

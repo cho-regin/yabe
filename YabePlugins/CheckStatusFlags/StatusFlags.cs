@@ -41,7 +41,7 @@ namespace CheckStatusFlags
     public partial class StatusFlags : Form
     {
         YabeMainDialog yabeFrm;
-        BacnetClient client; BacnetAddress adr; BacnetObjectId objId;
+        BacnetClient client; BacnetAddress adr; BacnetObjectId objId; uint deviceId;
 
         public StatusFlags(YabeMainDialog yabeFrm)
         {
@@ -73,7 +73,7 @@ namespace CheckStatusFlags
 
             try
             {
-                yabeFrm.GetObjectLink(out client, out adr, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
+                yabeFrm.GetObjectLink(out client, out adr, out deviceId, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
                 Devicename.Text = adr.ToString();
 
                 CheckAllObjects(yabeFrm.m_AddressSpaceTree.Nodes);
@@ -108,7 +108,7 @@ namespace CheckStatusFlags
                 String Identifier = null;
 
                 lock (yabeFrm.DevicesObjectsName) // translate to it's name if already known
-                    yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), object_id), out Identifier);
+                    yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(deviceId), object_id), out Identifier);
 
                 try
                 {

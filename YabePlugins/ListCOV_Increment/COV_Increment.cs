@@ -43,7 +43,7 @@ namespace ListCOV_Increment
         public BacnetObjectTypes[] Filter; // Filtering list
 
         YabeMainDialog yabeFrm;
-        BacnetClient client; BacnetAddress adr; BacnetObjectId objId;
+        BacnetClient client; BacnetAddress adr; BacnetObjectId objId; uint deviceId;
 
         public COV_Increment(YabeMainDialog yabeFrm)
         {
@@ -74,7 +74,7 @@ namespace ListCOV_Increment
 
             try
             {
-                yabeFrm.GetObjectLink(out client, out adr, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
+                yabeFrm.GetObjectLink(out client, out adr, out deviceId, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
                 Devicename.Text = adr.ToString();
 
                 CheckAllObjects(yabeFrm.m_AddressSpaceTree.Nodes);
@@ -106,7 +106,7 @@ namespace ListCOV_Increment
                     String Identifier = null;
 
                     lock (yabeFrm.DevicesObjectsName) // translate to it's name if already known
-                        yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), object_id), out Identifier);
+                        yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(deviceId), object_id), out Identifier);
 
                     try
                     {

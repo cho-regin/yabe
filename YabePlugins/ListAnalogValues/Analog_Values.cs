@@ -45,7 +45,7 @@ namespace LISTAnalog_Values
     {
         public BacnetObjectTypes[] Filter; // Filtering list
         YabeMainDialog yabeFrm;
-        BacnetClient client; BacnetAddress adr; BacnetObjectId objId;
+        BacnetClient client; BacnetAddress adr; BacnetObjectId objId; uint deviceId;
         public AnalogValues(YabeMainDialog yabeFrm)
         {
             this.yabeFrm = yabeFrm;
@@ -70,7 +70,7 @@ namespace LISTAnalog_Values
             Trace.Listeners.Remove(Trace.Listeners[1].Name);
             try
             {
-                yabeFrm.GetObjectLink(out client, out adr, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
+                yabeFrm.GetObjectLink(out client, out adr, out deviceId, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
                 Devicename.Text = adr.ToString();
                 CheckAllObjects(yabeFrm.m_AddressSpaceTree.Nodes);
                 //    EmptyList.Visible = IsEmpty;
@@ -90,7 +90,7 @@ namespace LISTAnalog_Values
                 {
                     String Identifier = null;
                     lock (yabeFrm.DevicesObjectsName) // translate to it's name if already known
-                        yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), object_id), out Identifier);
+                        yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(deviceId), object_id), out Identifier);
                     try
                     {
                         IList<BacnetValue> value;

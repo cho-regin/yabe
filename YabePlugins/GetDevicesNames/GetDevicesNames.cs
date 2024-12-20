@@ -99,7 +99,7 @@ namespace GetDevicesNames // namespace should have the same name as the dll file
 
                             lock (yabeFrm.DevicesObjectsName)
                             {
-                                Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id);
+                                Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(device_id), bobj_id);
                                 yabeFrm.DevicesObjectsName.Remove(t);
                                 yabeFrm.DevicesObjectsName.Add(t, values[0].ToString());
                             }
