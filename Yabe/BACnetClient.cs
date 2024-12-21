@@ -32,6 +32,7 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace System.IO.BACnet
 {
@@ -2669,7 +2670,93 @@ namespace System.IO.BACnet
             m_client.Dispose();
             m_client = null;
         }
+
+        #region Requests.Async
+        public async Task<bool> SubscribeCOVRequestAsync(BacnetAddress adr, BacnetObjectId object_id, uint subscribe_id, bool cancel, bool issue_confirmed_notifications, uint lifetime, byte invoke_id = 0)
+        {
+            using (var result = (BacnetAsyncResult)BeginSubscribeCOVRequest(adr, object_id, subscribe_id, cancel, issue_confirmed_notifications, lifetime, true, invoke_id))
+            {
+                do
+                {
+                    if (await result.WaitForDoneAsync(m_timeout).ConfigureAwait(false))
+                    {
+                        EndSubscribeCOVRequest(result, out var ex);
+                        if (ex != null) throw ex;
+                        return (true);
+                    }
+                } while (result.TryResend(m_retries));
+            }
+            return (false);
+        }
+        public async Task<IList<BacnetValue>> ReadPropertyRequestAsync(BacnetAddress adr, BacnetObjectId object_id, BacnetPropertyIds property_id, byte invoke_id = 0, uint array_index = ASN1.BACNET_ARRAY_ALL)
+        {
+            using (var result = (BacnetAsyncResult)BeginReadPropertyRequest(adr, object_id, property_id, true, invoke_id, array_index))
+            {
+                do
+                {
+                    if (await result.WaitForDoneAsync(m_timeout).ConfigureAwait(false))
+                    {
+                        EndReadPropertyRequest(result, object_id, property_id, out var value_list, out var ex);
+                        if (ex != null) throw ex;
+                        return (value_list);
+                    }
+                } while (result.TryResend(m_retries));
+            }
+
+            throw new TimeoutException("Request timed out!");
+        }
+        public async Task<IList<BacnetReadAccessResult>> ReadPropertyMultipleRequestAsync(BacnetAddress adr, BacnetObjectId object_id, IList<BacnetPropertyReference> property_id_and_array_index, byte invoke_id = 0)
+        {
+            using (var result = (BacnetAsyncResult)BeginReadPropertyMultipleRequest(adr, object_id, property_id_and_array_index, true, invoke_id))
+            {
+                do
+                {
+                    if (await result.WaitForDoneAsync(m_timeout).ConfigureAwait(false))
+                    {
+                        EndReadPropertyMultipleRequest(result, out var value_list, out var ex);
+                        if (ex != null) throw ex;
+                        return (value_list);
+                    }
+                } while (result.TryResend(m_retries));
+            }
+
+            throw new TimeoutException("Request timed out!");
+        }
+        public async Task<bool> WritePropertyRequestAsync(BacnetAddress adr, BacnetObjectId object_id, BacnetPropertyIds property_id, IEnumerable<BacnetValue> value_list, byte invoke_id = 0)
+        {
+            using (var result = (BacnetAsyncResult)BeginWritePropertyRequest(adr, object_id, property_id, value_list, true, invoke_id))
+            {
+                do
+                {
+                    if (await result.WaitForDoneAsync(m_timeout).ConfigureAwait(false))
+                    {
+                        EndWritePropertyRequest(result, out var ex);
+                        if (ex != null) throw ex;
+                        return (value_list != null);
+                    }
+                } while (result.TryResend(m_retries));
+            }
+            return (false);
+        }
+        public async Task<bool> WritePropertyMultipleRequestAsync(BacnetAddress adr, BacnetObjectId object_id, ICollection<BacnetPropertyValue> value_list, byte invoke_id = 0)
+        {
+            using (var result = (BacnetAsyncResult)BeginWritePropertyMultipleRequest(adr, object_id, value_list, true, invoke_id))
+            {
+                do
+                {
+                    if (await result.WaitForDoneAsync(m_timeout).ConfigureAwait(false))
+                    {
+                        EndWritePropertyRequest(result, out var ex);
+                        if (ex != null) throw ex;
+                        return (value_list != null);
+                    }
+                } while (result.TryResend(m_retries));
+            }
+            return (false);
+        }
+        #endregion
     }
+
 
     #region BacnetAsyncResult
 
@@ -2681,9 +2768,11 @@ namespace System.IO.BACnet
         private Exception m_error;
         private byte[] m_result;
         private byte[] m_transmit_buffer;
+        private int m_retries;
         private int m_transmit_length;
         private bool m_wait_for_transmit;
         private int m_transmit_timeout;
+        private TaskCompletionSource<bool> m_completionSrc;
 
         public byte[] Result { get { return m_result; } }
         public Exception Error
@@ -2694,6 +2783,7 @@ namespace System.IO.BACnet
                 m_error = value;
                 CompletedSynchronously = true;
                 ((System.Threading.ManualResetEvent)AsyncWaitHandle).Set();
+                m_completionSrc.SetException(value);
             }
         }
         public bool Segmented { get; private set; }
@@ -2711,6 +2801,7 @@ namespace System.IO.BACnet
             m_transmit_buffer = transmit_buffer;
             m_transmit_length = transmit_length;
             AsyncWaitHandle = new System.Threading.ManualResetEvent(false);
+            m_completionSrc = new TaskCompletionSource<bool>();
             m_comm = comm;
             m_wait_invoke_id = invoke_id;
             m_comm.OnComplexAck += new BacnetClient.ComplexAckHandler(m_comm_OnComplexAck);
@@ -2718,6 +2809,17 @@ namespace System.IO.BACnet
             m_comm.OnAbort += new BacnetClient.AbortHandler(m_comm_OnAbort);
             m_comm.OnSimpleAck += new BacnetClient.SimpleAckHandler(m_comm_OnSimpleAck);
             m_comm.OnSegment += new BacnetClient.SegmentHandler(m_comm_OnSegment);
+        }
+        public bool TryResend(int maxRetries)
+        {
+            if (m_retries < maxRetries)
+            {
+                m_retries++;
+                Resend();
+                return (true);
+            }
+            else
+                return (false);
         }
 
         public void Resend()
@@ -2741,6 +2843,7 @@ namespace System.IO.BACnet
             {
                 Segmented = true;
                 ((System.Threading.ManualResetEvent)AsyncWaitHandle).Set();
+                m_completionSrc.TrySetResult(true);
             }
         }
 
@@ -2749,6 +2852,7 @@ namespace System.IO.BACnet
             if ((invoke_id == m_wait_invoke_id)&&adr.Equals(m_adr))
             {
                 ((System.Threading.ManualResetEvent)AsyncWaitHandle).Set();
+                m_completionSrc.TrySetResult(true);
             }
         }
 
@@ -2776,6 +2880,7 @@ namespace System.IO.BACnet
                 m_result = new byte[length];
                 if (length > 0) Array.Copy(buffer, offset, m_result, 0, length);
                 ((System.Threading.ManualResetEvent)AsyncWaitHandle).Set();     //notify waiter even if segmented
+                m_completionSrc.TrySetResult(true);
             }
         }
 
@@ -2794,7 +2899,14 @@ namespace System.IO.BACnet
                     return true;
             }
         }
-
+        public async Task<bool> WaitForDoneAsync(int timeout)
+        {
+            using (var timeoutToken = new CancellationTokenSource(timeout))
+            {
+                timeoutToken.Token.Register(() => m_completionSrc.TrySetCanceled(), false);
+                return (await m_completionSrc.Task.ConfigureAwait(false));
+            }
+        }
         public void Dispose()
         {
             if (m_comm == null) return;

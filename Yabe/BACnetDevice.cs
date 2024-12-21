@@ -66,11 +66,11 @@ namespace Yabe
         // Several Properties Caches (Device Name, View List, Group List, ...), only needed to displays the Dictionnary
         List<BACObjectPropertyValue> Prop_Cached=new List<BACObjectPropertyValue>();    
 
-        public BACnetDevice(BacnetClient sender, BacnetAddress addr, uint Id, uint vendor_id = System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE)
+        public BACnetDevice(BacnetClient sender, BacnetAddress addr, uint deviceId, uint vendor_id = System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE)
         {
             channel = sender;
             BacAdr = addr;
-            deviceId = Id;
+            this.deviceId = deviceId;
             vendor_Id = vendor_id;
         }
 
@@ -93,7 +93,6 @@ namespace Yabe
         }
         public override int GetHashCode() { return (int)deviceId; } // deviceId should be unique in the network 
 
-        // Same as in BacnetAddress moving it here
         public string FullHashString() // A kind of unique Id. Normaly deviceId is enough on a correct network
         {
             StringBuilder s = new StringBuilder(deviceId.ToString() + "_" + BacAdr.type.ToString() + BacAdr.net.ToString() + "_");

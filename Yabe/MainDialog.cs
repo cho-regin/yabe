@@ -58,17 +58,6 @@ namespace Yabe
 
         private Dictionary<BacnetClient, BacnetDeviceLine> m_devices = new Dictionary<BacnetClient, BacnetDeviceLine>();
         public Dictionary<BacnetClient, BacnetDeviceLine> DiscoveredDevices { get { return m_devices; } }
-
-        private object _selectedNode = null;
-        private TreeNode _selectedDevice = null;
-
-        List<BacnetObjectId> _structuredViewParents = null;
-
-        // 0=Offnormal
-        // 1=Fault
-        // 2=Normal
-        private DateTime[] _cachedEventTimeStampsForAcknowledgementButtons = new DateTime[3];
-
         public int DeviceCount 
         { 
             get {
@@ -80,6 +69,27 @@ namespace Yabe
                 return count; 
             }
         }
+        public BACnetDevice[] YabeDiscoveredDevices
+        {
+            get
+            {
+                lock (m_devices)
+                {
+                    return (m_devices.Values.SelectMany(line => line.Devices).ToArray());
+                }
+            }
+        }
+
+        private object _selectedNode = null;
+        private TreeNode _selectedDevice = null;
+
+        List<BacnetObjectId> _structuredViewParents = null;
+
+        // 0=Offnormal
+        // 1=Fault
+        // 2=Normal
+        private DateTime[] _cachedEventTimeStampsForAcknowledgementButtons = new DateTime[3];
+
         public IEnumerable<TreeNode> DeviceNodes
         {
             get
@@ -206,14 +216,10 @@ namespace Yabe
 
         public class BacnetDeviceLine
         {
-            public BacnetClient Line;
             public List<BACnetDevice> Devices = new List<BACnetDevice>();
             public HashSet<byte> mstp_sources_seen = new HashSet<byte>();
             public HashSet<byte> mstp_pfm_destinations_seen = new HashSet<byte>();
-            public BacnetDeviceLine(BacnetClient comm)
-            {
-               Line = comm;
-            }
+
         }
 
         private int AsynchRequestId=0;
@@ -1064,7 +1070,7 @@ namespace Yabe
                 BacnetClient comm = dlg.Result;
                 try
                 {
-                    m_devices.Add(comm, new BacnetDeviceLine(comm));
+                    m_devices.Add(comm, new BacnetDeviceLine());
                 }
                 catch { return ; }
 
@@ -1171,16 +1177,10 @@ namespace Yabe
             try
             {
                 if (this.IsDisposed) return;
-                BacnetDeviceLine device_line = null;
-                foreach (BacnetDeviceLine l in m_devices.Values)
-                {
-                    if (l.Line.Transport == sender)
-                    {
-                        device_line = l;
-                        break;
-                    }
-                }
-                if (device_line == null) return;
+
+                BacnetDeviceLine device_line = m_devices.First(o => o.Key.Transport == sender).Value;
+                BacnetClient client= m_devices.First(o => o.Key.Transport == sender).Key;
+
                 lock (device_line.mstp_sources_seen)
                 {
                     if (!device_line.mstp_sources_seen.Contains(source_address))
@@ -1207,7 +1207,7 @@ namespace Yabe
                             TreeNode node = parent.Nodes.Add("device" + source_address);
                             node.ImageIndex = 2;
                             node.SelectedImageIndex = node.ImageIndex;
-                            node.Tag = new BACnetDevice(device_line.Line, new BacnetAddress(BacnetAddressTypes.MSTP, 0, new byte[] { source_address }), 0xFFFFFFFF);
+                            node.Tag = new BACnetDevice(client, new BacnetAddress(BacnetAddressTypes.MSTP, 0, new byte[] { source_address }), 0xFFFFFFFF);
                             if (free_node != null) free_node.Remove();
                             m_DeviceTree.ExpandAll();
                         });
@@ -1240,7 +1240,7 @@ namespace Yabe
                     }
                 }
             }
-            catch (ObjectDisposedException)
+            catch
             {
                 //we're closing down ... ignore
             }
@@ -1251,13 +1251,13 @@ namespace Yabe
             addDevicesearchToolStripMenuItem_Click(this, null);
         }
 
-        private void RemoveSubscriptions(BacnetAddress adr, uint deviceId, BacnetClient comm)
+        private void RemoveSubscriptions(BACnetDevice device, BacnetClient comm)
         {
             LinkedList<string> deletes = new LinkedList<string>();
             foreach (KeyValuePair<string, ListViewItem> entry in m_subscription_list)
             {
                 Subscription sub = (Subscription)entry.Value.Tag;
-                if (((sub.adr == adr) && (sub.device_id.instance == deviceId)) || (sub.comm == comm))
+                if ((sub.device == device)  || (sub.device.channel == comm))
                 {
                     m_SubscriptionView.Items.Remove(entry.Value);
                     deletes.AddLast(sub.sub_key);
@@ -1313,7 +1313,7 @@ namespace Yabe
                     m_devices[comm].Devices.Remove(device_entry);
 
                     m_DeviceTree.Nodes.Remove(m_DeviceTree.SelectedNode);
-                    RemoveSubscriptions(device_entry.BacAdr, device_entry.deviceId, null);
+                    RemoveSubscriptions(device_entry, null);
                 }
             }
             else if (comm_entry != null)
@@ -1328,7 +1328,7 @@ namespace Yabe
                     }
                     m_devices.Remove(comm_entry);
                     m_DeviceTree.Nodes.Remove(m_DeviceTree.SelectedNode);
-                    RemoveSubscriptions(null, 0, comm_entry);
+                    RemoveSubscriptions(null, comm_entry);
                     comm_entry.Dispose();
                 }
             }
@@ -2300,9 +2300,7 @@ namespace Yabe
             this.Cursor = Cursors.WaitCursor;
             try
             {
-                BACnetDevice entry;
-                BacnetAddress adr;
-                BacnetClient comm;
+                BACnetDevice device;
 
                 //fetch object_id
                 BacnetObjectId object_id;
@@ -2316,8 +2314,7 @@ namespace Yabe
                         object_id = subscription.object_id;
 
                         //fetch end point
-                        comm = subscription.comm;
-                        adr = subscription.adr;
+                        device = subscription.device;
                     }
                     else if(_selectedNode is TreeNode)
                     {
@@ -2344,13 +2341,8 @@ namespace Yabe
                                 return;
                             }
 
-                            entry = (BACnetDevice)_selectedDevice.Tag;
-                            adr = entry.BacAdr;
+                            device = (BACnetDevice)_selectedDevice.Tag;
 
-                            if (_selectedDevice.Parent.Tag is BacnetClient)
-                                comm = (BacnetClient)_selectedDevice.Parent.Tag;
-                            else
-                                comm = (BacnetClient)_selectedDevice.Parent.Parent.Tag; // a node under a router
                             if (selectedObject.Tag == null) return;
                             else if (!(selectedObject.Tag is BacnetObjectId)) return;
                             object_id = (BacnetObjectId)selectedObject.Tag;
@@ -2456,8 +2448,8 @@ namespace Yabe
                 //write
                 try
                 {
-                    comm.WritePriority = (uint)Properties.Settings.Default.DefaultWritePriority;
-                    if (!comm.WritePropertyRequest(adr, object_id, (BacnetPropertyIds)property.propertyIdentifier, b_value))
+                    device.channel.WritePriority = (uint)Properties.Settings.Default.DefaultWritePriority;
+                    if (!device.channel.WritePropertyRequest(device.BacAdr, object_id, (BacnetPropertyIds)property.propertyIdentifier, b_value))
                     {
                         MessageBox.Show(this, "Couldn't write property", "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
@@ -2710,7 +2702,6 @@ namespace Yabe
             MessageBox.Show(this, "Done", "Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        // FC
         private void showTrendLogToolStripMenuItem_Click(object sender, EventArgs e)
         {
             try
@@ -2801,7 +2792,6 @@ namespace Yabe
             catch (Exception ex) { Trace.TraceError("Error loading Calendar : " + ex.Message); }
         }
 
-        //FC
         private void showNotificationToolStripMenuItem_Click(object sender, EventArgs e)
         {
             try
@@ -2856,11 +2846,7 @@ namespace Yabe
         }
 
         private class Subscription
-        {
-            // first old 3 fields should be removes
-            public readonly BacnetClient comm;
-            public readonly BacnetAddress adr;
-            public readonly BacnetObjectId device_id;
+        { 
 
             public readonly BACnetDevice device;
 
@@ -2872,9 +2858,6 @@ namespace Yabe
             public Subscription(BACnetDevice device, BacnetObjectId object_id, string sub_key, uint subscribe_id)
             {
                 this.device = device;
-                comm = device.channel;
-                adr = device.BacAdr;
-                device_id = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId);
                 this.object_id = object_id;
                 this.sub_key = sub_key;
                 this.subscribe_id = subscribe_id;
@@ -3108,7 +3091,7 @@ namespace Yabe
                     break;
                 }
 
-                if (sub.comm == null)
+                if (sub.device == null)
                 {
                     break;
                 }
@@ -3127,7 +3110,7 @@ namespace Yabe
                     {
                         // We have no real way of checking wheter sub.comm has ben disposed other than catching the exception?
                         // I suppose hopefully sub.is_active_subscription will be false by the time that happens...
-                        bool readMultipleSuccessfully = sub.comm.ReadPropertyMultipleRequest(sub.adr, sub.object_id, propertiesToPoll, out multi_value_list);
+                        bool readMultipleSuccessfully = sub.device.channel.ReadPropertyMultipleRequest(sub.device.BacAdr, sub.object_id, propertiesToPoll, out multi_value_list);
                         if(!readMultipleSuccessfully)
                         {
                             // Timeout, could potentially just return?
@@ -3144,7 +3127,7 @@ namespace Yabe
                         else
                         {
                             readPropertyMultipleFailedPreviously = true;
-                            Trace.TraceError(String.Format("ReadPropertyMultiple failed while polling device {0}, object {1} - trying ReadProperty from now on.", sub.device_id.instance.ToString(), sub.object_id.ToString()));
+                            Trace.TraceError(String.Format("ReadPropertyMultiple failed while polling device {0}, object {1} - trying ReadProperty from now on.", sub.device.deviceId.ToString(), sub.object_id.ToString()));
                         }
                     }
                 }
@@ -3158,7 +3141,7 @@ namespace Yabe
                         {
                             if (m_subscription_list.ContainsKey(sub.sub_key))
                             {
-                                OnCOVNotification(sub.comm, sub.adr, 0, sub.subscribe_id, sub.device_id, sub.object_id, 0, false, multi_value_list[0].values, BacnetMaxSegments.MAX_SEG0);
+                                OnCOVNotification(sub.device.channel, sub.device.BacAdr, 0, sub.subscribe_id, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, sub.device.deviceId), sub.object_id, 0, false, multi_value_list[0].values, BacnetMaxSegments.MAX_SEG0);
                                 errorCount = 0;
                             }
                             else
@@ -3172,7 +3155,7 @@ namespace Yabe
                         errorCount++;
                         if (errorCount >= 4)
                         {
-                            Trace.TraceError(String.Format("The Notify function (while polling device {0}, object {1} using ReadPropertyMultiple) failed - last error was {2} - {3}.", sub.device_id.instance.ToString(), sub.object_id.ToString(), ex.GetType().Name, ex.Message));
+                            Trace.TraceError(String.Format("The Notify function (while polling device {0}, object {1} using ReadPropertyMultiple) failed - last error was {2} - {3}.", sub.device.deviceId.ToString(), sub.object_id.ToString(), ex.GetType().Name, ex.Message));
                             break;
                         }
                     }
@@ -3187,7 +3170,7 @@ namespace Yabe
                         errorCount++;
                         if (errorCount >= 4)
                         {
-                            Trace.TraceError(String.Format("The ReadProperty function (while polling of device {0}, object {1}) failed.", sub.device_id.instance.ToString(), sub.object_id.ToString()));
+                            Trace.TraceError(String.Format("The ReadProperty function (while polling of device {0}, object {1}) failed.", sub.device.deviceId.ToString(), sub.object_id.ToString()));
                             break; // maybe here we could not go away
                         }
                         continue;
@@ -3203,7 +3186,7 @@ namespace Yabe
                             errorCount++;
                             if (errorCount >= 4)
                             {
-                                Trace.TraceError(String.Format("The ReadProperty function (while polling of device {0}, object {1}) failed.", sub.device_id.instance.ToString(), sub.object_id.ToString()));
+                                Trace.TraceError(String.Format("The ReadProperty function (while polling of device {0}, object {1}) failed.", sub.device.deviceId.ToString(), sub.object_id.ToString()));
                                 break; // maybe here we could not go away
                             }
                             continue;
@@ -3230,7 +3213,7 @@ namespace Yabe
                             {
                                 if (m_subscription_list.ContainsKey(sub.sub_key))
                                 {
-                                    OnCOVNotification(sub.comm, sub.adr, 0, sub.subscribe_id, sub.device_id, sub.object_id, 0, false, presentValueAndStatusFlagsValues, BacnetMaxSegments.MAX_SEG0);
+                                    OnCOVNotification(sub.device.channel, sub.device.BacAdr, 0, sub.subscribe_id, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, sub.device.deviceId), sub.object_id, 0, false, presentValueAndStatusFlagsValues, BacnetMaxSegments.MAX_SEG0);
                                     errorCount = 0;
                                 }
                                 else
@@ -3244,7 +3227,7 @@ namespace Yabe
                             errorCount++;
                             if (errorCount >= 4)
                             {
-                                Trace.TraceError(String.Format("The Notify function (while polling of device {0}, object {1} using ReadProperty) failed - last error was {2} - {3}.", sub.device_id.instance.ToString(), sub.object_id.ToString(), ex.GetType().Name, ex.Message));
+                                Trace.TraceError(String.Format("The Notify function (while polling of device {0}, object {1} using ReadProperty) failed - last error was {2} - {3}.", sub.device.deviceId.ToString(), sub.object_id.ToString(), ex.GetType().Name, ex.Message));
                                 break;
                             }
                         }
@@ -3551,7 +3534,7 @@ namespace Yabe
                             try
                             {
                                 if (sub.is_COV_subscription)
-                                    if (!sub.comm.SubscribeCOVRequest(sub.adr, sub.object_id, sub.subscribe_id, true, false, 0))
+                                    if (!sub.device.channel.SubscribeCOVRequest(sub.device.BacAdr, sub.object_id, sub.subscribe_id, true, false, 0))
                                     {
                                         MessageBox.Show(this, "Couldn't unsubscribe", "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                         return;
@@ -3957,7 +3940,7 @@ namespace Yabe
                         if (sub.is_COV_subscription == false) // not needs to renew, periodic pooling in operation (or nothing) due to COV subscription refused by the remote device, or "polling" selected in the UI.
                             return;
 
-                        if (!sub.comm.SubscribeCOVRequest(sub.adr, sub.object_id, sub.subscribe_id, false, Properties.Settings.Default.Subscriptions_IssueConfirmedNotifies, Properties.Settings.Default.Subscriptions_Lifetime))
+                        if (!sub.device.channel.SubscribeCOVRequest(sub.device.BacAdr, sub.object_id, sub.subscribe_id, false, Properties.Settings.Default.Subscriptions_IssueConfirmedNotifies, Properties.Settings.Default.Subscriptions_Lifetime))
                         {
                             SetSubscriptionStatus(itm, "Offline");
                             Trace.TraceWarning("Couldn't renew subscription " + sub.subscribe_id);
@@ -5329,8 +5312,8 @@ namespace Yabe
                 }
                 else if (_selectedNode is Subscription subscription)
                 {
-                    adr = subscription.adr;
-                    comm = subscription.comm;
+                    adr = subscription.device.BacAdr;
+                    comm = subscription.device.channel;
 
                     BacnetObjectId object_id = subscription.object_id;
 
