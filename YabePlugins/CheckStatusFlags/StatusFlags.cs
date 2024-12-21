@@ -41,7 +41,7 @@ namespace CheckStatusFlags
     public partial class StatusFlags : Form
     {
         YabeMainDialog yabeFrm;
-        BacnetClient client; BacnetAddress adr; BacnetObjectId objId; uint deviceId;
+        BACnetDevice device; BacnetObjectId objId;
 
         public StatusFlags(YabeMainDialog yabeFrm)
         {
@@ -73,8 +73,8 @@ namespace CheckStatusFlags
 
             try
             {
-                yabeFrm.GetObjectLink(out client, out adr, out deviceId, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
-                Devicename.Text = adr.ToString();
+                yabeFrm.GetObjectLink(out device, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
+                Devicename.Text = device.BacAdr.ToString();
 
                 CheckAllObjects(yabeFrm.m_AddressSpaceTree.Nodes);
                 EmptyList.Visible = IsEmpty;
@@ -108,14 +108,14 @@ namespace CheckStatusFlags
                 String Identifier = null;
 
                 lock (yabeFrm.DevicesObjectsName) // translate to it's name if already known
-                    yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(deviceId), object_id), out Identifier);
+                    yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.FullHashString(), object_id), out Identifier);
 
                 try
                 {
 
                     IList<BacnetValue> value;
                     // read PROP_STATUS_FLAGS property on all objects (maybe a test could be done to avoid call without interest)   
-                    bool ret = client.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_STATUS_FLAGS, out value);
+                    bool ret = device.channel.ReadPropertyRequest(device.BacAdr, object_id, BacnetPropertyIds.PROP_STATUS_FLAGS, out value);
                     
                     if (ret)
                         if (value[0].Value.ToString() != "0000") // some flags are set
@@ -136,7 +136,7 @@ namespace CheckStatusFlags
 
                             // Get the description
                             IList<BacnetValue> value_descr;
-                            ret = client.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_DESCRIPTION, out value_descr);
+                            ret = device.channel.ReadPropertyRequest(device.BacAdr, object_id, BacnetPropertyIds.PROP_DESCRIPTION, out value_descr);
                             if (ret)
                             {
                                 N.Nodes.Add(new TreeNode(value_descr[0].Value.ToString(),5,5));

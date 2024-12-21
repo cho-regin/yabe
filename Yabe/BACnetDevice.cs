@@ -50,7 +50,7 @@ namespace Yabe
         }
 
         public BacnetClient channel;
-        public BacnetAddress BacAdr;  
+        public BacnetAddress BacAdr=new BacnetAddress(BacnetAddressTypes.None, 0, null);  
         public uint deviceId;
         public uint vendor_Id;
 
@@ -94,7 +94,7 @@ namespace Yabe
         public override int GetHashCode() { return (int)deviceId; } // deviceId should be unique in the network 
 
         // Same as in BacnetAddress moving it here
-        public string FullHashString() // It's not a hash but a kind of unique Id. Normaly deviceId is enough on a correct network
+        public string FullHashString() // A kind of unique Id. Normaly deviceId is enough on a correct network
         {
             StringBuilder s = new StringBuilder(deviceId.ToString() + "_" + BacAdr.type.ToString() + BacAdr.net.ToString() + "_");
 

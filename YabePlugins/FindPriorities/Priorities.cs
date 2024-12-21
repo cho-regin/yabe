@@ -41,7 +41,8 @@ namespace FindPriorities
     public partial class Priorities : Form
     {
         YabeMainDialog yabeFrm;
-        BacnetClient client; BacnetAddress adr; BacnetObjectId objId; uint deviceId;
+        BacnetObjectId objId;
+        BACnetDevice device;
 
         public Priorities(YabeMainDialog yabeFrm)
         {
@@ -72,8 +73,8 @@ namespace FindPriorities
 
             try
             {
-                yabeFrm.GetObjectLink(out client, out adr, out deviceId, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
-                Devicename.Text = adr.ToString();
+                yabeFrm.GetObjectLink(out device, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
+                Devicename.Text = device.BacAdr.ToString();
 
                 CheckAllObjects(yabeFrm.m_AddressSpaceTree.Nodes);
                 EmptyList.Visible = IsEmpty;
@@ -101,13 +102,13 @@ namespace FindPriorities
                 String Identifier = null;
 
                 lock (yabeFrm.DevicesObjectsName) // translate to it's name if already known
-                    yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(deviceId), object_id), out Identifier);
+                    yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.FullHashString(), object_id), out Identifier);
 
                 try
                 {
                     IList<BacnetValue> value;
                     // read PriorityArray property on all objects (maybe a test could be done to avoid call without interest)   
-                    bool ret = client.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_PRIORITY_ARRAY, out value);
+                    bool ret = device.channel.ReadPropertyRequest(device.BacAdr, object_id, BacnetPropertyIds.PROP_PRIORITY_ARRAY, out value);
 
                     if (ret)
                     {

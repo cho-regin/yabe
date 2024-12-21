@@ -86,9 +86,9 @@ namespace GetDevicesNames // namespace should have the same name as the dll file
                 {
                     try
                     {
-                        BACnetDevice entry = tn.Tag as BACnetDevice;
-                        BacnetAddress adr = entry.BacAdr;
-                        uint device_id = entry.deviceId;
+                        BACnetDevice device = tn.Tag as BACnetDevice;
+                        BacnetAddress adr = device.BacAdr;
+                        uint device_id = device.deviceId;
 
                         IList<BacnetValue> values;
                         BacnetObjectId bobj_id = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id);
@@ -99,7 +99,7 @@ namespace GetDevicesNames // namespace should have the same name as the dll file
 
                             lock (yabeFrm.DevicesObjectsName)
                             {
-                                Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(device_id), bobj_id);
+                                Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(device.FullHashString(), bobj_id);
                                 yabeFrm.DevicesObjectsName.Remove(t);
                                 yabeFrm.DevicesObjectsName.Add(t, values[0].ToString());
                             }

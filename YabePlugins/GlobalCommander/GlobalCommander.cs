@@ -1017,7 +1017,7 @@ namespace GlobalCommander
                             continue;
                         }
 
-                        BacnetDeviceExport device = new BacnetDeviceExport(comm, this, deviceID, deviceAddress);
+                        BacnetDeviceExport device = new BacnetDeviceExport(dev, this);
 
                         bool Prop_Object_NameOK = false;
                         BacnetObjectId deviceObjectID = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceID);
@@ -1025,7 +1025,7 @@ namespace GlobalCommander
 
                         lock (DevicesObjectsName)
                         {
-                            Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(deviceID), deviceObjectID), out identifier);
+                            Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(dev.FullHashString(), deviceObjectID), out identifier);
                         }
 
                         if (Prop_Object_NameOK)
@@ -1042,7 +1042,7 @@ namespace GlobalCommander
                                     identifier = values[0].ToString();
                                     lock (DevicesObjectsName)
                                     {
-                                        Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(deviceAddress.FullHashString(deviceID), deviceObjectID);
+                                        Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(dev.FullHashString(), deviceObjectID);
                                         DevicesObjectsName.Remove(t);
                                         DevicesObjectsName.Add(t, identifier);
                                         ObjectNamesChangedFlag = true;
@@ -1199,7 +1199,7 @@ namespace GlobalCommander
 
                     lock (DevicesObjectsName)
                     {
-                        Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(device_id), bobj_id), out objectName);
+                        Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.Device.FullHashString(), bobj_id), out objectName);
                     }
                     if (Prop_Object_NameOK)
                     {
@@ -1215,7 +1215,7 @@ namespace GlobalCommander
                                 objectName = values[0].ToString();
                                 lock (DevicesObjectsName)
                                 {
-                                    Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(device_id), bobj_id);
+                                    Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(device.Device.FullHashString(), bobj_id);
                                     //DevicesObjectsName.Remove(t);
                                     DevicesObjectsName[t]=objectName;
                                     ObjectNamesChangedFlag = true;
@@ -1353,6 +1353,7 @@ namespace GlobalCommander
             public bool NameIsSet { get { return _nameIsSet; } }
             public BacnetAddress DeviceAddress { get; }
             public BacnetClient Comm { get; }
+            public BACnetDevice Device { get;}
             public GlobalCommander ParentWindow { get; }
             public List<BacnetPointExport> Points { get; }
 
@@ -1371,15 +1372,16 @@ namespace GlobalCommander
                 return Name.CompareTo(other.Name);
             }
 
-            public BacnetDeviceExport(BacnetClient comm, GlobalCommander parentWindow, uint deviceID, BacnetAddress deviceAddress)
+            public BacnetDeviceExport(BACnetDevice device, GlobalCommander parentWindow)
             {
-                Comm = comm;
+                Device = device;
+                Comm = device.channel;
                 ParentWindow = parentWindow;
-                DeviceID = deviceID;
-                BacnetObjectId deviceObjectID = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceID);
+                DeviceID = device.deviceId;
+                BacnetObjectId deviceObjectID = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId);
                 _name = deviceObjectID.ToString();
                 _nameIsSet = false;
-                DeviceAddress = deviceAddress;
+                DeviceAddress = device.BacAdr;
                 Points = new List<BacnetPointExport>();
             }
         }
