@@ -1315,7 +1315,7 @@ namespace GlobalCommander
                 BacnetPropertyIds propertyID = (BacnetPropertyIds)p_value.property.propertyIdentifier;
                 BacnetPropertyExport property = new BacnetPropertyExport(point, propertyID);
 
-                property.Name = _yabeFrm.GetNiceName(propertyID, true);
+                property.Name = device.GetNiceName(propertyID, true);
 
                 if (p_value.value != null)
                 {
