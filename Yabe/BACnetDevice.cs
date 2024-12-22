@@ -31,8 +31,8 @@ using System.Text;
 
 namespace Yabe
 {
-    // One object per discovered device on the network. Referenced at least by the TreeNode.Tag in the DeviceTreeview 
-    // Used to cache some properties values & the object dictionnary
+    // One object per discovered device on the network. Referenced at least by the TreeNode.Tag in the DeviceTreeview and m_devices Dictionary
+    // Used to cache some properties values & the object dictionary
     public class BACnetDevice : IComparable<BACnetDevice>
     {
         class BACObjectPropertyValue
@@ -49,6 +49,10 @@ namespace Yabe
             }
         }
 
+        public enum ReadPopertyMultipleStatus { Unknow, Accepted, NotSupported };
+
+        public ReadPopertyMultipleStatus ReadMultiple = ReadPopertyMultipleStatus.Unknow;
+
         public BacnetClient channel;
         public BacnetAddress BacAdr=new BacnetAddress(BacnetAddressTypes.None, 0, null);  
         public uint deviceId;
@@ -63,7 +67,7 @@ namespace Yabe
         uint ListCountExpected;
         IList<BacnetValue> Prop_ObjectList; 
 
-        // Several Properties Caches (Device Name, View List, Group List, ...), only needed to displays the Dictionnary
+        // Several Properties Caches (Device Name, View List, Group List, ...), only needed to displays the Dictionnary, not all properties values
         List<BACObjectPropertyValue> Prop_Cached=new List<BACObjectPropertyValue>();    
 
         public BACnetDevice(BacnetClient sender, BacnetAddress addr, uint deviceId, uint vendor_id = System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE)
@@ -133,7 +137,6 @@ namespace Yabe
             Prop_Cached.Clear();
             Prop_ObjectList = null;
             ListCountExpected = 0;
-
         }
         public bool ReadObjectList(out IList<BacnetValue> ObjectList, out uint Count, bool ForceRead = false)
         {
@@ -169,10 +172,10 @@ namespace Yabe
                         return true;
                     }
                     else
-                        ReadListOneShort = false;
+                        ReadListOneShort = false; // assume it's done by this
 
                 }
-                catch { ReadListOneShort = false; }
+                catch { ReadListOneShort = false; } // assume it's done by this 
             }
 
             try // Unfortunatly get List count for a One by One operation after
@@ -190,7 +193,6 @@ namespace Yabe
             catch { }
 
             return false;
-
         }
 
         public bool ReadObjectListOneByOne(out IList<BacnetValue> value_list, uint Count, bool ForceRead=false)
@@ -258,7 +260,6 @@ namespace Yabe
                 Prop_Cached.Add(new BACObjectPropertyValue(object_id, PropertyId, value_list));
 
             return ret;
-
         }
     }
 }
