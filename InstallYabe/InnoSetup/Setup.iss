@@ -54,8 +54,11 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "..\..\Yabe\bin\Debug\Yabe.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\CheckReliability.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\CheckStatusFlags.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\ListAnalogValues.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\ListCOV_Increment.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\ListOutOfService.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\GlobalCommander.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\FindPriorities.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\FindPrioritiesGlobal.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\README.Txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Docs\history.txt"; DestDir: "{app}"; Flags: ignoreversion

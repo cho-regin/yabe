@@ -433,7 +433,8 @@ namespace Yabe.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("CheckReliability, CheckStatusFlags, ListOutOfService, GlobalCommander")]
+        [global::System.Configuration.DefaultSettingValueAttribute("CheckReliability, CheckStatusFlags, ListOutOfService, FindPrioritiesGlobal, Globa" +
+            "lCommander")]
         public string Plugins {
             get {
                 return ((string)(this["Plugins"]));

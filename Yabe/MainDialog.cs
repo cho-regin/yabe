@@ -773,10 +773,12 @@ namespace Yabe
             }
         }
 
-        public bool GetObjectName(BACnetDevice device, BacnetObjectId object_id, out String Name)
+        public String GetObjectName(BACnetDevice device, BacnetObjectId object_id)
         {
+            String Name = null;
             lock (DevicesObjectsName)
-                return DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.FullHashString(), object_id), out Name);
+                DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.FullHashString(), object_id), out Name);
+            return Name;
         }
         public string ReadObjectName(BACnetDevice device, BacnetObjectId object_id, bool ForceRead = false)
         {
@@ -805,8 +807,6 @@ namespace Yabe
                 return "";
             }
         }
-
-
         void OnIam(BacnetClient sender, BacnetAddress adr, uint device_id, uint max_apdu, BacnetSegmentations segmentation, ushort vendor_id)
         {
             DoReceiveIamImplementation(sender, adr, device_id, vendor_id);
@@ -819,11 +819,12 @@ namespace Yabe
             {
                 if (!m_devices.ContainsKey(sender)) return ;
                 int idx = m_devices[sender].Devices.IndexOf(new_device);
-                if (idx==-1)
+                if (idx == -1)
                     m_devices[sender].Devices.Add(new_device);
                 else
                 {
                     m_devices[sender].Devices[idx].vendor_Id = vendor_id; // Update vendor id (mstp case)
+                    return;
                 }
             }
 
@@ -833,20 +834,17 @@ namespace Yabe
                 TreeNode parent = FindCommTreeNode(sender);
                 if (parent == null) return; // should never occur
 
-                bool Prop_Object_NameOK = false;
-                String Identifier = null;
+                String Identifier = GetObjectName(new_device, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id));
 
-                Prop_Object_NameOK=GetObjectName(new_device, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), out Identifier);
-
-                //update existing (this can happen in MSTP)
                 foreach (TreeNode s in parent.Nodes)
                 {
                     BACnetDevice entry = s.Tag as BACnetDevice;
-                    if (entry != null && entry.BacAdr.Equals(adr))
+
+                    //update existing (this can happen in MSTP) // dead code ... to be removes after tests
+                    if (entry.Equals(new_device))   
                     {
                         s.Text = "Device " + new_device.deviceId + " - " + new_device.BacAdr.ToString(s.Parent.Parent != null);
-                        s.Tag = new_device;
-                        if (Prop_Object_NameOK)
+                        if (Identifier!=null)
                         {
                             s.ToolTipText = s.Text;
                             s.Text = Identifier + " [" + device_id.ToString() + "] ";
@@ -864,7 +862,7 @@ namespace Yabe
                 newNode.ImageIndex = 2;
                 newNode.SelectedImageIndex = newNode.ImageIndex;
                 newNode.Tag = new_device;
-                if (Prop_Object_NameOK)
+                if (Identifier != null)
                 {
                     newNode.ToolTipText = newNode.Text;
                     newNode.Text = Identifier + " [" + device_id.ToString() + "] ";
@@ -1280,8 +1278,9 @@ namespace Yabe
 
             TreeNode node;
 
+            string objName = GetObjectName(device, object_id);
             // Get the property name if already known
-            if (GetObjectName(device, object_id, out string objName) == true)
+            if (objName != null)
             {
                 if (Properties.Settings.Default.DisplayIdWithName)
                 {
@@ -1409,14 +1408,13 @@ namespace Yabe
         }
         private void AddObjectListOneByOne(BACnetDevice device, uint count, int AsynchRequestId, bool ForceRead = false)
         {
-            IList<BacnetValue> value_list;
             try
             {
                 for (uint i = 1; i <= count; i++)
                 {
-                    value_list = null;
-                    
-                    if (!device.ReadObjectListOneByOne(out value_list,i, ForceRead))
+                    BacnetObjectId objId;
+
+                    if (!device.ReadObjectListOneByOne(out objId, i, ForceRead))
                     {
                         Trace.WriteLine("Couldn't fetch object list index");
                         return;
@@ -1425,18 +1423,16 @@ namespace Yabe
                     if (AsynchRequestId != this.AsynchRequestId) return; // Selected device is no more the good one
 
                     //add to tree
-                    foreach (BacnetValue value in value_list)
+                    this.Invoke((MethodInvoker)delegate
                     {
-                        this.Invoke((MethodInvoker)delegate
-                        {
-                            if (AsynchRequestId != this.AsynchRequestId) return;  // another test in the GUI thread
-                            AddObjectEntry(device, null, (BacnetObjectId)value.Value, m_AddressSpaceTree.Nodes, ForceRead);
-                            if (i != count)
-                                AddSpaceLabel.Text = "Address Space : " + i + " objects / " + count + " expected";
-                            else
-                                AddSpaceLabel.Text = "Address Space : " + i + " objects";
-                        });
-                    }
+                        if (AsynchRequestId != this.AsynchRequestId) return;  // another test in the GUI thread
+                        AddObjectEntry(device, null, objId, m_AddressSpaceTree.Nodes, ForceRead);
+                        if (i != count)
+                            AddSpaceLabel.Text = "Address Space : " + i + " objects / " + count + " expected";
+                        else
+                            AddSpaceLabel.Text = "Address Space : " + i + " objects";
+                    });
+                    
                 }
             }
             catch (Exception ex)
@@ -1444,6 +1440,8 @@ namespace Yabe
                 Trace.WriteLine("Error during read: " + ex.Message);
                 return;
             }
+
+            return;
         }
 
         public List<BacnetObjectId> SortBacnetObjects(IList<BacnetValue> RawList, bool Sort=true)
@@ -1522,11 +1520,10 @@ namespace Yabe
                 {
                     value_list = FetchStructuredObjects(device, device_id, m_AddressSpaceTree.Nodes);
 
-                    BacnetObjectId bobj_id = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id);
-
                     // If the Device name not set, try to update it
                     if (node.ToolTipText == "")   // already update with the device name
                     {
+                        BacnetObjectId bobj_id = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id);
                         String Identifier = ReadObjectName(device, bobj_id);
                         node.ToolTipText = node.Text;
                         node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
@@ -3978,7 +3975,7 @@ namespace Yabe
         {
             char Sep = Properties.Settings.Default.EDE_Separator;
 
-            device.ReadObjectList(out _, out uint ObjCount);    // Get the dictionary (already in cache ot puts in cache)
+            device.ReadObjectList(out _, out uint ObjCount);    // Get the dictionary (already in cache or puts in cache)
 
             this.Cursor = Cursors.WaitCursor;
 
@@ -3994,14 +3991,12 @@ namespace Yabe
                     new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_ACTIVE_TEXT, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
                 };
 
-                for (uint i=1;i<ObjCount+1;i++)
+                for (uint i=1;i<=ObjCount;i++)
                 {
                     Application.DoEvents();
 
-                    IList<BacnetValue> value_list;
-                    device.ReadObjectListOneByOne(out value_list, i); // From the cache or not
-
-                    BacnetObjectId Bacobj = (BacnetObjectId)value_list[0].Value;
+                    BacnetObjectId Bacobj;
+                    device.ReadObjectListOneByOne(out Bacobj, i); // From the cache or not
                     string Identifier = "";
                     string Description = "";
                     String UnitCode = "";

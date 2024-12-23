@@ -105,7 +105,7 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="Plugins" Type="System.String" Scope="User">
-      <Value Profile="(Default)">CheckReliability, CheckStatusFlags, ListOutOfService, GlobalCommander</Value>
+      <Value Profile="(Default)">CheckReliability, CheckStatusFlags, ListOutOfService, FindPrioritiesGlobal, GlobalCommander</Value>
     </Setting>
     <Setting Name="GraphDotStyle" Type="ZedGraph.SymbolType" Scope="User">
       <Value Profile="(Default)">Square</Value>

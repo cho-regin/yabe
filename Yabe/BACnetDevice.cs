@@ -326,28 +326,26 @@ namespace Yabe
             return false;
         }
 
-        public bool ReadObjectListOneByOne(out IList<BacnetValue> value_list, uint Count, bool ForceRead=false)
+        public bool ReadObjectListOneByOne(out BacnetObjectId ObjId, uint Count, bool ForceRead = false)
         {
-            value_list = null;
+            ObjId=new BacnetObjectId();
 
             // Already in the cache ?
-            if (ForceRead==false)
+            if (ForceRead == false)
             {
                 if ((Prop_ObjectList != null) && (Prop_ObjectList.Count >= Count))
                 {
-                    value_list = new List<BacnetValue>();
-                    value_list.Add(Prop_ObjectList[(int)(Count - 1)]);
+                    ObjId = (BacnetObjectId)Prop_ObjectList[(int)(Count - 1)].Value;
                     return true;
                 }
             }
-            
-            if (Prop_ObjectList==null) Prop_ObjectList=new List<BacnetValue>();
+
+            if (Prop_ObjectList == null) Prop_ObjectList = new List<BacnetValue>();
 
             if (Prop_ObjectList.Count != Count - 1)
                 return false;   // Wrong sequence, should be 1..n in order, today not required / not accepted
 
-            value_list = null;
-
+            IList<BacnetValue> value_list;
             try
             {
                 if (!channel.ReadPropertyRequest(BacAdr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceId), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list, 0, Count))
@@ -355,6 +353,7 @@ namespace Yabe
                 else
                 {
                     Prop_ObjectList.Add(value_list[0]);
+                    ObjId = (BacnetObjectId)value_list[0].Value;
                     return true;
                 }
             }
@@ -362,7 +361,7 @@ namespace Yabe
 
             return false;
         }
-
+        
         public bool ReadCachablePropertyRequest(out IList<BacnetValue> value_list, BacnetObjectId object_id, BacnetPropertyIds PropertyId, bool ForceRead = false)
         {
             value_list = null;
