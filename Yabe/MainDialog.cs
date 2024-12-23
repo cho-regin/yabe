@@ -1245,10 +1245,6 @@ namespace Yabe
             node.SelectedImageIndex = node.ImageIndex;
         }
 
-#if DEBUG
-        private int depth = 0;
-        private const int maxDepth = 5;
-#endif
         private void AddObjectEntry(BACnetDevice device, string name, BacnetObjectId object_id, TreeNodeCollection nodes, bool ForceRead=false)
         {
             bool iAmTheCreator = false;
@@ -1264,9 +1260,6 @@ namespace Yabe
                 if(_structuredViewParents.Contains(object_id))
                 {
                     recursionDetected = true;
-#if DEBUG
-                    depth++;
-#endif
                 }
                 else
                 {
@@ -1326,21 +1319,9 @@ namespace Yabe
             {
                 if (recursionDetected)
                 {
-#if DEBUG
-                    if (depth > maxDepth)
-                    {
-#endif
                         TreeNode recursiveNode = node.Nodes.Add("WARNING: RECURSIVE NODE DETECTED");
                         recursiveNode.ImageIndex = 16;
                         recursiveNode.SelectedImageIndex = 16;
-#if DEBUG
-                    }
-                    else
-                    {
-                        FetchViewObjects(device, object_id, node.Nodes, ForceRead);
-                    }
-                    depth--;
-#endif
                 }
                 else
                 {

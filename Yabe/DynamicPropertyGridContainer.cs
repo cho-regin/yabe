@@ -1614,29 +1614,27 @@ namespace Utilities
             {
                 this.editorService = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
             }
-            if ((this.editorService != null)&&(value is Array priorities)&&(priorities.Length==16))
+            if ((this.editorService != null) && (value is object[] priorities) && (priorities.Length == 16))
             {
                 EnumList = new ListBox();
-                EnumList.CustomTabOffsets.Add(100);
-                EnumList.UseCustomTabOffsets = true;
-               
-                int Idx = 0;
-                foreach (var p in priorities)
+                
+                for (int Idx=0;Idx<16;Idx++)
                 {
-                    String s = BacnetEnumValueDisplay.GetNiceName(((BacnetWritePriority)Idx).ToString())+"\t";
-
-                    if (p != null)
-                         s += p.ToString();
+                    String s;
+                    if (priorities[Idx] != null)
+                        s = BacnetEnumValueDisplay.GetNiceName(((BacnetWritePriority)Idx).ToString()) +"\t"+ priorities[Idx].ToString();
                     else
-                        s += "Empty";
+                        s = BacnetEnumValueDisplay.GetNiceName(((BacnetWritePriority)Idx).ToString()) + "\tEmpty";
 
-                    Idx++;
                     EnumList.Items.Add(s);
                 }
 
                 Graphics g = EnumList.CreateGraphics();
                 int hzSize = (int)g.MeasureString("T", EnumList.Font).Height+1;
+
                 EnumList.Size = new Size(100, 16*hzSize);
+                EnumList.CustomTabOffsets.Add(100);
+                EnumList.UseCustomTabOffsets = true;
 
                 this.editorService.DropDownControl(EnumList);
             }

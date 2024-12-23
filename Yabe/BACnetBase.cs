@@ -11678,7 +11678,7 @@ namespace System.IO.BACnet.Serialize
                     value.Value = v;
                     return tag_len;
                 }
-                else if (property_id == BacnetPropertyIds.PROP_EVENT_TIME_STAMPS || property_id == BacnetPropertyIds.PROP_COMMAND_TIME_ARRAY || property_id == BacnetPropertyIds.PROP_LAST_COMMAND_TIME || property_id == BacnetPropertyIds.PROP_ACCESS_EVENT_TIME || property_id == BacnetPropertyIds.PROP_UPDATE_TIME || property_id == BacnetPropertyIds.PROP_LAST_RESTORE_TIME)
+                else if (property_id == BacnetPropertyIds.PROP_EVENT_TIME_STAMPS || property_id == BacnetPropertyIds.PROP_COMMAND_TIME_ARRAY || property_id == BacnetPropertyIds.PROP_LAST_COMMAND_TIME || property_id == BacnetPropertyIds.PROP_ACCESS_EVENT_TIME || property_id == BacnetPropertyIds.PROP_UPDATE_TIME || property_id == BacnetPropertyIds.PROP_LAST_RESTORE_TIME || property_id == BacnetPropertyIds.PROP_TIME_OF_DEVICE_RESTART)
                 {
 
                     ASN1.decode_tag_number_and_value(buffer, offset + len, out tag_number, out len_value_type);

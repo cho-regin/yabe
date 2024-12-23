@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{DB89E653-7DBF-45BC-A92E-3754D8091E89}</ProjectGuid>
+    <ProjectGuid>{4DE6790A-16A9-452B-B573-54730165202D}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>BasicLowEndServer</RootNamespace>

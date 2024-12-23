@@ -138,131 +138,6 @@ namespace Yabe
             return s.ToString();
 
         }
-        public static bool LoadVendorPropertyMapping()
-        {
-            _proprietaryPropertyMappings = new Dictionary<long, string>();
-
-            string path = Properties.Settings.Default.Proprietary_Properties_Files;
-
-            // helper function to log erros
-            void LogError(string message)
-            {
-                Trace.TraceError($"Invalid line in vendor proprietary BACnet properties file \"{path}\". {message}");
-            }
-
-            string[] lines;
-            try
-            {
-                // get all lines from the file
-                lines = File.ReadAllLines(path, Encoding.UTF8);
-            }
-            catch
-            {
-                Trace.TraceError("Cannot read Vendor proprietary BACnet file");
-                return false;
-            }
-
-            bool firstLine = true;
-
-            // parse each line
-            foreach (var line in lines)
-            {
-                // use the first line to detect the format
-                if (firstLine)
-                {
-                    // check the first line strictly so that we can verify that it is the new format
-                    if (!Regex.Match(line, @"^Vendor ID[,;]Property ID[,;]Property Name$").Success)
-                    {
-                        // return an indication that we do not have handled this file
-                        return false;
-                    }
-                    firstLine = false;
-                    continue;
-                }
-
-                // parse a line with a vendor property mapping
-                var match = Regex.Match(line, @"^(\d+)[,;](\d+)[,;]([^,;]+)"); // Allow here more than 3 columns, e.g. for an editorial comment in the file
-                if (!match.Success)
-                {
-                    LogError($"The row \"'{line}\" is not a valid mapping.");
-                    continue;
-                }
-
-                // parse the vendor ID
-                if (!ushort.TryParse(match.Groups[1].Value, out var vendorId))
-                {
-                    LogError($"The value {match.Groups[1].Value} is not a valid vendor ID number.");
-                    continue;
-                }
-
-                // parse the property ID
-                if (!uint.TryParse(match.Groups[2].Value, out var propertyId))
-                {
-                    LogError($"The value {match.Groups[2].Value} is not a valid property ID number.");
-                    continue;
-                }
-
-                // combine the vendor ID and the property ID so that be can store it in our central mapping list
-                var vendorPropertyNumber = ((long)vendorId << 32) | propertyId;
-                if (_proprietaryPropertyMappings.ContainsKey(vendorPropertyNumber))
-                {
-                    LogError($"The property ID {propertyId} of vendor ID {vendorId} is already defined as \"{_proprietaryPropertyMappings[vendorPropertyNumber]}\".");
-                    continue;
-                }
-                _proprietaryPropertyMappings.Add(vendorPropertyNumber, match.Groups[3].Value);
-            }
-
-            // return an indication that we have handled this file
-            return true;
-        }
-
-        public string GetNiceName(BacnetPropertyIds property, bool forceShowNumber = false)
-        {
-
-            if (_proprietaryPropertyMappings == null)   // First call
-                LoadVendorPropertyMapping();
-
-            bool prependNumber = forceShowNumber || Properties.Settings.Default.Show_Property_Id_Numbers;
-            string name = property.ToString();
-            if (name.StartsWith("PROP_"))
-            {
-                name = name.Substring(5);
-                name = name.Replace('_', ' ');
-                if (prependNumber)
-                {
-                    name = String.Format("{0}: {1}", (int)property, System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()));
-                }
-                else
-                {
-                    name = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower());
-                }
-            }
-            else
-            {
-                var vendorPropertyNumber = ((long)vendor_Id << 32) | (uint)property;
-                if (_proprietaryPropertyMappings.TryGetValue(vendorPropertyNumber, out var vendorPropertyName))
-                {
-                    name = vendorPropertyName;
-                }
-
-                if (name != null)
-                {
-                    if (prependNumber)
-                    {
-                        name = String.Format("Proprietary {0}: {1}", (int)property, System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()));
-                    }
-                    else
-                    {
-                        name = "Proprietary: " + System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower());
-                    }
-                }
-                else
-                {
-                    name = String.Format("Proprietary: {0}", (int)property);
-                }
-            }
-            return name;
-        }
         public void ClearCache()
         {
             Prop_Cached.Clear();
@@ -404,6 +279,132 @@ namespace Yabe
                 Prop_Cached.Add(new BACObjectPropertyValue(object_id, PropertyId, value_list));
 
             return ret;
+        }
+
+        public static bool LoadVendorPropertyMapping()
+        {
+            _proprietaryPropertyMappings = new Dictionary<long, string>();
+
+            string path = Properties.Settings.Default.Proprietary_Properties_Files;
+
+            // helper function to log erros
+            void LogError(string message)
+            {
+                Trace.TraceError($"Invalid line in vendor proprietary BACnet properties file \"{path}\". {message}");
+            }
+
+            string[] lines;
+            try
+            {
+                // get all lines from the file
+                lines = File.ReadAllLines(path, Encoding.UTF8);
+            }
+            catch
+            {
+                Trace.TraceError("Cannot read Vendor proprietary BACnet file");
+                return false;
+            }
+
+            bool firstLine = true;
+
+            // parse each line
+            foreach (var line in lines)
+            {
+                // use the first line to detect the format
+                if (firstLine)
+                {
+                    // check the first line strictly so that we can verify that it is the new format
+                    if (!Regex.Match(line, @"^Vendor ID[,;]Property ID[,;]Property Name$").Success)
+                    {
+                        // return an indication that we do not have handled this file
+                        return false;
+                    }
+                    firstLine = false;
+                    continue;
+                }
+
+                // parse a line with a vendor property mapping
+                var match = Regex.Match(line, @"^(\d+)[,;](\d+)[,;]([^,;]+)"); // Allow here more than 3 columns, e.g. for an editorial comment in the file
+                if (!match.Success)
+                {
+                    LogError($"The row \"'{line}\" is not a valid mapping.");
+                    continue;
+                }
+
+                // parse the vendor ID
+                if (!ushort.TryParse(match.Groups[1].Value, out var vendorId))
+                {
+                    LogError($"The value {match.Groups[1].Value} is not a valid vendor ID number.");
+                    continue;
+                }
+
+                // parse the property ID
+                if (!uint.TryParse(match.Groups[2].Value, out var propertyId))
+                {
+                    LogError($"The value {match.Groups[2].Value} is not a valid property ID number.");
+                    continue;
+                }
+
+                // combine the vendor ID and the property ID so that be can store it in our central mapping list
+                var vendorPropertyNumber = ((long)vendorId << 32) | propertyId;
+                if (_proprietaryPropertyMappings.ContainsKey(vendorPropertyNumber))
+                {
+                    LogError($"The property ID {propertyId} of vendor ID {vendorId} is already defined as \"{_proprietaryPropertyMappings[vendorPropertyNumber]}\".");
+                    continue;
+                }
+                _proprietaryPropertyMappings.Add(vendorPropertyNumber, match.Groups[3].Value);
+            }
+
+            // return an indication that we have handled this file
+            return true;
+        }
+
+        public string GetNiceName(BacnetPropertyIds property, bool forceShowNumber = false)
+        {
+
+            if (_proprietaryPropertyMappings == null)   // First call
+                LoadVendorPropertyMapping();
+
+            bool prependNumber = forceShowNumber || Properties.Settings.Default.Show_Property_Id_Numbers;
+            string name = property.ToString();
+            if (name.StartsWith("PROP_"))
+            {
+                name = name.Substring(5);
+                name = name.Replace('_', ' ');
+                if (prependNumber)
+                {
+                    name = String.Format("{0}: {1}", (int)property, System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()));
+                }
+                else
+                {
+                    name = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower());
+                }
+            }
+            else
+            {
+                var vendorPropertyNumber = ((long)vendor_Id << 32) | (uint)property;
+                if (_proprietaryPropertyMappings.TryGetValue(vendorPropertyNumber, out var vendorPropertyName))
+                {
+                    name = vendorPropertyName;
+                }
+
+                if (name != null)
+                {
+                    if (prependNumber)
+                    {
+                        name = String.Format("Proprietary {0}: {1}", (int)property, System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()));
+                    }
+                    else
+                    {
+                        name = "Proprietary: " + System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower());
+                    }
+                }
+                else
+                {
+                    name = String.Format("Proprietary: {0}", (int)property);
+                }
+            }
+            return name;
         }
     }
 }
