@@ -116,13 +116,13 @@ namespace FindPrioritiesGlobal
         {
             var device = devExport.Device;
 
-            device.ReadObjectList(out _, out uint Count);
+            device.ReadObjectList(out IList<BacnetValue>_, out uint Count);
 
             devExport.Points.Clear();
             for (uint j=1;j<= Count;j++)
             {
                 BacnetObjectId bobj_id;
-                device.ReadObjectListOneByOne(out bobj_id, j);
+                device.ReadObjectListItem(out bobj_id, j);
 
                 // Only the following objects contain or may contain a PriorityArray Property (135-2020)
                 //

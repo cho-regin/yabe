@@ -1369,7 +1369,7 @@ namespace Yabe
             }
         }
 
-        private IList<BacnetValue> FetchStructuredObjects(BACnetDevice device, uint device_id, TreeNodeCollection nodes, bool ForceRead=false)
+        private int FetchStructuredObjects(BACnetDevice device, uint device_id, TreeNodeCollection nodes, bool ForceRead=false)
         {
             IList<BacnetValue> ret;
             int old_reties = device.channel.Retries;
@@ -1379,7 +1379,7 @@ namespace Yabe
                 if (!device.ReadCachablePropertyRequest(out ret, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id),BacnetPropertyIds.PROP_STRUCTURED_OBJECT_LIST, ForceRead))
                 {
                     Trace.TraceInformation("Didn't get response from 'Structured Object List'");
-                    return null;
+                    return 0;
                 }
                 else
                 {
@@ -1390,13 +1390,13 @@ namespace Yabe
             }
             catch (Exception)
             {
-                return null;
+                return 0;
             }
             finally
             {
                 device.channel.Retries = old_reties;
             }
-            return ret;
+            return ret.Count;
         }
 
         private void AddObjectListOneByOneAsync(BACnetDevice device, uint count, int AsynchRequestId, bool ForceRead=false)
@@ -1414,7 +1414,7 @@ namespace Yabe
                 {
                     BacnetObjectId objId;
 
-                    if (!device.ReadObjectListOneByOne(out objId, i, ForceRead))
+                    if (!device.ReadObjectListItem(out objId, i, ForceRead))
                     {
                         Trace.WriteLine("Couldn't fetch object list index");
                         return;
@@ -1512,13 +1512,13 @@ namespace Yabe
             this.Cursor = Cursors.WaitCursor;
             Application.DoEvents();
             int old_timeout = comm.Timeout;
-            IList<BacnetValue> value_list = null;
 
             try
             {
+                int CountStructuredObjects = 0;
                 if (Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.Structured)
                 {
-                    value_list = FetchStructuredObjects(device, device_id, m_AddressSpaceTree.Nodes);
+                    CountStructuredObjects = FetchStructuredObjects(device, device_id, m_AddressSpaceTree.Nodes);
 
                     // If the Device name not set, try to update it
                     if (node.ToolTipText == "")   // already update with the device name
@@ -1530,23 +1530,25 @@ namespace Yabe
                     }
                         
                 }
-                if (value_list != null) // Without PROP_STRUCTURED_OBJECT_LIST we fall back to a flat view of the dictionnary
+
+                if (CountStructuredObjects != 0) 
                 {
-                   AddSpaceLabel.Text = "Address Space : " + value_list.Count.ToString() + " objects";
+                   AddSpaceLabel.Text = "Address Space : " + CountStructuredObjects.ToString() + " objects";
                 }
-                else
+                else // Without PROP_STRUCTURED_OBJECT_LIST we fall back to a flat view of the dictionnary
                 {
                     //fetch normal list
                     uint list_count;
+                    List<BacnetObjectId> objectList;
 
-                    if (!device.ReadObjectList(out value_list, out list_count))
+                    if (!device.ReadObjectList(out objectList, out list_count))
                     {
                         Trace.TraceWarning("Didn't get response from 'Object List'");
                         return;
                     }
 
                     //fetch list one-by-one
-                    if ((value_list == null)&&(list_count != 0))
+                    if ((objectList == null)&&(list_count != 0))
                     {
                         AddSpaceLabel.Text = "Address Space : 0 objects / " + list_count.ToString() + " expected";
                         AddObjectListOneByOneAsync(device, list_count, AsynchRequestId);
@@ -1554,7 +1556,8 @@ namespace Yabe
                         return;
                     }
 
-                    IList<BacnetObjectId>  objectList = SortBacnetObjects(value_list, device.SortableDictionnary);
+                    if (device.SortableDictionnary)
+                        objectList.Sort();
 
                     AddSpaceLabel.Text = "Address Space : " + objectList.Count.ToString() + " objects";
                     //add to tree
@@ -3975,7 +3978,7 @@ namespace Yabe
         {
             char Sep = Properties.Settings.Default.EDE_Separator;
 
-            device.ReadObjectList(out _, out uint ObjCount);    // Get the dictionary (already in cache or puts in cache)
+            device.ReadObjectList(out IList<BacnetValue>_, out uint ObjCount);    // Get the dictionary (already in cache or puts in cache)
 
             this.Cursor = Cursors.WaitCursor;
 
@@ -3996,7 +3999,7 @@ namespace Yabe
                     Application.DoEvents();
 
                     BacnetObjectId Bacobj;
-                    device.ReadObjectListOneByOne(out Bacobj, i); // From the cache or not
+                    device.ReadObjectListItem(out Bacobj, i); // From the cache or not
                     string Identifier = "";
                     string Description = "";
                     String UnitCode = "";

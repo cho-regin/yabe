@@ -325,8 +325,22 @@ namespace Yabe
 
             return false;
         }
+        public bool ReadObjectList(out List<BacnetObjectId> ObjectList, out uint Count, bool ForceRead = false)
+        {
+            ObjectList = null;
 
-        public bool ReadObjectListOneByOne(out BacnetObjectId ObjId, uint Count, bool ForceRead = false)
+            IList<BacnetValue> L;
+            bool ret = ReadObjectList(out L, out Count, ForceRead);
+            if (L!=null)
+            {
+                ObjectList=new List<BacnetObjectId>();
+                foreach (var val in L)
+                    ObjectList.Add((BacnetObjectId)val.Value);
+            }
+
+            return ret;
+        }
+        public bool ReadObjectListItem(out BacnetObjectId ObjId, uint Count, bool ForceRead = false)
         {
             ObjId=new BacnetObjectId();
 

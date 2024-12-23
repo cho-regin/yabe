@@ -33,6 +33,7 @@ using System.Globalization;
 using System.Windows.Forms.Design;
 using System.Windows.Forms;
 using System.Drawing.Design;
+using System.Drawing;
 
 namespace Utilities
 {
@@ -1598,12 +1599,49 @@ namespace Utilities
         }
     }
 
-    // In order to remove the default PriorityArray editor which is a problem
+    // PriorityArray editor : only displays values with priorities names
     public class BacnetEditPriorityArray : UITypeEditor
     {
+        ListBox EnumList;
+        IWindowsFormsEditorService editorService;
         public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context)
         {
-            return UITypeEditorEditStyle.None;
+            return UITypeEditorEditStyle.DropDown;
+        }
+        public override object EditValue(ITypeDescriptorContext context, IServiceProvider provider, object value)
+        {
+            if (provider != null)
+            {
+                this.editorService = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
+            }
+            if ((this.editorService != null)&&(value is Array priorities)&&(priorities.Length==16))
+            {
+                EnumList = new ListBox();
+                EnumList.CustomTabOffsets.Add(100);
+                EnumList.UseCustomTabOffsets = true;
+               
+                int Idx = 0;
+                foreach (var p in priorities)
+                {
+                    String s = BacnetEnumValueDisplay.GetNiceName(((BacnetWritePriority)Idx).ToString())+"\t";
+
+                    if (p != null)
+                         s += p.ToString();
+                    else
+                        s += "Empty";
+
+                    Idx++;
+                    EnumList.Items.Add(s);
+                }
+
+                Graphics g = EnumList.CreateGraphics();
+                int hzSize = (int)g.MeasureString("T", EnumList.Font).Height+1;
+                EnumList.Size = new Size(100, 16*hzSize);
+
+                this.editorService.DropDownControl(EnumList);
+            }
+
+            return value;
         }
     }
     // In order to give a readable name to classic enums
