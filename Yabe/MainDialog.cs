@@ -638,7 +638,7 @@ namespace Yabe
                         // string path = Path.GetDirectoryName(Application.ExecutablePath);
                         string name = pluginname.Replace(" ", String.Empty);
                         // Assembly myDll = Assembly.LoadFrom(path + "\\" + name + ".dll");
-                        Assembly myDll = Assembly.LoadFrom(name + ".dll");
+                        Assembly myDll = Assembly.LoadFrom("Plugins\\"+name + ".dll");
                         Trace.WriteLine(String.Format("Loaded plugin \"{0}\".", pluginname));
                         Type[] types = myDll.GetExportedTypes();
                         IYabePlugin plugin = (IYabePlugin)myDll.CreateInstance(name + ".Plugin", true);
@@ -3850,7 +3850,7 @@ namespace Yabe
                     }
 
                     // Write state texts:
-                    int? stateTextIdx = null;
+                    int? stateTextIdx=null;
                     IEnumerable<string> stateTexts = null;
                     if (State_Text != null)
                         stateTexts = State_Text.Select(sta => sta.Value.ToString());
@@ -3995,7 +3995,7 @@ namespace Yabe
                 try
                 {
                     IList<BacnetReadAccessResult> result = null;
-                    if (device.channel.ReadPropertyMultipleRequest(device.BacAdr, bras, out result) == true)
+                    if (device.ReadPropertyMultipleRequest(bras, out result) == true)
                     {
                         SetObjectName(tnc, result, device);
                         IsOK = true;
@@ -4032,10 +4032,10 @@ namespace Yabe
             {
                 if ((tn.ToolTipText == "") && (tn.Tag != null))
                 {
-                    IList<BacnetValue> name;
                     try
                     {
-                        if (device.channel.ReadPropertyRequest(device.BacAdr, (BacnetObjectId)tn.Tag, BacnetPropertyIds.PROP_OBJECT_NAME, out name) == true)
+                        String Name=device.ReadObjectName((BacnetObjectId)tn.Tag);
+                        if (Name!=null)
                         {
                             if (AsynchRequestId != this.AsynchRequestId) // Selected device is no more the good one
                             {
@@ -4049,8 +4049,7 @@ namespace Yabe
 
                                 // We are already going on-by-one (SLOW), in a different thread, so just update
                                 // as we go. Don't bother optimising (Tested and only ~15% faster in this case)
-                                ChangeTreeNodePropertyName(tn, name[0].Value.ToString());
-                                device.UpdateObjectNameMapping((BacnetObjectId)tn.Tag, name[0].Value.ToString());
+                                ChangeTreeNodePropertyName(tn, Name);
 
                             });
                         }

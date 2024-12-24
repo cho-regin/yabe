@@ -51,15 +51,15 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\..\Yabe\bin\Debug\Yabe.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\CheckReliability.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\CheckStatusFlags.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\ListAnalogValues.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\ListCOV_Increment.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\ListOutOfService.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\GlobalCommander.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\FindPriorities.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\FindPrioritiesGlobal.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Yabe.exe"; DestDir: "{app"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\CheckReliability.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\CheckStatusFlags.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\ListAnalogValues.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\ListCOV_Increment.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\ListOutOfService.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\GlobalCommander.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\FindPriorities.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\FindPrioritiesGlobal.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\README.Txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Docs\history.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Docs\MIT_license.txt"; DestDir: "{app}"; Flags: ignoreversion
