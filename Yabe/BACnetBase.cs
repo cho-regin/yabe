@@ -7725,6 +7725,9 @@ namespace System.IO.BACnet
 
             if (byte_number < value.Length)
             {
+                /* set max bits used */
+                if (bits_used < bit_number + 1)
+                    bits_used = (byte)(bit_number + 1);
 
                 if (v)
                     value[byte_number] |= bit_mask;
