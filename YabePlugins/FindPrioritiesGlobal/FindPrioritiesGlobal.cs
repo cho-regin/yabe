@@ -39,8 +39,6 @@ namespace FindPrioritiesGlobal
                                         "Available"
                                     };
         public string GUI_LastFilename = "";
-        private Dictionary<Tuple<String, BacnetObjectId>, String> DevicesObjectsName { get { return _yabeFrm.DevicesObjectsName; } }
-        private bool ObjectNamesChangedFlag { get { return _yabeFrm.objectNamesChangedFlag; } set { _yabeFrm.objectNamesChangedFlag = value; } }
 
         public FindPrioritiesGlobal(YabeMainDialog yabeFrm)
         {
@@ -66,7 +64,7 @@ namespace FindPrioritiesGlobal
                 BacnetDeviceExport devExport = new BacnetDeviceExport(device, this);
                 string identifier = null;
 
-                identifier=_yabeFrm.ReadObjectName(device, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId));
+                identifier= device.ReadObjectName(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId));
 
                 identifier = identifier + " [" + device.deviceId.ToString() + "] ";
                
@@ -116,7 +114,7 @@ namespace FindPrioritiesGlobal
         {
             var device = devExport.Device;
 
-            device.ReadObjectList(out IList<BacnetValue>_, out uint Count);
+            device.ReadObjectList(out _, out uint Count);
 
             devExport.Points.Clear();
             for (uint j=1;j<= Count;j++)
@@ -184,7 +182,7 @@ namespace FindPrioritiesGlobal
                     string identifier = null;
                     string objectName = null;
 
-                    objectName = _yabeFrm.ReadObjectName(device, bobj_id);
+                    objectName = device.ReadObjectName(bobj_id);
                     identifier = objectName + " [" + bobj_id.ToString() + "] ";
 
                     // check priorities

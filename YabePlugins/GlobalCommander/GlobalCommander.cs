@@ -41,8 +41,6 @@ namespace GlobalCommander
         private List<BacnetPropertyExport> _allSelectedProperties;
         private List<BacnetPropertyExport> _commonProperties;
 
-        private Dictionary<Tuple<String, BacnetObjectId>, String> DevicesObjectsName { get { return _yabeFrm.DevicesObjectsName; } }
-        private bool ObjectNamesChangedFlag { get { return _yabeFrm.objectNamesChangedFlag; } set { _yabeFrm.objectNamesChangedFlag = value; } }
         public IEnumerable<KeyValuePair<BacnetClient, YabeMainDialog.BacnetDeviceLine>> YabeDiscoveredDevices { get { return _yabeFrm.DiscoveredDevices; } }
 
         public GlobalCommander(YabeMainDialog yabeFrm)
@@ -1018,17 +1016,12 @@ namespace GlobalCommander
                         }
 
                         BacnetDeviceExport device = new BacnetDeviceExport(dev, this);
-
-                        bool Prop_Object_NameOK = false;
                         BacnetObjectId deviceObjectID = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceID);
                         string identifier = null;
 
-                        lock (DevicesObjectsName)
-                        {
-                            Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(dev.FullHashString(), deviceObjectID), out identifier);
-                        }
+                        identifier=dev.GetObjectName(deviceObjectID);
 
-                        if (Prop_Object_NameOK)
+                        if ((identifier != null) && (identifier!=""))
                         {
                             identifier = identifier + " [" + deviceObjectID.Instance.ToString() + "] ";
                         }
@@ -1040,13 +1033,6 @@ namespace GlobalCommander
                                 if (comm.ReadPropertyRequest(deviceAddress, deviceObjectID, BacnetPropertyIds.PROP_OBJECT_NAME, out values))
                                 {
                                     identifier = values[0].ToString();
-                                    lock (DevicesObjectsName)
-                                    {
-                                        Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(dev.FullHashString(), deviceObjectID);
-                                        DevicesObjectsName.Remove(t);
-                                        DevicesObjectsName.Add(t, identifier);
-                                        ObjectNamesChangedFlag = true;
-                                    }
                                     identifier = identifier + " [" + deviceObjectID.Instance.ToString() + "] ";
                                 }
                             }
@@ -1193,15 +1179,12 @@ namespace GlobalCommander
                     BacnetPointExport point = new BacnetPointExport(device, bobj_id);
 
                     // If the Device name not set, try to update it
-                    bool Prop_Object_NameOK = false;
                     string identifier = null;
                     string objectName = null;
 
-                    lock (DevicesObjectsName)
-                    {
-                        Prop_Object_NameOK = DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.Device.FullHashString(), bobj_id), out objectName);
-                    }
-                    if (Prop_Object_NameOK)
+                    identifier=device.Device.GetObjectName(bobj_id);
+
+                    if (identifier!=null)
                     {
                         identifier = objectName + " [" + bobj_id.ToString() + "] ";
                     }
@@ -1213,13 +1196,6 @@ namespace GlobalCommander
                             if (comm.ReadPropertyRequest(adr, bobj_id, BacnetPropertyIds.PROP_OBJECT_NAME, out values))
                             {
                                 objectName = values[0].ToString();
-                                lock (DevicesObjectsName)
-                                {
-                                    Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(device.Device.FullHashString(), bobj_id);
-                                    //DevicesObjectsName.Remove(t);
-                                    DevicesObjectsName[t]=objectName;
-                                    ObjectNamesChangedFlag = true;
-                                }
                                 identifier = objectName + " [" + bobj_id.ToString() + "] ";
                             }
                         }
@@ -1339,7 +1315,7 @@ namespace GlobalCommander
 
         private bool ReadAllPropertiesBySingle(BACnetDevice device, BacnetObjectId object_id, out IList<BacnetReadAccessResult> multi_value_list)
         {
-            return _yabeFrm.ReadAllPropertiesBySingle(device, object_id, out multi_value_list);
+            return device.ReadAllPropertiesBySingle(object_id, out multi_value_list);
         }
         // ------------------------------------------------------------------
 

@@ -23,6 +23,7 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
+using SharpPcap;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,6 +32,7 @@ using System.IO.BACnet;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml.Serialization;
 
 namespace Yabe
 {
@@ -52,8 +54,12 @@ namespace Yabe
             }
         }
 
-        private static Dictionary<long, string> _proprietaryPropertyMappings = null; 
-
+        private static Dictionary<long, string> _proprietaryPropertyMappings = null;
+        private static List<BacnetObjectDescription> objectsDescriptionExternal, objectsDescriptionDefault;
+        // Memory of all object names already discovered, first string in the Tuple is the device network address hash
+        // The tuple contains two value types, so it's ok for cross session
+        public static Dictionary<Tuple<String, BacnetObjectId>, String> DevicesObjectsName = new Dictionary<Tuple<String, BacnetObjectId>, String>();
+        public static bool objectNamesChangedFlag = false;
         public enum ReadPopertyMultipleStatus { Unknow, Accepted, NotSupported };
 
         public ReadPopertyMultipleStatus ReadMultiple = ReadPopertyMultipleStatus.Unknow;
@@ -70,10 +76,10 @@ namespace Yabe
 
         // PROP_OBJECT_LIST  cache
         uint ListCountExpected;
-        IList<BacnetValue> Prop_ObjectList; 
+        List<BacnetObjectId> Prop_ObjectList; 
 
         // Several Properties Caches (View List, Group List, ...), only needed to displays the Dictionnary, not all properties values
-        List<BACObjectPropertyValue> Prop_Cached=new List<BACObjectPropertyValue>();    
+        List<BACObjectPropertyValue> Prop_Cached=new List<BACObjectPropertyValue>();
 
         public BACnetDevice(BacnetClient sender, BacnetAddress addr, uint deviceId, uint vendor_id = System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE)
         {
@@ -144,7 +150,7 @@ namespace Yabe
             Prop_ObjectList = null;
             ListCountExpected = 0;
         }
-        public bool ReadObjectList(out IList<BacnetValue> ObjectList, out uint Count, bool ForceRead = false)
+        public bool ReadObjectList(out List<BacnetObjectId> ObjectList, out uint Count, bool ForceRead = false)
         {
             ObjectList = null;
             Count = 0;
@@ -170,9 +176,14 @@ namespace Yabe
             {
                 try
                 {
-                    if (channel.ReadPropertyRequest(BacAdr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceId), BacnetPropertyIds.PROP_OBJECT_LIST, out Prop_ObjectList))
+                    IList<BacnetValue> value_list;
+                    if (channel.ReadPropertyRequest(BacAdr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceId), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list))
                     {
-                        ListCountExpected = (uint)Prop_ObjectList.Count;
+                        ListCountExpected = (uint)value_list.Count;
+                        Prop_ObjectList = new List<BacnetObjectId>();
+                        foreach (var val in value_list)
+                            Prop_ObjectList.Add((BacnetObjectId)val.Value);
+
                         ObjectList = Prop_ObjectList;
                         Count = ListCountExpected;
                         return true;
@@ -200,21 +211,7 @@ namespace Yabe
 
             return false;
         }
-        public bool ReadObjectList(out List<BacnetObjectId> ObjectList, out uint Count, bool ForceRead = false)
-        {
-            ObjectList = null;
-
-            IList<BacnetValue> L;
-            bool ret = ReadObjectList(out L, out Count, ForceRead);
-            if (L!=null)
-            {
-                ObjectList=new List<BacnetObjectId>();
-                foreach (var val in L)
-                    ObjectList.Add((BacnetObjectId)val.Value);
-            }
-
-            return ret;
-        }
+        
         public bool ReadObjectListItem(out BacnetObjectId ObjId, uint Count, bool ForceRead = false)
         {
             ObjId=new BacnetObjectId();
@@ -224,24 +221,24 @@ namespace Yabe
             {
                 if ((Prop_ObjectList != null) && (Prop_ObjectList.Count >= Count))
                 {
-                    ObjId = (BacnetObjectId)Prop_ObjectList[(int)(Count - 1)].Value;
+                    ObjId = (BacnetObjectId)Prop_ObjectList[(int)(Count - 1)];
                     return true;
                 }
             }
 
-            if (Prop_ObjectList == null) Prop_ObjectList = new List<BacnetValue>();
+            if (Prop_ObjectList == null) Prop_ObjectList = new List<BacnetObjectId>();
 
             if (Prop_ObjectList.Count != Count - 1)
                 return false;   // Wrong sequence, should be 1..n in order, today not required / not accepted
 
-            IList<BacnetValue> value_list;
             try
             {
+                IList<BacnetValue> value_list;
                 if (!channel.ReadPropertyRequest(BacAdr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceId), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list, 0, Count))
                     return false;
                 else
                 {
-                    Prop_ObjectList.Add(value_list[0]);
+                    Prop_ObjectList.Add((BacnetObjectId)value_list[0].Value);
                     ObjId = (BacnetObjectId)value_list[0].Value;
                     return true;
                 }
@@ -251,6 +248,8 @@ namespace Yabe
             return false;
         }
         
+        // Here it is expected that the given properties (array) can be read in one shot. Nothing done if it's not possible
+        // But group and view lists are "normaly" small to fit even in a mstp frame 
         public bool ReadCachablePropertyRequest(out IList<BacnetValue> value_list, BacnetObjectId object_id, BacnetPropertyIds PropertyId, bool ForceRead = false)
         {
             value_list = null;
@@ -280,8 +279,156 @@ namespace Yabe
 
             return ret;
         }
+        public bool ReadProperty(BacnetObjectId object_id, BacnetPropertyIds property_id, ref IList<BacnetPropertyValue> values, uint array_index = System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL)
+        {
+            BacnetPropertyValue new_entry = new BacnetPropertyValue();
+            new_entry.property = new BacnetPropertyReference((uint)property_id, array_index);
+            IList<BacnetValue> value;
+            try
+            {
+                if (!channel.ReadPropertyRequest(BacAdr, object_id, property_id, out value, 0, array_index))
+                    return false;     //ignore
+            }
+            catch
+            {
+                return false;         //ignore
+            }
+            new_entry.value = value;
 
-        public static bool LoadVendorPropertyMapping()
+            values.Add(new_entry);
+            return true;
+        }
+
+        public bool ReadAllPropertiesBySingle(BacnetObjectId object_id, out IList<BacnetReadAccessResult> value_list)
+        {
+
+            if (objectsDescriptionDefault == null)  // first call, Read Objects description from internal & optional external xml file
+                LoadObjectsDescription();
+
+            value_list = null;
+
+            IList<BacnetPropertyValue> values = new List<BacnetPropertyValue>();
+
+            int old_retries = channel.Retries;
+            channel.Retries = 1;       //we don't want to spend too much time on non existing properties
+            try
+            {
+                // PROP_LIST was added as an addendum to 135-2010
+                // Test to see if it is supported, otherwise fall back to the the predefined delault property list.
+                bool objectDidSupplyPropertyList = ReadProperty(object_id, BacnetPropertyIds.PROP_PROPERTY_LIST, ref values);
+
+                //Used the supplied list of supported Properties, otherwise fall back to using the list of default properties.
+                if (objectDidSupplyPropertyList)
+                {
+                    var proplist = values.Last();
+
+                    foreach (var enumeratedValue in proplist.value)
+                    {
+                        BacnetPropertyIds bpi = (BacnetPropertyIds)(uint)enumeratedValue.Value;
+                        // read all specified properties given by the PROP_PROPERTY_LIST, except the 3 previous one
+                        ReadProperty(object_id, bpi, ref values);
+                    }
+
+                    // 3 required properties not in the list
+
+                    // ReadProperty(comm, adr, object_id, BacnetPropertyIds.PROP_OBJECT_IDENTIFIER, ref values)
+                    // No need to query it, known value
+                    BacnetPropertyValue new_entry = new BacnetPropertyValue();
+                    new_entry.property = new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_IDENTIFIER, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL);
+                    new_entry.value = new BacnetValue[] { new BacnetValue(object_id) };
+                    values.Add(new_entry);
+
+                    // ReadProperty(comm, adr, object_id, BacnetPropertyIds.PROP_OBJECT_TYPE, ref values);
+                    // No need to query it, known value
+                    new_entry = new BacnetPropertyValue();
+                    new_entry.property = new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_TYPE, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL);
+                    new_entry.value = new BacnetValue[] { new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_ENUMERATED, (uint)object_id.type) };
+                    values.Add(new_entry);
+                    // We do not know the value here
+                    ReadProperty(object_id, BacnetPropertyIds.PROP_OBJECT_NAME, ref values);
+                }
+                else
+                {
+                    // Three mandatory common properties to all objects : PROP_OBJECT_IDENTIFIER,PROP_OBJECT_TYPE, PROP_OBJECT_NAME
+
+                    // ReadProperty(comm, adr, object_id, BacnetPropertyIds.PROP_OBJECT_IDENTIFIER, ref values)
+                    // No need to query it, known value
+                    BacnetPropertyValue new_entry = new BacnetPropertyValue();
+                    new_entry.property = new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_IDENTIFIER, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL);
+                    new_entry.value = new BacnetValue[] { new BacnetValue(object_id) };
+                    values.Add(new_entry);
+
+                    // ReadProperty(comm, adr, object_id, BacnetPropertyIds.PROP_OBJECT_TYPE, ref values);
+                    // No need to query it, known value
+                    new_entry = new BacnetPropertyValue();
+                    new_entry.property = new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_TYPE, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL);
+                    new_entry.value = new BacnetValue[] { new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_ENUMERATED, (uint)object_id.type) };
+                    values.Add(new_entry);
+
+                    // We do not know the value here
+                    ReadProperty(object_id, BacnetPropertyIds.PROP_OBJECT_NAME, ref values);
+
+                    // for all other properties, the list is comming from the internal or external XML file
+
+                    BacnetObjectDescription objDescr = new BacnetObjectDescription(); ;
+
+                    int Idx = -1;
+                    // try to find the Object description from the optional external xml file
+                    if (objectsDescriptionExternal != null)
+                        Idx = objectsDescriptionExternal.FindIndex(o => o.typeId == object_id.type);
+
+                    if (Idx != -1)
+                        objDescr = objectsDescriptionExternal[Idx];
+                    else
+                    {
+                        // try to find from the embedded resoruce
+                        Idx = objectsDescriptionDefault.FindIndex(o => o.typeId == object_id.type);
+                        if (Idx != -1)
+                            objDescr = objectsDescriptionDefault[Idx];
+                    }
+
+                    if (Idx != -1)
+                        foreach (BacnetPropertyIds bpi in objDescr.propsId)
+                            // read all specified properties given by the xml file
+                            ReadProperty(object_id, bpi, ref values);
+                }
+            }
+            catch { }
+
+            channel.Retries = old_retries;
+            value_list = new BacnetReadAccessResult[] { new BacnetReadAccessResult(object_id, values) };
+            return true;
+        }
+
+        // Multiple properties on a single object
+        public bool ReadPropertyMultipleRequest(BacnetObjectId object_id, IList<BacnetPropertyReference> properties, out IList<BacnetReadAccessResult> multi_value_list) => channel.ReadPropertyMultipleRequest(BacAdr, object_id, properties, out multi_value_list);
+        // Multiple properties on multiple objects
+        public bool ReadPropertyMultipleRequest(IList<BacnetReadAccessSpecification> properties, out IList<BacnetReadAccessResult> values) => channel.ReadPropertyMultipleRequest(BacAdr, properties, out values);
+        public bool WritePropertyRequest(BacnetObjectId object_id, BacnetPropertyIds property_id, IEnumerable<BacnetValue> value_list) => channel.WritePropertyRequest(BacAdr, object_id, property_id, value_list);
+        public bool ReadPropertyRequest(BacnetObjectId object_id, BacnetPropertyIds property_id, out IList<BacnetValue> value_list) => channel.ReadPropertyRequest(BacAdr, object_id, property_id, out value_list);
+        public void SimpleAckResponse(BacnetConfirmedServices service, byte invoke_id) => channel.SimpleAckResponse(BacAdr, service, invoke_id);
+        public bool SubscribeCOVRequest(BacnetObjectId object_id, uint subscribe_id, bool cancel, bool issue_confirmed_notifications, uint lifetime)=>channel.SubscribeCOVRequest(BacAdr, object_id, subscribe_id, cancel, issue_confirmed_notifications, lifetime);
+        public static void LoadObjectsDescription()
+        {
+            // Use to read object properties when ReadMultiple is not accepted (very simple devices on MSTP without segmentation)
+            StreamReader sr;
+            XmlSerializer xs = new XmlSerializer(typeof(List<BacnetObjectDescription>));
+
+            // embedded resource
+            System.Reflection.Assembly _assembly;
+            _assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            sr = new StreamReader(_assembly.GetManifestResourceStream("Yabe.ReadSinglePropDescrDefault.xml"));
+            objectsDescriptionDefault = (List<BacnetObjectDescription>)xs.Deserialize(sr);
+
+            try  // External optional file
+            {
+                sr = new StreamReader("ReadSinglePropDescr.xml");
+                objectsDescriptionExternal = (List<BacnetObjectDescription>)xs.Deserialize(sr);
+            }
+            catch { }
+
+        }
+        public static bool LoadVendorPropertyMapping() // Daniel Evers, BOSCH
         {
             _proprietaryPropertyMappings = new Dictionary<long, string>();
 
@@ -406,5 +553,72 @@ namespace Yabe
             }
             return name;
         }
+
+        #region "Cross session Object Name dictionnary"
+        public void UpdateObjectNameMapping(BacnetObjectId Bacobj, string Name)
+        {
+            if ((Name == null) || (Name == "")) return;
+            
+            lock (DevicesObjectsName)
+            {
+                Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(FullHashString(), Bacobj);
+                if (DevicesObjectsName.ContainsKey(t))
+                {
+                    if (!DevicesObjectsName[t].Equals(Name))
+                    {
+                        DevicesObjectsName.Remove(t);
+                        DevicesObjectsName.Add(t, Name);
+                        objectNamesChangedFlag = true;
+                    }
+                }
+                else
+                {
+                    DevicesObjectsName.Add(t, Name);
+                    objectNamesChangedFlag = true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Provides the name if it is in the cache, uses ReadObjectName if value is mandatory
+        /// </summary>
+        public String GetObjectName(BacnetObjectId object_id)
+        {
+            String Name = null;
+            lock (DevicesObjectsName)
+                DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(FullHashString(), object_id), out Name);
+            return Name;
+        }
+        /// <summary>
+        /// Uses GetObjectName with network access if required 
+        /// </summary>
+        public string ReadObjectName(BacnetObjectId object_id, bool ForceRead = false)
+        {
+            if (ForceRead == false)
+            {
+                String Name;
+                lock (DevicesObjectsName)
+                    if (DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(FullHashString(), object_id), out Name))
+                        return Name;
+            }
+            try
+            {
+                IList<BacnetValue> value;
+                if (!ReadPropertyRequest(object_id, BacnetPropertyIds.PROP_OBJECT_NAME, out value))
+                    return "";
+                if (value == null || value.Count == 0)
+                    return "";
+                else
+                {
+                    UpdateObjectNameMapping(object_id, value[0].Value.ToString());
+                    return value[0].Value.ToString();
+                }
+            }
+            catch
+            {
+                return "";
+            }
+        }
+        #endregion
     }
 }

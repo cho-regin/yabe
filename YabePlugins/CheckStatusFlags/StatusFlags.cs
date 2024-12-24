@@ -105,10 +105,7 @@ namespace CheckStatusFlags
 
                 BacnetObjectId object_id = (BacnetObjectId)tn.Tag;
 
-                String Identifier = null;
-
-                lock (yabeFrm.DevicesObjectsName) // translate to it's name if already known
-                    yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.FullHashString(), object_id), out Identifier);
+                String Identifier = device.GetObjectName(object_id);
 
                 try
                 {

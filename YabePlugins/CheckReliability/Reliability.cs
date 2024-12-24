@@ -98,10 +98,7 @@ namespace CheckReliability
 
                 BacnetObjectId object_id = (BacnetObjectId)tn.Tag;
 
-                String Identifier = null;
-
-                lock (yabeFrm.DevicesObjectsName) // translate to it's name if already known
-                    yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.FullHashString(), object_id), out Identifier);
+                String Identifier = device.GetObjectName(object_id) ;
 
                 try
                 {
@@ -134,7 +131,7 @@ namespace CheckReliability
                                 name=name.Substring(7);
 
                             TreeNode N;
-                            if (Identifier!=null)
+                            if (Identifier != null) 
                                  N = treeView1.Nodes.Add(Identifier+" (" + System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower())+")");
                             else
                                 N = treeView1.Nodes.Add(name);

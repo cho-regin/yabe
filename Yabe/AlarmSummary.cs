@@ -35,17 +35,14 @@ namespace Yabe
     {
         BACnetDevice device;
 
-        Dictionary<Tuple<String, BacnetObjectId>, String> DevicesObjectsName;
 
         IList<BacnetGetEventInformationData> Alarms=new List<BacnetGetEventInformationData>();
 
-        public AlarmSummary(ImageList img_List, BACnetDevice device, Dictionary<Tuple<String, BacnetObjectId>, String> DevicesObjectsName)
+        public AlarmSummary(ImageList img_List, BACnetDevice device)
         {
             InitializeComponent();
             this.Text = "Active Alarms on Device Id " + device.deviceId.ToString();
             this.device = device;
-
-            this.DevicesObjectsName = DevicesObjectsName;
 
             TAlarmList.ImageList = img_List;
 
@@ -122,10 +119,7 @@ namespace Yabe
                 {
                     TreeNode currentTn;
 
-                    String nameStr = null;
-
-                    lock (DevicesObjectsName)
-                        DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.FullHashString(), alarm.objectIdentifier), out nameStr);
+                    String nameStr = device.GetObjectName(alarm.objectIdentifier);
 
                     if (nameStr == null)
                     {
@@ -136,8 +130,6 @@ namespace Yabe
                         if (retcode)
                         {
                             nameStr = name[0].Value.ToString();
-                            lock (DevicesObjectsName)
-                                DevicesObjectsName.Add(new Tuple<String, BacnetObjectId>(device.FullHashString(), alarm.objectIdentifier), nameStr);
                         }
                     }
 

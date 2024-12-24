@@ -89,7 +89,7 @@ namespace GetDevicesNames // namespace should have the same name as the dll file
                         BACnetDevice device = tn.Tag as BACnetDevice;
                         uint device_id = device.deviceId;
 
-                        String Name=yabeFrm.ReadObjectName(device, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id));
+                        String Name= device.ReadObjectName(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id));
                         if ((Name!=null)&&(Name!=""))
                         {
                             tn.ToolTipText = tn.Text;   // IP or MSTP node id -> in the Tooltip

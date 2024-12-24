@@ -103,11 +103,8 @@ namespace ListCOV_Increment
                 if (Filter.Contains(object_id.type)) // Only for some objects
                 {
 
-                    String Identifier = null;
+                    String Identifier = device.GetObjectName(object_id);
 
-                    lock (yabeFrm.DevicesObjectsName) // translate to it's name if already known
-                        yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(device.FullHashString(), object_id), out Identifier);
-                    
                     try
                     {
 
