@@ -751,6 +751,7 @@ namespace Yabe
                 else
                 {
                     m_devices[sender].Devices[idx].vendor_Id = vendor_id; // Update vendor id (mstp case)
+                    m_devices[sender].Devices[idx].deviceId= device_id; // Occure only with a remote device with unknown id 0X3FFFFF
                     return;
                 }
             }
@@ -2750,9 +2751,6 @@ namespace Yabe
                     }
                 }
 
-                sb.Append(hasGraph ? "P" : "T");
-                sb.Append(';');
-
                 string key = subscription.Key;
                 string[] keyComponents = key.Split(':');
                 if(keyComponents.Length!=4)
@@ -2773,8 +2771,7 @@ namespace Yabe
                     continue;
                 }
                 sb.Append(value);
-                sb.Append(';');
-                sb.AppendLine(subscription.Value.SubItems[10].Text);
+
                 count++;
             }
             if (count==0)
