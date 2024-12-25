@@ -214,10 +214,9 @@ namespace Utilities
         private object m_tag;
         private DynamicEnum m_options;
         private string m_category;
-        // Modif FC : change type
+
         private BacnetApplicationTags? m_description;
 
-        // Modif FC : constructor
         public CustomProperty(string name, object value, Type type, bool read_only, string category = "", BacnetApplicationTags? description = null, DynamicEnum options = null, object tag = null)
         {
 			this.m_name = name;
@@ -246,13 +245,11 @@ namespace Utilities
             get { return m_category; }
         }
 
-        // Modif FC
         public string Description
         {
             get { return m_description == null ? null : m_description.ToString(); }
         }
 
-        // Modif FC : added
         public BacnetApplicationTags? bacnetApplicationTags
         {
             get { return m_description; }
@@ -1549,7 +1546,7 @@ namespace Utilities
             return UITypeEditorEditStyle.DropDown;
         }
 
-        private static string GetNiceName(String name)
+        public static string GetNiceName(String name)
         {
             if (name.StartsWith("OBJECT_")) name = name.Substring(7);
             if (name.StartsWith("SERVICE_SUPPORTED_")) name = name.Substring(18);
@@ -1592,6 +1589,7 @@ namespace Utilities
 
                 if (ObjetList.Items.Count == 0) // when bitstring is only 00000...
                     ObjetList.Items.Add("... Nothing");
+
                 // shows the list
                 this.editorService.DropDownControl(ObjetList);
             }
@@ -1672,6 +1670,8 @@ namespace Utilities
             if (name.StartsWith("STATUS_")) name = name.Substring(7);
             if (name.StartsWith("NOTIFY_")) name = name.Substring(7);
             if (name.StartsWith("UNITS_")) name = name.Substring(6);
+            if (name.StartsWith("OBJECTS_")) name = name.Substring(8);
+            if (name.StartsWith("SERVICE_SUPPORTED_")) name = name.Substring(19);
 
             name = name.Replace('_', ' ');
             name = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower());
@@ -1718,7 +1718,7 @@ namespace Utilities
 
         }
     }
-    // used for BacnetTime (without Date, but stored in a DateTime struct)
+
     public class BacnetEnumValueConverter : TypeConverter
     {
          Enum currentPropertyEnum;
@@ -1745,7 +1745,46 @@ namespace Utilities
         }
     }
 
-    // by FC
+    public class BacnetBitStringValueConverter : TypeConverter
+    {
+        Enum currentPropertyEnum;
+        bool LinearEnum;
+
+        // the corresponding Enum is given in parameter
+        public BacnetBitStringValueConverter(Enum e, bool LinearEnum)
+        {
+            currentPropertyEnum = e;
+            this.LinearEnum = LinearEnum;
+        }
+        public override object ConvertTo(ITypeDescriptorContext context,
+                       CultureInfo culture,
+                       object value,
+                       System.Type destinationType)
+        {
+            if (destinationType == typeof(System.String) &&
+                value is BacnetBitString)
+            {
+                String bbs = value.ToString();
+                String Text = "";
+                for (int i = 0; i < bbs.Length; i++)
+                {
+                    try
+                    {
+                        if (bbs[i] == '1')
+                            if (LinearEnum == true)
+                                Text = Text + BacnetBitStringToEnumListDisplay.GetNiceName(Enum.GetName(currentPropertyEnum.GetType(), i))+"\r\n"; // for 'classic' Enum like 0,1,2,3 ...
+                            else
+                                Text = Text + BacnetBitStringToEnumListDisplay.GetNiceName(Enum.GetName(currentPropertyEnum.GetType(), 1 << i))+"\r\n"; // for 2^n shift Enum like 1,2,4,8, ...
+                    }
+                    catch { }
+                }
+                return Text;
+            }
+            else
+                return base.ConvertTo(context, culture, value, destinationType);
+        }
+    }
+
     // this class is used to display 
     //      the priority name instead of the index base 0 for the Priority Array
     //      the priority level name for notification class priority array 
@@ -1952,6 +1991,10 @@ namespace Utilities
                 BacnetPropertyReference bpr = (BacnetPropertyReference)m_Property.Tag;
                 switch ((BacnetPropertyIds)bpr.propertyIdentifier)
                 {
+                    case BacnetPropertyIds.PROP_PROTOCOL_OBJECT_TYPES_SUPPORTED:
+                        return new BacnetBitStringValueConverter(new BacnetObjectTypes(),true);
+                    case BacnetPropertyIds.PROP_PROTOCOL_SERVICES_SUPPORTED:
+                        return new BacnetBitStringValueConverter(new BacnetServicesSupported(), true);
                     case BacnetPropertyIds.PROP_OBJECT_TYPE:
                         return new BacnetEnumValueConverter(new BacnetObjectTypes());
                     case BacnetPropertyIds.PROP_NOTIFY_TYPE:

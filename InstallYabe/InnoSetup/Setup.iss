@@ -51,10 +51,10 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\..\Yabe\bin\Debug\Yabe.exe"; DestDir: "{app"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Yabe.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\Plugins\CheckReliability.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\Plugins\CheckStatusFlags.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\Plugins\ListAnalogValues.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\ListAnalog_Values.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\Plugins\ListCOV_Increment.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\Plugins\ListOutOfService.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\Plugins\GlobalCommander.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion

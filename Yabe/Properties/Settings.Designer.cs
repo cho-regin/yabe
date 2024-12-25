@@ -590,18 +590,6 @@ namespace Yabe.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("VendorPropertyMapping.csv")]
-        public string Proprietary_Properties_Files {
-            get {
-                return ((string)(this["Proprietary_Properties_Files"]));
-            }
-            set {
-                this["Proprietary_Properties_Files"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool Show_Property_Id_Numbers {
             get {

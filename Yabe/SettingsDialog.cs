@@ -313,10 +313,6 @@ namespace Yabe
             [Description("If this value is positive Yabe send response to 'Who-Is' with this BACnet device ID. Can be usefull to set recipients list in notification class objects without using Yabe IP endpoint.")]
             [Category(CAT_GENERAL)]
             public int YabeDeviceId { set { instance.YabeDeviceId = value; } get { return instance.YabeDeviceId; } }
-            [DisplayName("Proprietary properties files")]
-            [Description("Filename of the CSV-file containing a description of proprietary properties from different vendors. The file is located in the YABE program folder.")]
-            [Category(CAT_GENERAL)]
-            public string Proprietary_Properties_Files { set { instance.Proprietary_Properties_Files = value; } get { return instance.Proprietary_Properties_Files; } }
             [DisplayName("Use Objects cache when useful")]
             [Description("Queries the dictionary via a cache if available. The Refresh button forces a real reading.")]
             [Category(CAT_GENERAL)]

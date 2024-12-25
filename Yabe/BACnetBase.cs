@@ -67,6 +67,7 @@ namespace System.IO.BACnet
         SEGMENTATION_TRANSMIT = 1,
         SEGMENTATION_RECEIVE = 2,
         SEGMENTATION_NONE = 3,
+        SEGMENTATION_UNKNOW =4, // Not a BACnet Value
     };
 
     public enum BacnetDeviceStatus : byte
@@ -7726,7 +7727,7 @@ namespace System.IO.BACnet
             if (byte_number < value.Length)
             {
                 /* set max bits used */
-                if (bits_used < bit_number + 1)
+                if ((bits_used < bit_number + 1)&&(v==true))
                     bits_used = (byte)(bit_number + 1);
 
                 if (v)

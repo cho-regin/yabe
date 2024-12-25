@@ -745,7 +745,6 @@ namespace Yabe
             BACnetDevice new_device = new BACnetDevice(sender, adr, device_id, vendor_id);
             lock (m_devices)
             {
-                if (!m_devices.ContainsKey(sender)) return ;
                 int idx = m_devices[sender].Devices.IndexOf(new_device);
                 if (idx == -1)
                     m_devices[sender].Devices.Add(new_device);
@@ -1642,6 +1641,15 @@ namespace Yabe
 
                     switch ((BacnetPropertyIds)p_value.property.propertyIdentifier)
                     {
+                        // Got two communication parameters about the device, could be used later.
+                        case BacnetPropertyIds.PROP_SEGMENTATION_SUPPORTED:
+                            device.Segmentation = (BacnetSegmentations)((uint) value);
+                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
+                            break;
+                        case BacnetPropertyIds.PROP_MAX_APDU_LENGTH_ACCEPTED:
+                            device.MaxuAPDULenght = Convert.ToInt32(value);
+                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
+                            break;
                         // PROP_PRESENT_VALUE can be write at null value to clear the prioroityarray if exists
                         case BacnetPropertyIds.PROP_PRESENT_VALUE:
                             // change to the related nullable type
@@ -2877,13 +2885,13 @@ namespace Yabe
                         {
 
                             string[] description = line.Split(';');
-                            if (description.Length == 3)
+                            if (description.Length == 2)
                             {
                                 try
                                 {
                                     uint deviceId;
-                                    deviceId = Convert.ToUInt32(description[1]);
-                                    string objectIdString = description[2];
+                                    deviceId = Convert.ToUInt32(description[0]);
+                                    string objectIdString = description[1];
                                     if(!objectIdString.StartsWith("OBJECT_"))
                                     {
                                         objectIdString = "OBJECT_" + objectIdString;
@@ -2891,13 +2899,13 @@ namespace Yabe
                                     BacnetObjectId objectId = BacnetObjectId.Parse(objectIdString);
 
                                     foreach (var E in m_devices)
-                                    {
+                                    { 
                                         var devices = E.Value.Devices;
                                         foreach (var deviceEntry in devices)
                                         {
                                             if (deviceEntry.deviceId == deviceId)
                                             {
-                                                CreateSubscription(deviceEntry, objectId, description[0].Equals("P",StringComparison.OrdinalIgnoreCase));
+                                                CreateSubscription(deviceEntry, objectId, sender == CovGraph);
                                                 break;
                                             }
                                         }
@@ -2905,38 +2913,8 @@ namespace Yabe
                                     }
                                 }
                                 catch { }
-
                             }
-                            else if (description.Length == 4)
-                            {
-                                try
-                                {
-                                    uint deviceId;
-                                    deviceId = Convert.ToUInt32(description[1]);
-                                    string objectIdString = description[2];
-                                    if (!objectIdString.StartsWith("OBJECT_"))
-                                    {
-                                        objectIdString = "OBJECT_" + objectIdString;
-                                    }
-                                    BacnetObjectId objectId = BacnetObjectId.Parse(objectIdString);
-                                    int period = Int32.Parse(description[3]);
-                                    foreach (var E in m_devices)
-                                    {
-                                        var comm = E.Value.Devices;
-                                        foreach (var deviceEntry in comm)
-                                        {
-                                            if (deviceEntry.deviceId == deviceId)
-                                            {
-                                                CreateSubscription(deviceEntry, objectId, description[0].Equals("P", StringComparison.OrdinalIgnoreCase), period);
-                                                break;
-                                            }
-                                        }
 
-                                    }
-                                }
-                                catch { }
-
-                            }
                         }
                     }
                     sr.Close();

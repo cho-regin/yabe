@@ -36,7 +36,7 @@ using System.Xml.Serialization;
 
 namespace Yabe
 {
-    // One object per discovered device on the network. Referenced at least by the TreeNode.Tag in the DeviceTreeview and m_devices Dictionary
+    // One object per discovered device on the network.
     // Used to cache some properties values & the object dictionary (PROP_OBJECT_LIST content in DEVICE object)
     public class BACnetDevice : IComparable<BACnetDevice>
     {
@@ -69,6 +69,10 @@ namespace Yabe
         public uint deviceId;
         public uint vendor_Id;
 
+        // Updated during the dialog
+        public int MaxuAPDULenght = 1476;   // Assume it's IP v4
+        public BacnetSegmentations Segmentation = BacnetSegmentations.SEGMENTATION_UNKNOW;
+
         bool ReadListOneShort = true;
 
         // Don't sort it if ReadListOneShort or it will be displayed on two different ways when getting back the cache
@@ -100,24 +104,26 @@ namespace Yabe
             {
                 if (!BacAdr.Equals(other.BacAdr)) return false;
                 if (this.deviceId != other.deviceId) return false;
-                if (vendor_Id != System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE) 
-                    if (this.vendor_Id != other.vendor_Id)  return false;
                 return true;
             }
             return false;
         }
         public override int GetHashCode() { return (int)deviceId; } // deviceId should be unique in the network 
 
-        public string FullHashString() // A kind of unique Id. Normaly deviceId is enough on a correct network
+        private string FullHashString() // A kind of unique Id. Normaly deviceId is enough on a correct network
         {
-            StringBuilder s = new StringBuilder(deviceId.ToString() + "_" + BacAdr.type.ToString() + BacAdr.net.ToString() + "_");
 
-            /*
+            BacnetAddress Addr;
+
             if (BacAdr.RoutedSource != null)
-                s.Append("R"); // Just add an indication
-            */
+                Addr = BacAdr.RoutedSource;
+            else
+                Addr = BacAdr;
+
+            StringBuilder s = new StringBuilder(deviceId.ToString() + "_" + Addr.type.ToString() + Addr.net.ToString() + "_");
+
             int Adrsize;
-            switch (BacAdr.type)
+            switch (Addr.type)
             {
                 case BacnetAddressTypes.IP:
                     Adrsize = 4;    // without Port it can be change (with this Stack)
@@ -137,13 +143,22 @@ namespace Yabe
                     break;
             }
 
-            if (BacAdr.adr != null) // Normaly never null
+            if (Addr.adr != null) // Normaly never null
                 for (int i = 0; i < Adrsize; i++)
-                    s.Append(BacAdr.adr[i].ToString("X2"));
+                    s.Append(Addr.adr[i].ToString("X2"));
 
             return s.ToString();
 
         }
+
+        public BacnetAddressTypes GetNetworkType()  // Can be used to adjust packets size
+        {
+            if (BacAdr.RoutedSource != null)
+               return BacAdr.RoutedSource.type;
+            else
+                return BacAdr.type;
+        }
+
         public void ClearCache()
         {
             Prop_Cached.Clear();
@@ -432,7 +447,7 @@ namespace Yabe
         {
             _proprietaryPropertyMappings = new Dictionary<long, string>();
 
-            string path = Properties.Settings.Default.Proprietary_Properties_Files;
+            string path = "VendorPropertyMapping.csv";
 
             // helper function to log erros
             void LogError(string message)
@@ -448,7 +463,7 @@ namespace Yabe
             }
             catch
             {
-                Trace.TraceError("Cannot read Vendor proprietary BACnet file");
+                // silently
                 return false;
             }
 
@@ -509,8 +524,6 @@ namespace Yabe
         public string GetNiceName(BacnetPropertyIds property, bool forceShowNumber = false)
         {
 
-            if (_proprietaryPropertyMappings == null)   // First call
-                LoadVendorPropertyMapping();
 
             bool prependNumber = forceShowNumber || Properties.Settings.Default.Show_Property_Id_Numbers;
             string name = property.ToString();
@@ -529,6 +542,10 @@ namespace Yabe
             }
             else
             {
+
+                if (_proprietaryPropertyMappings == null)   // First call
+                    LoadVendorPropertyMapping();
+
                 var vendorPropertyNumber = ((long)vendor_Id << 32) | (uint)property;
                 if (_proprietaryPropertyMappings.TryGetValue(vendorPropertyNumber, out var vendorPropertyName))
                 {
