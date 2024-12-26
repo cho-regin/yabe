@@ -1758,7 +1758,7 @@ namespace Utilities
             {
                 return new IPAddress(valarray).ToString();
             }
-            else if (destinationType == typeof(System.String) && value is byte[][] valarrayofarray)
+            else if (destinationType == typeof(System.String) && value is Array valarrayofarray)
             {
                 String S = "";
                 foreach (byte[] val in valarrayofarray)
