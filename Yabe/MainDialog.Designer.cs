@@ -31,7 +31,7 @@
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.ImageList m_ImageList;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(YabeMainDialog));
-            System.Windows.Forms.TreeNode treeNode1 = new System.Windows.Forms.TreeNode("Devices");
+            System.Windows.Forms.TreeNode treeNode2 = new System.Windows.Forms.TreeNode("Devices");
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.m_SearchToolButton = new System.Windows.Forms.ToolStripButton();
             this.m_RemoveToolButton = new System.Windows.Forms.ToolStripButton();
@@ -141,7 +141,7 @@
             this.m_DataGrid = new System.Windows.Forms.PropertyGrid();
             this.label1 = new System.Windows.Forms.Label();
             this.m_LogText = new System.Windows.Forms.TextBox();
-            this.label4 = new System.Windows.Forms.Label();
+            this.LblLog = new System.Windows.Forms.Label();
             this.m_subscriptionRenewTimer = new System.Windows.Forms.Timer(this.components);
             this.SaveObjectNamesTimer = new System.Windows.Forms.Timer(this.components);
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
@@ -605,7 +605,7 @@
             // m_SplitContainerButtom.Panel2
             // 
             this.m_SplitContainerButtom.Panel2.Controls.Add(this.m_LogText);
-            this.m_SplitContainerButtom.Panel2.Controls.Add(this.label4);
+            this.m_SplitContainerButtom.Panel2.Controls.Add(this.LblLog);
             this.m_SplitContainerButtom.Size = new System.Drawing.Size(1126, 631);
             this.m_SplitContainerButtom.SplitterDistance = 544;
             this.m_SplitContainerButtom.TabIndex = 3;
@@ -671,10 +671,10 @@
             this.m_DeviceTree.ImageList = m_ImageList;
             this.m_DeviceTree.Location = new System.Drawing.Point(0, 23);
             this.m_DeviceTree.Name = "m_DeviceTree";
-            treeNode1.Name = "Node0";
-            treeNode1.Text = "Devices";
+            treeNode2.Name = "Node0";
+            treeNode2.Text = "Devices";
             this.m_DeviceTree.Nodes.AddRange(new System.Windows.Forms.TreeNode[] {
-            treeNode1});
+            treeNode2});
             this.m_DeviceTree.SelectedImageIndex = 0;
             this.m_DeviceTree.ShowNodeToolTips = true;
             this.m_DeviceTree.ShowRootLines = false;
@@ -1004,7 +1004,7 @@
             this.labelDrop1.Name = "labelDrop1";
             this.labelDrop1.Size = new System.Drawing.Size(175, 26);
             this.labelDrop1.TabIndex = 1;
-            this.labelDrop1.Text = "Drop a cov file or objects from the\r\nAddress Space here to subscribe ...";
+            this.labelDrop1.Text = "Drop a setup file or objects from the\r\nAddress Space here to subscribe ...";
             // 
             // m_SubscriptionView
             // 
@@ -1367,15 +1367,16 @@
             this.m_LogText.Size = new System.Drawing.Size(1126, 70);
             this.m_LogText.TabIndex = 0;
             // 
-            // label4
+            // LblLog
             // 
-            this.label4.AutoSize = true;
-            this.label4.Dock = System.Windows.Forms.DockStyle.Top;
-            this.label4.Location = new System.Drawing.Point(0, 0);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(25, 13);
-            this.label4.TabIndex = 2;
-            this.label4.Text = "Log";
+            this.LblLog.AutoSize = true;
+            this.LblLog.Dock = System.Windows.Forms.DockStyle.Top;
+            this.LblLog.Location = new System.Drawing.Point(0, 0);
+            this.LblLog.Name = "LblLog";
+            this.LblLog.Size = new System.Drawing.Size(25, 13);
+            this.LblLog.TabIndex = 2;
+            this.LblLog.Text = "Log";
+            this.LblLog.DoubleClick += new System.EventHandler(this.LblLog_DoubleClick);
             // 
             // m_subscriptionRenewTimer
             // 
@@ -1477,7 +1478,7 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label AddSpaceLabel;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label LblLog;
         private System.Windows.Forms.ToolStripMenuItem searchToolStripMenuItem;
         private System.Windows.Forms.ToolStripButton m_SearchToolButton;
         private System.Windows.Forms.ToolStripButton m_RemoveToolButton;

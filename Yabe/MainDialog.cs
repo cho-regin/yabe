@@ -1382,7 +1382,7 @@ namespace Yabe
 
             if (device == null) return;  // Not a TreeNode linked to a device
 
-            if ((sender == manual_refresh_objects)|| ((sender != null) && (sender.GetType() == typeof(CreateObject))) || (!Properties.Settings.Default.UseObjectsCache))
+            if ((sender == manual_refresh_objects) || (sender as String == "ObjNewDelete" ) || (!Properties.Settings.Default.UseObjectsCache))
                 device.ClearCache();
 
             m_AddressSpaceTree.Nodes.Clear();   //clear
@@ -1648,7 +1648,7 @@ namespace Yabe
                             bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
                             break;
                         case BacnetPropertyIds.PROP_MAX_APDU_LENGTH_ACCEPTED:
-                            device.MaxuAPDULenght = Convert.ToInt32(value);
+                            device.MaxAPDULenght = Convert.ToInt32(value);
                             bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
                             break;
                         // PROP_PRESENT_VALUE can be write at null value to clear the prioroityarray if exists
@@ -2062,9 +2062,6 @@ namespace Yabe
 
                 if (GetObjectLink(out device, out object_id, BacnetObjectTypes.OBJECT_FILE) == false) return;
 
-                BacnetClient comm = device.channel;
-                BacnetAddress adr=device.BacAdr;
-
                 //where to store file?
                 SaveFileDialog dlg = new SaveFileDialog();
                 dlg.FileName = Properties.Settings.Default.GUI_LastFilename;
@@ -2073,7 +2070,7 @@ namespace Yabe
                 Properties.Settings.Default.GUI_LastFilename = filename;
 
                 //get file size
-                int filesize = FileTransfers.ReadFileSize(comm, adr, object_id);
+                int filesize = FileTransfers.ReadFileSize(device, object_id);
                 if (filesize < 0)
                 {
                     MessageBox.Show(this, "Couldn't read file size", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -2102,11 +2099,11 @@ namespace Yabe
                 try
                 {
                     if(Properties.Settings.Default.DefaultDownloadSpeed == 2)
-                        transfer.DownloadFileBySegmentation(comm, adr, object_id, filename, update_progress);
+                        transfer.DownloadFileBySegmentation(device, object_id, filename, update_progress);
                     else if(Properties.Settings.Default.DefaultDownloadSpeed == 1)
-                        transfer.DownloadFileByAsync(comm, adr, object_id, filename, update_progress);
+                        transfer.DownloadFileByAsync(device, object_id, filename, update_progress);
                     else
-                        transfer.DownloadFileByBlocking(comm, adr, object_id, filename, update_progress);
+                        transfer.DownloadFileByBlocking(device, object_id, filename, update_progress);
                 }
                 catch (Exception ex)
                 {
@@ -2142,11 +2139,7 @@ namespace Yabe
 
                 BacnetObjectId object_id;
                 BACnetDevice device;
-
                 if (GetObjectLink(out device, out object_id, BacnetObjectTypes.OBJECT_FILE) == false) return;
-
-                BacnetClient comm = device.channel;
-                BacnetAddress adr=device.BacAdr;
 
                 //which file to upload?
                 OpenFileDialog dlg = new OpenFileDialog();
@@ -2176,7 +2169,7 @@ namespace Yabe
                 };
                 try
                 {
-                    transfer.UploadFileByBlocking(comm, adr, object_id, filename, update_progress);
+                    transfer.UploadFileByBlocking(device, object_id, filename, update_progress);
                 }
                 catch (Exception ex)
                 {
@@ -2257,7 +2250,7 @@ namespace Yabe
                 if (MessageBox.Show("Are you sure you want to delete this object ?", object_id.ToString(), MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK)
                 {
                     comm.DeleteObjectRequest(adr, object_id);
-                    m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(this._selectedDevice));
+                    m_DeviceTree_AfterSelect("ObjNewDelete", new TreeViewEventArgs(this._selectedDevice));
                 }
 
             }
@@ -2740,38 +2733,17 @@ namespace Yabe
             int count=0;
             foreach (KeyValuePair<string,ListViewItem> subscription in m_subscription_list)
             {
-                // sub_key = adr.ToString() + ":" + device_id + ":" + m_next_subscription_id;
                 bool hasGraph = false;
-                if(!string.IsNullOrWhiteSpace(subscription.Value.SubItems[9].Text))
-                {
-                    bool graphBoolParsed;
-                    if(bool.TryParse(subscription.Value.SubItems[9].Text, out graphBoolParsed))
-                    {
-                        hasGraph = graphBoolParsed;
-                    }
-                }
-
-                string key = subscription.Key;
-                string[] keyComponents = key.Split(':');
-                if(keyComponents.Length!=4)
-                {
-                    continue;
-                }
-                sb.Append(keyComponents[2]);
-                sb.Append(';');
-                string value = string.Empty;
-                try
-                {
-                    value = ((Subscription)subscription.Value.Tag).object_id.ToString();
-                    //value = subscription.Value.SubItems[2].Text;
-                }
-                catch { continue; }
-                if(value.Length==0 || !value.Contains(':'))
-                {
-                    continue;
-                }
-                sb.Append(value);
-
+                bool.TryParse(subscription.Value.SubItems[9].Text, out hasGraph);
+                sb.Append(hasGraph ? "P;" : "D;");
+                
+                // Device Id
+                sb.Append(((Subscription)subscription.Value.Tag).device.deviceId+";");
+                // Object Id
+                sb.Append(((Subscription)subscription.Value.Tag).object_id.ToString() + ";");
+                // Period or 0 if COV
+                sb.AppendLine(subscription.Value.SubItems[10].Text);  
+                
                 count++;
             }
             if (count==0)
@@ -2861,10 +2833,8 @@ namespace Yabe
                 Bobjs.Sort();
 
                 for (int i = 0; i < Bobjs.Count; i++)
-                {
-                    if (CreateSubscription(entry, Bobjs[i], sender==CovGraph) == false)
-                        break;
-                }
+                    CreateSubscription(entry, Bobjs[i], sender == CovGraph);
+
             }
 
             // Drop a file deviceId;object:Id
@@ -2882,13 +2852,13 @@ namespace Yabe
                         {
 
                             string[] description = line.Split(';');
-                            if (description.Length == 2)
+                            if ((description.Length == 3) || (description.Length ==4))
                             {
                                 try
                                 {
                                     uint deviceId;
-                                    deviceId = Convert.ToUInt32(description[0]);
-                                    string objectIdString = description[1];
+                                    deviceId = Convert.ToUInt32(description[1]);
+                                    string objectIdString = description[2];
                                     if(!objectIdString.StartsWith("OBJECT_"))
                                     {
                                         objectIdString = "OBJECT_" + objectIdString;
@@ -2902,7 +2872,11 @@ namespace Yabe
                                         {
                                             if (deviceEntry.deviceId == deviceId)
                                             {
-                                                CreateSubscription(deviceEntry, objectId, sender == CovGraph);
+                                                if (description.Length==4)
+                                                    CreateSubscription(deviceEntry, objectId, description[2]=="P", Int32.Parse(description[3]));
+                                                else
+                                                    CreateSubscription(deviceEntry, objectId, description[2] == "P");
+
                                                 break;
                                             }
                                         }
@@ -3018,24 +2992,29 @@ namespace Yabe
 
         private void sendWhoIsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            BacnetClient comm = null;
+
             try
             {
-                BacnetClient comm=null;
-
-                if (m_DeviceTree.SelectedNode.Tag is BacnetClient)
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Tag;
+                if (m_DeviceTree.SelectedNode.Tag is BacnetClient)  // A Channel is selected
+                    comm = m_DeviceTree.SelectedNode.Tag as BacnetClient;
                 else
-                    if (m_DeviceTree.SelectedNode.Parent?.Tag is BacnetClient)
-                        comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Tag;
-                    else
-                        if (m_DeviceTree.SelectedNode.Parent.Parent?.Tag is BacnetClient)
-                        comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Parent.Tag;
+                    if (m_DeviceTree.SelectedNode.Parent.Tag is BacnetClient) // A Device is selected
+                    comm = m_DeviceTree.SelectedNode.Parent.Tag as BacnetClient;
+                else
+                    if (m_DeviceTree.SelectedNode.Parent.Parent.Tag is BacnetClient) // A routed Device is selected
+                        comm = m_DeviceTree.SelectedNode.Parent.Parent.Tag as BacnetClient;
 
                 comm?.WhoIs();
             }
             catch
             {
-                MessageBox.Show(this, "Please select a \"transport\" node first", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                foreach (TreeNode tn in m_DeviceTree.Nodes[0].Nodes)    // Nothing is selected, send on every available channel
+                {
+                    comm = (BacnetClient)tn.Tag;
+                    comm?.WhoIs();
+
+                }
             }
         }
 
@@ -4142,7 +4121,7 @@ namespace Yabe
                     }
                     comm.CreateObjectRequest(adr, new BacnetObjectId((BacnetObjectTypes)F.ObjectType.SelectedIndex, (uint)F.ObjectId.Value), initialvalues);
 
-                    m_DeviceTree_AfterSelect(F, new TreeViewEventArgs(this._selectedDevice));
+                    m_DeviceTree_AfterSelect("ObjNewDelete", new TreeViewEventArgs(this._selectedDevice));
                 }
                 catch (Exception ex)
                 {
@@ -4772,7 +4751,7 @@ namespace Yabe
         {
             GenericInputBox<TextBox> search = new GenericInputBox<TextBox>("Search object", "Name",     (o) =>
             {
-                o.Text = m_AddressSpaceTree.SelectedNode.Text;
+                    o.Text = m_AddressSpaceTree.SelectedNode?.Text;
             });
 
             if (search.ShowDialog() == DialogResult.OK)
@@ -4789,6 +4768,12 @@ namespace Yabe
                 }
             }
         }
+
+        private void LblLog_DoubleClick(object sender, EventArgs e)
+        {
+            m_LogText.Text = "";
+        }
+
         #region "YabeServer"
         // Only the see Yabe on the net
         void OnWhoIs(BacnetClient sender, BacnetAddress adr, int low_limit, int high_limit)

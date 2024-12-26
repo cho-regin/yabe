@@ -70,7 +70,7 @@ namespace Yabe
         public uint vendor_Id;
 
         // Updated during the dialog
-        public int MaxuAPDULenght = 1476;   // Assume it's IP v4
+        public int MaxAPDULenght = -1; 
         public BacnetSegmentations Segmentation = BacnetSegmentations.SEGMENTATION_UNKNOW;
 
         bool ReadListOneShort = true;
@@ -138,8 +138,10 @@ namespace Yabe
                     Adrsize = 1;
                     break;
                 case BacnetAddressTypes.SC: // SC (RandomVMAC no sens, values never the same)
-                default:
                     Adrsize = 0;
+                    break;
+                default:
+                    Adrsize = Addr.adr.Length;
                     break;
             }
 

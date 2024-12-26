@@ -8046,7 +8046,6 @@ namespace System.IO.BACnet
         public byte[] VMac=new byte[6]; // 3 bytes for IP V6, 6 for BACnetSC
         public BacnetAddressTypes type;
 
-        // Modif FC
         public BacnetAddress RoutedSource=null;
 
         public BacnetAddress(BacnetAddressTypes type, UInt16 net, byte[] adr)
@@ -8054,7 +8053,11 @@ namespace System.IO.BACnet
             this.type = type;
             this.net = net;
             this.adr = adr;
-            if (this.adr == null) this.adr = new byte[0];
+            if (this.adr == null) 
+                this.adr = new byte[0];
+            else
+                if ((type == BacnetAddressTypes.None) && (adr.Length == 1)) // Routed source with unknown Transport but 1 byte can just be mstp
+                    this.type = BacnetAddressTypes.MSTP;
         }
 
         public BacnetAddress(BacnetAddressTypes type, String s, UInt16 net=0)
@@ -8146,6 +8149,9 @@ namespace System.IO.BACnet
 
                  default: // Routed @ are always like this, NPDU do not contains the MAC type, only the lenght
                     if (adr == null) return "?";
+
+                    if (adr.Length ==1)
+                        return ToString(BacnetAddressTypes.MSTP);
 
                     if (adr.Length == 6) // certainly IP, but not sure (Newron System send it for internal usage with 4*0 bytes)
                         return ToString(BacnetAddressTypes.IP);

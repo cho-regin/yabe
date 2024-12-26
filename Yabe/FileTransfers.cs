@@ -35,8 +35,11 @@ namespace Yabe
     {
         public bool Cancel { get; set; }
 
-        public static int ReadFileSize(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id)
+        public static int ReadFileSize(BACnetDevice device, BacnetObjectId object_id)
         {
+            BacnetClient comm = device.channel;
+            BacnetAddress adr = device.BacAdr;
+
             IList<BacnetValue> value;
             try
             {
@@ -52,8 +55,11 @@ namespace Yabe
             }
         }
 
-        public void DownloadFileByBlocking(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id, string filename, Action<int> progress_action)
+        public void DownloadFileByBlocking(BACnetDevice device, BacnetObjectId object_id, string filename, Action<int> progress_action)
         {
+            BacnetClient comm = device.channel;
+            BacnetAddress adr = device.BacAdr;
+
             Cancel = false;
 
             //open file
@@ -95,8 +101,11 @@ namespace Yabe
             }
         }
 
-        public void DownloadFileBySegmentation(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id, string filename, Action<int> progress_action)
+        public void DownloadFileBySegmentation(BACnetDevice device, BacnetObjectId object_id, string filename, Action<int> progress_action)
         {
+            BacnetClient comm = device.channel;
+            BacnetAddress adr = device.BacAdr;
+
             Cancel = false;
 
             //open file
@@ -149,8 +158,11 @@ namespace Yabe
         /// This method is based upon increasing the MaxInfoFrames in the MSTP.
         /// In Bacnet/IP this will have bad effect due to the retries
         /// </summary>
-        public void DownloadFileByAsync(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id, string filename, Action<int> progress_action)
+        public void DownloadFileByAsync(BACnetDevice device, BacnetObjectId object_id, string filename, Action<int> progress_action)
         {
+            BacnetClient comm = device.channel;
+            BacnetAddress adr = device.BacAdr;
+
             Cancel = false;
 
             //open file
@@ -224,8 +236,11 @@ namespace Yabe
             }
         }
 
-        public void UploadFileByBlocking(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id, string filename, Action<int> progress_action)
+        public void UploadFileByBlocking(BACnetDevice device, BacnetObjectId object_id, string filename, Action<int> progress_action)
         {
+            BacnetClient comm = device.channel;
+            BacnetAddress adr = device.BacAdr;
+
             Cancel = false;
 
             //open file
@@ -241,8 +256,30 @@ namespace Yabe
 
             try
             {
+                int localBufSize = comm.GetFileBufferMaxSize();
+                int remoteBufSize = device.MaxAPDULenght - 18;
+
+                if (remoteBufSize < 0) // Unknown value
+                {
+                    try
+                    {
+                        // Try to get MaxAPDU size on the remote device
+                        IList<BacnetValue> val = new List<BacnetValue>();
+                        if (device.ReadPropertyRequest(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId), BacnetPropertyIds.PROP_MAX_APDU_LENGTH_ACCEPTED, out val) == true)
+                        {
+                            device.MaxAPDULenght = Convert.ToInt32(val[0].Value);
+                            remoteBufSize = device.MaxAPDULenght - 18;
+                        }
+                    }
+                    catch { }
+                }
+
+                if (remoteBufSize <0)
+                    remoteBufSize = 480 - 18; // Acceptable on MSTP, but also on IP, SC ...
+
+                int count = Math.Min(localBufSize, remoteBufSize); // MaxAPDULenght can be -1 if not read from the Device object
                 int position = 0;
-                int count = comm.GetFileBufferMaxSize();
+
                 byte[] buffer = new byte[count];
                 while (count > 0 && !Cancel)
                 {
