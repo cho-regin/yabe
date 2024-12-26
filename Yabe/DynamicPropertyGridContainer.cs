@@ -34,6 +34,7 @@ using System.Windows.Forms.Design;
 using System.Windows.Forms;
 using System.Drawing.Design;
 using System.Drawing;
+using System.Net;
 
 namespace Utilities
 {
@@ -1745,6 +1746,30 @@ namespace Utilities
         }
     }
 
+    public class BacnetIPAddressConverter : TypeConverter
+    {
+
+        public override object ConvertTo(ITypeDescriptorContext context,
+                        CultureInfo culture,
+                        object value,
+                        System.Type destinationType)
+        {
+            if (destinationType == typeof(System.String) && value is byte[] valarray)
+            {
+                return new IPAddress(valarray).ToString();
+            }
+            else if (destinationType == typeof(System.String) && value is byte[][] valarrayofarray)
+            {
+                String S = "";
+                foreach (byte[] val in valarrayofarray)
+                    S= S+new IPAddress(val).ToString()+"\r\n";
+                return S ;
+            }
+            else
+                return base.ConvertTo(context, culture, value, destinationType);
+        }
+    }
+
     public class BacnetBitStringValueConverter : TypeConverter
     {
         Enum currentPropertyEnum;
@@ -2086,7 +2111,19 @@ namespace Utilities
                         return new BacnetEnumValueConverter(new BACnetAccessEvents());
                     case BacnetPropertyIds.PROP_FAULT_TYPE:
                         return new BacnetEnumValueConverter(new BACnetFaultParameter.BACnetFaultType());
-                    case BacnetPropertyIds.PROP_ACTION:
+                    case BacnetPropertyIds.PROP_IP_ADDRESS:
+                    case BacnetPropertyIds.PROP_BACNET_IP_MULTICAST_ADDRESS:
+                    case BacnetPropertyIds.PROP_IP_SUBNET_MASK:
+                    case BacnetPropertyIds.PROP_IP_DHCP_SERVER:
+                    case BacnetPropertyIds.PROP_IP_DEFAULT_GATEWAY:
+                    case BacnetPropertyIds.PROP_IP_DNS_SERVER:
+                    case BacnetPropertyIds.PROP_IPV6_ADDRESS:
+                    case BacnetPropertyIds.PROP_BACNET_IPV6_MULTICAST_ADDRESS:
+                    case BacnetPropertyIds.PROP_IPV6_DHCP_SERVER:
+                    case BacnetPropertyIds.PROP_IPV6_DEFAULT_GATEWAY:
+                    case BacnetPropertyIds.PROP_IPV6_DNS_SERVER:
+                        return new BacnetIPAddressConverter();
+                   case BacnetPropertyIds.PROP_ACTION:
                         //because Command Object Type also has PROP_ACTION wich decodes to BACnetActionList
                         if (m_Property.bacnetApplicationTags != BacnetApplicationTags.BACNET_APPLICATION_CONTEXT_SPECIFIC)
                             return new BacnetEnumValueConverter(new BACnetAction());
