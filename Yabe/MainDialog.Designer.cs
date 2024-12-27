@@ -93,6 +93,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.manual_refresh_objects = new System.Windows.Forms.Button();
             this.TbxHighlightAddress = new System.Windows.Forms.TextBox();
+            this.m_AddressSpaceTree = new CodersLab.Windows.Controls.TreeView();
             this.m_AddressSpaceMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.subscribeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.downloadFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -144,7 +145,6 @@
             this.m_subscriptionRenewTimer = new System.Windows.Forms.Timer(this.components);
             this.SaveObjectNamesTimer = new System.Windows.Forms.Timer(this.components);
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.m_AddressSpaceTree = new CodersLab.Windows.Controls.TreeView();
             m_ImageList = new System.Windows.Forms.ImageList(this.components);
             this.toolStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
@@ -819,6 +819,24 @@
             this.TbxHighlightAddress.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TbxHighlightTreeView_KeyDown);
             this.TbxHighlightAddress.Leave += new System.EventHandler(this.TbxHighlightTreeView_Update);
             // 
+            // m_AddressSpaceTree
+            // 
+            this.m_AddressSpaceTree.ContextMenuStrip = this.m_AddressSpaceMenuStrip;
+            this.m_AddressSpaceTree.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_AddressSpaceTree.ImageIndex = 0;
+            this.m_AddressSpaceTree.ImageList = m_ImageList;
+            this.m_AddressSpaceTree.Location = new System.Drawing.Point(0, 23);
+            this.m_AddressSpaceTree.Name = "m_AddressSpaceTree";
+            this.m_AddressSpaceTree.SelectedImageIndex = 0;
+            this.m_AddressSpaceTree.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            this.m_AddressSpaceTree.SelectionMode = CodersLab.Windows.Controls.TreeViewSelectionMode.MultiSelectSameLevel;
+            this.m_AddressSpaceTree.ShowNodeToolTips = true;
+            this.m_AddressSpaceTree.Size = new System.Drawing.Size(258, 521);
+            this.m_AddressSpaceTree.TabIndex = 0;
+            this.m_AddressSpaceTree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.m_AddressSpaceTree_ItemDrag);
+            this.m_AddressSpaceTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.m_AddressSpaceTree_AfterSelect);
+            this.m_AddressSpaceTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TreeView_MouseDown);
+            // 
             // m_AddressSpaceMenuStrip
             // 
             this.m_AddressSpaceMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -1369,24 +1387,6 @@
             // 
             this.SaveObjectNamesTimer.Interval = 240000;
             this.SaveObjectNamesTimer.Tick += new System.EventHandler(this.SaveObjectNamesTimer_Tick);
-            // 
-            // m_AddressSpaceTree
-            // 
-            this.m_AddressSpaceTree.ContextMenuStrip = this.m_AddressSpaceMenuStrip;
-            this.m_AddressSpaceTree.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.m_AddressSpaceTree.ImageIndex = 0;
-            this.m_AddressSpaceTree.ImageList = m_ImageList;
-            this.m_AddressSpaceTree.Location = new System.Drawing.Point(0, 23);
-            this.m_AddressSpaceTree.Name = "m_AddressSpaceTree";
-            this.m_AddressSpaceTree.SelectedImageIndex = 0;
-            this.m_AddressSpaceTree.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            this.m_AddressSpaceTree.SelectionMode = CodersLab.Windows.Controls.TreeViewSelectionMode.MultiSelectSameLevel;
-            this.m_AddressSpaceTree.ShowNodeToolTips = true;
-            this.m_AddressSpaceTree.Size = new System.Drawing.Size(258, 521);
-            this.m_AddressSpaceTree.TabIndex = 0;
-            this.m_AddressSpaceTree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.m_AddressSpaceTree_ItemDrag);
-            this.m_AddressSpaceTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.m_AddressSpaceTree_AfterSelect);
-            this.m_AddressSpaceTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TreeView_MouseDown);
             // 
             // YabeMainDialog
             // 

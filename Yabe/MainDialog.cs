@@ -1617,9 +1617,13 @@ namespace Yabe
 
                 bool[] showAlarmAck = new bool[3] {false, false, false };
 
+                // Alphabetical order (but proprietary are in first !)
+                var sortedEnum = multi_value_list[0].values.OrderBy(o => (((BacnetPropertyIds)(o.property.propertyIdentifier)).ToString()));
+
                 //update grid
                 Utilities.DynamicPropertyGridContainer bag = new Utilities.DynamicPropertyGridContainer();
-                foreach (BacnetPropertyValue p_value in multi_value_list[0].values)
+
+                foreach (BacnetPropertyValue p_value in sortedEnum)
                 {
                     object value = null;
                     BacnetValue[] b_values = null;

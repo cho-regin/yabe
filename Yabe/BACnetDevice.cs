@@ -81,7 +81,6 @@ namespace Yabe
         // PROP_OBJECT_LIST  cache
         uint ListCountExpected;
         List<BacnetObjectId> Prop_ObjectList; 
-
         // Several Properties Caches (View List, Group List, ...), only needed to displays the Dictionnary, not all properties values
         List<BACObjectPropertyValue> Prop_Cached=new List<BACObjectPropertyValue>();
 

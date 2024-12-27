@@ -1647,6 +1647,21 @@ namespace Utilities
             return UITypeEditorEditStyle.None;
         }
     }
+    public class IPAdressConverter : TypeConverter
+    {
+        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+        {
+            if (sourceType == typeof(string)) return true;
+            return base.CanConvertFrom(context, sourceType);
+        }
+        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+        {
+            if (value is string)
+                return IPAddress.Parse((string)value).GetAddressBytes();
+            return base.ConvertFrom(context, culture, value);
+        }
+    }
+    
     // In order to give a readable name to classic enums
     public class BacnetEnumValueDisplay : UITypeEditor
     {
@@ -2096,7 +2111,19 @@ namespace Utilities
                         return new BacnetEnumValueConverter(new BACnetAccessEvents());
                     case BacnetPropertyIds.PROP_FAULT_TYPE:
                         return new BacnetEnumValueConverter(new BACnetFaultParameter.BACnetFaultType());
-                   case BacnetPropertyIds.PROP_ACTION:
+
+                    case BacnetPropertyIds.PROP_IP_ADDRESS:
+                    case BacnetPropertyIds.PROP_BACNET_IP_MULTICAST_ADDRESS:
+                    case BacnetPropertyIds.PROP_IP_SUBNET_MASK:
+                    case BacnetPropertyIds.PROP_IP_DHCP_SERVER:
+                    case BacnetPropertyIds.PROP_IP_DEFAULT_GATEWAY:
+                    case BacnetPropertyIds.PROP_IPV6_ADDRESS:
+                    case BacnetPropertyIds.PROP_BACNET_IPV6_MULTICAST_ADDRESS:
+                    case BacnetPropertyIds.PROP_IPV6_DHCP_SERVER:
+                    case BacnetPropertyIds.PROP_IPV6_DEFAULT_GATEWAY:
+                        return new IPAdressConverter();
+
+                    case BacnetPropertyIds.PROP_ACTION:
                         //because Command Object Type also has PROP_ACTION wich decodes to BACnetActionList
                         if (m_Property.bacnetApplicationTags != BacnetApplicationTags.BACNET_APPLICATION_CONTEXT_SPECIFIC)
                             return new BacnetEnumValueConverter(new BACnetAction());
@@ -2213,7 +2240,6 @@ namespace Utilities
                 case BacnetPropertyIds.PROP_ACCESS_ALARM_EVENTS:
                 case BacnetPropertyIds.PROP_ACCESS_TRANSACTION_EVENTS:
                     return new BacnetEnumValueDisplay(new BACnetAccessEvents());
-
                 default :
                     return base.GetEditor(editorBaseType);
             }
