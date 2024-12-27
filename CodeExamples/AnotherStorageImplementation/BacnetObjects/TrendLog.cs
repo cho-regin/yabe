@@ -161,6 +161,13 @@ namespace BaCSharp
         {
 
             status = BacnetResultFlags.NONE;
+
+            if ((count < 0) && (start >= count))
+            {
+                start = (uint)(start + count);
+                count = -count;
+            }
+
             start--;    //position is 1 based
 
             if (start >= m_PROP_RECORD_COUNT || (start + count) > m_PROP_RECORD_COUNT)

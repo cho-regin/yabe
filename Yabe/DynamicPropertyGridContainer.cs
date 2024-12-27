@@ -2158,15 +2158,61 @@ namespace Utilities
                     return new BacnetEnumValueDisplay(new BacnetRestartReason());
                 case BacnetPropertyIds.PROP_PRIORITY_FOR_WRITING:
                     return new BacnetEnumValueDisplay(new BacnetWritePriority());
-                case BacnetPropertyIds.PROP_PROGRAM_CHANGE:
-                    return new BacnetEnumValueDisplay(new BacnetProgramChange());
                 case BacnetPropertyIds.PROP_PRIORITY_ARRAY:
                     return new BacnetEditPriorityArray();
+                case BacnetPropertyIds.PROP_PROGRAM_CHANGE:
+                    return new BacnetEnumValueDisplay(new BacnetProgramChange());
+                case BacnetPropertyIds.PROP_PROGRAM_STATE:
+                    return new BacnetEnumValueDisplay(new BacnetProgramState());
+                case BacnetPropertyIds.PROP_REASON_FOR_HALT:
+                    return new BacnetEnumValueDisplay(new BACnetProgramError());
                 case BacnetPropertyIds.PROP_BACKUP_AND_RESTORE_STATE:
                     return new BacnetEnumValueDisplay(new BACnetBackupState());
                 case BacnetPropertyIds.PROP_FILE_ACCESS_METHOD:
                     return new BacnetEnumValueDisplay(new BacnetFileAccessMethod());
-
+                case BacnetPropertyIds.PROP_DOOR_STATUS:
+                case BacnetPropertyIds.PROP_LOCK_STATUS:
+                case BacnetPropertyIds.PROP_CAR_DOOR_STATUS:
+                    return new BacnetEnumValueDisplay(new BACnetDoorStatus());
+                case BacnetPropertyIds.PROP_CREDENTIAL_DISABLE:
+                    return new BacnetEnumValueDisplay(new BACnetAccessCredentialDisable());
+                case BacnetPropertyIds.PROP_OCCUPANCY_STATE:
+                    return new BacnetEnumValueDisplay(new BACnetAccessZoneOccupancyState());
+                case BacnetPropertyIds.PROP_AUTHENTICATION_STATUS:
+                    return new BacnetEnumValueDisplay(new BACnetAuthenticationStatus());
+                case BacnetPropertyIds.PROP_ESCALATOR_MODE:
+                    return new BacnetEnumValueDisplay(new BACnetEscalatorMode());
+                case BacnetPropertyIds.PROP_BACNET_IP_MODE:
+                    return new BacnetEnumValueDisplay(new BACnetIPMode());
+                case BacnetPropertyIds.PROP_MAINTENANCE_REQUIRED:
+                    return new BacnetEnumValueDisplay(new BACnetMaintenance());
+                case BacnetPropertyIds.PROP_NETWORK_NUMBER_QUALITY:
+                    return new BacnetEnumValueDisplay(new BACnetNetworkNumberQuality());
+                case BacnetPropertyIds.PROP_COMMAND:
+                    return new BacnetEnumValueDisplay(new BACnetNetworkPortCommand());
+                case BacnetPropertyIds.PROP_NETWORK_TYPE:
+                    return new BacnetEnumValueDisplay(new BACnetNetworkType());
+                case BacnetPropertyIds.PROP_BASE_DEVICE_SECURITY_POLICY:
+                    return new BacnetEnumValueDisplay(new BACnetSecurityLevel());
+                case BacnetPropertyIds.PROP_PROTOCOL_LEVEL:
+                    return new BacnetEnumValueDisplay(new BACnetProtocolLevel());
+                case BacnetPropertyIds.PROP_SILENCED:
+                    return new BacnetEnumValueDisplay(new BACnetSilencedState());
+                case BacnetPropertyIds.PROP_TIMER_STATE:
+                    return new BacnetEnumValueDisplay(new BACnetTimerState());
+                case BacnetPropertyIds.PROP_LAST_STATE_CHANGE:
+                    return new BacnetEnumValueDisplay(new BACnetTimerTransition());
+                case BacnetPropertyIds.PROP_WRITE_STATUS:
+                    return new BacnetEnumValueDisplay(new BACnetWriteStatus());
+                case BacnetPropertyIds.PROP_DOOR_ALARM_STATE:
+                    return new BacnetEnumValueDisplay(new BACnetDoorAlarmState());
+                case BacnetPropertyIds.PROP_SECURED_STATUS:
+                    return new BacnetEnumValueDisplay(new BACnetDoorSecuredStatus());
+                case BacnetPropertyIds.PROP_ACCESS_EVENT:
+                case BacnetPropertyIds.PROP_LAST_ACCESS_EVENT:
+                case BacnetPropertyIds.PROP_ACCESS_ALARM_EVENTS:
+                case BacnetPropertyIds.PROP_ACCESS_TRANSACTION_EVENTS:
+                    return new BacnetEnumValueDisplay(new BACnetAccessEvents());
 
                 default :
                     return base.GetEditor(editorBaseType);

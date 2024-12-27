@@ -7652,6 +7652,17 @@ namespace System.IO.BACnet
             this.objectIdentifier = objectIdentifier;
             this.values = values;
         }
+
+        public override string ToString()
+        {
+            String ret = "";
+            foreach (var RefVal in values)
+            {
+                foreach (var Val in RefVal.value)
+                    ret = ret + Val.ToString() + "  ";
+            }
+            return ret;
+        }
     }
 
     public struct BacnetCOVSubscription : ASN1.IASN1encode
@@ -11589,7 +11600,7 @@ namespace System.IO.BACnet.Serialize
 
                     decode_len = bacapp_decode_data(buffer, offset + len, max_offset, (BacnetApplicationTags)tag_number, len_value_type, out value);
 
-                    // Modification of some properties values to fit the right data type
+                    // Modification of some properties values to fit the right data type, can be done for some other types
                     try
                     {
                         switch (property_id)
