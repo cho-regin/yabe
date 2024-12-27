@@ -1280,7 +1280,6 @@ namespace Utilities
             return base.ConvertFrom(context, culture, value);
         }
     }
-
     public class BacnetObjectIdentifierConverter : ExpandableObjectConverter
     {
 
@@ -1641,6 +1640,13 @@ namespace Utilities
             return value;
         }
     }
+    public class NullEditor : UITypeEditor
+    {
+        public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context)
+        {
+            return UITypeEditorEditStyle.None;
+        }
+    }
     // In order to give a readable name to classic enums
     public class BacnetEnumValueDisplay : UITypeEditor
     {
@@ -1746,30 +1752,6 @@ namespace Utilities
         }
     }
 
-    public class BacnetIPAddressConverter : TypeConverter
-    {
-
-        public override object ConvertTo(ITypeDescriptorContext context,
-                        CultureInfo culture,
-                        object value,
-                        System.Type destinationType)
-        {
-            if (destinationType == typeof(System.String) && value is byte[] valarray)
-            {
-                return new IPAddress(valarray).ToString();
-            }
-            else if (destinationType == typeof(System.String) && value is Array valarrayofarray)
-            {
-                String S = "";
-                foreach (byte[] val in valarrayofarray)
-                    S= S+new IPAddress(val).ToString()+"\r\n";
-                return S ;
-            }
-            else
-                return base.ConvertTo(context, culture, value, destinationType);
-        }
-    }
-
     public class BacnetBitStringValueConverter : TypeConverter
     {
         Enum currentPropertyEnum;
@@ -1790,16 +1772,19 @@ namespace Utilities
                 value is BacnetBitString)
             {
                 String bbs = value.ToString();
-                String Text = "";
+                String Text = "" ;
                 for (int i = 0; i < bbs.Length; i++)
                 {
                     try
                     {
                         if (bbs[i] == '1')
+                        {
+                            if (Text != "") Text = Text + ", \r\n";
                             if (LinearEnum == true)
-                                Text = Text + BacnetBitStringToEnumListDisplay.GetNiceName(Enum.GetName(currentPropertyEnum.GetType(), i))+"\r\n"; // for 'classic' Enum like 0,1,2,3 ...
+                                Text = Text + BacnetBitStringToEnumListDisplay.GetNiceName(Enum.GetName(currentPropertyEnum.GetType(), i)); // for 'classic' Enum like 0,1,2,3 ...
                             else
-                                Text = Text + BacnetBitStringToEnumListDisplay.GetNiceName(Enum.GetName(currentPropertyEnum.GetType(), 1 << i))+"\r\n"; // for 2^n shift Enum like 1,2,4,8, ...
+                                Text = Text + BacnetBitStringToEnumListDisplay.GetNiceName(Enum.GetName(currentPropertyEnum.GetType(), 1 << i)); // for 2^n shift Enum like 1,2,4,8, ...
+                        }
                     }
                     catch { }
                 }
@@ -2111,18 +2096,6 @@ namespace Utilities
                         return new BacnetEnumValueConverter(new BACnetAccessEvents());
                     case BacnetPropertyIds.PROP_FAULT_TYPE:
                         return new BacnetEnumValueConverter(new BACnetFaultParameter.BACnetFaultType());
-                    case BacnetPropertyIds.PROP_IP_ADDRESS:
-                    case BacnetPropertyIds.PROP_BACNET_IP_MULTICAST_ADDRESS:
-                    case BacnetPropertyIds.PROP_IP_SUBNET_MASK:
-                    case BacnetPropertyIds.PROP_IP_DHCP_SERVER:
-                    case BacnetPropertyIds.PROP_IP_DEFAULT_GATEWAY:
-                    case BacnetPropertyIds.PROP_IP_DNS_SERVER:
-                    case BacnetPropertyIds.PROP_IPV6_ADDRESS:
-                    case BacnetPropertyIds.PROP_BACNET_IPV6_MULTICAST_ADDRESS:
-                    case BacnetPropertyIds.PROP_IPV6_DHCP_SERVER:
-                    case BacnetPropertyIds.PROP_IPV6_DEFAULT_GATEWAY:
-                    case BacnetPropertyIds.PROP_IPV6_DNS_SERVER:
-                        return new BacnetIPAddressConverter();
                    case BacnetPropertyIds.PROP_ACTION:
                         //because Command Object Type also has PROP_ACTION wich decodes to BACnetActionList
                         if (m_Property.bacnetApplicationTags != BacnetApplicationTags.BACNET_APPLICATION_CONTEXT_SPECIFIC)
@@ -2153,12 +2126,10 @@ namespace Utilities
                     return new BacnetBitStringToEnumListDisplay(new BacnetStatusFlags(), false, true);
                 case BacnetPropertyIds.PROP_LIMIT_ENABLE:
                     return new BacnetBitStringToEnumListDisplay(new BacnetEventNotificationData.BacnetLimitEnable(), false, true);
-
                 case BacnetPropertyIds.PROP_EVENT_ENABLE:
                 case BacnetPropertyIds.PROP_ACK_REQUIRED:
                 case BacnetPropertyIds.PROP_ACKED_TRANSITIONS:
                     return new BacnetBitStringToEnumListDisplay(new BacnetEventNotificationData.BacnetEventEnable(), false, true);
-
                 case BacnetPropertyIds.PROP_OBJECT_TYPE:
                     return new BacnetEnumValueDisplay(new BacnetObjectTypes());
                 case BacnetPropertyIds.PROP_NOTIFY_TYPE:

@@ -11588,6 +11588,33 @@ namespace System.IO.BACnet.Serialize
                     len += tag_len;
 
                     decode_len = bacapp_decode_data(buffer, offset + len, max_offset, (BacnetApplicationTags)tag_number, len_value_type, out value);
+
+                    // Modification of some properties values to fit the right data type
+                    try
+                    {
+                        switch (property_id)
+                        {
+                            case BacnetPropertyIds.PROP_PROPERTY_LIST:
+                                value.Value = (BacnetPropertyIds)Convert.ToInt32(value.Value);
+                                break;
+                            case BacnetPropertyIds.PROP_IP_ADDRESS:
+                            case BacnetPropertyIds.PROP_BACNET_IP_MULTICAST_ADDRESS:
+                            case BacnetPropertyIds.PROP_IP_SUBNET_MASK:
+                            case BacnetPropertyIds.PROP_IP_DHCP_SERVER:
+                            case BacnetPropertyIds.PROP_IP_DEFAULT_GATEWAY:
+                            case BacnetPropertyIds.PROP_IP_DNS_SERVER:
+                            case BacnetPropertyIds.PROP_IPV6_ADDRESS:
+                            case BacnetPropertyIds.PROP_BACNET_IPV6_MULTICAST_ADDRESS:
+                            case BacnetPropertyIds.PROP_IPV6_DHCP_SERVER:
+                            case BacnetPropertyIds.PROP_IPV6_DEFAULT_GATEWAY:
+                            case BacnetPropertyIds.PROP_IPV6_DNS_SERVER:
+                                value.Value = new IPAddress(value.Value as byte[]);
+                                break;
+                        }
+                    }
+                    catch { }
+
+                           
                     if (decode_len < 0) return decode_len;
                     len += decode_len;
                 }
@@ -11836,6 +11863,7 @@ namespace System.IO.BACnet.Serialize
                     value.Value = v;
                     return tag_len;
                 }
+
                 else if(property_id == BacnetPropertyIds.PROP_BACNET_IP_GLOBAL_ADDRESS || property_id == BacnetPropertyIds.PROP_FD_BBMD_ADDRESS )
                 {
 
@@ -11867,8 +11895,7 @@ namespace System.IO.BACnet.Serialize
 
                 }
 
-
-                    value.Tag = BacnetApplicationTags.BACNET_APPLICATION_TAG_CONTEXT_SPECIFIC_DECODED;
+                value.Tag = BacnetApplicationTags.BACNET_APPLICATION_TAG_CONTEXT_SPECIFIC_DECODED;
                 List<BacnetValue> list = new List<BacnetValue>();
 
                 decode_tag_number_and_value(buffer, offset + len, out tag_number, out len_value_type);

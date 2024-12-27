@@ -1593,6 +1593,8 @@ namespace Yabe
                 {
                     Trace.TraceWarning("Couldn't perform ReadPropertyMultiple ... Trying with ReadProperty instead");
 
+                    // Sometime it's wrong : a ReadMultiple is not accepted on an object and OK with some others
+                    // If a read is made first on such an object, it will be always a read out one by one even on the ones supported readmultiple
                     if (device.ReadMultiple != BACnetDevice.ReadPopertyMultipleStatus.Accepted)
                         device.ReadMultiple = BACnetDevice.ReadPopertyMultipleStatus.NotSupported;
                     

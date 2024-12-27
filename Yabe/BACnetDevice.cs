@@ -341,7 +341,7 @@ namespace Yabe
 
                     foreach (var enumeratedValue in proplist.value)
                     {
-                        BacnetPropertyIds bpi = (BacnetPropertyIds)(uint)enumeratedValue.Value;
+                        BacnetPropertyIds bpi = (BacnetPropertyIds)Convert.ToInt32(enumeratedValue.Value);
                         // read all specified properties given by the PROP_PROPERTY_LIST, except the 3 previous one
                         ReadProperty(object_id, bpi, ref values);
                     }
