@@ -64,15 +64,15 @@ namespace Yabe
         }
         private Dictionary<BacnetClient, BacnetDeviceLine> m_devices = new Dictionary<BacnetClient, BacnetDeviceLine>();
         public Dictionary<BacnetClient, BacnetDeviceLine> DiscoveredDevices { get { return m_devices; } }
-        public int DeviceCount 
-        { 
+        public int DeviceCount
+        {
             get {
                 int count = 0;
                 lock (m_devices)
                     foreach (var entry in m_devices)
-                        count +=  entry.Value.Devices.Count;
+                        count += entry.Value.Devices.Count;
 
-                return count; 
+                return count;
             }
         }
         public BACnetDevice[] YabeDiscoveredDevices
@@ -95,23 +95,6 @@ namespace Yabe
         // 1=Fault
         // 2=Normal
         private DateTime[] _cachedEventTimeStampsForAcknowledgementButtons = new DateTime[3];
-
-        public IEnumerable<TreeNode> DeviceNodes
-        {
-            get
-            {
-                // Enumerate each Transport Layer:
-                foreach (TreeNode transport in m_DeviceTree.Nodes[0].Nodes)
-                {
-                    //Enumerate each Parent Device:
-                    foreach (TreeNode node in transport.Nodes)
-                    {
-                        yield return (node);
-                    }
-                }
-                yield break;
-            }
-        }
 
         private Dictionary<string, ListViewItem> m_subscription_list = new Dictionary<string, ListViewItem>();
         private Dictionary<string, RollingPointPairList> m_subscription_points = new Dictionary<string, RollingPointPairList>();        
@@ -912,17 +895,17 @@ namespace Yabe
                             Prop = Array.Find<Property>(m_storage.Objects[0].Properties, p => p.Id == BacnetPropertyIds.PROP_APPLICATION_SOFTWARE_VERSION);
                             Prop.Value[0] = this.GetType().Assembly.GetName().Version.ToString();
                         }
-                        comm.OnWhoIs += new BacnetClient.WhoIsHandler(OnWhoIs);
-                        comm.OnReadPropertyRequest += new BacnetClient.ReadPropertyRequestHandler(OnReadPropertyRequest);
-                        comm.OnReadPropertyMultipleRequest += new BacnetClient.ReadPropertyMultipleRequestHandler(OnReadPropertyMultipleRequest);
+                        comm.OnWhoIs += OnWhoIs;
+                        comm.OnReadPropertyRequest += OnReadPropertyRequest;
+                        comm.OnReadPropertyMultipleRequest += OnReadPropertyMultipleRequest;
                     }
                     else
                     {
-                        comm.OnWhoIs += new BacnetClient.WhoIsHandler(OnWhoIsIgnore);
+                        comm.OnWhoIs += OnWhoIsIgnore;
                     }
-                    comm.OnIam += new BacnetClient.IamHandler(OnIam);
-                    comm.OnCOVNotification += new BacnetClient.COVNotificationHandler(OnCOVNotification);
-                    comm.OnEventNotify += new BacnetClient.EventNotificationCallbackHandler(OnEventNotify);
+                    comm.OnIam += OnIam;
+                    comm.OnCOVNotification += OnCOVNotification;
+                    comm.OnEventNotify += OnEventNotify;
                     comm.Start();
 
                     // WhoIs Min & Max limits
@@ -934,8 +917,12 @@ namespace Yabe
 
                     if (comm.Transport.Type == BacnetAddressTypes.SC) comm.Retries = 1; // Not required devices are connected to the Hub
 
+                    if (Properties.Settings.Default.YabeDeviceId >= 0)
+                        comm.Iam((uint)Properties.Settings.Default.YabeDeviceId, BacnetSegmentations.SEGMENTATION_BOTH, 61440);
+
                     //start search
-                    if (comm.Transport.Type == BacnetAddressTypes.IP || comm.Transport.Type == BacnetAddressTypes.Ethernet 
+                    if (comm.Transport.Type == BacnetAddressTypes.IP 
+                        || comm.Transport.Type == BacnetAddressTypes.Ethernet 
                         || comm.Transport.Type == BacnetAddressTypes.IPV6
                         || comm.Transport.Type == BacnetAddressTypes.SC
                         || (comm.Transport is BacnetMstpProtocolTransport && ((BacnetMstpProtocolTransport)comm.Transport).SourceAddress != -1) 
@@ -948,6 +935,7 @@ namespace Yabe
                                 comm.WhoIs(IdMin,IdMax);
                                 System.Threading.Thread.Sleep(comm.Timeout);
                             }
+
                         }, null);
                     }
 
@@ -964,6 +952,11 @@ namespace Yabe
                     MessageBox.Show(this, "Couldn't start Bacnet communication: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+        }
+
+        private void Comm_OnWhoIs(BacnetClient sender, BacnetAddress adr, int low_limit, int high_limit)
+        {
+            throw new NotImplementedException();
         }
 
         private void MSTP_FrameRecieved(BacnetMstpProtocolTransport sender, BacnetMstpFrameTypes frame_type, byte destination_address, byte source_address, int msg_length)
@@ -1617,13 +1610,10 @@ namespace Yabe
 
                 bool[] showAlarmAck = new bool[3] {false, false, false };
 
-                // Alphabetical order (but proprietary are in first !)
-                var sortedEnum = multi_value_list[0].values.OrderBy(o => (((BacnetPropertyIds)(o.property.propertyIdentifier)).ToString()));
-
                 //update grid
                 Utilities.DynamicPropertyGridContainer bag = new Utilities.DynamicPropertyGridContainer();
 
-                foreach (BacnetPropertyValue p_value in sortedEnum)
+                foreach (BacnetPropertyValue p_value in multi_value_list[0].values)
                 {
                     object value = null;
                     BacnetValue[] b_values = null;
@@ -1712,6 +1702,17 @@ namespace Yabe
                 }
 
                 m_DataGrid.SelectedObject = bag;
+
+                // Expand some Arrays in the Grid
+                GridItem root = m_DataGrid.SelectedGridItem;
+                // Get the parent, no clear other way than this on to take the root. Normally one and only one loop required here.
+                while (root.Parent != null)
+                    root = root.Parent;
+                foreach (GridItem g in root.GridItems)
+                {
+                    if  ((g.Value is Array ar) && (ar.Length <= Properties.Settings.Default.GridArrayExpandMaxSize))
+                        g.Expanded = true;
+                }
 
                 ack_offnormal.Visible = showAlarmAck[0];
                 ack_fault.Visible = showAlarmAck[1];
@@ -3472,12 +3473,9 @@ namespace Yabe
         }
         private void FetchEndPoints(out List<BACnetDevice> endPoints)
         {
-            endPoints = new List<BACnetDevice>();
-            foreach (var node in DeviceNodes)
+            lock (m_devices)
             {
-                var device = FetchEndPoint(node);
-                if (device != null)
-                    endPoints.Add(device);
+                endPoints=m_devices.Values.SelectMany(line => line.Devices).ToList();
             }
         }
         private TreeNode GetTreeNodeFromDeviceId(uint deviceId)

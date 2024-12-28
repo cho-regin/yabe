@@ -36,7 +36,7 @@ using System.Net;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
-
+using System.Net.NetworkInformation;
 
 namespace System.IO.BACnet
 {
@@ -11620,6 +11620,9 @@ namespace System.IO.BACnet.Serialize
                             case BacnetPropertyIds.PROP_IPV6_DEFAULT_GATEWAY:
                             case BacnetPropertyIds.PROP_IPV6_DNS_SERVER:
                                 value.Value = new IPAddress(value.Value as byte[]);
+                                break;
+                            case BacnetPropertyIds.PROP_MAC_ADDRESS:
+                                value.Value=new PhysicalAddress(value.Value as byte[]);
                                 break;
                         }
                     }

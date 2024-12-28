@@ -1342,7 +1342,7 @@
             this.m_DataGrid.LineColor = System.Drawing.SystemColors.ControlDark;
             this.m_DataGrid.Location = new System.Drawing.Point(0, 13);
             this.m_DataGrid.Name = "m_DataGrid";
-            this.m_DataGrid.PropertySort = System.Windows.Forms.PropertySort.Categorized;
+            this.m_DataGrid.PropertySort = System.Windows.Forms.PropertySort.Alphabetical;
             this.m_DataGrid.Size = new System.Drawing.Size(200, 531);
             this.m_DataGrid.TabIndex = 0;
             this.m_DataGrid.PropertyValueChanged += new System.Windows.Forms.PropertyValueChangedEventHandler(this.m_DataGrid_PropertyValueChanged);

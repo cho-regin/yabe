@@ -19,7 +19,7 @@
           <Value>0</Value>
         </Property>
         <Property Id="PROP_VENDOR_NAME" Tag="BACNET_APPLICATION_TAG_CHARACTER_STRING">
-          <Value>Morten Kvistgaard, MIT licence, 2015</Value>
+          <Value>Morten Kvistgaard/Frederic Chaxel, 2015</Value>
         </Property>
         <Property Id="PROP_VENDOR_IDENTIFIER" Tag="BACNET_APPLICATION_TAG_UNSIGNED_INT">
           <Value>61440</Value>
