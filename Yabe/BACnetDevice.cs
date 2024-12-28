@@ -131,13 +131,16 @@ namespace Yabe
                     Adrsize = 6;
                     break;
                 case BacnetAddressTypes.IPV6:
-                    Adrsize = 16; // without Port it can be change (with this Stack)
+                    Adrsize = 16; // without Port it can be change (with this Stack), should be VMAC 3 bytes for a routed device
                     break;
                 case BacnetAddressTypes.MSTP:
                     Adrsize = 1;
                     break;
-                case BacnetAddressTypes.SC: // SC (RandomVMAC no sens, values never the same)
-                    Adrsize = 0;
+                case BacnetAddressTypes.SC: // adr is the same array as VMAC
+                    if (((Addr.adr[0] & 0x0F) == 0x02)) // RandomVMAC no sens, values never the same
+                        Adrsize = 0;
+                    else
+                        Adrsize = 6;
                     break;
                 default:
                     Adrsize = Addr.adr.Length;
@@ -145,7 +148,7 @@ namespace Yabe
             }
 
             if (Addr.adr != null) // Normaly never null
-                for (int i = 0; i < Adrsize; i++)
+                for (int i = 0; i < Math.Min(Adrsize, Addr.adr.Length); i++)
                     s.Append(Addr.adr[i].ToString("X2"));
 
             return s.ToString();

@@ -164,5 +164,8 @@
     <Setting Name="GridArrayExpandMaxSize" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">10</Value>
     </Setting>
+    <Setting Name="GridAlwaysExpandProperties" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Priority Array</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

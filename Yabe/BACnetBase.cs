@@ -872,8 +872,8 @@ namespace System.IO.BACnet
         UNITS_MILLION_STANDARD_CUBIC_FEET_PER_MINUTE = 254,
         /* Enumerated values 256-47807 may be used by others
         subject to the procedures and constraints described in Clause 23. */
-        UNITS_PROPRIETARY_RANGE_MIN = 256,
-        UNITS_PROPRIETARY_RANGE_MAX = 47807,
+        //UNITS_PROPRIETARY_RANGE_MIN = 256,
+        //UNITS_PROPRIETARY_RANGE_MAX = 47807,
         /* Enumerated values 47808-49999 are reserved for definition by ASHRAE. */
         // Since Addendum 135-2020ar
         UNITS_DEGREES_LOVIBOND = 47816,
@@ -883,13 +883,13 @@ namespace System.IO.BACnet
         UNITS_DEGREES_PLATO = 47820,
         UNITS_SPECIFIC_GRAVITY = 47821,
         UNITS_EUROPEAN_BREWING_CONVENTION = 47822,
-        UNITS_PROPRIETARY_RANGE_MIN2 = 50000,
+        //UNITS_PROPRIETARY_RANGE_MIN2 = 50000,
         /* Enumerated values 50000-65535 may be used by others
         subject to the procedures and constraints described in Clause 23. */
         /* do the proprietary range inside of enum so that
         compilers will allocate adequate sized datatype for enum
         which is used to store decoding */
-        UNITS_PROPRIETARY_RANGE_MAX2 = 65535
+        //UNITS_PROPRIETARY_RANGE_MAX2 = 65535
     }
 
     public enum BacnetPolarity : byte
@@ -1029,10 +1029,10 @@ namespace System.IO.BACnet
         /* do the max range inside of enum so that
            compilers will allocate adequate sized datatype for enum
            which is used to store decoding */
-        OBJECT_PROPRIETARY_MIN = 128,
-        OBJECT_PROPRIETARY_MAX = 1023,
+        //OBJECT_PROPRIETARY_MIN = 128,
+        //OBJECT_PROPRIETARY_MAX = 1023,
         MAX_BACNET_OBJECT_TYPE = 1024,
-        MAX_ASHRAE_OBJECT_TYPE = 64,
+        //MAX_ASHRAE_OBJECT_TYPE = 64,
     };
 
     public enum BacnetApplicationTags

@@ -111,6 +111,8 @@ namespace Yabe
 
         YabeMainDialog yabeFrm; // Ref to itself, already affected, usefull for plugin developpmenet inside this code, before exporting it
 
+        string[] ExpandedProperties; // List of properties always expanded in the properties grid
+
         public bool GetSetting_TimeSynchronize_UTC() // GlobalCommander is using it
         {
             return Properties.Settings.Default.TimeSynchronize_UTC;
@@ -635,6 +637,8 @@ namespace Yabe
 
             if (pluginsToolStripMenuItem.DropDownItems.Count == 0) pluginsToolStripMenuItem.Visible = false;
 
+            if (Properties.Settings.Default.GridAlwaysExpandProperties!="")
+                ExpandedProperties= Properties.Settings.Default.GridAlwaysExpandProperties.Split(new char[] { ',', ';' });
 
             // Object Names
             if (Properties.Settings.Default.Auto_Store_Object_Names)
@@ -1704,14 +1708,23 @@ namespace Yabe
                 m_DataGrid.SelectedObject = bag;
 
                 // Expand some Arrays in the Grid
-                GridItem root = m_DataGrid.SelectedGridItem;
-                // Get the parent, no clear other way than this on to take the root. Normally one and only one loop required here.
-                while (root.Parent != null)
-                    root = root.Parent;
-                foreach (GridItem g in root.GridItems)
+                if ((Properties.Settings.Default.GridArrayExpandMaxSize > 1) || (ExpandedProperties!=null)) // Arrays with 1 element are not expandable
                 {
-                    if  ((g.Value is Array ar) && (ar.Length <= Properties.Settings.Default.GridArrayExpandMaxSize))
-                        g.Expanded = true;
+                    GridItem root = m_DataGrid.SelectedGridItem;
+                    // Get the parent, no clear other way than this one to take the root. Normally one and only one loop required here.
+                    while (root.Parent != null)
+                        root = root.Parent;
+                    foreach (GridItem g in root.GridItems)
+                    {
+                        if (g.Expandable)
+                        {
+                            if ((g.Value is Array ar) && (ar.Length <= Properties.Settings.Default.GridArrayExpandMaxSize))
+                                g.Expanded = true;
+                            else
+                                if (((ExpandedProperties != null)) && (ExpandedProperties.Contains(g.Label)))
+                                    g.Expanded = true;
+                        }
+                    }
                 }
 
                 ack_offnormal.Visible = showAlarmAck[0];

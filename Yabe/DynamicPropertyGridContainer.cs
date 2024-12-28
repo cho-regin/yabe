@@ -1718,8 +1718,6 @@ namespace Utilities
                     String[] sl=Enum.GetNames(currentPropertyEnum.GetType());
                     for (int i = 0; i < sl.Length; i++)
                     {
-                        if ((currentPropertyEnum.GetType() == typeof(BacnetObjectTypes)) && (i >= (int)BacnetObjectTypes.MAX_ASHRAE_OBJECT_TYPE))
-                            break; // One property with some content not usefull
                         EnumList.Items.Add(i.ToString() + " : " + GetNiceName(sl[i])); // add to the list
                     }
                     if (InitialIdx<EnumList.Items.Count)

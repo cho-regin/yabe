@@ -25,9 +25,11 @@
 *
 *********************************************************************/
 using System;
+using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.IO.BACnet;
+using System.Linq;
 using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
@@ -62,6 +64,9 @@ namespace Yabe
                 chk_VerifyHubCert.Checked = config.ValidateHubCertificate;
                 chk_DirectConnect.Checked = config.DirectConnect;
 
+                if ((config.VMAC!= null)&&(config.VMAC.Length==6))
+                    VMAC.Text= String.Join("", config.VMAC.Select(by => by.ToString("X2")));
+
                 YabeCertPassword.Text = YabeCertificateFilePassword;
 
             }
@@ -82,7 +87,18 @@ namespace Yabe
             config.DirectConnect = chk_DirectConnect.Checked;
 
             // Password is put into the config object but not saved in the Xml file.
-            YabeCertificateFilePassword = YabeCertPassword.Text; 
+            YabeCertificateFilePassword = YabeCertPassword.Text;
+
+            if (VMAC.Text.Length == 12)
+            {
+                try
+                {
+                    config.VMAC = new byte[6];
+                    for (int i = 0; i < 6; i++)
+                        config.VMAC[i] = Convert.ToByte(VMAC.Text.Substring(i * 2, 2), 16);
+                }
+                catch { config.VMAC = null; }
+            }
 
             try
             {

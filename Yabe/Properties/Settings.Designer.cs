@@ -671,5 +671,17 @@ namespace Yabe.Properties {
                 this["GridArrayExpandMaxSize"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Priority Array")]
+        public string GridAlwaysExpandProperties {
+            get {
+                return ((string)(this["GridAlwaysExpandProperties"]));
+            }
+            set {
+                this["GridAlwaysExpandProperties"] = value;
+            }
+        }
     }
 }

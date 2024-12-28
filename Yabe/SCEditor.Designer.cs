@@ -48,6 +48,8 @@
             this.label3 = new System.Windows.Forms.Label();
             this.chk_DirectConnect = new System.Windows.Forms.CheckBox();
             this.bpGetX509 = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
+            this.VMAC = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -64,7 +66,7 @@
             // lblUri
             // 
             this.lblUri.AutoSize = true;
-            this.lblUri.Location = new System.Drawing.Point(20, 69);
+            this.lblUri.Location = new System.Drawing.Point(20, 93);
             this.lblUri.Name = "lblUri";
             this.lblUri.Size = new System.Drawing.Size(49, 13);
             this.lblUri.TabIndex = 1;
@@ -88,14 +90,14 @@
             // 
             // HubURI
             // 
-            this.HubURI.Location = new System.Drawing.Point(111, 66);
+            this.HubURI.Location = new System.Drawing.Point(111, 90);
             this.HubURI.Name = "HubURI";
             this.HubURI.Size = new System.Drawing.Size(204, 20);
             this.HubURI.TabIndex = 4;
             // 
             // btSave
             // 
-            this.btSave.Location = new System.Drawing.Point(118, 397);
+            this.btSave.Location = new System.Drawing.Point(118, 421);
             this.btSave.Name = "btSave";
             this.btSave.Size = new System.Drawing.Size(77, 22);
             this.btSave.TabIndex = 13;
@@ -116,7 +118,7 @@
             this.groupBox1.Controls.Add(this.lblRemoteCertificate);
             this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.Controls.Add(this.chk_VerifyHubCert);
-            this.groupBox1.Location = new System.Drawing.Point(12, 143);
+            this.groupBox1.Location = new System.Drawing.Point(12, 167);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(309, 236);
             this.groupBox1.TabIndex = 18;
@@ -219,7 +221,7 @@
             // chk_DirectConnect
             // 
             this.chk_DirectConnect.AutoSize = true;
-            this.chk_DirectConnect.Location = new System.Drawing.Point(23, 98);
+            this.chk_DirectConnect.Location = new System.Drawing.Point(23, 122);
             this.chk_DirectConnect.Name = "chk_DirectConnect";
             this.chk_DirectConnect.Size = new System.Drawing.Size(97, 17);
             this.chk_DirectConnect.TabIndex = 26;
@@ -229,7 +231,7 @@
             // 
             // bpGetX509
             // 
-            this.bpGetX509.Location = new System.Drawing.Point(234, 92);
+            this.bpGetX509.Location = new System.Drawing.Point(234, 116);
             this.bpGetX509.Name = "bpGetX509";
             this.bpGetX509.Size = new System.Drawing.Size(79, 23);
             this.bpGetX509.TabIndex = 27;
@@ -237,11 +239,29 @@
             this.bpGetX509.UseVisualStyleBackColor = true;
             this.bpGetX509.Click += new System.EventHandler(this.GetRemoteCertificate_Click);
             // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(20, 59);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(147, 13);
+            this.label4.TabIndex = 28;
+            this.label4.Text = "Optional VMAC (Hexa values)";
+            // 
+            // VMAC
+            // 
+            this.VMAC.Location = new System.Drawing.Point(182, 56);
+            this.VMAC.Name = "VMAC";
+            this.VMAC.Size = new System.Drawing.Size(133, 20);
+            this.VMAC.TabIndex = 29;
+            // 
             // SCEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(333, 447);
+            this.ClientSize = new System.Drawing.Size(333, 459);
+            this.Controls.Add(this.VMAC);
+            this.Controls.Add(this.label4);
             this.Controls.Add(this.bpGetX509);
             this.Controls.Add(this.chk_DirectConnect);
             this.Controls.Add(this.groupBox1);
@@ -285,5 +305,7 @@
         private System.Windows.Forms.Button bpGetX509;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox YabeCertPassword;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.TextBox VMAC;
     }
 }

@@ -175,9 +175,14 @@ namespace Yabe
             public bool ShowHighLightFilter { set { instance.ShowHighLightFilter = value; } get { return instance.ShowHighLightFilter; } }
 
             [DisplayName("Auto Expand Grid Array Max Size")]
-            [Description("Maximum number of elements in Array to automatically expanded it in the Properties Grid. Can be set to zero to disable the option.")]
+            [Description("Maximum number of elements in Array to automatically expanded it in the Properties Grid. Zero to disable the option")]
             [Category(CAT_GUI)]
             public int GridArrayExpandMaxSize { set { instance.GridArrayExpandMaxSize = value; } get { return instance.GridArrayExpandMaxSize; } }
+            
+            [DisplayName("Always Expanded Properties")]
+            [Description("Always expand the Properties in Grid even with a large array (comma separated names, case sensible, no space)")]
+            [Category(CAT_GUI)]
+            public String GridAlwaysExpandProperties { set { instance.GridAlwaysExpandProperties = value; } get { return instance.GridAlwaysExpandProperties; } }
 
             [DisplayName("Single file")]
             [Description("Export multiple devices into a single EDE file.")]
