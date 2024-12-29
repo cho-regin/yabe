@@ -111,7 +111,7 @@ namespace Yabe
 
         YabeMainDialog yabeFrm; // Ref to itself, already affected, usefull for plugin developpmenet inside this code, before exporting it
 
-        string[] ExpandedProperties; // List of properties always expanded in the properties grid
+        string[] ExpandedProperties; // List of properties always expanded in the properties grid, from a Setting property
 
         public bool GetSetting_TimeSynchronize_UTC() // GlobalCommander is using it
         {
@@ -141,10 +141,10 @@ namespace Yabe
                 Properties.Settings.Default.Save();
             }
 
-            BACnetDevice.LoadVendorPropertyMapping();
-
             InitializeComponent();
             Trace.Listeners.Add(new MyTraceListener(this));
+
+            BACnetDevice.LoadVendorPropertyMapping();
 
             if (_plotterRunningFlag)
             {
@@ -1563,7 +1563,6 @@ namespace Yabe
             removeDeviceToolStripMenuItem_Click(this, null);
         }
 
-
         private String UpdateGrid(BACnetDevice device, BacnetObjectId object_id)
         {
             BacnetClient comm = device.channel;
@@ -1707,21 +1706,21 @@ namespace Yabe
 
                 m_DataGrid.SelectedObject = bag;
 
-                // Expand some Arrays in the Grid
+                // Expand some Arrays (or expandable properties) in the Grid
                 if ((Properties.Settings.Default.GridArrayExpandMaxSize > 1) || (ExpandedProperties!=null)) // Arrays with 1 element are not expandable
                 {
+                    // Get the top level item, no clear other way than this one to take the root. Normally one and only one loop done here.
                     GridItem root = m_DataGrid.SelectedGridItem;
-                    // Get the parent, no clear other way than this one to take the root. Normally one and only one loop required here.
-                    while (root.Parent != null)
-                        root = root.Parent;
+                    while (root.Parent != null) root = root.Parent;
+
                     foreach (GridItem g in root.GridItems)
                     {
                         if (g.Expandable)
                         {
-                            if ((g.Value is Array ar) && (ar.Length <= Properties.Settings.Default.GridArrayExpandMaxSize))
+                            if ((g.Value is Array ar) && (ar.Length <= Properties.Settings.Default.GridArrayExpandMaxSize)) // small Array
                                 g.Expanded = true;
                             else
-                                if (((ExpandedProperties != null)) && (ExpandedProperties.Contains(g.Label)))
+                                if (((ExpandedProperties != null)) && (ExpandedProperties.Contains(g.Label))) // chosen Properties
                                     g.Expanded = true;
                         }
                     }
@@ -2026,45 +2025,21 @@ namespace Yabe
             }
         }
 
-        public bool GetObjectLink(out BACnetDevice device, out BacnetObjectId object_id, BacnetObjectTypes ExpectedType)
+        public bool GetObjectLink(out BACnetDevice device, out BacnetObjectId object_id, BacnetObjectTypes ExpectedType=BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE)
         {
-            device = null;
             object_id = new BacnetObjectId();
 
-            try
-            {
-                if (m_DeviceTree.SelectedNode == null) return false;
-                else if (m_DeviceTree.SelectedNode.Tag == null) return false;
-                else if (!(m_DeviceTree.SelectedNode.Tag is BACnetDevice)) return false;
-                device = (BACnetDevice)m_DeviceTree.SelectedNode.Tag;
-
-            }
-            catch
-            {
-                if (ExpectedType != BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE)
-                    Trace.WriteLine("This is not a valid node: Wrong node");
-                return false;
-            }
+            device = FetchEndPoint();
+            if (device == null) return false;
 
             //fetch object_id
-            if (
-                m_AddressSpaceTree.SelectedNode == null ||
-                !(m_AddressSpaceTree.SelectedNode.Tag is BacnetObjectId) ||
-                !(((BacnetObjectId)m_AddressSpaceTree.SelectedNode.Tag).type == ExpectedType))
+            if ((m_AddressSpaceTree.SelectedNode != null) && (m_AddressSpaceTree.SelectedNode.Tag is BacnetObjectId objid))
             {
-                String S = ExpectedType.ToString().Substring(7).ToLower();
-                if (ExpectedType != BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE)
-                {
-                    Trace.WriteLine("The marked object is not a " + S);
+                object_id = objid;
+                if (objid.type == ExpectedType)
+                    return true;
+                else
                     return false;
-                }
-            }
-
-            if (m_AddressSpaceTree.SelectedNode != null)
-            {
-                if (m_AddressSpaceTree.SelectedNode.Tag == null) return false;
-                object_id = (BacnetObjectId)m_AddressSpaceTree.SelectedNode.Tag;
-                return true;
             }
 
             return false;
@@ -2262,7 +2237,7 @@ namespace Yabe
                 BACnetDevice device;
                 BacnetObjectId object_id;
 
-                GetObjectLink(out device,out object_id, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
+                GetObjectLink(out device,out object_id);
 
                 BacnetClient comm = device.channel;
                 BacnetAddress adr = device.BacAdr;
@@ -3234,13 +3209,9 @@ namespace Yabe
         private void exportDeviceDBToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
-            BacnetClient comm = null;
-            BacnetAddress adr;
-            uint device_id;
+            BACnetDevice device=FetchEndPoint();
 
-            FetchEndPoint(out comm, out adr, out device_id);
-
-            if (comm == null)
+            if (device == null)
             {
                 MessageBox.Show(this, "Please select a device node", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
@@ -3262,7 +3233,7 @@ namespace Yabe
                 //get all objects
                 System.IO.BACnet.Storage.DeviceStorage storage = new System.IO.BACnet.Storage.DeviceStorage();
                 IList<BacnetValue> value_list;
-                comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list);
+                device.ReadPropertyRequest(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list);
                 LinkedList<BacnetObjectId> object_list = new LinkedList<BacnetObjectId>();
                 foreach (BacnetValue value in value_list)
                 {
@@ -3277,7 +3248,7 @@ namespace Yabe
                     //read all properties
                     IList<BacnetReadAccessResult> multi_value_list;
                     BacnetPropertyReference[] properties = new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_ALL, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL) };
-                    comm.ReadPropertyMultipleRequest(adr, object_id, properties, out multi_value_list);
+                    device.ReadPropertyMultipleRequest(object_id, properties, out multi_value_list);
 
                     //store
                     foreach (BacnetPropertyValue value in multi_value_list[0].values)
@@ -3450,32 +3421,14 @@ namespace Yabe
             timeSynchronizeToolStripMenuItem_Click(this, null);
         }
 
-        /// <summary>
-        /// Retreive the BacnetClient, BacnetAddress, device id of the selected node, all way before BACnetDevice object as TreeNode Tag
-        /// </summary>
-        private bool FetchEndPoint(out BacnetClient comm, out BacnetAddress adr, out uint device_id) => FetchEndPoint(m_DeviceTree.SelectedNode, out comm, out adr, out device_id);
-        /// <summary>
-        /// Retreive the BacnetClient, BacnetAddress, device id of <paramref name="node"/>.
-        /// </summary>
-        private bool FetchEndPoint(TreeNode node, out BacnetClient comm, out BacnetAddress adr, out uint device_id)
-        {
-            comm = null; adr = null; device_id = 0;
-
-            if (node == null) return false;
-            else if (node.Tag == null) return false;
-            else if (!(node.Tag is BACnetDevice)) return false;
-
-            BACnetDevice entry = (BACnetDevice)node.Tag;
-            adr = entry.BacAdr;
-            device_id = entry.deviceId;
-            comm = entry.channel;
-            return true;
-
-        }
+        // Get the current device associated to the current node, or a node
         private BACnetDevice FetchEndPoint() => FetchEndPoint(m_DeviceTree.SelectedNode);
         private BACnetDevice FetchEndPoint(TreeNode node)
         {
-            return (node.Tag as BACnetDevice);
+            if (node != null)
+                return (node.Tag as BACnetDevice);
+            else
+                return null;
         }
         private void FetchEndPoint(out List<BACnetDevice> endPoints)
         {
@@ -3484,6 +3437,7 @@ namespace Yabe
             if (device != null)
                 endPoints.Add(device);
         }
+        // Get all devices
         private void FetchEndPoints(out List<BACnetDevice> endPoints)
         {
             lock (m_devices)
@@ -3510,19 +3464,15 @@ namespace Yabe
                         
                 }
             }
-            throw new KeyNotFoundException($"Failed to determine node of device with ID {deviceId}!");
+            return null;
         }
 
         private void timeSynchronizeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
-            BacnetClient comm = null;
-            BacnetAddress adr;
-            uint device_id;
+            BACnetDevice device = FetchEndPoint();
 
-            FetchEndPoint(out comm, out adr, out device_id);
-
-            if (comm == null)
+            if (device == null)
             {
                 MessageBox.Show(this, "Please select a device node", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
@@ -3530,9 +3480,9 @@ namespace Yabe
 
             //send
             if(Properties.Settings.Default.TimeSynchronize_UTC)
-                comm.SynchronizeTime(adr, DateTime.Now.ToUniversalTime(), true);
+                device.channel.SynchronizeTime(device.BacAdr, DateTime.Now.ToUniversalTime(), true);
             else
-                comm.SynchronizeTime(adr, DateTime.Now, false);
+                device.channel.SynchronizeTime(device.BacAdr, DateTime.Now, false);
 
             //done
             MessageBox.Show(this, "OK", "Time Synchronize", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -3541,13 +3491,9 @@ namespace Yabe
         private void communicationControlToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
-            BacnetClient comm = null;
-            BacnetAddress adr;
-            uint device_id;
+            BACnetDevice device = FetchEndPoint();
 
-            FetchEndPoint(out comm, out adr, out device_id);
-
-            if (comm == null)
+            if (device == null)
             {
                 MessageBox.Show(this, "Please select a device node", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
@@ -3560,7 +3506,7 @@ namespace Yabe
             if (dlg.IsReinitialize)
             {
                 //Reinitialize Device
-                if (!comm.ReinitializeRequest(adr, dlg.ReinitializeState, dlg.Password))
+                if (!device.channel.ReinitializeRequest(device.BacAdr, dlg.ReinitializeState, dlg.Password))
                     MessageBox.Show(this, "Couldn't perform device communication control", "Device Communication Control", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 else
                     MessageBox.Show(this, "OK", "Device Communication Control", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -3568,7 +3514,7 @@ namespace Yabe
             else
             {
                 //Device Communication Control
-                if (!comm.DeviceCommunicationControlRequest(adr, dlg.Duration, dlg.DisableCommunication ? (uint)1 : (uint)0, dlg.Password))
+                if (!device.channel.DeviceCommunicationControlRequest(device.BacAdr, dlg.Duration, dlg.DisableCommunication ? (uint)1 : (uint)0, dlg.Password))
                     MessageBox.Show(this, "Couldn't perform device communication control", "Device Communication Control", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 else
                     MessageBox.Show(this, "OK", "Device Communication Control", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -4110,14 +4056,13 @@ namespace Yabe
         private void createObjectToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
-            BacnetClient comm = null;
-            BacnetAddress adr;
-            uint device_id;
+            BACnetDevice device=FetchEndPoint();
 
-            FetchEndPoint(out comm, out adr, out device_id);
-
-            if (comm == null)
+            if (device == null)
+            {
+                MessageBox.Show(this, "Please select a device node", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
+            }
 
             CreateObject F = new CreateObject();
             if (F.ShowDialog() == DialogResult.OK)
@@ -4136,7 +4081,7 @@ namespace Yabe
                         initialvalues[0].value = new BacnetValue[1];
                         initialvalues[0].value[0] = new BacnetValue(F.ObjectName.Text);
                     }
-                    comm.CreateObjectRequest(adr, new BacnetObjectId((BacnetObjectTypes)F.ObjectType.SelectedIndex, (uint)F.ObjectId.Value), initialvalues);
+                    device.channel.CreateObjectRequest(device.BacAdr, new BacnetObjectId((BacnetObjectTypes)F.ObjectType.SelectedIndex, (uint)F.ObjectId.Value), initialvalues);
 
                     m_DeviceTree_AfterSelect("ObjNewDelete", new TreeViewEventArgs(this._selectedDevice));
                 }
@@ -4151,14 +4096,11 @@ namespace Yabe
 
         private void editBBMDTablesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            BacnetClient comm = null;
-            BacnetAddress adr;
-            uint device_id;
 
-            FetchEndPoint(out comm, out adr, out device_id);
+            BACnetDevice device=FetchEndPoint();
 
-            if ((comm != null) && (comm.Transport is BacnetIpUdpProtocolTransport) && (adr != null) && (adr.RoutedSource == null))
-                new BBMDEditor(comm, adr).ShowDialog();
+            if ((device != null) && (device.channel.Transport is BacnetIpUdpProtocolTransport) && (device.BacAdr != null) && (device.BacAdr.RoutedSource == null))
+                new BBMDEditor(device.channel, device.BacAdr).ShowDialog();
             else
                 MessageBox.Show("An IPv4 device is required", "Wrong device", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
@@ -4310,7 +4252,6 @@ namespace Yabe
         {
             this.m_SubscriptionView.SelectedItems.Clear();
             UpdateGrid(e.Node);
-            BacnetObjectId objId;
 
             // Hide all elements in the toolstip menu
             foreach (object its in m_AddressSpaceMenuStrip.Items)
@@ -4322,7 +4263,8 @@ namespace Yabe
 
             // Get the node type
             BACnetDevice device;
-            GetObjectLink(out device, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
+            BacnetObjectId objId;
+            GetObjectLink(out device, out objId); // objId cannot be null it's a value type
             // Set visible some elements depending of the object type
             switch (objId.type)
             {
@@ -4628,7 +4570,7 @@ namespace Yabe
         {
             // Updates controls enabled state.
             FetchEndPoints(out var endPoints);
-            exportEDEFilesSelDeviceToolStripMenuItem.Enabled = FetchEndPoint(out _, out _, out _);
+            exportEDEFilesSelDeviceToolStripMenuItem.Enabled = (FetchEndPoint() != null);
             exportEDEFilesAllDevicesToolStripMenuItem.Enabled = (endPoints.Count >= 1);
         }
 
@@ -4788,7 +4730,7 @@ namespace Yabe
 
         private void LblLog_DoubleClick(object sender, EventArgs e)
         {
-            m_LogText.Text = "";
+            m_LogText.Text = "";    // Clear the Log
         }
 
         #region "YabeServer"

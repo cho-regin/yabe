@@ -244,9 +244,9 @@
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(20, 59);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(147, 13);
+            this.label4.Size = new System.Drawing.Size(151, 13);
             this.label4.TabIndex = 28;
-            this.label4.Text = "Optional VMAC (Hexa values)";
+            this.label4.Text = "Optional VMAC (6 Hexa Bytes)";
             // 
             // VMAC
             // 

@@ -1280,7 +1280,7 @@ namespace Utilities
             return base.ConvertFrom(context, culture, value);
         }
     }
-    public class BacnetObjectIdentifierConverter : ExpandableObjectConverter
+    public class BacnetObjectIdentifierConverter : TypeConverter
     {
 
         public override bool CanConvertTo(ITypeDescriptorContext context,

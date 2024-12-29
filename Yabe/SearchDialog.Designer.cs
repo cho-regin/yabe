@@ -514,11 +514,13 @@
             // 
             // m_EthernetInterfaceCombo
             // 
+            this.m_EthernetInterfaceCombo.Enabled = false;
             this.m_EthernetInterfaceCombo.FormattingEnabled = true;
             this.m_EthernetInterfaceCombo.Location = new System.Drawing.Point(13, 48);
             this.m_EthernetInterfaceCombo.Name = "m_EthernetInterfaceCombo";
             this.m_EthernetInterfaceCombo.Size = new System.Drawing.Size(271, 21);
             this.m_EthernetInterfaceCombo.TabIndex = 12;
+            this.m_EthernetInterfaceCombo.Text = "Wait ...";
             // 
             // label11
             // 
@@ -532,6 +534,7 @@
             // m_AddEthernetButton
             // 
             this.m_AddEthernetButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.m_AddEthernetButton.Enabled = false;
             this.m_AddEthernetButton.Location = new System.Drawing.Point(234, 16);
             this.m_AddEthernetButton.Name = "m_AddEthernetButton";
             this.m_AddEthernetButton.Size = new System.Drawing.Size(60, 23);

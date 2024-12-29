@@ -38,6 +38,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Xml.Serialization;
+using System.Threading;
 
 namespace Yabe
 {
@@ -58,7 +59,7 @@ namespace Yabe
             m_SerialPortCombo.Items.AddRange(ports);
             m_SerialPtpPortCombo.Items.AddRange(ports);
 
-            if (Environment.OSVersion.Platform == System.PlatformID.Win32Windows) 
+            if (Environment.OSVersion.Platform.ToString().Contains("Win32")) 
             {
                 //find all pipe transports that's pretending to be com ports  : fail on Linux
                 ports = BacnetPipeTransport.AvailablePorts;
@@ -68,11 +69,23 @@ namespace Yabe
                         m_SerialPortCombo.Items.Add(str);
                         m_SerialPtpPortCombo.Items.Add(str);
                     }
-
-                //select first
-                if (m_SerialPortCombo.Items.Count > 0) m_SerialPortCombo.SelectedItem = m_SerialPortCombo.Items[0];
-                if (m_SerialPtpPortCombo.Items.Count > 0) m_SerialPtpPortCombo.SelectedItem = m_SerialPtpPortCombo.Items[0];
             }
+
+            //select first
+            if (m_SerialPortCombo.Items.Count > 0) m_SerialPortCombo.SelectedItem = m_SerialPortCombo.Items[0];
+            if (m_SerialPtpPortCombo.Items.Count > 0) m_SerialPtpPortCombo.SelectedItem = m_SerialPtpPortCombo.Items[0];
+        }
+
+        private void SearchDialog_Load(object sender, EventArgs e)
+        {
+            //get all local endpoints for udp
+            string[] local_endpoints = GetAvailableIps();
+            m_localUdpEndpointsCombo.Items.Clear();
+            m_localUdpEndpointsCombo.Items.AddRange(local_endpoints);
+
+            // try to get Ethernet interfaces. It takes a while, so I put it in a separate thread
+            // not in the Thread Pool to achieve the job up to the end even if the form is closed
+            new Thread(FillEthernetInterface).Start();
         }
 
         private void m_SearchIpButton_Click(object sender, EventArgs e)
@@ -170,9 +183,23 @@ namespace Yabe
         }
 
 
-        private void FillEthernetInterface()
+        private void FillEthernetInterface() // do not run in the main Thread
         {
-            var devices = LibPcapLiveDeviceList.Instance.Where(dev => dev.Interface != null);
+           IEnumerable<LibPcapLiveDevice> devices;
+
+            try
+            {
+                devices = LibPcapLiveDeviceList.Instance.Where(dev => dev.Interface != null);
+            }
+            catch 
+            {
+                try // Form can be Disposed
+                {
+                    BeginInvoke(new Action(() => { m_EthernetInterfaceCombo.Text = "NPcap in WinPcap compatiblity mode not avaialble"; }));
+                }
+                catch { } 
+                return;
+            }
 
             foreach (var device in devices)
             {
@@ -181,31 +208,25 @@ namespace Yabe
                     try
                     {
                         device.Open();
-                        if (device.LinkType == PacketDotNet.LinkLayers.Ethernet
-                            && device.Interface.MacAddress != null)
-                            m_EthernetInterfaceCombo.Items.Add(device.Interface.FriendlyName + ": " + device.Interface.Description);
+                        try // Form can be Disposed
+                        {
+                            if (device.LinkType == PacketDotNet.LinkLayers.Ethernet && device.Interface.MacAddress != null)
+                                BeginInvoke(new Action(() => { m_EthernetInterfaceCombo.Items.Add(device.Interface.FriendlyName + ": " + device.Interface.Description); }));
+                        }
+                        catch { }
+
                         device.Close();
                     }
                     catch { }
                 }
             }
-        }
 
-        private void SearchDialog_Load(object sender, EventArgs e)
-        {
-            //get all local endpoints for udp
-            string[] local_endpoints = GetAvailableIps();
-            m_localUdpEndpointsCombo.Items.Clear();
-            m_localUdpEndpointsCombo.Items.AddRange(local_endpoints);
-
-            // try to get Ethernet interfaces
-            try
+            try // Form can be Disposed
             {
-                FillEthernetInterface();
-            }
-            catch { }
+                BeginInvoke(new Action(() => { m_EthernetInterfaceCombo.Text = ""; m_AddEthernetButton.Enabled=m_EthernetInterfaceCombo.Enabled = true; }));
+            } 
+            catch { } 
         }
-
         public static string[] GetAvailableIps()
         {
             List<string> ips = new List<string>();
