@@ -139,7 +139,7 @@
             this.ack_offnormal = new System.Windows.Forms.Button();
             this.manual_refresh_properties = new System.Windows.Forms.Button();
             this.m_DataGrid = new System.Windows.Forms.PropertyGrid();
-            this.label1 = new System.Windows.Forms.Label();
+            this.LblProperties = new System.Windows.Forms.Label();
             this.m_LogText = new System.Windows.Forms.TextBox();
             this.LblLog = new System.Windows.Forms.Label();
             this.m_subscriptionRenewTimer = new System.Windows.Forms.Timer(this.components);
@@ -952,7 +952,7 @@
             this.m_SplitContainerRight.Panel2.Controls.Add(this.ack_offnormal);
             this.m_SplitContainerRight.Panel2.Controls.Add(this.manual_refresh_properties);
             this.m_SplitContainerRight.Panel2.Controls.Add(this.m_DataGrid);
-            this.m_SplitContainerRight.Panel2.Controls.Add(this.label1);
+            this.m_SplitContainerRight.Panel2.Controls.Add(this.LblProperties);
             this.m_SplitContainerRight.Size = new System.Drawing.Size(671, 544);
             this.m_SplitContainerRight.SplitterDistance = 467;
             this.m_SplitContainerRight.TabIndex = 0;
@@ -1348,15 +1348,15 @@
             this.m_DataGrid.TabIndex = 0;
             this.m_DataGrid.PropertyValueChanged += new System.Windows.Forms.PropertyValueChangedEventHandler(this.m_DataGrid_PropertyValueChanged);
             // 
-            // label1
+            // LblProperties
             // 
-            this.label1.AutoSize = true;
-            this.label1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.label1.Location = new System.Drawing.Point(0, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(54, 13);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Properties";
+            this.LblProperties.AutoSize = true;
+            this.LblProperties.Dock = System.Windows.Forms.DockStyle.Top;
+            this.LblProperties.Location = new System.Drawing.Point(0, 0);
+            this.LblProperties.Name = "LblProperties";
+            this.LblProperties.Size = new System.Drawing.Size(54, 13);
+            this.LblProperties.TabIndex = 1;
+            this.LblProperties.Text = "Properties";
             // 
             // m_LogText
             // 
@@ -1479,7 +1479,7 @@
         private System.Windows.Forms.PropertyGrid m_DataGrid;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label AddSpaceLabel;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label LblProperties;
         private System.Windows.Forms.Label LblLog;
         private System.Windows.Forms.ToolStripMenuItem searchToolStripMenuItem;
         private System.Windows.Forms.ToolStripButton m_SearchToolButton;

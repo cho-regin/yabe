@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Description of Object & Properties filtered when using the FieldTechnicianView or when display mode is toogle with <CTRL><ALT><S>
+Can be modified as you want. Yabe restart is required. Looks at the Log Window to see if errors occur at boot time.
+Build it step by step ! 
+Objects and properties not here are not displayed.
+  <typeId>OBJECT_ANALOG_INPUT</typeId> : the correct name could be seen in Yabe Adress Space (uppercase with OBJECT and _)
+  <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds> : the correct name could be seen in the Properties grid (uppercase with PROP and _)
+If the BacnetPropertyIds list is empty the objects can be seen in the address space but without any property associated.
+VIEW and GROUP are here otherwise objects under them will be hidden even if listed in this file.
+DEVICE can be removed as all other objects.
+-->
+
+<ArrayOfBacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_STRUCTURED_VIEW</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_GROUP</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_DEVICE</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_ACTIVE_COV_SUBSCRIPTIONS</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_SYSTEM_STATUS</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_TIME_OF_DEVICE_RESTART</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_ANALOG_INPUT</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_SYSTEM_STATUS</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_RELIABILITY</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_ANALOG_OUTPUT</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_SYSTEM_STATUS</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_RELIABILITY</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRIORITY_ARRAY</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_ANALOG_VALUE</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_SYSTEM_STATUS</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_RELIABILITY</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRIORITY_ARRAY</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_BINARY_INPUT</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_SYSTEM_STATUS</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_RELIABILITY</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_BINARY_OUTPUT</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_SYSTEM_STATUS</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_RELIABILITY</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRIORITY_ARRAY</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_BINARY_VALUE</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_SYSTEM_STATUS</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_RELIABILITY</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRIORITY_ARRAY</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_MULTI_STATE_INPUT</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_SYSTEM_STATUS</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_RELIABILITY</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_STATE_TEXT</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_MULTI_STATE_OUTPUT</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_SYSTEM_STATUS</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_RELIABILITY</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRIORITY_ARRAY</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_STATE_TEXT</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_MULTI_STATE_VALUE</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_SYSTEM_STATUS</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_RELIABILITY</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRIORITY_ARRAY</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_STATE_TEXT</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_TRENDLOG</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_CALENDAR</typeId>
+    <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
+      <BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+</ArrayOfBacnetObjectDescription>

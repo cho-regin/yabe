@@ -112,6 +112,8 @@ namespace Yabe
         YabeMainDialog yabeFrm; // Ref to itself, already affected, usefull for plugin developpmenet inside this code, before exporting it
 
         string[] ExpandedProperties; // List of properties always expanded in the properties grid, from a Setting property
+        List<BacnetObjectDescription> SimplifiedViewFilter;
+        bool ToogleViewSimplified = false; // Used to change the view mode independently of the chosen setting mode (short cut : ctrl alt S)
 
         public bool GetSetting_TimeSynchronize_UTC() // GlobalCommander is using it
         {
@@ -143,8 +145,6 @@ namespace Yabe
 
             InitializeComponent();
             Trace.Listeners.Add(new MyTraceListener(this));
-
-            BACnetDevice.LoadVendorPropertyMapping();
 
             if (_plotterRunningFlag)
             {
@@ -639,6 +639,21 @@ namespace Yabe
 
             if (Properties.Settings.Default.GridAlwaysExpandProperties!="")
                 ExpandedProperties= Properties.Settings.Default.GridAlwaysExpandProperties.Split(new char[] { ',', ';' });
+
+            if (File.Exists("SimplifiedViewFilter.xml"))
+                try
+                {
+                    StreamReader sr;
+                    XmlSerializer xs = new XmlSerializer(typeof(List<BacnetObjectDescription>));
+                    sr = new StreamReader("SimplifiedViewFilter.xml");
+                    SimplifiedViewFilter = (List<BacnetObjectDescription>)xs.Deserialize(sr);
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine("Error with SimplifiedViewFilter.xml :" + ex.Message);
+                }
+
+            BACnetDevice.LoadVendorPropertyMapping();
 
             // Object Names
             if (Properties.Settings.Default.Auto_Store_Object_Names)
@@ -1174,6 +1189,11 @@ namespace Yabe
         {
             bool iAmTheCreator = false;
             bool recursionDetected = false;
+
+            if (((Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.FieldTechnician) ^ ToogleViewSimplified==true) && (SimplifiedViewFilter != null))
+                if (!SimplifiedViewFilter.Exists(o => o.typeId == object_id.Type))
+                    return;
+
             if (object_id.type==BacnetObjectTypes.OBJECT_STRUCTURED_VIEW)
             {
                 if(_structuredViewParents==null)
@@ -1373,14 +1393,23 @@ namespace Yabe
         {
 
             AsynchRequestId++; // disabled a possible thread pool work (update) on the AddressSpaceTree
+            if (((Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.FieldTechnician) ^ ToogleViewSimplified == true) && (SimplifiedViewFilter != null))
+                LblProperties.Text = "Properties (Simplified)";
+            else
+                LblProperties.Text = "Properties";
+
             TreeNode node = e.Node;
+
+            if (node == null) return;
+
             //_selectedDevice = null;
-            BACnetDevice device = e.Node.Tag as BACnetDevice;
+            BACnetDevice device = node.Tag as BACnetDevice;
 
             if (device == null) return;  // Not a TreeNode linked to a device
 
             if ((sender == manual_refresh_objects) || (sender as String == "ObjNewDelete" ) || (!Properties.Settings.Default.UseObjectsCache))
                 device.ClearCache();
+
 
             m_AddressSpaceTree.Nodes.Clear();   //clear
             AddSpaceLabel.Text = "Address Space";
@@ -1613,11 +1642,20 @@ namespace Yabe
 
                 bool[] showAlarmAck = new bool[3] {false, false, false };
 
+                List<BacnetPropertyIds> PropertyFilter =null;
+                if (((Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.FieldTechnician) ^ ToogleViewSimplified == true) && (SimplifiedViewFilter != null))
+                    PropertyFilter = SimplifiedViewFilter.Find(o => o.typeId == object_id.Type).propsId;
+
                 //update grid
                 Utilities.DynamicPropertyGridContainer bag = new Utilities.DynamicPropertyGridContainer();
 
                 foreach (BacnetPropertyValue p_value in multi_value_list[0].values)
                 {
+
+                    // Do not displays property if requested
+                    if ((PropertyFilter != null) &&(!PropertyFilter.Exists(o => o == (BacnetPropertyIds)p_value.property.propertyIdentifier)))
+                        continue;
+
                     object value = null;
                     BacnetValue[] b_values = null;
                     if (p_value.value != null)
@@ -4174,6 +4212,12 @@ namespace Yabe
             if ((e.Modifiers == (Keys.Control | Keys.Alt)))
             {
 
+                if (e.KeyCode == Keys.S)
+                {
+                    ToogleViewSimplified = !ToogleViewSimplified;
+                    m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(this._selectedDevice));
+                }
+
                 if ((e.KeyCode >= Keys.D0 && e.KeyCode <= Keys.D9) || (e.KeyCode >= Keys.NumPad0 && e.KeyCode <= Keys.NumPad9))
                 {
                     string s = e.KeyCode.ToString();
@@ -4829,6 +4873,7 @@ namespace Yabe
     {
         List,
         Structured,
-        Both
+        Both,
+        FieldTechnician
     }
 }

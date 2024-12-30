@@ -149,6 +149,10 @@ namespace Yabe
             [Description("Displays the description of objects in some places (requires more network activities to get it).")]
             [Category(CAT_GUI)]
             public bool ShowDescriptionWhenUseful { set { instance.ShowDescriptionWhenUseful = value; } get { return instance.ShowDescriptionWhenUseful; } }
+            [DisplayName("Address space view")]
+            [Description("The Addendum 135d defines a 'Structured View' entry in the address space. This enables a hierarchical address space (selection 'Structured'). Though if you like the flat model better, set this to 'List'. The option both combines both display modes. FieldTechnician view is a flat view with filter described in the file SimplifiedViewFilter.xml")]
+            [Category(CAT_GUI)]
+            public AddressTreeViewType Address_Space_Structured_View { set { instance.Address_Space_Structured_View = value; } get { return instance.Address_Space_Structured_View; } }
             [DisplayName("Display ID with name")]
             [Description("Leaves properties Id (such as ANALOG_INPUT:0) along with the properties name or hides this Id.")]
             [Category(CAT_GUI)]
@@ -282,11 +286,7 @@ namespace Yabe
             [Category(CAT_SC)]
             public string BACnetSCConfigFile { set { instance.BACnetSCConfigFile = value; } get { return instance.BACnetSCConfigFile; } }
 
-            [DisplayName("Address space structured view")]
-            [Description("The Addendum 135d defines a 'Structured View' entry in the address space. This enables a hierarchical address space (selection 'Structured'). Though if you like the flat model better, set this to 'List'. The option both combines both display modes.")]
-            [Category(CAT_GENERAL)]
-            public AddressTreeViewType Address_Space_Structured_View { set { instance.Address_Space_Structured_View = value; } get { return instance.Address_Space_Structured_View; } }
-            [DisplayName("Default retries")]
+             [DisplayName("Default retries")]
             [Description("Number of APDU retries when no response is given to a request (such as read, write, ...)")]
             [Category(CAT_GENERAL)]
             public decimal DefaultRetries { set { instance.DefaultRetries = value; } get { return instance.DefaultRetries; } }

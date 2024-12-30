@@ -246,7 +246,25 @@
 			Leaves properties Id (such as ANALOG_INPUT:0) along with the properties 
  			name or hides this Id.
 
-		2.7.14 Plugins
+		2.7.14 Address space view & Properties
+			The Addendum 135d defines a 'Structured View' entry in the address space. 
+			This enables a hierarchical address space (selection 'Structured'). 
+			Though if you like the flat model better, set this to 'List'. 
+			The option both combines both display modes. 
+			FieldTechnician view is a flat view with filter described in the file 
+			SimplifiedViewFilter.xml.
+			This Simplified view can be activated/desactivated with the shortcut 
+			<Ctrl><Alt> + S
+
+		2.7.15 Expand properties
+			Array and structure can be atomaticaly expanded using two parameters
+			"Auto Expand Grid Array Max Size" & "Always Expanded Properties".
+			The first one opens all Array with a size inferior to the value.
+			The second always opens Array and structure given in the comma 
+			separated String, even with a hugh size.
+			0 and an empty String are accepted.
+
+		2.7.16 Plugins
 			List of plugins to be loaded (see  2.9).
 
 	2.8 Bacnet Object name
@@ -379,7 +397,7 @@
 9.  CONTRIBUTORS, in order of apearance
 	Morten Kvistgaard	2014-2016	PCH Engineering/Danemark
 	Frédéric Chaxel		2015-2024	University of Lorraine/France
-	Adam Guzik		2015		Quark Communications, Inc/USA
+	Adam Guzik			2015		Quark Communications, Inc/USA
 	Christopher Günther	2015, 2019
 	Thamer Al-Salek		2016
 	Alexander Jaszkowski	2016-2024	Sauter/Germany

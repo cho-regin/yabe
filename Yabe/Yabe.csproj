@@ -277,6 +277,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="SimplifiedViewFilter.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <EmbeddedResource Include="YabeDeviceDescriptor.xml">
       <SubType>Designer</SubType>
     </EmbeddedResource>
