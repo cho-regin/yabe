@@ -257,7 +257,7 @@ namespace Yabe
             try
             {
                 int localBufSize = comm.GetFileBufferMaxSize();
-                int remoteBufSize = device.MaxAPDULenght - 18;
+                int remoteBufSize = (int)device.MaxAPDULenght - 18;
 
                 if (remoteBufSize < 0) // Unknown value
                 {
@@ -267,8 +267,8 @@ namespace Yabe
                         IList<BacnetValue> val = new List<BacnetValue>();
                         if (device.ReadPropertyRequest(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId), BacnetPropertyIds.PROP_MAX_APDU_LENGTH_ACCEPTED, out val) == true)
                         {
-                            device.MaxAPDULenght = Convert.ToInt32(val[0].Value);
-                            remoteBufSize = device.MaxAPDULenght - 18;
+                            device.MaxAPDULenght = Convert.ToUInt32(val[0].Value);
+                            remoteBufSize = (int)device.MaxAPDULenght - 18;
                         }
                     }
                     catch { }

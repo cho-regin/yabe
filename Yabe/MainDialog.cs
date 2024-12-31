@@ -29,13 +29,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.IO.BACnet;
-using System.IO.BACnet.Storage;
 using System.Linq;
 using System.Media;
 using System.Net;
@@ -108,7 +106,7 @@ namespace Yabe
         private Random _rand = new Random();
         private uint m_next_subscription_id = 0;
 
-        private static DeviceStorage m_storage;
+        YabeDevice m_Server;
 
         YabeMainDialog yabeFrm; // Ref to itself, already affected, usefull for plugin developpmenet inside this code, before exporting it
 
@@ -669,33 +667,16 @@ namespace Yabe
                 sender.SimpleAckResponse(adr, BacnetConfirmedServices.SERVICE_CONFIRMED_COV_NOTIFICATION, invoke_id);
             }
         }
-       
-        private TreeNode FindCommTreeNode(BacnetClient comm)
-        {
-            foreach (TreeNode node in m_DeviceTree.Nodes[0].Nodes)
-            {
-                BacnetClient c = node.Tag as BacnetClient;
-                if(c != null && c.Equals(comm)) return node;
-            }
-            return null;
-        }
-        private TreeNode FindCommTreeNode(IBacnetTransport transport)
-        {
-            foreach (TreeNode node in m_DeviceTree.Nodes[0].Nodes)
-            {
-                BacnetClient c = node.Tag as BacnetClient;
-                if (c != null && c.Transport.Equals(transport)) return node;
-            }
-            return null;
-        }
+        
         void OnIam(BacnetClient sender, BacnetAddress adr, uint device_id, uint max_apdu, BacnetSegmentations segmentation, ushort vendor_id)
         {
-            DoReceiveIamImplementation(sender, adr, device_id, vendor_id);
+            DoReceiveIamImplementation(sender, adr, device_id, max_apdu, vendor_id);
         }
 
-        private void DoReceiveIamImplementation(BacnetClient sender, BacnetAddress adr, uint device_id, uint vendor_id)
+        private void DoReceiveIamImplementation(BacnetClient sender, BacnetAddress adr, uint device_id, uint max_apdu, uint vendor_id)
         {
-            BACnetDevice new_device = new BACnetDevice(sender, adr, device_id, vendor_id);
+
+            BACnetDevice new_device = new BACnetDevice(sender, adr, device_id, max_apdu, vendor_id);
             lock (m_devices)
             {
                 int idx = m_devices[sender].Devices.IndexOf(new_device);
@@ -849,37 +830,22 @@ namespace Yabe
                     comm.Retries = (int)Properties.Settings.Default.DefaultRetries;
                     comm.Timeout = (int)Properties.Settings.Default.DefaultTimeout;
                     comm.MaxSegments = BacnetClient.GetSegmentsCount(Properties.Settings.Default.Segments_Max);
+
                     if (Properties.Settings.Default.YabeDeviceId >= 0) // If Yabe get a Device id
                     {
-                        if (m_storage == null)
-                        {
-                            // Load descriptor from the embedded xml resource
-                            m_storage = m_storage = DeviceStorage.Load("Yabe.YabeDeviceDescriptor.xml", (uint)Properties.Settings.Default.YabeDeviceId);
-                            // A fast way to change the PROP_OBJECT_LIST
-                            Property Prop = Array.Find<Property>(m_storage.Objects[0].Properties, p => p.Id == BacnetPropertyIds.PROP_OBJECT_LIST);
-                            Prop.Value[0] = "OBJECT_DEVICE:" + Properties.Settings.Default.YabeDeviceId.ToString();
-                            // change PROP_FIRMWARE_REVISION
-                            Prop = Array.Find<Property>(m_storage.Objects[0].Properties, p => p.Id == BacnetPropertyIds.PROP_FIRMWARE_REVISION);
-                            Prop.Value[0] = this.GetType().Assembly.GetName().Version.ToString();
-                            // change PROP_APPLICATION_SOFTWARE_VERSION
-                            Prop = Array.Find<Property>(m_storage.Objects[0].Properties, p => p.Id == BacnetPropertyIds.PROP_APPLICATION_SOFTWARE_VERSION);
-                            Prop.Value[0] = this.GetType().Assembly.GetName().Version.ToString();
-                        }
-                        comm.OnWhoIs += OnWhoIs;
-                        comm.OnReadPropertyRequest += OnReadPropertyRequest;
-                        comm.OnReadPropertyMultipleRequest += OnReadPropertyMultipleRequest;
+                        if (m_Server == null)
+                            m_Server = new YabeDevice((uint)Properties.Settings.Default.YabeDeviceId);
+                        m_Server.AddCom(comm);
                     }
                     else
-                    {
-                        comm.OnWhoIs += OnWhoIsIgnore;
-                    }
+                        comm.OnWhoIs += (_,__,___,____)=>{ };    // Ignore OnWhois
+
                     comm.OnIam += OnIam;
                     comm.OnCOVNotification += OnCOVNotification;
                     comm.OnEventNotify += OnEventNotify;
                     comm.Start();
 
-                    if ((Properties.Settings.Default.YabeDeviceId >= 0)&((comm.Transport is BacnetMstpProtocolTransport && ((BacnetMstpProtocolTransport)comm.Transport).SourceAddress != -1)))
-                        comm.Iam((uint)Properties.Settings.Default.YabeDeviceId, BacnetSegmentations.SEGMENTATION_BOTH, 61440);
+                    m_Server?.Iam(comm); // will not be done if not appropriated
 
                     if (dlg.chkSendWhois.Checked == true)
                     {
@@ -923,10 +889,6 @@ namespace Yabe
                     MessageBox.Show(this, "Couldn't start Bacnet communication: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-        }
-
-        private void Comm_OnWhoIs(BacnetClient sender, BacnetAddress adr, int low_limit, int high_limit)
-        {
         }
 
         private void MSTP_FrameRecieved(BacnetMstpProtocolTransport sender, BacnetMstpFrameTypes frame_type, byte destination_address, byte source_address, int msg_length)
@@ -1003,11 +965,6 @@ namespace Yabe
             }
         }
 
-        private void m_SearchToolButton_Click(object sender, EventArgs e)
-        {
-            addDevicesearchToolStripMenuItem_Click(this, null);
-        }
-
         private void RemoveSubscriptions(BACnetDevice device, BacnetClient comm)
         {
             LinkedList<string> deletes = new LinkedList<string>();
@@ -1040,7 +997,7 @@ namespace Yabe
 
             CovGraph.AxisChange();
             CovGraph.Invalidate();
-        }        
+        }
 
         private void removeDeviceToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1083,6 +1040,8 @@ namespace Yabe
                             AddSpaceLabel.Text = "Address Space";
                             m_DataGrid.SelectedObject = null;   //clear property grid
                     }
+
+                    m_Server.RemoveCom(comm_entry);
                     m_devices.Remove(comm_entry);
                     m_DeviceTree.Nodes.Remove(m_DeviceTree.SelectedNode);
                     RemoveSubscriptions(null, comm_entry);
@@ -1090,12 +1049,6 @@ namespace Yabe
                 }
             }
         }
-
-        private void m_RemoveToolButton_Click(object sender, EventArgs e)
-        {
-            removeDeviceToolStripMenuItem_Click(this, null);
-        }
-
         public static int GetIconNum(BacnetObjectTypes object_type)
         {
             switch (object_type)
@@ -1129,11 +1082,6 @@ namespace Yabe
                 default:
                     return 4;
             }
-        }
-        private void SetNodeIcon(BacnetObjectTypes object_type, TreeNode node)
-        {
-            node.ImageIndex = GetIconNum(object_type);            
-            node.SelectedImageIndex = node.ImageIndex;
         }
 
         private void AddObjectEntry(BACnetDevice device, string name, BacnetObjectId object_id, TreeNodeCollection nodes, bool ForceRead=false)
@@ -1202,9 +1150,9 @@ namespace Yabe
             if ((!TbxHighlightAddress.Text.IsNullOrEmpty())&&(node.Text.ToLower().Contains(TbxHighlightAddress.Text.ToLower())))
                 node.ForeColor = Color.Red;
 
-            // icon
-            SetNodeIcon(object_id.type, node);
-
+            // Set icon
+            node.ImageIndex = GetIconNum(object_id.type);
+            node.SelectedImageIndex = node.ImageIndex;
 
             //fetch sub properties
             if (object_id.type == BacnetObjectTypes.OBJECT_GROUP)
@@ -1300,7 +1248,7 @@ namespace Yabe
                     if (AsynchRequestId != this.AsynchRequestId) return; // Selected device is no more the good one
 
                     //add to tree
-                    this.Invoke((MethodInvoker)delegate
+                    this.Invoke(new Action( () =>
                     {
                         if (AsynchRequestId != this.AsynchRequestId) return;  // another test in the GUI thread
                         AddObjectEntry(device, null, objId, m_AddressSpaceTree.Nodes, ForceRead);
@@ -1308,7 +1256,7 @@ namespace Yabe
                             AddSpaceLabel.Text = "Address Space : " + i + " objects / " + count + " expected";
                         else
                             AddSpaceLabel.Text = "Address Space : " + i + " objects";
-                    });
+                    }));
                     
                 }
             }
@@ -1533,16 +1481,6 @@ namespace Yabe
                 Trace.TraceError("Couldn't fetch group members: " + ex.Message);
             }
         }
-        private void addDeviceToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            addDevicesearchToolStripMenuItem_Click(this, null);
-        }
-
-        private void removeDeviceToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            removeDeviceToolStripMenuItem_Click(this, null);
-        }
-
         private String UpdateGrid(BACnetDevice device, BacnetObjectId object_id)
         {
             BacnetClient comm = device.channel;
@@ -1604,7 +1542,7 @@ namespace Yabe
                 {
 
                     // Do not displays property if requested
-                    if ((PropertyFilter != null) &&(!PropertyFilter.Exists(o => o == (BacnetPropertyIds)p_value.property.propertyIdentifier)))
+                    if ((PropertyFilter != null) && (!PropertyFilter.Exists(o => o == (BacnetPropertyIds)p_value.property.propertyIdentifier) && (!PropertyFilter.Exists(o=>o == BacnetPropertyIds.MAX_BACNET_PROPERTY_ID))))
                         continue;
 
                     object value = null;
@@ -1632,11 +1570,11 @@ namespace Yabe
                     {
                         // Got two communication parameters about the device, could be used later.
                         case BacnetPropertyIds.PROP_SEGMENTATION_SUPPORTED:
-                            device.Segmentation = (BacnetSegmentations)((uint) value);
+                            device.Segmentation = (BacnetSegmentations)(Convert.ToUInt32(value));
                             bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
                             break;
                         case BacnetPropertyIds.PROP_MAX_APDU_LENGTH_ACCEPTED:
-                            device.MaxAPDULenght = Convert.ToInt32(value);
+                            device.MaxAPDULenght = Convert.ToUInt32(value);
                             bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
                             break;
                         // PROP_PRESENT_VALUE can be write at null value to clear the prioroityarray if exists
@@ -2142,7 +2080,6 @@ namespace Yabe
                 Trace.TraceError("Error loading TrendLog : " + ex.Message);
             }
         }
-        // FC
         private void showScheduleToolStripMenuItem_Click(object sender, EventArgs e)
         {
             try
@@ -3202,56 +3139,7 @@ namespace Yabe
                 }
             }
         }
-
-        private void sendWhoIsToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            sendWhoIsToolStripMenuItem_Click(this, null);
-        }
-
-        private void exportDeviceDBToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            exportDeviceDBToolStripMenuItem_Click(this, null);
-        }
-
-        private void downloadFileToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            downloadFileToolStripMenuItem_Click(this, null);
-        }
-
-        private void showTrendLogToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            showTrendLogToolStripMenuItem_Click(null, null);
-        }
-
-        private void showScheduleToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            showScheduleToolStripMenuItem_Click(null, null);
-        }
-
-        private void showCalendarToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            showCalendarToolStripMenuItem_Click(null, null);
-        }
-
-        private void showNotificationToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            showNotificationToolStripMenuItem_Click(null, null);
-        }
-        private void uploadFileToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            uploadFileToolStripMenuItem_Click(this, null);
-        }
-
-        private void subscribeToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            subscribeToolStripMenuItem_Click(this, null);
-        }
-
-        private void timeSynchronizeToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            timeSynchronizeToolStripMenuItem_Click(this, null);
-        }
-
+  
         // Get the current device associated to the current node, or a node
         private BACnetDevice FetchEndPoint() => FetchEndPoint(m_DeviceTree.SelectedNode);
         private BACnetDevice FetchEndPoint(TreeNode node)
@@ -3294,6 +3182,25 @@ namespace Yabe
                     }
                         
                 }
+            }
+            return null;
+        }
+        TreeNode FindCommTreeNode(BacnetClient comm)
+        {
+            foreach (TreeNode node in m_DeviceTree.Nodes[0].Nodes)
+            {
+                BacnetClient c = node.Tag as BacnetClient;
+                if (c != null && c.Equals(comm)) return node;
+            }
+            return null;
+        }
+
+        TreeNode FindCommTreeNode(IBacnetTransport transport)
+        {
+            foreach (TreeNode node in m_DeviceTree.Nodes[0].Nodes)
+            {
+                BacnetClient c = node.Tag as BacnetClient;
+                if (c != null && c.Transport.Equals(transport)) return node;
             }
             return null;
         }
@@ -3350,11 +3257,6 @@ namespace Yabe
             }
         }
 
-        private void communicationControlToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            communicationControlToolStripMenuItem_Click(this, null);
-        }
-
         private void foreignDeviceRegistrationToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
@@ -3375,12 +3277,6 @@ namespace Yabe
             Form F = new ForeignRegistry(comm);
             F.ShowDialog();
         }
-
-        private void alarmSummaryToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            alarmSummaryToolStripMenuItem_Click(sender, e);
-        }
-
         private void alarmSummaryToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
@@ -3604,10 +3500,6 @@ namespace Yabe
 
         }
 
-        private void createObjectToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            createObjectToolStripMenuItem_Click(sender, e);
-        }
         private void createObjectToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
@@ -3728,6 +3620,11 @@ namespace Yabe
         {
             if ((e.Modifiers == (Keys.Control | Keys.Alt)))
             {
+                if (e.KeyValue == (int)Keys.S)
+                    ToggleViewMenuItem_Click(null, null);
+                    
+                if (e.KeyValue == (int)Keys.N)
+                    readPropertiesNameToolStripMenuItem_Click(null,null);
 
                 if ((e.KeyCode >= Keys.D0 && e.KeyCode <= Keys.D9) || (e.KeyCode >= Keys.NumPad0 && e.KeyCode <= Keys.NumPad9))
                 {
@@ -3969,7 +3866,6 @@ namespace Yabe
                 }
             }
         }
-
         private void DoSaveObjectNames(string path = null)
         {
             string fileTotal;
@@ -4242,25 +4138,20 @@ namespace Yabe
             }
         }
 
-        private void ack_offnormal_Click(object sender, EventArgs e)
+        private void ack_icon_Click(object sender, EventArgs e)
         {
-            DoAck(BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_OFFNORMAL);
-        }
-
-        private void ack_fault_Click(object sender, EventArgs e)
-        {
-            DoAck(BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_FAULT);
-        }
-
-        private void ack_normal_Click(object sender, EventArgs e)
-        {
-            DoAck(BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_NORMAL);
+            if (sender==ack_offnormal)
+                DoAck(BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_OFFNORMAL);
+            if (sender == ack_fault)
+                DoAck(BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_FAULT);
+            if (sender == ack_normal)
+                DoAck(BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_NORMAL);
         }
 
         private void manual_refresh_objects_Click(object sender, EventArgs e)
         {
-           if (_selectedDevice == null) return;
-            m_DeviceTree_AfterSelect(sender, new TreeViewEventArgs(_selectedDevice));
+            if (_selectedDevice == null) return;
+                m_DeviceTree_AfterSelect(sender, new TreeViewEventArgs(_selectedDevice));
         }
 
         private void searchToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -4289,76 +4180,6 @@ namespace Yabe
         {
             m_LogText.Text = "";    // Clear the Log
         }
-
-        #region "YabeServer"
-        // Only the see Yabe on the net
-        void OnWhoIs(BacnetClient sender, BacnetAddress adr, int low_limit, int high_limit)
-        {
-            uint myId = (uint)Properties.Settings.Default.YabeDeviceId;
-
-            if (low_limit != -1 && myId < low_limit) return;
-            else if (high_limit != -1 && myId > high_limit) return;
-            sender.Iam(myId, BacnetSegmentations.SEGMENTATION_BOTH, 61440);
-        }
-
-        void OnWhoIsIgnore(BacnetClient sender, BacnetAddress adr, int low_limit, int high_limit)
-        {
-            //ignore whois responses from other devices (or loopbacks)
-        }
-
-        private void OnReadPropertyRequest(BacnetClient sender, BacnetAddress adr, byte invoke_id, BacnetObjectId object_id, BacnetPropertyReference property, BacnetMaxSegments max_segments)
-        {
-            lock (m_storage)
-            {
-                try
-                {
-                    IList<BacnetValue> value;
-                    DeviceStorage.ErrorCodes code = m_storage.ReadProperty(object_id, (BacnetPropertyIds)property.propertyIdentifier, property.propertyArrayIndex, out value);
-                    if (code == DeviceStorage.ErrorCodes.Good)
-                        sender.ReadPropertyResponse(adr, invoke_id, sender.GetSegmentBuffer(max_segments), object_id, property, value);
-                    else
-                        sender.ErrorResponse(adr, BacnetConfirmedServices.SERVICE_CONFIRMED_READ_PROPERTY, invoke_id, BacnetErrorClasses.ERROR_CLASS_DEVICE, BacnetErrorCodes.ERROR_CODE_OTHER);
-                }
-                catch (Exception)
-                {
-                    sender.ErrorResponse(adr, BacnetConfirmedServices.SERVICE_CONFIRMED_READ_PROPERTY, invoke_id, BacnetErrorClasses.ERROR_CLASS_DEVICE, BacnetErrorCodes.ERROR_CODE_OTHER);
-                }
-            }
-        }
-
-        private static void OnReadPropertyMultipleRequest(BacnetClient sender, BacnetAddress adr, byte invoke_id, IList<BacnetReadAccessSpecification> properties, BacnetMaxSegments max_segments)
-        {
-            lock (m_storage)
-            {
-                try
-                {
-                    IList<BacnetPropertyValue> value;
-                    List<BacnetReadAccessResult> values = new List<BacnetReadAccessResult>();
-                    foreach (BacnetReadAccessSpecification p in properties)
-                    {
-                        if (p.propertyReferences.Count == 1 && p.propertyReferences[0].propertyIdentifier == (uint)BacnetPropertyIds.PROP_ALL)
-                        {
-                            if (!m_storage.ReadPropertyAll(p.objectIdentifier, out value))
-                            {
-                                sender.ErrorResponse(adr, BacnetConfirmedServices.SERVICE_CONFIRMED_READ_PROP_MULTIPLE, invoke_id, BacnetErrorClasses.ERROR_CLASS_OBJECT, BacnetErrorCodes.ERROR_CODE_UNKNOWN_OBJECT);
-                                return;
-                            }
-                        }
-                        else
-                            m_storage.ReadPropertyMultiple(p.objectIdentifier, p.propertyReferences, out value);
-                        values.Add(new BacnetReadAccessResult(p.objectIdentifier, value));
-                    }
-
-                    sender.ReadPropertyMultipleResponse(adr, invoke_id, sender.GetSegmentBuffer(max_segments), values);
-
-                }
-                catch (Exception)
-                {
-                    sender.ErrorResponse(adr, BacnetConfirmedServices.SERVICE_CONFIRMED_READ_PROP_MULTIPLE, invoke_id, BacnetErrorClasses.ERROR_CLASS_DEVICE, BacnetErrorCodes.ERROR_CODE_OTHER);
-                }
-            }
-        }
-        #endregion
 
         private void ToggleViewMenuItem_Click(object sender, EventArgs e)
         {

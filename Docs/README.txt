@@ -254,7 +254,7 @@
 			FieldTechnician view is a flat view with filter described in the file 
 			SimplifiedViewFilter.xml.
 			This Simplified view can be activated/desactivated with the shortcut 
-			<Ctrl> + S
+			<Ctrl><Alt> + S
 
 		2.7.15 Expand properties
 			Array and structure can be atomaticaly expanded using two parameters

@@ -70,7 +70,7 @@ namespace Yabe
         public uint vendor_Id;
 
         // Updated during the dialog
-        public int MaxAPDULenght = -1; 
+        public uint MaxAPDULenght = 0; 
         public BacnetSegmentations Segmentation = BacnetSegmentations.SEGMENTATION_UNKNOW;
 
         bool ReadListOneShort = true;
@@ -84,12 +84,13 @@ namespace Yabe
         // Several Properties Caches (View List, Group List, ...), only needed to displays the Dictionnary, not all properties values
         List<BACObjectPropertyValue> Prop_Cached=new List<BACObjectPropertyValue>();
 
-        public BACnetDevice(BacnetClient sender, BacnetAddress addr, uint deviceId, uint vendor_id = System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE)
+        public BACnetDevice(BacnetClient sender, BacnetAddress addr, uint deviceId, uint MaxAPDULenght=0, uint vendor_id = System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE)
         {
             channel = sender;
             BacAdr = addr;
             this.deviceId = deviceId;
             vendor_Id = vendor_id;
+            this.MaxAPDULenght = MaxAPDULenght;
         }
 
         public int CompareTo(BACnetDevice other)

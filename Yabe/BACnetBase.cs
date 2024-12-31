@@ -1032,7 +1032,7 @@ namespace System.IO.BACnet
         //OBJECT_PROPRIETARY_MIN = 128,
         //OBJECT_PROPRIETARY_MAX = 1023,
         MAX_BACNET_OBJECT_TYPE = 1024,
-        //MAX_ASHRAE_OBJECT_TYPE = 64,
+        MAX_ASHRAE_OBJECT_TYPE = 64,
     };
 
     public enum BacnetApplicationTags

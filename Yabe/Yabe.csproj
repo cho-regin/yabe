@@ -201,6 +201,7 @@
     <Compile Include="SourceAddressDialog.Designer.cs">
       <DependentUpon>SourceAddressDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="YabeDevice.cs" />
     <EmbeddedResource Include="AlarmSummary.resx">
       <DependentUpon>AlarmSummary.cs</DependentUpon>
     </EmbeddedResource>

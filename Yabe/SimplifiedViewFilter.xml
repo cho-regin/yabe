@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- Description of Object & Properties filtered when using the FieldTechnicianView or when display mode is toogle with <CTRL><S>
+<!-- Description of Object & Properties filtered when using the FieldTechnicianView or when display mode is toogle with <CTRL><ALT><S>
 Can be modified as you want. Yabe restart is required. Looks at the Log Window to see if errors occur at boot time.
 Build it step by step ! 
-Objects and properties not here are not displayed.
+Objects and properties not here are not displayed in the filter view.
   <typeId>OBJECT_ANALOG_INPUT</typeId> : the correct name could be seen in Yabe Adress Space (uppercase with OBJECT, exact name, and _)
   <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds> : the correct name could be seen in the Properties grid (uppercase with PROP, exact name, and _)
-If the BacnetPropertyIds list is empty the objects can be seen in the address space but without any property associated.
+If the BacnetPropertyIds list is empty the objects can be seen in the address space but without any property associated,
+  a single Property with the following value means all properties are not filtered
+  <BacnetPropertyIds>MAX_BACNET_PROPERTY_ID</BacnetPropertyIds>
 STRUCTURED_VIEW and GROUP are here otherwise objects under them will be hidden at runtime even if listed in this file.
 DEVICE can be removed/modified as all other objects.
 -->
@@ -155,6 +157,12 @@ DEVICE can be removed/modified as all other objects.
       <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
       <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
       <BacnetPropertyIds>PROP_PRESENT_VALUE</BacnetPropertyIds>
+    </propsId>
+  </BacnetObjectDescription>
+  <BacnetObjectDescription>
+    <typeId>OBJECT_NETWORK_PORT</typeId>
+    <propsId>
+      <BacnetPropertyIds>MAX_BACNET_PROPERTY_ID</BacnetPropertyIds>
     </propsId>
   </BacnetObjectDescription>
 </ArrayOfBacnetObjectDescription>

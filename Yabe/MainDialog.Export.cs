@@ -12,7 +12,7 @@ namespace Yabe
     /// <summary>
     /// Common used stuff.
     /// </summary>
-    internal static class Common
+    static class Common
     {
         static Common()
         {
@@ -36,7 +36,7 @@ namespace Yabe
     /// Containing data can be obtained per row. Each cell will be associated with an enum value.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    internal class CsvLoader<T>
+    class CsvLoader<T>
         where T : struct, Enum
     {
         /// <summary>
@@ -118,7 +118,7 @@ namespace Yabe
                     Filter = "csv|*.csv",
                     FileName = file
                 };
-                if (dlg.ShowDialog(this) != DialogResult.OK)
+                if (dlg.ShowDialog() != DialogResult.OK)
                     return;
 
                 file = dlg.FileName.Remove(dlg.FileName.Length - 4, 4);
@@ -131,7 +131,7 @@ namespace Yabe
                 {
                     Description = $"Select output folder to export {endPoints.Count} EDE files to."
                 };
-                if (dlg.ShowDialog(this) != DialogResult.OK)
+                if (dlg.ShowDialog() != DialogResult.OK)
                     return;
 
                 foreach (var endPoint in endPoints)
@@ -141,7 +141,7 @@ namespace Yabe
                 }
             }
 
-            MessageBox.Show(this, $"Exported {endPoints.Count} device(s).", EDE_EXPORT_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show($"Exported {endPoints.Count} device(s).", EDE_EXPORT_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         /// <summary>
         /// Exports a single device to EDE file.
@@ -356,7 +356,7 @@ namespace Yabe
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, $"Export failed:\r\n{ex.Message}", EDE_EXPORT_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Export failed:\r\n{ex.Message}", EDE_EXPORT_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -377,7 +377,7 @@ namespace Yabe
 
             if (device == null)
             {
-                MessageBox.Show(this, "Please select a device node", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Please select a device node", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -385,7 +385,7 @@ namespace Yabe
             //select file to store
             SaveFileDialog dlg = new SaveFileDialog();
             dlg.Filter = "xml|*.xml";
-            if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
+            if (dlg.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
 
             this.Cursor = Cursors.WaitCursor;
             Application.DoEvents();
@@ -429,11 +429,11 @@ namespace Yabe
                 storage.Save(dlg.FileName);
 
                 //display
-                MessageBox.Show(this, "Done", "Export done", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Done", "Export done", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, "Error during export: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error during export: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {

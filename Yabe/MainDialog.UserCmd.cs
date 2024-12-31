@@ -32,12 +32,13 @@ namespace Yabe
                             {
                                 String[] MenuCommand = l.Split(';');
                                 Tuple<int, string> Cmd = null;
+
                                 if (MenuCommand.Length == 2)
                                     Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[1].ToLower()), null);
                                 else if (MenuCommand.Length == 3)
                                     Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[1].ToLower()), MenuCommand[2]);
 
-                                if (MenuCommand.Length >= 2)
+                                if (Cmd!=null)
                                 {
                                     if ((MenuCommand[0] != "Sep") && (Cmd.Item1 >= 0))
                                     {
@@ -91,12 +92,21 @@ namespace Yabe
             if (Cmd.Item2 == null) return;
 
             String[] P = Cmd.Item2.Split(',');
+
+            if (P.Length <2) return;
+
             try
             {
-                if (P.Length == 1)
-                    Process.Start(P[0]);
+                ProcessStartInfo ps = new ProcessStartInfo(P[1]);
+
+                ps.WorkingDirectory = P[0];
+                if (P.Length > 2)
+                    ps.Arguments= P[2];
+
+                if (P.Length == 2)
+                    Process.Start(ps);
                 else
-                    Process.Start(P[0], P[1]);
+                    Process.Start(ps);
             }
             catch { }
             
@@ -108,7 +118,8 @@ namespace Yabe
             foreach (TreeNode Tn in m_DeviceTree.Nodes[0].Nodes)
             {
                 BacnetClient cli = Tn.Tag as BacnetClient;
-                cli.Iam((uint)Properties.Settings.Default.YabeDeviceId);
+                try
+                { m_Server?.Iam(cli); } catch { }
             }
             return;
         }
@@ -129,7 +140,7 @@ namespace Yabe
             foreach (TreeNode Tn in m_DeviceTree.Nodes[0].Nodes)
             {
                 BacnetClient cli = Tn.Tag as BacnetClient;
-                cli.WhoIs(Min, Max);
+                try { cli.WhoIs(Min, Max); } catch { }
             }
             return;
         }
@@ -151,7 +162,7 @@ namespace Yabe
             {
                 BacnetClient cli = Tn.Tag as BacnetClient;
                 foreach (var devId in Id)
-                    cli.WhoIs(devId, devId);
+                    try { cli.WhoIs(devId, devId); } catch { }
             }
             return;
         }

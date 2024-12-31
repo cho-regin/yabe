@@ -46,7 +46,7 @@
           <Value>000000001000000000000000000000000000000000000000000</Value>
         </Property>
         <Property Id="PROP_MAX_APDU_LENGTH_ACCEPTED" Tag="BACNET_APPLICATION_TAG_UNSIGNED_INT">
-          <Value>1476</Value>
+          <Value>480</Value>
         </Property>
         <Property Id="PROP_SEGMENTATION_SUPPORTED" Tag="BACNET_APPLICATION_TAG_ENUMERATED">
           <Value>0</Value>
