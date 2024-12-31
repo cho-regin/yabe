@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- Description of Object & Properties filtered when using the FieldTechnicianView or when display mode is toogle with <CTRL><ALT><S>
+<!-- Description of Object & Properties filtered when using the FieldTechnicianView or when display mode is toogle with <CTRL><S>
 Can be modified as you want. Yabe restart is required. Looks at the Log Window to see if errors occur at boot time.
 Build it step by step ! 
 Objects and properties not here are not displayed.
-  <typeId>OBJECT_ANALOG_INPUT</typeId> : the correct name could be seen in Yabe Adress Space (uppercase with OBJECT and _)
-  <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds> : the correct name could be seen in the Properties grid (uppercase with PROP and _)
+  <typeId>OBJECT_ANALOG_INPUT</typeId> : the correct name could be seen in Yabe Adress Space (uppercase with OBJECT, exact name, and _)
+  <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds> : the correct name could be seen in the Properties grid (uppercase with PROP, exact name, and _)
 If the BacnetPropertyIds list is empty the objects can be seen in the address space but without any property associated.
-VIEW and GROUP are here otherwise objects under them will be hidden even if listed in this file.
-DEVICE can be removed as all other objects.
+STRUCTURED_VIEW and GROUP are here otherwise objects under them will be hidden at runtime even if listed in this file.
+DEVICE can be removed/modified as all other objects.
 -->
 
 <ArrayOfBacnetObjectDescription>

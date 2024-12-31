@@ -182,10 +182,14 @@ namespace Yabe
             catch { }
         }
 
-
         private void FillEthernetInterface() // do not run in the main Thread
         {
-           IEnumerable<LibPcapLiveDevice> devices;
+            void TryInvoke(Action a) // Form can be Disposed
+            {
+                try { BeginInvoke(a); } catch { }
+            }
+
+            IEnumerable<LibPcapLiveDevice> devices;
 
             try
             {
@@ -193,11 +197,7 @@ namespace Yabe
             }
             catch 
             {
-                try // Form can be Disposed
-                {
-                    BeginInvoke(new Action(() => { m_EthernetInterfaceCombo.Text = "NPcap in WinPcap compatiblity mode not avaialble"; }));
-                }
-                catch { } 
+                TryInvoke(new Action(() => { m_EthernetInterfaceCombo.Text = "NPcap in WinPcap compatiblity mode not avaialble"; }));
                 return;
             }
 
@@ -208,24 +208,16 @@ namespace Yabe
                     try
                     {
                         device.Open();
-                        try // Form can be Disposed
-                        {
-                            if (device.LinkType == PacketDotNet.LinkLayers.Ethernet && device.Interface.MacAddress != null)
-                                BeginInvoke(new Action(() => { m_EthernetInterfaceCombo.Items.Add(device.Interface.FriendlyName + ": " + device.Interface.Description); }));
-                        }
-                        catch { }
-
+                        if (device.LinkType == PacketDotNet.LinkLayers.Ethernet && device.Interface.MacAddress != null)
+                            TryInvoke(new Action(() => { m_EthernetInterfaceCombo.Items.Add(device.Interface.FriendlyName + ": " + device.Interface.Description); }));
                         device.Close();
                     }
                     catch { }
                 }
             }
 
-            try // Form can be Disposed
-            {
-                BeginInvoke(new Action(() => { m_EthernetInterfaceCombo.Text = ""; m_AddEthernetButton.Enabled=m_EthernetInterfaceCombo.Enabled = true; }));
-            } 
-            catch { } 
+            TryInvoke(new Action(() => { m_EthernetInterfaceCombo.Text = ""; m_AddEthernetButton.Enabled=m_EthernetInterfaceCombo.Enabled = true; }));
+
         }
         public static string[] GetAvailableIps()
         {

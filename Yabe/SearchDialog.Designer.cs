@@ -74,6 +74,7 @@
             this.m_EditSC = new System.Windows.Forms.Button();
             this.m_SelectSC = new System.Windows.Forms.Button();
             this.m_AddScButton = new System.Windows.Forms.Button();
+            this.chkSendWhois = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_PortValue)).BeginInit();
             this.groupBox2.SuspendLayout();
@@ -334,6 +335,7 @@
             // 
             this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox3.Controls.Add(this.chkSendWhois);
             this.groupBox3.Controls.Add(this.WhoLimitHigh);
             this.groupBox3.Controls.Add(this.label15);
             this.groupBox3.Controls.Add(this.WhoLimitLow);
@@ -609,6 +611,18 @@
             this.m_AddScButton.UseVisualStyleBackColor = true;
             this.m_AddScButton.Click += new System.EventHandler(this.m_AddScButton_Click);
             // 
+            // chkSendWhois
+            // 
+            this.chkSendWhois.AutoSize = true;
+            this.chkSendWhois.Checked = true;
+            this.chkSendWhois.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkSendWhois.Location = new System.Drawing.Point(520, 21);
+            this.chkSendWhois.Name = "chkSendWhois";
+            this.chkSendWhois.Size = new System.Drawing.Size(85, 17);
+            this.chkSendWhois.TabIndex = 10;
+            this.chkSendWhois.Text = "Send WhoIs";
+            this.chkSendWhois.UseVisualStyleBackColor = true;
+            // 
             // SearchDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -698,5 +712,6 @@
         private System.Windows.Forms.TextBox m_SC_Config;
         private System.Windows.Forms.Button m_EditSC;
         private System.Windows.Forms.Button m_SelectSC;
+        public System.Windows.Forms.CheckBox chkSendWhois;
     }
 }

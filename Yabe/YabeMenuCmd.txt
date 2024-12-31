@@ -1,0 +1,26 @@
+# Menu Label;YabeCommand;Parameter(s)
+# Label puts in the Menu; YabeCommand from a little list of possiblity;  Parameters (without ;)
+# Remove/modify this file. 
+# Line starting with # are comments.
+# File read only at start time if present (original Name only).
+
+# Iam on all open interfaces
+Send Iam;Send_Iam
+
+# Whois with Min and Max devicesId concerned
+Whois To Devices 0..10;Send_Whois;0,10
+Whois To Devices 50..100;Send_Whois;50,100
+
+# Whois to a list of individual devices
+Whois To 4,8,9,15;Send_WhoisTo;4,8,9,15
+
+# Insert a separator (Label Sep, command None)
+Sep;None
+
+# Purge_DevicesTree using the list of DeviceId not to be Hidden
+Remove Devices others than Office Building;Leave_Devices;1,3,2,54,6,45455,654564
+Remove Devices others than HVAC;Leave_Devices;3,9,523
+
+# To be remove by you
+Sep;None
+See YabeMenuCmd.txt to modify these menus content;Launch;notepad,YabeMenuCmd.txt

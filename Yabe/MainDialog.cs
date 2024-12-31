@@ -85,9 +85,10 @@ namespace Yabe
                 }
             }
         }
-
-        private object _selectedNode = null; // could be a TreeNode or a Subscription
-        private TreeNode _selectedDevice = null; // In the Device TreeView
+        // Selection can be done in the address space or in the event/sub grip, could be a TreeNode or a Subscription
+        private object _selectedNode = null;
+        // Only In the Device TreeView
+        private TreeNode _selectedDevice = null;
 
         List<BacnetObjectId> _structuredViewParents = null;
 
@@ -144,7 +145,7 @@ namespace Yabe
             }
 
             InitializeComponent();
-            Trace.Listeners.Add(new MyTraceListener(this));
+            Trace.Listeners.Add(new MyTraceListener(m_LogText));
 
             if (_plotterRunningFlag)
             {
@@ -241,7 +242,163 @@ namespace Yabe
             
             SaveObjectNamesTimer.Enabled = true;
         }
+        private void MainDialog_Load(object sender, EventArgs e)
+        {
+            //start renew timer at half lifetime
+            int lifetime = (int)Properties.Settings.Default.Subscriptions_Lifetime;
+            if (lifetime > 0)
+            {
+                m_subscriptionRenewTimer.Interval = (lifetime / 2) * 1000;
+                m_subscriptionRenewTimer.Enabled = true;
+            }
 
+            //display nice floats in propertygrid
+            Utilities.CustomSingleConverter.DontDisplayExactFloats = true;
+
+            m_DeviceTree.TreeViewNodeSorter = new NodeSorter();
+
+            if (Properties.Settings.Default.GridAlwaysExpandProperties != "")
+                ExpandedProperties = Properties.Settings.Default.GridAlwaysExpandProperties.Split(new char[] { ',', ';' });
+
+            // Plugins, cannot be loaded within the ThreadPool
+            string[] listPlugins = Properties.Settings.Default.Plugins.Split(new char[] { ',', ';' });
+
+            if (Environment.OSVersion.Platform.ToString().Contains("Win"))
+                foreach (string pluginname in listPlugins)
+                {
+                    try
+                    {
+                        // string path = Path.GetDirectoryName(Application.ExecutablePath);
+                        string name = pluginname.Replace(" ", String.Empty);
+                        // Assembly myDll = Assembly.LoadFrom(path + "\\" + name + ".dll");
+                        Assembly myDll = Assembly.LoadFrom("Plugins\\" + name + ".dll");
+                        Trace.WriteLine(String.Format("Loaded plugin \"{0}\".", pluginname));
+                        Type[] types = myDll.GetExportedTypes();
+                        IYabePlugin plugin = (IYabePlugin)myDll.CreateInstance(name + ".Plugin", true);
+                        plugin.Init(this);
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine(String.Format("Error loading plugin \"{0}\". {1}", pluginname, ex.Message));
+                    }
+                }
+
+            if (pluginsToolStripMenuItem.DropDownItems.Count == 0) pluginsToolStripMenuItem.Visible = false;
+
+            ThreadPool.QueueUserWorkItem(o=> // speed up start, no need immediatly, Trace listen thread safe.
+            {
+                if (File.Exists("SimplifiedViewFilter.xml"))
+                    try
+                    {
+                        StreamReader sr;
+                        XmlSerializer xs = new XmlSerializer(typeof(List<BacnetObjectDescription>));
+                        sr = new StreamReader("SimplifiedViewFilter.xml");
+                        SimplifiedViewFilter = (List<BacnetObjectDescription>)xs.Deserialize(sr);
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine("Error with SimplifiedViewFilter.xml :" + ex.Message);
+                    }
+
+                    BACnetDevice.LoadVendorPropertyMapping();
+            });
+
+            InitUserCmd();
+
+            // Object Names
+            if (Properties.Settings.Default.Auto_Store_Object_Names)
+            {
+                string fileTotal = Properties.Settings.Default.Auto_Store_Object_Names_File;
+                if (!string.IsNullOrWhiteSpace(fileTotal))
+                {
+                    try
+                    {
+                        string file = Path.GetFileName(fileTotal);
+                        string directory = Path.GetDirectoryName(fileTotal);
+                        if (string.IsNullOrWhiteSpace(file))
+                        {
+                            file = "Auto_Stored_Object_Names.YabeMap";
+                            fileTotal = Path.Combine(directory, file);
+                            Properties.Settings.Default.Auto_Store_Object_Names_File = fileTotal;
+                        }
+
+                        if (File.Exists(fileTotal))
+                        {
+                            // Try to open the current (if exist) object Id<-> object name mapping file
+                            Stream stream = File.Open(fileTotal, FileMode.Open);
+                            BinaryFormatter bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                            var d = (Dictionary<Tuple<String, BacnetObjectId>, String>)bf.Deserialize(stream);
+                            stream.Close();
+
+                            if (d != null)
+                            {
+                                BACnetDevice.DevicesObjectsName = d;
+                                BACnetDevice.objectNamesChangedFlag = false;
+                                Trace.TraceInformation("Loaded object names from \"" + fileTotal + "\".");
+                            }
+                        }
+                        else
+                        {
+                            if (!Directory.Exists(directory))
+                            {
+                                try
+                                {
+                                    Directory.CreateDirectory(directory);
+                                    Trace.TraceInformation("Created directory \"" + directory + "\".");
+                                }
+                                catch
+                                {
+                                    Trace.TraceError("Error trying to setup the auto-save object names function: The directory \"" + directory + "\" does not exist, and Yabe cannot create this directory. Try changing the Auto_StoreObject_Names_File setting to a different path."); Properties.Settings.Default.Auto_Store_Object_Names = false;
+                                }
+                            }
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.TraceError("Exception trying to setup the auto-save object names function: " + ex.Message + ". Try resetting the Auto_StoreObject_Names_File setting to a valid file path.");
+                        Properties.Settings.Default.Auto_Store_Object_Names = false;
+                    }
+                }
+                else
+                {
+                    Properties.Settings.Default.Auto_Store_Object_Names = false;
+                }
+            }
+
+            addDevicesearchToolStripMenuItem_Click(this, null);
+        }
+        private void MainDialog_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            try
+            {
+                //commit setup
+                Properties.Settings.Default.GUI_SplitterButtom = m_SplitContainerButtom.SplitterDistance;
+                Properties.Settings.Default.GUI_SplitterMiddle = m_SplitContainerLeft.SplitterDistance;
+                Properties.Settings.Default.GUI_SplitterRight = m_SplitContainerRight.SplitterDistance;
+                Properties.Settings.Default.GUI_SplitterLeft = splitContainer4.SplitterDistance;
+                Properties.Settings.Default.GUI_FormSize = this.Size;
+                Properties.Settings.Default.GUI_FormState = this.WindowState.ToString();
+
+                StringBuilder s = new StringBuilder();
+                for (int i = 0; i < m_SubscriptionView.Columns.Count; i++)
+                    s.Append(m_SubscriptionView.Columns[i].DisplayIndex.ToString() + ";" + m_SubscriptionView.Columns[i].Width.ToString() + ";");
+                s.Remove(s.Length - 1, 1);
+
+                Properties.Settings.Default.GUI_SubscriptionColumns = s.ToString();
+
+                //save
+                Properties.Settings.Default.Save();
+
+                // save object name<->id file
+                DoSaveObjectNamesIfNecessary();
+
+            }
+            catch
+            {
+                //ignore
+            }
+        }
         string CovGraph_PointValueEvent(ZedGraphControl sender, GraphPane pane, CurveItem curve, int iPt)
         {
             PointPair point= curve[iPt];
@@ -250,25 +407,6 @@ namespace Yabe
             XDate X = new XDate(point.X);
             string tooltip = Name + Environment.NewLine + X.ToString() + "    " + point.Y.ToString();
             return tooltip;
-        }
-
-        private static string ConvertToText(IList<BacnetValue> values)
-        {
-            if (values == null)
-                return "[null]";
-            else if (values.Count == 0)
-                return "";
-            else if (values.Count == 1)
-                return values[0].Value.ToString();
-            else
-            {
-                string ret = "{";
-                foreach (BacnetValue value in values)
-                    ret += value.Value.ToString() + ",";
-                ret = ret.Substring(0, ret.Length - 1);
-                ret += "}";
-                return ret;
-            }
         }
 
         private void ChangeTreeNodePropertyName(TreeNode tn, String Name)
@@ -299,13 +437,6 @@ namespace Yabe
                 tn.ForeColor = Color.Red;
             else
                 tn.ForeColor = Color.Black;
-        }
-
-        private void SetSubscriptionStatus(ListViewItem itm, string status)
-        {
-            if (itm.SubItems[6].Text == status) return;
-            itm.SubItems[6].Text = status;
-            itm.SubItems[5].Text = DateTime.Now.ToString(Properties.Settings.Default.COVTimeFormater);
         }
 
         private void OnEventNotify(BacnetClient sender, BacnetAddress adr, byte invoke_id, BacnetEventNotificationData EventData, bool need_confirm)
@@ -412,6 +543,25 @@ namespace Yabe
 
         private void OnCOVNotification(BacnetClient sender, BacnetAddress adr, byte invoke_id, uint subscriberProcessIdentifier, BacnetObjectId initiatingDeviceIdentifier, BacnetObjectId monitoredObjectIdentifier, uint timeRemaining, bool need_confirm, ICollection<BacnetPropertyValue> values, BacnetMaxSegments max_segments)
         {
+            string ConvertToText(IList<BacnetValue> val)
+            {
+                if (val == null)
+                    return "[null]";
+                else if (val.Count == 0)
+                    return "";
+                else if (values.Count == 1)
+                    return val[0].Value.ToString();
+                else
+                {
+                    string ret = "{";
+                    foreach (BacnetValue value in val)
+                        ret += value.Value.ToString() + ",";
+                    ret = ret.Substring(0, ret.Length - 1);
+                    ret += "}";
+                    return ret;
+                }
+            }
+
             string sub_key = adr.ToString() + ":" + initiatingDeviceIdentifier.instance + ":" + subscriberProcessIdentifier;
 
             // The changing of the bool value _plotterPauseFlag should naturally be thread
@@ -519,205 +669,7 @@ namespace Yabe
                 sender.SimpleAckResponse(adr, BacnetConfirmedServices.SERVICE_CONFIRMED_COV_NOTIFICATION, invoke_id);
             }
         }
-
-        #region " Trace Listner "
-        private class MyTraceListener : TraceListener
-        {
-            private YabeMainDialog m_form;
-
-            public MyTraceListener(YabeMainDialog form)
-                : base("MyListener")
-            {
-                m_form = form;
-            }
-
-            public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string message)
-            {
-                if ((this.Filter != null) && !this.Filter.ShouldTrace(eventCache, source, eventType, id, message, null, null, null)) return;
-
-                ConsoleColor color;
-                switch (eventType)
-                {
-                    case TraceEventType.Error:
-                        color = ConsoleColor.Red;
-                        break;
-                    case TraceEventType.Warning:
-                        color = ConsoleColor.Yellow;
-                        break;
-                    case TraceEventType.Information:
-                        color = ConsoleColor.DarkGreen;
-                        break;
-                    default:
-                        color = ConsoleColor.Gray;
-                        break;
-                }
-
-                WriteColor(message + Environment.NewLine, color);
-            }
-
-            public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string format, params object[] args)
-            {
-                if ((this.Filter != null) && !this.Filter.ShouldTrace(eventCache, source, eventType, id, format, args, null, null)) return;
-
-                ConsoleColor color;
-                switch (eventType)
-                {
-                    case TraceEventType.Error:
-                        color = ConsoleColor.Red;
-                        break;
-                    case TraceEventType.Warning:
-                        color = ConsoleColor.Yellow;
-                        break;
-                    case TraceEventType.Information:
-                        color = ConsoleColor.DarkGreen;
-                        break;
-                    default:
-                        color = ConsoleColor.Gray;
-                        break;
-                }
-
-                WriteColor(string.Format(format, args) + Environment.NewLine, color);
-            }
-
-            public override void Write(string message)
-            {
-                WriteColor(message, ConsoleColor.Gray);
-            }
-            public override void WriteLine(string message)
-            {
-                WriteColor(message + Environment.NewLine, ConsoleColor.Gray);
-            }
-
-            private void WriteColor(string message, ConsoleColor color)
-            {
-                if (!m_form.IsHandleCreated) return;
-
-                m_form.m_LogText.BeginInvoke((MethodInvoker)delegate { m_form.m_LogText.AppendText(message); });
-            }
-        }
-        #endregion
-
-        private void MainDialog_Load(object sender, EventArgs e)
-        {
-            //start renew timer at half lifetime
-            int lifetime = (int)Properties.Settings.Default.Subscriptions_Lifetime;
-            if (lifetime > 0)
-            {
-                m_subscriptionRenewTimer.Interval = (lifetime / 2) * 1000;
-                m_subscriptionRenewTimer.Enabled = true;
-            }
-
-            //display nice floats in propertygrid
-            Utilities.CustomSingleConverter.DontDisplayExactFloats = true;
-
-            m_DeviceTree.TreeViewNodeSorter = new NodeSorter();
-
-            // Plugins
-            string[] listPlugins = Properties.Settings.Default.Plugins.Split(new char[] { ',', ';' });
-
-            if (Environment.OSVersion.Platform.ToString().Contains("Win"))
-                foreach (string pluginname in listPlugins)
-                {
-                    try
-                    {
-                        // string path = Path.GetDirectoryName(Application.ExecutablePath);
-                        string name = pluginname.Replace(" ", String.Empty);
-                        // Assembly myDll = Assembly.LoadFrom(path + "\\" + name + ".dll");
-                        Assembly myDll = Assembly.LoadFrom("Plugins\\"+name + ".dll");
-                        Trace.WriteLine(String.Format("Loaded plugin \"{0}\".", pluginname));
-                        Type[] types = myDll.GetExportedTypes();
-                        IYabePlugin plugin = (IYabePlugin)myDll.CreateInstance(name + ".Plugin", true);
-                        plugin.Init(this);
-                    }
-                    catch(Exception ex)
-                    {
-                        Trace.WriteLine(String.Format("Error loading plugin \"{0}\". {1}",pluginname,ex.Message));
-                    }
-                }
-
-            if (pluginsToolStripMenuItem.DropDownItems.Count == 0) pluginsToolStripMenuItem.Visible = false;
-
-            if (Properties.Settings.Default.GridAlwaysExpandProperties!="")
-                ExpandedProperties= Properties.Settings.Default.GridAlwaysExpandProperties.Split(new char[] { ',', ';' });
-
-            if (File.Exists("SimplifiedViewFilter.xml"))
-                try
-                {
-                    StreamReader sr;
-                    XmlSerializer xs = new XmlSerializer(typeof(List<BacnetObjectDescription>));
-                    sr = new StreamReader("SimplifiedViewFilter.xml");
-                    SimplifiedViewFilter = (List<BacnetObjectDescription>)xs.Deserialize(sr);
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine("Error with SimplifiedViewFilter.xml :" + ex.Message);
-                }
-
-            BACnetDevice.LoadVendorPropertyMapping();
-
-            // Object Names
-            if (Properties.Settings.Default.Auto_Store_Object_Names)
-            {
-                string fileTotal = Properties.Settings.Default.Auto_Store_Object_Names_File;
-                if (!string.IsNullOrWhiteSpace(fileTotal))
-                {
-                    try
-                    {
-                        string file = Path.GetFileName(fileTotal);
-                        string directory = Path.GetDirectoryName(fileTotal);
-                        if (string.IsNullOrWhiteSpace(file))
-                        {
-                            file = "Auto_Stored_Object_Names.YabeMap";
-                            fileTotal = Path.Combine(directory, file);
-                            Properties.Settings.Default.Auto_Store_Object_Names_File = fileTotal;
-                        }
-
-                        if (File.Exists(fileTotal))
-                        {
-                            // Try to open the current (if exist) object Id<-> object name mapping file
-                            Stream stream = File.Open(fileTotal, FileMode.Open);
-                            BinaryFormatter bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-                            var d = (Dictionary<Tuple<String, BacnetObjectId>, String>)bf.Deserialize(stream);
-                            stream.Close();
-
-                            if (d != null)
-                            {
-                                BACnetDevice.DevicesObjectsName = d;
-                                BACnetDevice.objectNamesChangedFlag = false;
-                                Trace.TraceInformation("Loaded object names from \""+ fileTotal + "\".");
-                            }
-                        }
-                        else
-                        {
-                            if (!Directory.Exists(directory))
-                            {
-                                try
-                                {
-                                    Directory.CreateDirectory(directory);
-                                    Trace.TraceInformation("Created directory \"" + directory + "\".");
-                                }
-                                catch(UnauthorizedAccessException)
-                                {
-                                    Trace.TraceError("Error trying to setup the auto-save object names function: The directory \"" + directory + "\" does not exist, and Yabe does not have permissions to automatically create this directory. Try changing the Auto_StoreObject_Names_File setting to a different path.");                                    Properties.Settings.Default.Auto_Store_Object_Names = false;
-                                }
-                            }
-                            //Trace.TraceError("Error trying to auto-load object names from file: The file \"" + file + "\" does not exist. Try resetting the Auto_StoreObject_Names_File setting to a valid file path, or disable auto-store.");
-                        }
-
-                    }
-                    catch (Exception ex)
-                    {
-                        Trace.TraceError("Exception trying to setup the auto-save object names function: " + ex.Message + ". Try resetting the Auto_StoreObject_Names_File setting to a valid file path.");
-                        Properties.Settings.Default.Auto_Store_Object_Names = false;
-                    }
-                }
-                else
-                {
-                    Properties.Settings.Default.Auto_Store_Object_Names = false;
-                }
-            }
-        }
-
+       
         private TreeNode FindCommTreeNode(BacnetClient comm)
         {
             foreach (TreeNode node in m_DeviceTree.Nodes[0].Nodes)
@@ -727,7 +679,6 @@ namespace Yabe
             }
             return null;
         }
-
         private TreeNode FindCommTreeNode(IBacnetTransport transport)
         {
             foreach (TreeNode node in m_DeviceTree.Nodes[0].Nodes)
@@ -927,35 +878,36 @@ namespace Yabe
                     comm.OnEventNotify += OnEventNotify;
                     comm.Start();
 
-                    // WhoIs Min & Max limits
-                    int IdMin = -1, IdMax = -1;
-                    Int32.TryParse(dlg.WhoLimitLow.Text, out IdMin); Int32.TryParse(dlg.WhoLimitHigh.Text, out IdMax);
-                    if (IdMin == 0) IdMin = -1; if (IdMax == 0) IdMax = -1;
-                    if ((IdMin!=-1)&&(IdMax==-1)) IdMax=0x3FFFFF;
-                    if ((IdMax != -1) && (IdMin == -1)) IdMin = 0;
-
-                    if (comm.Transport.Type == BacnetAddressTypes.SC) comm.Retries = 1; // Not required devices are connected to the Hub
-
-                    if (Properties.Settings.Default.YabeDeviceId >= 0)
+                    if ((Properties.Settings.Default.YabeDeviceId >= 0)&((comm.Transport is BacnetMstpProtocolTransport && ((BacnetMstpProtocolTransport)comm.Transport).SourceAddress != -1)))
                         comm.Iam((uint)Properties.Settings.Default.YabeDeviceId, BacnetSegmentations.SEGMENTATION_BOTH, 61440);
 
-                    //start search
-                    if (comm.Transport.Type == BacnetAddressTypes.IP 
-                        || comm.Transport.Type == BacnetAddressTypes.Ethernet 
-                        || comm.Transport.Type == BacnetAddressTypes.IPV6
-                        || comm.Transport.Type == BacnetAddressTypes.SC
-                        || (comm.Transport is BacnetMstpProtocolTransport && ((BacnetMstpProtocolTransport)comm.Transport).SourceAddress != -1) 
-                        || comm.Transport.Type == BacnetAddressTypes.PTP)
+                    if (dlg.chkSendWhois.Checked == true)
                     {
-                        System.Threading.ThreadPool.QueueUserWorkItem((o) =>
-                        {
-                            for (int i = 0; i < comm.Retries; i++)
-                            {
-                                comm.WhoIs(IdMin,IdMax);
-                                System.Threading.Thread.Sleep(comm.Timeout);
-                            }
+                        // WhoIs Min & Max limits
+                        int IdMin = -1, IdMax = -1;
+                        Int32.TryParse(dlg.WhoLimitLow.Text, out IdMin); Int32.TryParse(dlg.WhoLimitHigh.Text, out IdMax);
+                        if (IdMin == 0) IdMin = -1; if (IdMax == 0) IdMax = -1;
+                        if ((IdMin != -1) && (IdMax == -1)) IdMax = 0x3FFFFF;
+                        if ((IdMax != -1) && (IdMin == -1)) IdMin = 0;
 
-                        }, null);
+                        //start search
+                        if (comm.Transport.Type == BacnetAddressTypes.IP
+                            || comm.Transport.Type == BacnetAddressTypes.Ethernet
+                            || comm.Transport.Type == BacnetAddressTypes.IPV6
+                            || comm.Transport.Type == BacnetAddressTypes.SC
+                            || (comm.Transport is BacnetMstpProtocolTransport && ((BacnetMstpProtocolTransport)comm.Transport).SourceAddress != -1)
+                            || comm.Transport.Type == BacnetAddressTypes.PTP)
+                        {
+                            System.Threading.ThreadPool.QueueUserWorkItem((o) =>
+                            {
+                                for (int i = 0; i < comm.Retries; i++)
+                                {
+                                    comm.WhoIs(IdMin, IdMax);
+                                    System.Threading.Thread.Sleep(comm.Timeout);
+                                }
+
+                            }, null);
+                        }
                     }
 
                     //special MSTP auto discovery
@@ -975,7 +927,6 @@ namespace Yabe
 
         private void Comm_OnWhoIs(BacnetClient sender, BacnetAddress adr, int low_limit, int high_limit)
         {
-            throw new NotImplementedException();
         }
 
         private void MSTP_FrameRecieved(BacnetMstpProtocolTransport sender, BacnetMstpFrameTypes frame_type, byte destination_address, byte source_address, int msg_length)
@@ -1853,58 +1804,40 @@ namespace Yabe
             try
             {
                 BACnetDevice device;
-
-                //fetch object_id
                 BacnetObjectId object_id;
 
-                if(_selectedNode!=null)
+                if(_selectedNode==null)
                 {
-                    if(_selectedNode is Subscription)
-                    {
-                        Subscription subscription=_selectedNode as Subscription;
-                        //fetch object_id
-                        object_id = subscription.object_id;
+                    _selectedNode = null;
+                    m_DataGrid.SelectedObject = null;
+                    return;
+                }
 
+                if (_selectedNode is Subscription)
+                {
+                    Subscription subscription = _selectedNode as Subscription;
+                    //fetch object_id
+                    object_id = subscription.object_id;
+                    //fetch end point
+                    device = subscription.device;
+                }
+                else if (_selectedNode is TreeNode)
+                {
+                    TreeNode selectedObject = _selectedNode as TreeNode;
+                    if (_selectedDevice != null)
+                    {
                         //fetch end point
-                        device = subscription.device;
-                    }
-                    else if(_selectedNode is TreeNode)
-                    {
-                        TreeNode selectedObject=_selectedNode as TreeNode;
-                        if(_selectedDevice != null)
-                        {
-                            //fetch end point
-                            if (_selectedDevice == null)
-                            {
-                                _selectedNode = null;
-                                m_DataGrid.SelectedObject = null;
-                                return;
-                            }
-                            else if (_selectedDevice.Tag == null)
-                            {
-                                _selectedNode = null;
-                                m_DataGrid.SelectedObject = null;
-                                return;
-                            }
-                            else if (!(_selectedDevice.Tag is BACnetDevice))
-                            {
-                                _selectedNode = null;
-                                m_DataGrid.SelectedObject = null;
-                                return;
-                            }
-
-                            device = (BACnetDevice)_selectedDevice.Tag;
-
-                            if (selectedObject.Tag == null) return;
-                            else if (!(selectedObject.Tag is BacnetObjectId)) return;
-                            object_id = (BacnetObjectId)selectedObject.Tag;
-                        }
-                        else
+                        if ((_selectedDevice == null) || (_selectedDevice.Tag == null) || (!(_selectedDevice.Tag is BACnetDevice)))
                         {
                             _selectedNode = null;
                             m_DataGrid.SelectedObject = null;
                             return;
                         }
+
+                        device = (BACnetDevice)_selectedDevice.Tag;
+                        if (selectedObject.Tag == null) return;
+                        else if (!(selectedObject.Tag is BacnetObjectId)) return;
+                        object_id = (BacnetObjectId)selectedObject.Tag;
                     }
                     else
                     {
@@ -1915,22 +1848,14 @@ namespace Yabe
                 }
                 else
                 {
-                    _selectedDevice = null;
+                    _selectedNode = null;
                     m_DataGrid.SelectedObject = null;
                     return;
-                }
-
-
-                PropertyGrid pg = null;
-                if (s is PropertyGrid)
-                {
-                    pg = (PropertyGrid)s;
                 }
 
                 Utilities.CustomPropertyDescriptor c=null;
                 GridItem gridItem=e.ChangedItem;
                 // Go up to the Property (could be a sub-element)
-
                 do
                 {
                     if (gridItem.PropertyDescriptor is Utilities.CustomPropertyDescriptor)
@@ -2012,48 +1937,19 @@ namespace Yabe
                 }
 
                 //reload
-                if (_selectedNode != null)
+                if (_selectedNode is Subscription)
                 {
-                    if (_selectedNode is Subscription)
-                    {
-                        Subscription subscription = _selectedNode as Subscription;
-                        UpdateGrid(subscription);
-                        if(pg!=null)
-                        {
-                            pg.SelectedGridItem = gridItem;
-                        }
+                    Subscription subscription = _selectedNode as Subscription;
+                    UpdateGrid(subscription);
+                    m_DataGrid.SelectedGridItem = gridItem;
 
-                    }
-                    else if (_selectedNode is TreeNode)
-                    {
-                        TreeNode selectedObject= _selectedNode as TreeNode;
-                        if (_selectedDevice!=null)
-                        {
-                            UpdateGrid(selectedObject);
-                            if (pg != null)
-                            {
-                                pg.SelectedGridItem = gridItem;
-                            }
-                        }
-                        else
-                        {
-                            _selectedNode = null;
-                            m_DataGrid.SelectedObject = null;
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        _selectedNode = null;
-                        m_DataGrid.SelectedObject = null;
-                        return;
-                    }
+
                 }
-                else
+                else if (_selectedNode is TreeNode)
                 {
-                    _selectedDevice = null;
-                    m_DataGrid.SelectedObject = null;
-                    return;
+                    TreeNode selectedObject = _selectedNode as TreeNode;
+                    UpdateGrid(selectedObject);
+                    m_DataGrid.SelectedGridItem = gridItem;
                 }
 
             }
@@ -2382,6 +2278,23 @@ namespace Yabe
 
         private bool CreateSubscription(BACnetDevice device, BacnetObjectId object_id, bool WithGraph, int pollPeriod = -1)
         {
+            uint FetchDeviceId(BacnetClient _comm, BacnetAddress _adr)
+            {
+                IList<BacnetValue> value;
+                if (_comm.ReadPropertyRequest(_adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE), BacnetPropertyIds.PROP_OBJECT_IDENTIFIER, out value))
+                {
+                    if (value != null && value.Count > 0 && value[0].Value is BacnetObjectId)
+                    {
+                        BacnetObjectId obj_id = (BacnetObjectId)value[0].Value;
+                        return obj_id.instance;
+                    }
+                    else
+                        return 0xFFFFFFFF;
+                }
+                else
+                    return 0xFFFFFFFF;
+            }
+
             BacnetClient comm = device.channel;
             BacnetAddress adr = device.BacAdr;
             uint device_id=device.deviceId;
@@ -2929,38 +2842,6 @@ namespace Yabe
             }
         }
 
-        private void MainDialog_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            try
-            {
-                //commit setup
-                Properties.Settings.Default.GUI_SplitterButtom = m_SplitContainerButtom.SplitterDistance;
-                Properties.Settings.Default.GUI_SplitterMiddle = m_SplitContainerLeft.SplitterDistance;
-                Properties.Settings.Default.GUI_SplitterRight = m_SplitContainerRight.SplitterDistance;
-                Properties.Settings.Default.GUI_SplitterLeft = splitContainer4.SplitterDistance;
-                Properties.Settings.Default.GUI_FormSize = this.Size;
-                Properties.Settings.Default.GUI_FormState = this.WindowState.ToString();
-
-                StringBuilder s=new StringBuilder();
-                for (int i = 0; i < m_SubscriptionView.Columns.Count;i++)
-                    s.Append(m_SubscriptionView.Columns[i].DisplayIndex.ToString() + ";" + m_SubscriptionView.Columns[i].Width.ToString() + ";");
-                s.Remove(s.Length-1,1);
-
-                Properties.Settings.Default.GUI_SubscriptionColumns=s.ToString();
-
-                //save
-                Properties.Settings.Default.Save();
-
-                // save object name<->id file
-                DoSaveObjectNamesIfNecessary();
-
-            }
-            catch
-            {
-                //ignore
-            }
-        }
-
         private void m_SubscriptionView_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode != Keys.Delete) return;
@@ -3236,103 +3117,7 @@ namespace Yabe
 
             }
 
-        }
-
-        /// <summary>
-        /// This will download all values from a given device and store it in a xml format, fit for the DemoServer
-        /// This can be a good way to test serializing
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void exportDeviceDBToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            //fetch end point
-            BACnetDevice device=FetchEndPoint();
-
-            if (device == null)
-            {
-                MessageBox.Show(this, "Please select a device node", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-  
-
-            //select file to store
-            SaveFileDialog dlg = new SaveFileDialog();
-            dlg.Filter = "xml|*.xml";
-            if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
-
-            this.Cursor = Cursors.WaitCursor;
-            Application.DoEvents();
-
-            bool removeObject = false;
-
-            try
-            {
-                //get all objects
-                System.IO.BACnet.Storage.DeviceStorage storage = new System.IO.BACnet.Storage.DeviceStorage();
-                IList<BacnetValue> value_list;
-                device.ReadPropertyRequest(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId), BacnetPropertyIds.PROP_OBJECT_LIST, out value_list);
-                LinkedList<BacnetObjectId> object_list = new LinkedList<BacnetObjectId>();
-                foreach (BacnetValue value in value_list)
-                {
-                    if (Enum.IsDefined(typeof(BacnetObjectTypes), ((BacnetObjectId)value.Value).Type))
-                        object_list.AddLast((BacnetObjectId)value.Value);
-                    else
-                        removeObject = true;
-                }
-
-                foreach (BacnetObjectId object_id in object_list)
-                {
-                    //read all properties
-                    IList<BacnetReadAccessResult> multi_value_list;
-                    BacnetPropertyReference[] properties = new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_ALL, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL) };
-                    device.ReadPropertyMultipleRequest(object_id, properties, out multi_value_list);
-
-                    //store
-                    foreach (BacnetPropertyValue value in multi_value_list[0].values)
-                    {
-                        try
-                        {
-                            storage.WriteProperty(object_id, (BacnetPropertyIds)value.property.propertyIdentifier, value.property.propertyArrayIndex, value.value, true);
-                        }
-                        catch { }
-                    }
-                }
-
-                //save to disk
-                storage.Save(dlg.FileName);
-
-                //display
-                MessageBox.Show(this, "Done", "Export done", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, "Error during export: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                this.Cursor = Cursors.Default;
-                if (removeObject == true)
-                    Trace.TraceWarning("All proprietary Objects removed from export");
-            }
-        }
-
-        private uint FetchDeviceId(BacnetClient comm, BacnetAddress adr)
-        {
-            IList<BacnetValue> value;
-            if (comm.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE), BacnetPropertyIds.PROP_OBJECT_IDENTIFIER, out value))
-            {
-                if (value != null && value.Count > 0 && value[0].Value is BacnetObjectId)
-                {
-                    BacnetObjectId object_id = (BacnetObjectId)value[0].Value;
-                    return object_id.instance;
-                }
-                else
-                    return 0xFFFFFFFF;
-            }
-            else
-                return 0xFFFFFFFF;
-        }
+        } 
 
         private void subscribeToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -3369,6 +3154,14 @@ namespace Yabe
 
         private void m_subscriptionRenewTimer_Tick(object sender, EventArgs e)
         {
+
+            void SetSubscriptionStatus(ListViewItem itm, string status)
+            {
+                if (itm.SubItems[6].Text == status) return;
+                itm.SubItems[6].Text = status;
+                itm.SubItems[5].Text = DateTime.Now.ToString(Properties.Settings.Default.COVTimeFormater);
+            }
+
             // don't want to lock the list for a while
             // so get element one by one using the indexer            
             int ItmCount;
@@ -3504,7 +3297,6 @@ namespace Yabe
             }
             return null;
         }
-
         private void timeSynchronizeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
@@ -3525,7 +3317,6 @@ namespace Yabe
             //done
             MessageBox.Show(this, "OK", "Time Synchronize", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
-
         private void communicationControlToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
@@ -3562,280 +3353,6 @@ namespace Yabe
         private void communicationControlToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             communicationControlToolStripMenuItem_Click(this, null);
-        }
-
-        private void exportEDEFilesSelDeviceToolStripMenuItem_Click(object sender, EventArgs e) => exportDeviceEDEFile(true);
-        private void exportEDEFilesAllDevicesToolStripMenuItem_Click(object sender, EventArgs e) => exportDeviceEDEFile(false);
-        private const string EDE_EXPORT_TITLE = "EDE file export";
-        private const string EDE_EXPORT_EXT = "csv";
-        private void exportDeviceEDEFile(bool selDeviceOnly)
-        {
-            // Fetch endpoints:
-            var endPoints = new List<BACnetDevice>();
-            if (selDeviceOnly)
-                FetchEndPoint(out endPoints);
-            else
-                FetchEndPoints(out endPoints);
-            if (endPoints.Count == 0)
-                return;
-
-            string file;
-            var singleFile = ((endPoints.Count == 1) || (Properties.Settings.Default.EDE_SingleFile));
-            if (singleFile)
-            {
-                // Export device(s) in into single file:
-                var endPoint = endPoints.First();
-                if (endPoints.Count == 1)
-                    file = $"Device{endPoint.deviceId}.{EDE_EXPORT_EXT}";
-                else
-                    file = $"Devices.{EDE_EXPORT_EXT}";
-                var dlg = new SaveFileDialog() {
-                    Filter = "csv|*.csv",
-                    FileName = file
-                };
-                if (dlg.ShowDialog(this) != DialogResult.OK)
-                    return;
-
-                file = dlg.FileName.Remove(dlg.FileName.Length - 4, 4);
-                exportDeviceEDEFile(endPoints, file);
-            }
-            else
-            {
-                // Export devices in into separate files:
-                var dlg = new FolderBrowserDialog() {
-                    Description = $"Select output folder to export {endPoints.Count} EDE files to."
-                };
-                if (dlg.ShowDialog(this) != DialogResult.OK)
-                    return;
-
-                foreach (var endPoint in endPoints)
-                {
-                    file = Path.Combine(dlg.SelectedPath, $"Device{endPoint.deviceId}.{EDE_EXPORT_EXT}");
-                    exportDeviceEDEFile(endPoint, file);
-                }
-            }
-
-            MessageBox.Show(this, $"Exported {endPoints.Count} device(s).", EDE_EXPORT_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-        /// <summary>
-        /// Exports a single device to EDE file.
-        /// </summary>
-        private void exportDeviceEDEFile(BACnetDevice device, String fileName) => exportDeviceEDEFile(Enumerable.Repeat((device), 1), fileName);
-        /// <summary>
-        /// Exports one or more devices to EDE file.
-        /// </summary>
-        /// <remarks>
-        /// This will download all values from a given device and store it in 2 csv files: EDE and StateText (for Binary and Multistate objects).
-        /// Ede files for Units and ObjectTypes are common when all values are coming from the standard
-        /// </remarks>
-        /// <example>
-        /// Base on https://www.big-eu.org/s/big_ede_2_3.zip
-        /// </example>
-        private void exportDeviceEDEFile(IEnumerable<BACnetDevice> endPoints, String fileName)
-        {
-            var stateTextReferences = new List<string>();
-
-            char Sep = Properties.Settings.Default.EDE_Separator;
-
-            using (var edeWriter = new StreamWriter($"{fileName}_EDE.csv"))
-            {
-                edeWriter.WriteLine("#Engineering-Data-Exchange - B.I.G.-EU");
-                edeWriter.WriteLine("PROJECT_NAME");
-                edeWriter.WriteLine("VERSION_OF_REFERENCEFILE");
-                edeWriter.WriteLine("TIMESTAMP_OF_LAST_CHANGE"+ Sep + DateTime.Now.ToShortDateString());
-                edeWriter.WriteLine("AUTHOR_OF_LAST_CHANGE"+Sep+"YABE Yet Another Bacnet Explorer");
-                edeWriter.WriteLine("VERSION_OF_LAYOUT"+Sep+"2.3");
-                edeWriter.WriteLine("#mandatory;mandator;mandatory;mandatory;mandatory;optional;optional;optional;optional;optional;optional;optional;optional;optional;optional;optional".Replace(';',Sep));
-                edeWriter.WriteLine("# keyname;device obj.-instance;object-name;object-type;object-instance;description;present-value-default;min-present-value;max-present-value;settable;supports COV;hi-limit;low-limit;state-text-reference;unit-code;vendor-specific-addres".Replace(';', Sep));
-
-                foreach (var device in endPoints)
-                    exportDeviceEDEFile(device, edeWriter, stateTextReferences);
-            }
-            using (var stateTextWriter = new StreamWriter($"{fileName}_StateTexts.csv"))
-            {
-                stateTextWriter.WriteLine("#State Text Reference");
-                if (stateTextReferences.Count > 0)
-                {
-                    var maxStates = stateTextReferences
-                        .Select(stateRef => stateRef.Count(c => c.Equals(Sep)) + 1)
-                        .Max();
-                    var columns = Enumerable
-                        .Range(0, maxStates + 1)
-                        .Select(col => $"Text {col}")
-                        .ToArray();
-                    if (maxStates >= 0) columns[0] = "Reference Number";
-                    if (maxStates >= 1) columns[1] += " or Inactive-Text";
-                    if (maxStates >= 2) columns[2] += " or Active-Text";
-                    stateTextWriter.WriteLine("#" + string.Join(Sep.ToString(), columns));
-
-                    int i = 0;
-                    foreach (var stateRef in stateTextReferences)
-                    {
-                        stateTextWriter.Write($"{i++}"+Sep);
-                        stateTextWriter.WriteLine(stateRef);
-                    }
-                }
-            }
-
-            if (Properties.Settings.Default.EDE_CommonFiles)
-            {
-                using (var objTypesWriter = new StreamWriter($"{fileName}_ObjTypes.csv"))
-                {
-                    objTypesWriter.WriteLine("#Encoding of BACnet Object Types"+Sep);
-                    objTypesWriter.WriteLine("#Code;Object Type;".Replace(';', Sep));
-                    foreach (var objType in Common.ObjectType_EdeTexts)
-                        objTypesWriter.WriteLine($"{(int)objType.Key};{objType.Value}" + Sep);
-                }
-                using (var unitsWriter = new StreamWriter($"{fileName}_Units.csv"))
-                {
-                    unitsWriter.WriteLine("#Encoding of BACnet Engineering Units" + Sep);
-                    unitsWriter.WriteLine("#Code;Unit Text;".Replace(';', Sep));
-                    foreach (var unit in Common.Unit_EdeTexts)
-                        unitsWriter.WriteLine($"{(int)unit.Key};{unit.Value};".Replace(';', Sep));
-                }
-            }
-        }
-        /// <summary>
-        /// Gathers a devices EDE data and writes it to a file stream.
-        /// </summary>
-        private void exportDeviceEDEFile(BACnetDevice device, StreamWriter edeWriter, List<string> stateTextReferences)
-        {
-            char Sep = Properties.Settings.Default.EDE_Separator;
-
-            device.ReadObjectList(out _, out uint ObjCount);    // Get the dictionary (already in cache or puts in cache)
-
-            this.Cursor = Cursors.WaitCursor;
-
-            try
-            {
-                // Read 6 properties even if not existing in the given object
-                BacnetPropertyReference[] propertiesWithText = new BacnetPropertyReference[6] {
-                    new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_NAME, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
-                    new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_DESCRIPTION, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
-                    new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_UNITS, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
-                    new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_STATE_TEXT, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
-                    new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_INACTIVE_TEXT, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
-                    new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_ACTIVE_TEXT, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL),
-                };
-
-                for (uint i=1;i<=ObjCount;i++)
-                {
-                    Application.DoEvents();
-
-                    BacnetObjectId Bacobj;
-                    device.ReadObjectListItem(out Bacobj, i); // From the cache or not
-                    string Identifier = "";
-                    string Description = "";
-                    String UnitCode = "";
-                    String InactiveText = "";
-                    String ActiveText = "";
-
-                    IList<BacnetValue> State_Text = null;
-
-                    if (device.ReadMultiple != BACnetDevice.ReadPopertyMultipleStatus.NotSupported)
-                    {
-                        try
-                        {
-
-                            IList<BacnetReadAccessResult> multi_value_list;
-                            device.ReadPropertyMultipleRequest(Bacobj, propertiesWithText, out multi_value_list);
-                            BacnetReadAccessResult br = multi_value_list[0];
-
-                            foreach (BacnetPropertyValue pv in br.values)
-                            {
-
-                                if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_OBJECT_NAME)
-                                    Identifier = pv.value[0].Value.ToString();
-                                if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_DESCRIPTION)
-                                    if (!(pv.value[0].Value is BacnetError))
-                                        Description = pv.value[0].Value.ToString();
-                                if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_UNITS)
-                                    if (!(pv.value[0].Value is BacnetError))
-                                        UnitCode = pv.value[0].Value.ToString();
-                                if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_STATE_TEXT)
-                                    if (!(pv.value[0].Value is BacnetError))
-                                        State_Text = pv.value;
-                                if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_INACTIVE_TEXT)
-                                    if (!(pv.value[0].Value is BacnetError))
-                                        InactiveText = pv.value[0].Value.ToString();
-                                if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_ACTIVE_TEXT)
-                                    if (!(pv.value[0].Value is BacnetError))
-                                        ActiveText = pv.value[0].Value.ToString();
-                            }
-
-                            device.ReadMultiple = BACnetDevice.ReadPopertyMultipleStatus.Accepted;
-                        }
-                        catch
-                        {
-                            if (device.ReadMultiple != BACnetDevice.ReadPopertyMultipleStatus.Accepted)
-                                device.ReadMultiple = BACnetDevice.ReadPopertyMultipleStatus.NotSupported; // assume the error is due to that 
-                        }
-                    }
-                    if (device.ReadMultiple == BACnetDevice.ReadPopertyMultipleStatus.NotSupported)
-                    {
-                        IList<BacnetValue> out_value;
-
-                        Identifier = device.ReadObjectName(Bacobj);
-
-                        try
-                        { 
-                            // OBJECT_MULTI_STATE_INPUT, OBJECT_MULTI_STATE_OUTPUT, OBJECT_MULTI_STATE_VALUE
-                            if ((Bacobj.type >= BacnetObjectTypes.OBJECT_MULTI_STATE_INPUT) && (Bacobj.type <= BacnetObjectTypes.OBJECT_MULTI_STATE_INPUT + 2))
-                            {
-                                device.ReadPropertyRequest(Bacobj, BacnetPropertyIds.PROP_STATE_TEXT, out State_Text);
-                                if (State_Text[0].Value is BacnetError) State_Text = null;
-                            }
-                            // OBJECT_BINARY_INPUT, OBJECT_BINARY_OUTPUT, OBJECT_BINARY_VALUE
-                            if ((Bacobj.type >= BacnetObjectTypes.OBJECT_BINARY_INPUT) && (Bacobj.type <= BacnetObjectTypes.OBJECT_BINARY_INPUT + 2))
-                            {
-                                device.ReadPropertyRequest(Bacobj, BacnetPropertyIds.PROP_INACTIVE_TEXT, out out_value);
-                                if (!(out_value[0].Value is BacnetError))
-                                    InactiveText = out_value[0].Value.ToString();
-                                device.ReadPropertyRequest(Bacobj, BacnetPropertyIds.PROP_ACTIVE_TEXT, out out_value);
-                                if (!(out_value[0].Value is BacnetError))
-                                    ActiveText = out_value[0].Value.ToString();
-                            }
-
-                            device.ReadPropertyRequest(Bacobj, BacnetPropertyIds.PROP_DESCRIPTION, out out_value);
-                            if (!(out_value[0].Value is BacnetError))
-                                Description = out_value[0].Value.ToString();
-
-                        }
-                        catch { }
-                    }
-
-                    // Write state texts:
-                    int? stateTextIdx=null;
-                    IEnumerable<string> stateTexts = null;
-                    if (State_Text != null)
-                        stateTexts = State_Text.Select(sta => sta.Value.ToString());
-                    else if ((InactiveText != "") && (ActiveText != ""))
-                        stateTexts = new string[] { InactiveText, ActiveText };
-
-                    if (stateTexts != null)
-                    {
-                        var line = string.Join(Sep.ToString(), stateTexts);
-                        stateTextIdx = stateTextReferences.IndexOf(line);
-                        if (stateTextIdx == -1)
-                        {
-                            stateTextIdx = stateTextReferences.Count;
-                            stateTextReferences.Add(line);
-                        }
-                    }
-                    edeWriter.WriteLine(Bacobj.ToString() + Sep + device.deviceId.ToString() + Sep + Identifier + Sep + ((int)Bacobj.type).ToString() + Sep + Bacobj.instance.ToString() + Sep + Description + Sep + Sep + Sep + Sep + Sep + Sep + Sep + Sep + stateTextIdx + Sep + UnitCode);
-
-                    // Update also the Dictionary of known object name
-                    device.UpdateObjectNameMapping(Bacobj, Identifier);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, $"Export failed:\r\n{ex.Message}", EDE_EXPORT_TITLE, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                this.Cursor = Cursors.Default;
-            }
         }
 
         private void foreignDeviceRegistrationToolStripMenuItem_Click(object sender, EventArgs e)
@@ -4206,17 +3723,11 @@ namespace Yabe
             }
         }
 
-        // Change the WritePriority Value
+        // Change the WritePriority Value & Simplified view
         private void MainDialog_KeyDown(object sender, KeyEventArgs e)
         {
             if ((e.Modifiers == (Keys.Control | Keys.Alt)))
             {
-
-                if (e.KeyCode == Keys.S)
-                {
-                    ToogleViewSimplified = !ToogleViewSimplified;
-                    m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(this._selectedDevice));
-                }
 
                 if ((e.KeyCode >= Keys.D0 && e.KeyCode <= Keys.D9) || (e.KeyCode >= Keys.NumPad0 && e.KeyCode <= Keys.NumPad9))
                 {
@@ -4304,6 +3815,8 @@ namespace Yabe
             m_AddressSpaceMenuStrip.Items[0].Visible = true;
             // Set Search always visible
             m_AddressSpaceMenuStrip.Items[8].Visible = true;
+            // Toggle view always visible
+            m_AddressSpaceMenuStrip.Items[9].Visible = true;
 
             // Get the node type
             BACnetDevice device;
@@ -4620,6 +4133,11 @@ namespace Yabe
 
         private void DoAck(BacnetEventNotificationData.BacnetEventStates eventState)
         {
+            void AckFail()
+            {
+                MessageBox.Show("Alarm acknowledge failed!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
             this.Cursor = Cursors.WaitCursor;
             try
             {
@@ -4722,11 +4240,6 @@ namespace Yabe
             {
                 this.Cursor = Cursors.Default;
             }
-        }
-
-        private void AckFail()
-        {
-            MessageBox.Show("Alarm acknowledge failed!","Error",MessageBoxButtons.OK,MessageBoxIcon.Warning);
         }
 
         private void ack_offnormal_Click(object sender, EventArgs e)
@@ -4847,8 +4360,118 @@ namespace Yabe
         }
         #endregion
 
+        private void ToggleViewMenuItem_Click(object sender, EventArgs e)
+        {
+
+            TreeNode stn = _selectedNode as TreeNode;
+            Subscription sub = _selectedNode as Subscription;
+
+            ToogleViewSimplified = !ToogleViewSimplified;
+            m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(this._selectedDevice));
+            if (stn != null)
+            {
+                UpdateGrid(stn); // maybe the object is no more displayed, it's not a problem
+                foreach (TreeNode tn in m_AddressSpaceTree.Nodes) // try to select the same
+                {
+                    if (tn.Tag.ToString() == stn.Tag.ToString())
+                    {
+                        m_AddressSpaceTree.SelectedNode = tn;
+                        _selectedNode = tn;
+                        return;
+                    }
+                    foreach (TreeNode tn2 in tn.Nodes)
+                    {
+                        if (tn2.Tag.ToString() == stn.Tag.ToString())
+                        {
+                            m_AddressSpaceTree.SelectedNode = tn2;
+                            _selectedNode = tn2;
+                            return;
+                        }
+                    }
+                }
+            }
+            if (sub != null)
+                UpdateGrid(sub); // maybe the object is no more displayed, it's not a problem               
+            
+        }
     }
 
+    #region " Trace Listner "
+    class MyTraceListener : TraceListener
+    {
+        private TextBox m_LogText;
+        public MyTraceListener(TextBox txtLog)
+            : base("MyListener")
+        {
+            m_LogText = txtLog;
+        }
+
+        public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string message)
+        {
+            if ((this.Filter != null) && !this.Filter.ShouldTrace(eventCache, source, eventType, id, message, null, null, null)) return;
+
+            ConsoleColor color;
+            switch (eventType)
+            {
+                case TraceEventType.Error:
+                    color = ConsoleColor.Red;
+                    break;
+                case TraceEventType.Warning:
+                    color = ConsoleColor.Yellow;
+                    break;
+                case TraceEventType.Information:
+                    color = ConsoleColor.DarkGreen;
+                    break;
+                default:
+                    color = ConsoleColor.Gray;
+                    break;
+            }
+
+            WriteColor(message + Environment.NewLine, color);
+        }
+
+        public override void TraceEvent(TraceEventCache eventCache, string source, TraceEventType eventType, int id, string format, params object[] args)
+        {
+            if ((this.Filter != null) && !this.Filter.ShouldTrace(eventCache, source, eventType, id, format, args, null, null)) return;
+
+            ConsoleColor color;
+            switch (eventType)
+            {
+                case TraceEventType.Error:
+                    color = ConsoleColor.Red;
+                    break;
+                case TraceEventType.Warning:
+                    color = ConsoleColor.Yellow;
+                    break;
+                case TraceEventType.Information:
+                    color = ConsoleColor.DarkGreen;
+                    break;
+                default:
+                    color = ConsoleColor.Gray;
+                    break;
+            }
+
+            WriteColor(string.Format(format, args) + Environment.NewLine, color);
+        }
+
+        public override void Write(string message)
+        {
+            WriteColor(message, ConsoleColor.Gray);
+        }
+        public override void WriteLine(string message)
+        {
+            WriteColor(message + Environment.NewLine, ConsoleColor.Gray);
+        }
+
+        private void WriteColor(string message, ConsoleColor color)
+        {
+            if (!m_LogText.IsHandleCreated)
+                return;
+
+            m_LogText.BeginInvoke((MethodInvoker)delegate { m_LogText.AppendText(message); });
+        }
+    }
+    #endregion
     // Used to sort the devices Tree by device_id
     public class NodeSorter : IComparer
     {
