@@ -258,77 +258,37 @@ namespace Yabe
 
                     IList<BacnetValue> State_Text = null;
 
-                    if (device.ReadMultiple != BACnetDevice.ReadPopertyMultipleStatus.NotSupported)
+                    try
                     {
-                        try
+
+                        IList<BacnetReadAccessResult> multi_value_list;
+                        device.ReadPropertyMultipleRequest(Bacobj, propertiesWithText, out multi_value_list);
+                        BacnetReadAccessResult br = multi_value_list[0];
+
+                        foreach (BacnetPropertyValue pv in br.values)
                         {
 
-                            IList<BacnetReadAccessResult> multi_value_list;
-                            device.ReadPropertyMultipleRequest(Bacobj, propertiesWithText, out multi_value_list);
-                            BacnetReadAccessResult br = multi_value_list[0];
-
-                            foreach (BacnetPropertyValue pv in br.values)
-                            {
-
-                                if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_OBJECT_NAME)
-                                    Identifier = pv.value[0].Value.ToString();
-                                if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_DESCRIPTION)
-                                    if (!(pv.value[0].Value is BacnetError))
-                                        Description = pv.value[0].Value.ToString();
-                                if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_UNITS)
-                                    if (!(pv.value[0].Value is BacnetError))
-                                        UnitCode = pv.value[0].Value.ToString();
-                                if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_STATE_TEXT)
-                                    if (!(pv.value[0].Value is BacnetError))
-                                        State_Text = pv.value;
-                                if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_INACTIVE_TEXT)
-                                    if (!(pv.value[0].Value is BacnetError))
-                                        InactiveText = pv.value[0].Value.ToString();
-                                if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_ACTIVE_TEXT)
-                                    if (!(pv.value[0].Value is BacnetError))
-                                        ActiveText = pv.value[0].Value.ToString();
-                            }
-
-                            device.ReadMultiple = BACnetDevice.ReadPopertyMultipleStatus.Accepted;
+                            if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_OBJECT_NAME)
+                                Identifier = pv.value[0].Value.ToString();
+                            if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_DESCRIPTION)
+                                if (!(pv.value[0].Value is BacnetError))
+                                    Description = pv.value[0].Value.ToString();
+                            if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_UNITS)
+                                if (!(pv.value[0].Value is BacnetError))
+                                    UnitCode = pv.value[0].Value.ToString();
+                            if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_STATE_TEXT)
+                                if (!(pv.value[0].Value is BacnetError))
+                                    State_Text = pv.value;
+                            if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_INACTIVE_TEXT)
+                                if (!(pv.value[0].Value is BacnetError))
+                                    InactiveText = pv.value[0].Value.ToString();
+                            if ((BacnetPropertyIds)pv.property.propertyIdentifier == BacnetPropertyIds.PROP_ACTIVE_TEXT)
+                                if (!(pv.value[0].Value is BacnetError))
+                                    ActiveText = pv.value[0].Value.ToString();
                         }
-                        catch
-                        {
-                            if (device.ReadMultiple != BACnetDevice.ReadPopertyMultipleStatus.Accepted)
-                                device.ReadMultiple = BACnetDevice.ReadPopertyMultipleStatus.NotSupported; // assume the error is due to that 
-                        }
+
                     }
-                    if (device.ReadMultiple == BACnetDevice.ReadPopertyMultipleStatus.NotSupported)
-                    {
-                        IList<BacnetValue> out_value;
-
-                        Identifier = device.ReadObjectName(Bacobj);
-
-                        try
-                        {
-                            // OBJECT_MULTI_STATE_INPUT, OBJECT_MULTI_STATE_OUTPUT, OBJECT_MULTI_STATE_VALUE
-                            if ((Bacobj.type >= BacnetObjectTypes.OBJECT_MULTI_STATE_INPUT) && (Bacobj.type <= BacnetObjectTypes.OBJECT_MULTI_STATE_INPUT + 2))
-                            {
-                                device.ReadPropertyRequest(Bacobj, BacnetPropertyIds.PROP_STATE_TEXT, out State_Text);
-                                if (State_Text[0].Value is BacnetError) State_Text = null;
-                            }
-                            // OBJECT_BINARY_INPUT, OBJECT_BINARY_OUTPUT, OBJECT_BINARY_VALUE
-                            if ((Bacobj.type >= BacnetObjectTypes.OBJECT_BINARY_INPUT) && (Bacobj.type <= BacnetObjectTypes.OBJECT_BINARY_INPUT + 2))
-                            {
-                                device.ReadPropertyRequest(Bacobj, BacnetPropertyIds.PROP_INACTIVE_TEXT, out out_value);
-                                if (!(out_value[0].Value is BacnetError))
-                                    InactiveText = out_value[0].Value.ToString();
-                                device.ReadPropertyRequest(Bacobj, BacnetPropertyIds.PROP_ACTIVE_TEXT, out out_value);
-                                if (!(out_value[0].Value is BacnetError))
-                                    ActiveText = out_value[0].Value.ToString();
-                            }
-
-                            device.ReadPropertyRequest(Bacobj, BacnetPropertyIds.PROP_DESCRIPTION, out out_value);
-                            if (!(out_value[0].Value is BacnetError))
-                                Description = out_value[0].Value.ToString();
-
-                        }
-                        catch { }
-                    }
+                    catch {}
 
                     // Write state texts:
                     int? stateTextIdx = null;

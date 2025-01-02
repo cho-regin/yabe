@@ -1,4 +1,29 @@
-﻿using System;
+﻿/**************************************************************************
+*                           MIT License
+* 
+* Copyright (C) 2025 Frederic Chaxel <fchaxel@free.fr>
+*
+* Permission is hereby granted, free of charge, to any person obtaining
+* a copy of this software and associated documentation files (the
+* "Software"), to deal in the Software without restriction, including
+* without limitation the rights to use, copy, modify, merge, publish,
+* distribute, sublicense, and/or sell copies of the Software, and to
+* permit persons to whom the Software is furnished to do so, subject to
+* the following conditions:
+*
+* The above copyright notice and this permission notice shall be included
+* in all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+* IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+* CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+* TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*
+*********************************************************************/
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -14,14 +39,33 @@ namespace Yabe
     {
         string[] CommandList = { "none", "launch", "send_iam", "send_whois", "send_whoisto", "leave_devices" };
 
+        Keys ShortCut(String s) // Must contains Control or Alt 
+        {
+            if (s.Length==1)
+                return Keys.Control | (Keys)s[0];
+            else
+            {
+                int Ret = (int)s[1];
+                Int32.TryParse(s[0].ToString(), out int ModifierInt);
+
+                if (((ModifierInt & 1) == 1) || ((ModifierInt & 3) == 0))
+                    Ret = Ret + (int)Keys.Control;
+                if ((ModifierInt & 2) == 2)
+                    Ret = Ret + (int)Keys.Alt;
+                if ((ModifierInt & 4) == 4)
+                    Ret = Ret + (int)Keys.Shift;
+
+                return (Keys)Ret;
+            }
+        }
         void InitUserCmd()
         {
             if (File.Exists("YabeMenuCmd.txt"))
             {
+                
                 int LineCount = 0;
                 try
                 {
-
                     using (StreamReader sr = new StreamReader("YabeMenuCmd.txt"))
                     {
                         while (!sr.EndOfStream)
@@ -33,10 +77,10 @@ namespace Yabe
                                 String[] MenuCommand = l.Split(';');
                                 Tuple<int, string> Cmd = null;
 
-                                if (MenuCommand.Length == 2)
-                                    Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[1].ToLower()), null);
-                                else if (MenuCommand.Length == 3)
-                                    Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[1].ToLower()), MenuCommand[2]);
+                                if (MenuCommand.Length == 3)
+                                    Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), null);
+                                else if (MenuCommand.Length == 4)
+                                    Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), MenuCommand[3]);
 
                                 if (Cmd!=null)
                                 {
@@ -47,6 +91,9 @@ namespace Yabe
                                         MenuItem.Text = MenuCommand[0];
                                         MenuItem.Tag = Cmd;
 
+                                        if (MenuCommand[1].Length >= 1)
+                                            MenuItem.ShortcutKeys = ShortCut(MenuCommand[1]);
+                                        
                                         if (Cmd.Item1 > 0)
                                             MenuItem.Click += new EventHandler(UserMenuItem_Click);
 

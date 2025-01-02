@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!-- optional external resource used when ReadPropertyMultiple not implemented, override an internal default description file
-OBJECT_IDENTIFIER, OBJECT_NAME & OBJECT_TYPE not here since they're required by all
+OBJECT_IDENTIFIER, OBJECT_NAME & OBJECT_TYPE & DESCRIPTION not here since they're required by all
 -->
 
 <ArrayOfBacnetObjectDescription xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -12,7 +12,6 @@ OBJECT_IDENTIFIER, OBJECT_NAME & OBJECT_TYPE not here since they're required by 
       <BacnetPropertyIds>PROP_PROGRAM_CHANGE</BacnetPropertyIds>
       <BacnetPropertyIds>PROP_STATUS_FLAGS</BacnetPropertyIds>
       <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
-      <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
     </propsId>
   </BacnetObjectDescription>
 </ArrayOfBacnetObjectDescription>

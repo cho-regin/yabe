@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Design;
 using System.Globalization;
@@ -120,19 +121,20 @@ namespace Yabe
             {
                 this.instance = instance;
 
-#if DEBUG
-                // Detect missing descriptions:
-                var thisProp = this.GetType().GetProperties();
-                var expectProp = instance.GetType().GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance);
-                var missingProp = expectProp
-                    .Where(exProp => !thisProp.Any(thProp => (thProp.Name == exProp.Name)))
-                    .Select(exProp => $"- {exProp.Name}");
-                if (missingProp.Any())
-                    // Dear developer:
-                    // You throw this exception because you probably have added or removed some setting!?
-                    // > If so, please ensure to add one "descriptive property" per settings-property and fill in some details to show to the user.
-                    throw new NotImplementedException($"Detected missing property descriptions for the following settings:\n{string.Join("\n", missingProp)}");
-#endif
+                if (Debugger.IsAttached)
+                { 
+                    // Detect missing descriptions:
+                    var thisProp = this.GetType().GetProperties();
+                    var expectProp = instance.GetType().GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance);
+                    var missingProp = expectProp
+                        .Where(exProp => !thisProp.Any(thProp => (thProp.Name == exProp.Name)))
+                        .Select(exProp => $"- {exProp.Name}");
+                    if (missingProp.Any())
+                        // Dear developer:
+                        // You throw this exception because you probably have added or removed some setting!?
+                        // > If so, please ensure to add one "descriptive property" per settings-property and fill in some details to show to the user.
+                        throw new NotImplementedException($"Detected missing property descriptions for the following settings:\n{string.Join("\n", missingProp)}");
+                }
             }
 
 

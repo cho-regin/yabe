@@ -30,6 +30,7 @@ using System.Windows.Forms;
 using System.Reflection;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
 
 namespace Yabe
 {
@@ -41,6 +42,13 @@ namespace Yabe
         [STAThread]
         static void Main()
         {
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Application.ThreadException += delegate (object sender, System.Threading.ThreadExceptionEventArgs e)
+            {
+                // Don't care with Exception in thread without try catch.
+                // Normally here not exist ... but who knows ?
+            };
+
             // Load Embbeded dll
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
             {

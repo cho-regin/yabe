@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!-- Embedded resource used when ReadPropertyMultiple not implemented 
-OBJECT_IDENTIFIER, OBJECT_NAME & OBJECT_TYPE not here since they're required by all
+OBJECT_IDENTIFIER, OBJECT_NAME, DESCRIPTION, OBJECT_TYPE not here since they're required by all (should not be set)
 could be 'ovveride' by an optional external file
 -->
 
@@ -59,6 +59,8 @@ could be 'ovveride' by an optional external file
     <BacnetPropertyIds>PROP_EVENT_STATE</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_POLARITY</BacnetPropertyIds>
+    <BacnetPropertyIds>PROP_INACTIVE_TEXT</BacnetPropertyIds>
+    <BacnetPropertyIds>PROP_ACTIVE_TEXT</BacnetPropertyIds>
     </propsId>
 </BacnetObjectDescription>
 <BacnetObjectDescription>
@@ -70,6 +72,8 @@ could be 'ovveride' by an optional external file
     <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_PRIORITY_ARRAY</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_RELINQUISH_DEFAULT</BacnetPropertyIds>
+    <BacnetPropertyIds>PROP_INACTIVE_TEXT</BacnetPropertyIds>
+    <BacnetPropertyIds>PROP_ACTIVE_TEXT</BacnetPropertyIds>
     </propsId>
 </BacnetObjectDescription>
 <BacnetObjectDescription>
@@ -79,6 +83,8 @@ could be 'ovveride' by an optional external file
     <BacnetPropertyIds>PROP_MEMBER_STATUS_FLAGS</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_EVENT_STATE</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
+    <BacnetPropertyIds>PROP_INACTIVE_TEXT</BacnetPropertyIds>
+    <BacnetPropertyIds>PROP_ACTIVE_TEXT</BacnetPropertyIds>
     </propsId>
 </BacnetObjectDescription>
 <BacnetObjectDescription>
@@ -108,7 +114,6 @@ could be 'ovveride' by an optional external file
     <BacnetPropertyIds>PROP_FIRMWARE_REVISION</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_APPLICATION_SOFTWARE_VERSION</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_LOCATION</BacnetPropertyIds>
-    <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_PROTOCOL_VERSION</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_PROTOCOL_REVISION</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_PROTOCOL_SERVICES_SUPPORTED</BacnetPropertyIds>
@@ -214,6 +219,7 @@ could be 'ovveride' by an optional external file
     <BacnetPropertyIds>PROP_EVENT_STATE</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_NUMBER_OF_STATES</BacnetPropertyIds>
+    <BacnetPropertyIds>PROP_STATE_TEXT</BacnetPropertyIds>
     </propsId>
 </BacnetObjectDescription>
 <BacnetObjectDescription>
@@ -226,6 +232,7 @@ could be 'ovveride' by an optional external file
     <BacnetPropertyIds>PROP_NUMBER_OF_STATES</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_PRIORITY_ARRAY</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_RELINQUISH_DEFAULT</BacnetPropertyIds>
+    <BacnetPropertyIds>PROP_STATE_TEXT</BacnetPropertyIds>
     </propsId>
 </BacnetObjectDescription>
 <BacnetObjectDescription>    
@@ -236,6 +243,7 @@ could be 'ovveride' by an optional external file
     <BacnetPropertyIds>PROP_EVENT_STATE</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_OUT_OF_SERVICE</BacnetPropertyIds>
     <BacnetPropertyIds>PROP_NUMBER_OF_STATES</BacnetPropertyIds>
+    <BacnetPropertyIds>PROP_STATE_TEXT</BacnetPropertyIds>
     </propsId>
 </BacnetObjectDescription>
 <BacnetObjectDescription>

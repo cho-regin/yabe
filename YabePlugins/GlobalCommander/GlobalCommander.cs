@@ -1251,37 +1251,19 @@ namespace GlobalCommander
             IList<BacnetReadAccessResult> multi_value_list;
             try
             {
-                //fetch properties. This might not be supported (ReadMultiple) or the response might be too long.
+                // fetch properties.
                 if (!device.channel.ReadPropertyMultipleRequest(device.BacAdr, object_id, properties, out multi_value_list))
                 {
-                    Trace.TraceWarning(String.Format("Couldn't perform ReadPropertyMultiple for property list on device {0}, object {1} ... Trying ReadProperty instead", point.ParentDevice.Name, point.Name));
-                    if (!ReadAllPropertiesBySingle(device, object_id, out multi_value_list))
-                    {
-                        ResetPatience();
-                        MessageBox.Show(this, String.Format("Couldn't get property list using ReadProperty loop (single properties at a time) of device {0}, object {1} ... Trying ReadProperty instead", point.ParentDevice.Name, point.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return false;
-                    }
+                    Trace.TraceWarning(String.Format("Couldn't perform Read Property for property list on device {0}, object {1}", point.ParentDevice.Name, point.Name));
+                    ResetPatience();
+                    return false;
                 }
             }
             catch (Exception)
             {
-                Trace.TraceWarning(String.Format("Couldn't perform ReadPropertyMultiple for property list on device {0}, object {1} ... Trying ReadProperty instead", point.ParentDevice.Name, point.Name));
-                try
-                {
-                    //fetch properties with single calls
-                    if (!ReadAllPropertiesBySingle(device, object_id, out multi_value_list))
-                    {
-                        ResetPatience();
-                        MessageBox.Show(this, String.Format("Couldn't get property list using ReadProperty loop (single properties at a time) of device {0}, object {1} ... Trying ReadProperty instead", point.ParentDevice.Name, point.Name), "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    ResetPatience();
-                    MessageBox.Show(this, String.Format("Error reading properties one-at-a-time from device {1}, object {2}: {0}", ex.Message, point.ParentDevice.Name, point.Name), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return false;
-                }
+                Trace.TraceWarning(String.Format("Couldn't perform Read Property for property list on device {0}, object {1}", point.ParentDevice.Name, point.Name));
+                ResetPatience();
+                return false;
             }
 
             point.Properties.Clear();
@@ -1313,10 +1295,6 @@ namespace GlobalCommander
             return _yabeFrm.SortBacnetObjects(value_list);
         }
 
-        private bool ReadAllPropertiesBySingle(BACnetDevice device, BacnetObjectId object_id, out IList<BacnetReadAccessResult> multi_value_list)
-        {
-            return device.ReadAllPropertiesBySingle(object_id, out multi_value_list);
-        }
         // ------------------------------------------------------------------
 
         public class BacnetDeviceExport : IEquatable<BacnetDeviceExport>, IComparable<BacnetDeviceExport>
