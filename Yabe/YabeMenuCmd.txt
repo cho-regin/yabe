@@ -11,7 +11,7 @@ Start Bacnet.Room.Simulator;1R;Launch;AddOn,Bacnet.Room.Simulator.exe
 Start Wheather2_to_Bacnet;2W;Launch;AddOn,Wheather2_to_Bacnet.exe
 Start DemoServer;;Launch;AddOn,DemoServer.exe
 
-# Insert a separator (Label mandatory Sep, command mandatory None)
+# Insert a separator (Label mandatory Sep, Command None)
 Sep;;None
 
 # Iam on all open interfaces
@@ -33,3 +33,8 @@ Remove Devices others than HVAC;;Leave_Devices;3,9,523
 # To be remove by you
 Sep;;None
 Edit YabeMenuCmd.txt to modify menu content;7Y;Launch;.,notepad,YabeMenuCmd.txt
+
+# Subscription similar to the drop action of a file in the Subscription view. Param is a list of files with , as separator
+# Subscribe to some very important objects;2S;Subscribe_Files;C:\Users\Fred\Desktop\Yabe\File1.cov,C:\Users\Fred\Desktop\Yabe\File2.cov
+
+# Some idea of generic commands to be added, useful for the community, let me know ... or better, post the code !

@@ -37,17 +37,18 @@ namespace Yabe
 
     public partial class YabeMainDialog
     {
-        string[] CommandList = { "none", "launch", "send_iam", "send_whois", "send_whoisto", "leave_devices" };
-
+        static readonly string[] CommandList = { "none", "launch", "send_iam", "send_whois", "send_whoisto", "leave_devices", "subscribe_files" };
+        // Action array cannot be filed here, methods cannot be static to access simply to all Yabe elements, done in InitUserCmd
+        Action<String>[] UserCmdCommands; 
         Keys ShortCut(String s) // Must contains Control or Alt 
         {
-            if (s.Length==1)
+            if (s.Length == 1)
                 return Keys.Control | (Keys)s[0];
             else
             {
                 int Ret = (int)s[1];
                 Int32.TryParse(s[0].ToString(), out int ModifierInt);
-
+                // at least Ctrl or Alt is required for a Keyboard Shortcut
                 if (((ModifierInt & 1) == 1) || ((ModifierInt & 3) == 0))
                     Ret = Ret + (int)Keys.Control;
                 if ((ModifierInt & 2) == 2)
@@ -60,9 +61,20 @@ namespace Yabe
         }
         void InitUserCmd()
         {
+
             if (File.Exists("YabeMenuCmd.txt"))
             {
-                
+                // Init the Array of link to Methods associated to every commands
+                UserCmdCommands = new Action<String>[] { null, UserCmd_Launch, UserCmd_Iam, UserCmd_WhoIs1, 
+                    UserCmd_WhoIs2, UserCmd_RemoveDevices, UserCmd_SubscribeFiles };
+
+                if ((Debugger.IsAttached)&&(UserCmdCommands.Length!=CommandList.Length))
+                {
+                    // Dear developer:
+                    // You throw this exception because you probably have added or removed User commands!?
+                    throw new NotImplementedException("Missing User Commands");
+                }
+
                 int LineCount = 0;
                 try
                 {
@@ -77,29 +89,33 @@ namespace Yabe
                                 String[] MenuCommand = l.Split(';');
                                 Tuple<int, string> Cmd = null;
 
+                                // Parameters with , are not splited here. Maybe it will be necessary a day inside them and not as a sperator
+
                                 if (MenuCommand.Length == 3)
                                     Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), null);
                                 else if (MenuCommand.Length == 4)
                                     Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), MenuCommand[3]);
-
-                                if (Cmd!=null)
+                                
+                                if (Cmd !=null)
                                 {
                                     if ((MenuCommand[0] != "Sep") && (Cmd.Item1 >= 0))
                                     {
                                         // Creates the Menu Item
-                                        ToolStripMenuItem MenuItem = new ToolStripMenuItem();
-                                        MenuItem.Text = MenuCommand[0];
-                                        MenuItem.Tag = Cmd;
+                                        ToolStripMenuItem MenuItem = new ToolStripMenuItem()
+                                        {
+                                            Text = MenuCommand[0],
+                                            Tag = Cmd,
+                                        };
 
                                         if (MenuCommand[1].Length >= 1)
                                             MenuItem.ShortcutKeys = ShortCut(MenuCommand[1]);
-                                        
+
                                         if (Cmd.Item1 > 0)
                                             MenuItem.Click += new EventHandler(UserMenuItem_Click);
 
                                         yabeFrm.userCommandToolStripMenuItem.DropDownItems.Add(MenuItem);
                                     }
-                                    else 
+                                    else
                                         yabeFrm.userCommandToolStripMenuItem.DropDownItems.Add(new ToolStripSeparator());
 
                                 }
@@ -108,37 +124,25 @@ namespace Yabe
                     }
                 }
                 catch { Trace.WriteLine("Error file YabeMenuCmd.txt line " + LineCount); }
-
-                if (userCommandToolStripMenuItem.DropDownItems.Count == 0) userCommandToolStripMenuItem.Visible = false;
-
             }
 
+            if (userCommandToolStripMenuItem.DropDownItems.Count == 0) userCommandToolStripMenuItem.Visible = false;
+
         }
 
-        void UserMenuItem_Click(object sender, EventArgs e)
+        void UserMenuItem_Click(object sender, EventArgs e) // This indirect step could be avoided, but it's not necessary
         {
-            Tuple<int, string> Cmd = (Tuple<int, string>)(sender as ToolStripMenuItem).Tag;
-
-            if (Cmd.Item1 == 1) // Launch
-                UserCmd_Launch(Cmd);
-
-            if ((Cmd.Item1==2)&&(Properties.Settings.Default.YabeDeviceId>=0))   // Iam
-                UserCmd_Iam(Cmd);
-
-            if (Cmd.Item1 == 3) // WhoIs with interval
-                UserCmd_WhoIs1(Cmd);
-
-            if (Cmd.Item1 == 4) // WhoIs to several
-                UserCmd_WhoIs2(Cmd);
-
-            if (Cmd.Item1 == 5)
-                UserCmd_RemoveDevices(Cmd);
+            try
+            { 
+                Tuple<int, string> Cmd = (Tuple<int, string>)(sender as ToolStripMenuItem).Tag;
+                UserCmdCommands[Cmd.Item1](Cmd.Item2);
+            } catch {}
         }
-        void UserCmd_Launch(Tuple<int, string> Cmd)
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        void UserCmd_Launch(String Parameters)
         {
-            if (Cmd.Item2 == null) return;
-
-            String[] P = Cmd.Item2.Split(',');
+            if (Parameters == null) return;
+            String[] P = Parameters.Split(',');
 
             if (P.Length <2) return;
 
@@ -160,22 +164,25 @@ namespace Yabe
             return;
         }
 
-        void UserCmd_Iam(Tuple<int, string> Cmd)
+        void UserCmd_Iam(String Parameters)
         {
-            foreach (TreeNode Tn in m_DeviceTree.Nodes[0].Nodes)
-            {
-                BacnetClient cli = Tn.Tag as BacnetClient;
-                try
-                { m_Server?.Iam(cli); } catch { }
+            if (Properties.Settings.Default.YabeDeviceId >= 0)
+            { 
+                foreach (TreeNode Tn in m_DeviceTree.Nodes[0].Nodes)
+                {
+                    BacnetClient cli = Tn.Tag as BacnetClient;
+                    try
+                    { m_Server?.Iam(cli); }
+                    catch { }
+                }
             }
-            return;
         }
 
-        void UserCmd_WhoIs1(Tuple<int, string> Cmd)
+        void UserCmd_WhoIs1(String Parameters)
         {
-            if (Cmd.Item2 == null) return;
+            if (Parameters == null) return;
+            String[] P = Parameters.Split(',');
 
-            String[] P = Cmd.Item2.Split(',');
             int Min, Max;
             try
             {
@@ -192,11 +199,11 @@ namespace Yabe
             return;
         }
 
-        void UserCmd_WhoIs2(Tuple<int, string> Cmd)
+        void UserCmd_WhoIs2(String Parameters)
         {
-            if (Cmd.Item2 == null) return;
+            if (Parameters == null) return;
+            String[] Param = Parameters.Split(',');
 
-            String[] Param = Cmd.Item2.Split(',');
             int[] Id = new int[Param.Length];
             try
             {
@@ -213,11 +220,11 @@ namespace Yabe
             }
             return;
         }
-        void UserCmd_RemoveDevices(Tuple<int, string> Cmd)
+        void UserCmd_RemoveDevices(String Parameters)
         {
-            if (Cmd.Item2 == null) return;
+            if (Parameters == null) return;
+            String[] Param = Parameters.Split(',');
 
-            String[] Param = Cmd.Item2.Split(',');
             uint[] Id = new uint[Param.Length];
 
             try
@@ -264,8 +271,25 @@ namespace Yabe
                 }
 
             m_AddressSpaceTree.Nodes.Clear();   //clear address space
-            AddSpaceLabel.Text = "Address Space";
+            AddSpaceLabel.Text = AddrSpaceTxt;
             m_DataGrid.SelectedObject = null;   //clear property grid
+        }
+
+        void UserCmd_SubscribeFiles(String Parameters)
+        {
+            if (Parameters == null) return;
+            String[] Param = Parameters.Split(',');
+
+            foreach (String ParamStr in Param) 
+            {
+                if (File.Exists(ParamStr))
+                    try
+                    {
+                        DataObject dataObject = new DataObject(DataFormats.FileDrop, new string[] { ParamStr });
+                        m_SubscriptionView_DragDrop(null, new DragEventArgs(dataObject, 0, 0, 0, DragDropEffects.All, DragDropEffects.All));
+                    }
+                    catch { }
+            }
         }
     }
 }

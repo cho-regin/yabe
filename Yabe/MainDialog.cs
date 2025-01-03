@@ -113,14 +113,6 @@ namespace Yabe
         bool ToogleViewSimplified = false; // Used to change the view mode independently of the chosen setting mode (short cut : ctrl alt S)
         string AddrSpaceTxt = "Objects";
 
-        bool Rentry = false;
-        void WaitRenty()
-        { 
-            while (Rentry==true) { Thread.Sleep(10); Application.DoEvents(); }
-            Rentry = true;
-        }
-        void ExitRentry() { Rentry = false; }
-
         public bool GetSetting_TimeSynchronize_UTC() // GlobalCommander is using it
         {
             return Properties.Settings.Default.TimeSynchronize_UTC;
@@ -251,7 +243,7 @@ namespace Yabe
             
             SaveObjectNamesTimer.Enabled = true;
 
-            SetSimplfiedLabels();
+            SetSimplifiedLabels();
         }
         private void MainDialog_Load(object sender, EventArgs e)
         {
@@ -804,9 +796,6 @@ namespace Yabe
 
         private void addDevicesearchToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            labelDrop1.Visible = labelDrop2.Visible = false;
-            if (TbxHighlightAddress.Text == "HighLight Filter")
-                TbxHighlightAddress.Text = TbxHighlightDevice.Text = "";
 
             SearchDialog dlg = new SearchDialog();
             if (dlg.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
@@ -897,6 +886,11 @@ namespace Yabe
                     {
                         ((BacnetMstpProtocolTransport)comm.Transport).FrameRecieved += new BacnetMstpProtocolTransport.FrameRecievedHandler(MSTP_FrameRecieved);
                     }
+
+                    labelDrop1.Visible = labelDrop2.Visible = false;
+                    if (TbxHighlightAddress.Text == "HighLight Filter")
+                        TbxHighlightAddress.Text = TbxHighlightDevice.Text = "";
+
                 }
                 catch (Exception ex)
                 {
@@ -904,6 +898,7 @@ namespace Yabe
                     node.Remove();
                     MessageBox.Show(this, "Couldn't start Bacnet communication: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+
             }
         }
 
@@ -1307,7 +1302,7 @@ namespace Yabe
             return SortedList;
         }
 
-        void SetSimplfiedLabels()
+        void SetSimplifiedLabels()
         {
             if (((Properties.Settings.Default.Address_Space_Structured_View == AddressTreeViewType.FieldTechnician) ^ ToogleViewSimplified == true) && (SimplifiedViewFilter != null))
             {
@@ -1324,7 +1319,7 @@ namespace Yabe
         {
 
             AsynchRequestId++; // disabled a possible thread pool work (update) on the AddressSpaceTree
-            SetSimplfiedLabels();
+            SetSimplifiedLabels();
 
             TreeNode node = e.Node;
 
@@ -1388,8 +1383,11 @@ namespace Yabe
                     {
                         BacnetObjectId bobj_id = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id);
                         String Identifier = device.ReadObjectName(bobj_id);
-                        node.ToolTipText = node.Text;
-                        node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
+                        if (!string.IsNullOrWhiteSpace(Identifier))
+                        {
+                            node.ToolTipText = node.Text;
+                            node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
+                        }
                     }
 
                 }
@@ -1435,9 +1433,11 @@ namespace Yabe
 
                                 String Identifier = device.ReadObjectName(bobj_id);
 
-                                node.ToolTipText = node.Text;
-                                node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
-
+                                if (!string.IsNullOrWhiteSpace(Identifier))
+                                {
+                                    node.ToolTipText = node.Text;
+                                    node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
+                                }
                             }
                         }
                         AddObjectEntry(device, null, bobj_id, m_AddressSpaceTree.Nodes);
@@ -3305,7 +3305,7 @@ namespace Yabe
                     try
                     {
                         String Name=device.ReadObjectName((BacnetObjectId)tn.Tag);
-                        if (Name!=null)
+                        if (!string.IsNullOrWhiteSpace(Name))
                         {
                             if (AsynchRequestId != this.AsynchRequestId) // Selected device is no more the good one
                             {
@@ -3665,7 +3665,7 @@ namespace Yabe
                 
                 this.m_AddressSpaceTree.SelectedNode = null;
                 this.m_AddressSpaceTree.SelectedNodes.Clear();
-
+                
                 ListViewItem itm=selectedSubscriptions[0] ;
 
                 if (!(itm.Tag is Subscription subscription))

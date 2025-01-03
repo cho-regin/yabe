@@ -219,7 +219,10 @@ namespace Yabe
                     return true;
                 }
             }
-            catch { }
+            catch 
+            {
+                ReadObjectsListOneShot = false;    // no way to read OBJECT_LIST. Maybe a temporary problem.
+            }
 
             return false;
         }
@@ -418,7 +421,7 @@ namespace Yabe
                 LoadObjectsDescription();
 
             int old_retries = channel.Retries;
-            channel.Retries = 1;       //we don't want to spend too much time on non existing properties
+
             try
             {
                 // PROP_LIST was added as an addendum to 135-2010
@@ -460,6 +463,8 @@ namespace Yabe
                 }
                 else
                 {
+                    channel.Retries = 1;       //we don't want to spend too much time on non existing properties
+
                     // Three mandatory common properties to all objects : PROP_OBJECT_IDENTIFIER,PROP_OBJECT_TYPE, PROP_OBJECT_NAME
                     // One more optional included every time PROP_DESCRIPTION
 
@@ -616,7 +621,7 @@ namespace Yabe
                 _proprietaryPropertyMappings.Add(vendorPropertyNumber, match.Groups[3].Value);
             }
 
-            Trace.WriteLine(path + " loaded");
+            Trace.WriteLine("Loaded "+path);
             // return an indication that we have handled this file
             return true;
         }
