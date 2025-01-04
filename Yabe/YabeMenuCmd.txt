@@ -17,12 +17,15 @@ Sep;;None
 # Iam on all open interfaces
 Send Iam;I;Send_Iam
 
-# Whois with Min and Max devicesId concerned
-Send Whois To Devices 0..10;;Send_Whois;0,10
-Send Whois To Devices 50..100;;Send_Whois;50,100
+# Insert a Sub Menu Level (Label mandatory start with SubStart)
+SubStart Send Several Whois;;None
 
-# Whois to a list of individual devices
-Send Whois To 4,8,9,15;;Send_WhoisTo;4,8,9,15
+# WhoIs to a list of individual devices and within ranges
+To Devices 4,8 to 10, 56;;Send_Whois;4,8..10,56
+To Devices 50 to 100;;Send_Whois;50..100
+
+# Close a Sub Menu Level (Label mandatory SubClose)
+SubClose;;None
 
 Sep;;None
 
@@ -30,11 +33,23 @@ Sep;;None
 Remove Devices others than Office Building;;Leave_Devices;1,3,2,54,6,45455,654564
 Remove Devices others than HVAC;;Leave_Devices;3,9,523
 
+SubStart Read, Write several Devices/Objects/Properties;;None
+
+# Write a set of values into one or several devices. Param is the file with Device;Object;Property;Priority;Value. See RecipeSample.csv for syntax 
+Shutdown all lights on floor level 1;;Write_Recipe;RecipeSample.csv
+# Take a snapshot of several values into several devices. First param is the same file as Write_Recipe, second is the result file. 
+# If no result file is provided a display form displayed 
+Take a snapshot of floor level 1;;SnapShot;RecipeSample.csv,C:\Users\Fred\Desktop\Yabe\SnapShotReport.csv
+Edit RecipeSample.csv to change the Recipe/Snapshot file;;Launch;.,notepad,RecipeSample.csv
+
+SubClose;;None
+
 # To be remove by you
 Sep;;None
-Edit YabeMenuCmd.txt to modify menu content;7Y;Launch;.,notepad,YabeMenuCmd.txt
+Edit YabeMenuCmd.txt to modify/remove this menu content;7Y;Launch;.,notepad,YabeMenuCmd.txt
 
 # Subscription similar to the drop action of a file in the Subscription view. Param is a list of files with , as separator
 # Subscribe to some very important objects;2S;Subscribe_Files;C:\Users\Fred\Desktop\Yabe\File1.cov,C:\Users\Fred\Desktop\Yabe\File2.cov
 
 # Some idea of generic commands to be added, useful for the community, let me know ... or better, post the code !
+# Batch command to be done with a file of a sequence of these previous commands

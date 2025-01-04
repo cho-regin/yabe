@@ -28,13 +28,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.BACnet;
-using System.IO.BACnet.Storage;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Windows.Forms;
 using System.Xml.Serialization;
 
 namespace Yabe
@@ -46,6 +42,7 @@ namespace Yabe
         public BacnetClient channel;
         public BacnetAddress BacAdr = new BacnetAddress(BacnetAddressTypes.None, 0, null);
         public uint deviceId;
+        public string deviceName { get { return GetObjectName(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, deviceId)); } }
         public uint vendor_Id;
         public uint MaxAPDULenght;
         public BacnetSegmentations Segmentation;
@@ -715,6 +712,7 @@ namespace Yabe
             String Name = null;
             lock (DevicesObjectsName)
                 DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(FullHashString(), object_id), out Name);
+
             return Name;
         }
         /// <summary>
@@ -724,10 +722,7 @@ namespace Yabe
         {
             if (ForceRead == false)
             {
-                String Name;
-                lock (DevicesObjectsName)
-                    if (DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(FullHashString(), object_id), out Name))
-                        return Name;
+                return (GetObjectName(object_id));
             }
             try
             {
@@ -738,7 +733,7 @@ namespace Yabe
                     return "";
                 else
                 {
-                    UpdateObjectNameMapping(object_id, value[0].Value.ToString());
+                    UpdateObjectNameMapping(object_id, value[0].Value.ToString());;
                     return value[0].Value.ToString();
                 }
             }

@@ -45,6 +45,7 @@ using System.Windows.Forms;
 using System.Xml.Serialization;
 using WebSocketSharp;
 using ZedGraph;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar;
 
 namespace Yabe
 {
@@ -374,8 +375,12 @@ namespace Yabe
                 }
             });
 
-            addDevicesearchToolStripMenuItem_Click(this, null);
-
+            ThreadPool.QueueUserWorkItem( _ => 
+            {
+                Thread.Sleep(100);
+                Invoke(new Action( () => { addDevicesearchToolStripMenuItem_Click(this, null); }));
+            });
+            
         }
         private void MainDialog_FormClosing(object sender, FormClosingEventArgs e)
         {
@@ -704,7 +709,7 @@ namespace Yabe
                 TreeNode parent = FindCommTreeNode(sender);
                 if (parent == null) return; // should never occur
 
-                String Identifier = new_device.GetObjectName(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id));
+                String Identifier = new_device.deviceName;
 
                 foreach (TreeNode s in parent.Nodes)
                 {
@@ -785,7 +790,6 @@ namespace Yabe
                 "\nhttps://github.com/chmorgan/sharppcap"+
                 "\nhttps://sourceforge.net/projects/mstreeview" + 
                 "\nhttps://github.com/sta/websocket-sharp"
-                
                 , "About", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -1333,8 +1337,7 @@ namespace Yabe
             if ((sender == manual_refresh_objects) || (sender as String == "ObjNewDelete" ) || (!Properties.Settings.Default.UseObjectsCache))
                 device.ClearCache();
 
-
-            m_AddressSpaceTree.Nodes.Clear();   //clear
+            m_AddressSpaceTree.Nodes.Clear();   // clear Objects dictionnary, the device is changed
             AddSpaceLabel.Text = AddrSpaceTxt;
 
             BacnetClient comm = device.channel;
@@ -2648,23 +2651,24 @@ namespace Yabe
                                     }
                                     BacnetObjectId objectId = BacnetObjectId.Parse(objectIdString);
 
+                                    lock (m_devices)
                                     foreach (var E in m_devices)
-                                    { 
-                                        var devices = E.Value.Devices;
-                                        foreach (var deviceEntry in devices)
-                                        {
-                                            if (deviceEntry.deviceId == deviceId)
+                                        { 
+                                            var devices = E.Value.Devices;
+                                            foreach (var deviceEntry in devices)
                                             {
-                                                if (description.Length==4)
-                                                    CreateSubscription(deviceEntry, objectId, description[2]=="P", Int32.Parse(description[3]));
-                                                else
-                                                    CreateSubscription(deviceEntry, objectId, description[2] == "P");
+                                                if (deviceEntry.deviceId == deviceId)
+                                                {
+                                                    if (description.Length==4)
+                                                        CreateSubscription(deviceEntry, objectId, description[2]=="P", Int32.Parse(description[3]));
+                                                    else
+                                                        CreateSubscription(deviceEntry, objectId, description[2] == "P");
 
-                                                break;
+                                                    break;
+                                                }
                                             }
-                                        }
 
-                                    }
+                                        }
                                 }
                                 catch { }
                             }
@@ -3064,6 +3068,20 @@ namespace Yabe
             lock (m_devices)
             {
                 endPoints=m_devices.Values.SelectMany(line => line.Devices).ToList();
+            }
+        }
+
+        private BACnetDevice GetDeviceFromDeviceId(uint deviceId)
+        {
+            lock (m_devices)
+            {
+                foreach (var entry in m_devices)
+                {
+                    int idx = entry.Value.Devices.FindIndex(o=>o.deviceId==deviceId);
+                    if (idx != -1)
+                        return entry.Value.Devices[idx];
+                }
+                return null;
             }
         }
         private TreeNode GetTreeNodeFromDeviceId(uint deviceId)

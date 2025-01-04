@@ -25,11 +25,16 @@
 *********************************************************************/
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.IO.BACnet;
 using System.Linq;
+using System.Text;
+using System.Threading;
 using System.Windows.Forms;
+using Yabe.Properties;
 
 namespace Yabe
 { 
@@ -37,10 +42,11 @@ namespace Yabe
 
     public partial class YabeMainDialog
     {
-        static readonly string[] CommandList = { "none", "launch", "send_iam", "send_whois", "send_whoisto", "leave_devices", "subscribe_files" };
+        static readonly string[] CommandList = { "none", "launch", "send_iam", "send_whois", "leave_devices", "subscribe_files",
+                                                "snapshot", "write_recipe", "exec_batch" };
         // Action array cannot be filed here, methods cannot be static to access simply to all Yabe elements, done in InitUserCmd
-        Action<String>[] UserCmdCommands; 
-        Keys ShortCut(String s) // Must contains Control or Alt 
+        Action<String>[] UserCmdCommands;
+        Keys ShortCut(String s) // Must contains Control or Altrecipes
         {
             if (s.Length == 1)
                 return Keys.Control | (Keys)s[0];
@@ -61,17 +67,17 @@ namespace Yabe
         }
         void InitUserCmd()
         {
-
             if (File.Exists("YabeMenuCmd.txt"))
             {
-                // Init the Array of link to Methods associated to every commands
-                UserCmdCommands = new Action<String>[] { null, UserCmd_Launch, UserCmd_Iam, UserCmd_WhoIs1, 
-                    UserCmd_WhoIs2, UserCmd_RemoveDevices, UserCmd_SubscribeFiles };
+                // Init the Array of link to Methods associated to each commands
+                UserCmdCommands = new Action<String>[] { UserCmd_None, UserCmd_Launch, UserCmd_Iam, UserCmd_WhoIs,
+                     UserCmd_RemoveDevices, UserCmd_SubscribeFiles, UserCmd_SnapShot, UserCmd_WriteRecipe, null };
 
-                if ((Debugger.IsAttached)&&(UserCmdCommands.Length!=CommandList.Length))
+                if ((Debugger.IsAttached) && (UserCmdCommands.Length != CommandList.Length))
                 {
                     // Dear developer:
                     // You throw this exception because you probably have added or removed User commands!?
+                    // The number of commands should be the same as the number of methods linked to them
                     throw new NotImplementedException("Missing User Commands");
                 }
 
@@ -80,6 +86,8 @@ namespace Yabe
                 {
                     using (StreamReader sr = new StreamReader("YabeMenuCmd.txt"))
                     {
+
+                        ToolStripMenuItem YabeUserMenu = yabeFrm.userCommandToolStripMenuItem;
                         while (!sr.EndOfStream)
                         {
                             string l = sr.ReadLine();
@@ -95,10 +103,26 @@ namespace Yabe
                                     Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), null);
                                 else if (MenuCommand.Length == 4)
                                     Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), MenuCommand[3]);
-                                
-                                if (Cmd !=null)
+
+                                if (Cmd != null)
                                 {
-                                    if ((MenuCommand[0] != "Sep") && (Cmd.Item1 >= 0))
+                                    if (MenuCommand[0].StartsWith("SubStart"))
+                                    {
+                                        ToolStripMenuItem MenuItem = new ToolStripMenuItem()
+                                        {
+                                            Text = MenuCommand[0].Substring(9),
+                                            Tag = YabeUserMenu, // To remember the Parent
+                                        };
+
+                                        YabeUserMenu.DropDownItems.Add(MenuItem);
+                                        YabeUserMenu = MenuItem;
+                                    }
+                                    else if (MenuCommand[0].StartsWith("SubClose"))
+                                    {
+                                        if (YabeUserMenu.Tag is ToolStripMenuItem)
+                                            YabeUserMenu = YabeUserMenu.Tag as ToolStripMenuItem;
+                                    }
+                                    else if ((MenuCommand[0] != "Sep") && (Cmd.Item1 >= 0))
                                     {
                                         // Creates the Menu Item
                                         ToolStripMenuItem MenuItem = new ToolStripMenuItem()
@@ -113,10 +137,10 @@ namespace Yabe
                                         if (Cmd.Item1 > 0)
                                             MenuItem.Click += new EventHandler(UserMenuItem_Click);
 
-                                        yabeFrm.userCommandToolStripMenuItem.DropDownItems.Add(MenuItem);
+                                        YabeUserMenu.DropDownItems.Add(MenuItem);
                                     }
                                     else
-                                        yabeFrm.userCommandToolStripMenuItem.DropDownItems.Add(new ToolStripSeparator());
+                                        YabeUserMenu.DropDownItems.Add(new ToolStripSeparator());
 
                                 }
                             }
@@ -133,12 +157,19 @@ namespace Yabe
         void UserMenuItem_Click(object sender, EventArgs e) // This indirect step could be avoided, but it's not necessary
         {
             try
-            { 
+            {
                 Tuple<int, string> Cmd = (Tuple<int, string>)(sender as ToolStripMenuItem).Tag;
-                UserCmdCommands[Cmd.Item1](Cmd.Item2);
-            } catch {}
+                UserCmdCommands?[Cmd.Item1](Cmd.Item2);
+            } catch { }
         }
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        void UserCmd_None(String Parameters) // will be used later with an idea of batch command
+        {
+            if (Parameters == null) return;
+
+            UInt32.TryParse(Parameters, out uint delay);
+            Thread.Sleep((int)delay);
+        }
         void UserCmd_Launch(String Parameters)
         {
             if (Parameters == null) return;
@@ -178,45 +209,36 @@ namespace Yabe
             }
         }
 
-        void UserCmd_WhoIs1(String Parameters)
-        {
-            if (Parameters == null) return;
-            String[] P = Parameters.Split(',');
-
-            int Min, Max;
-            try
-            {
-                Min = Convert.ToInt32(P[0]);
-                Max = Convert.ToInt32(P[1]);
-            }
-            catch { return; }
-
-            foreach (TreeNode Tn in m_DeviceTree.Nodes[0].Nodes)
-            {
-                BacnetClient cli = Tn.Tag as BacnetClient;
-                try { cli.WhoIs(Min, Max); } catch { }
-            }
-            return;
-        }
-
-        void UserCmd_WhoIs2(String Parameters)
+        void UserCmd_WhoIs(String Parameters)
         {
             if (Parameters == null) return;
             String[] Param = Parameters.Split(',');
 
-            int[] Id = new int[Param.Length];
+            List<Tuple<int, int>> Id = new List<Tuple<int, int>>();
             try
             {
                 for (int i = 0; i < Param.Length; i++)
-                    Id[i] = Convert.ToInt32(Param[i]);
+                {
+                    int Min, Max;
+                    if (Param[i].Contains(".."))
+                    {
+                        String[] Param2 = Param[i].Split('.');
+                        Min = Convert.ToInt32(Param2[0]);
+                        Max= Convert.ToInt32(Param2[2]);
+                    }
+                    else
+                        Min = Max = Convert.ToInt32(Param[i]);
+
+                    Id.Add(new Tuple<int, int>(Min,Max));
+                }
             }
-            catch { return; }
+            catch {}
 
             foreach (TreeNode Tn in m_DeviceTree.Nodes[0].Nodes)
             {
                 BacnetClient cli = Tn.Tag as BacnetClient;
                 foreach (var devId in Id)
-                    try { cli.WhoIs(devId, devId); } catch { }
+                    try { cli.WhoIs(devId.Item1, devId.Item2); } catch { }
             }
             return;
         }
@@ -291,5 +313,181 @@ namespace Yabe
                     catch { }
             }
         }
+        List<String> UserCmd_WriteRecipeSnapShotCommon(String Parameters, bool IsOnlySnap)
+        {
+            BacnetValue GetBacnetValue(BACnetDevice device, BacnetObjectId obj, BacnetPropertyIds prop, bool Snap)
+            {
+                // if Snap=true we always want the value
+                // We need only the BacnetApplicationTags if Snap=false
+                // Some a well known and maybe here a read can be avoided for them
+                // eg Present Value on basic objects, several binary property such as out of service
+                IList<BacnetValue> out_value;
+                device.ReadPropertyRequest(obj, prop, out out_value);
+                if (out_value != null)
+                    return out_value[0];
+                else
+                    return new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL, null);
+            }
+
+            List<String> Status = new List<string>();
+
+            if (File.Exists(Parameters))
+            {
+                String ReadWriteStatus = null;
+                String[] WriteCmds = File.ReadAllLines(Parameters);
+                foreach (String WriteCmd in WriteCmds)
+                {
+                    String[] Commande = WriteCmd.Split(';');
+
+                    if ((Commande.Length < 7) || (Commande[0].StartsWith("#")))
+                        continue;
+                    try
+                    {
+                        if (UInt32.TryParse(Commande[0], out uint device_id)) // fail with the first line if it's the header
+                        {
+                            BACnetDevice device = GetDeviceFromDeviceId(device_id);
+
+                            if (device == null)
+                            {
+                                ReadWriteStatus = Commande[0] + ";" + Commande[1] + ";" + Commande[2] + ";" + Commande[3] + ";" + Commande[4] + ";;Device not Found";
+                                Status.Add(ReadWriteStatus);
+                                continue;
+                            }
+
+                            if (device.deviceName != null)  // Change the Device Name if already knonw
+                                Commande[1] = device.deviceName;
+
+                            ReadWriteStatus = Commande[0] + ";" + Commande[1] + ";" + Commande[2] + ";" + Commande[3] + ";" + Commande[4] + ";";
+
+
+                            BacnetObjectId boid = BacnetObjectId.Parse("OBJECT_" + Commande[2].Trim().Replace(' ', '_').ToUpper());
+                            BacnetPropertyIds prop = (BacnetPropertyIds)Enum.Parse(typeof(BacnetPropertyIds), "PROP_" + Commande[4].Trim().Replace(' ', '_').ToUpper());
+
+                            UInt32.TryParse(Commande[5], out uint WritePriority);
+
+                            String ValStrSatus = Commande[6];
+                            String ValStr = Commande[6];
+                            for (int i = 7; i < Commande.Length; i++)    // Restore the possible ; from a String
+                            {
+                                ValStr = ValStr + ";" + Commande[i];
+                                ValStrSatus = ValStrSatus + "," + Commande[i]; // Change de seprator only for the status
+                            }
+
+                            // Get the data with the right type and BacnetTag
+                            BacnetValue valRead = GetBacnetValue(device, boid, prop, false);
+
+                            if ((valRead.Tag != BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL) && (!IsOnlySnap))
+                            {
+                                BacnetValue valtoWrite = new BacnetValue(valRead.Tag, ValStr); // The stack is able to convert the string with the good Tag value
+                                uint oldpriority = device.channel.WritePriority;
+                                device.channel.WritePriority = WritePriority;
+                                try
+                                {
+                                    bool ret = device.WritePropertyRequest(boid, prop, new List<BacnetValue> { valtoWrite });
+                                    if (ret == false)
+                                        ReadWriteStatus += ";Write Fail";
+                                    else
+                                        ReadWriteStatus += ValStrSatus + ";Write Ok";
+                                }
+                                catch { ReadWriteStatus += ";Write Fail"; }
+                                device.channel.WritePriority = oldpriority;
+                            }
+                            if (IsOnlySnap)
+                            {
+                                if (valRead.Value != null)
+                                    ReadWriteStatus += valRead.Value.ToString();
+                                else
+                                    ReadWriteStatus += ";Read Fail";
+                            }
+                        }
+                        else
+                            continue;
+                    }
+                    catch 
+                    {
+                        ReadWriteStatus += ";Syntax Error";
+                    }
+
+                    Status.Add(ReadWriteStatus);
+                }
+            }
+
+            return Status;
+        }
+
+        void UserCmd_SnapShot(String Parameters)
+        {
+            if (Parameters == null) return;
+            String[] Param = Parameters.Split(',');
+
+            if (Param.Length >= 1)
+            {
+                List<String> status = UserCmd_WriteRecipeSnapShotCommon(Param[0], true);
+                if (Param.Length >= 2)
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendLine("DeviceId;DeviceName;ObjectId;ObjectName;Property;Value;Status");
+                    foreach (String s in status)
+                        sb.AppendLine(s);
+
+                    File.WriteAllText(Param[1], sb.ToString());
+                }
+                else
+                    new WriteRecipeForm(this.Icon, status).ShowDialog();
+            }
+
+        }
+        void UserCmd_WriteRecipe(String Parameters)
+        {
+            List<String> status = UserCmd_WriteRecipeSnapShotCommon(Parameters, false);
+            new WriteRecipeForm(this.Icon,status).ShowDialog();
+        }
+    }
+
+    class WriteRecipeForm : Form
+    {
+        private ListView listStatus;
+        public WriteRecipeForm(Icon icon, List<String> Status)
+        {
+            InitializeComponent(icon);
+            foreach (String s in Status)
+            {
+                String[] st = s.Split(';');
+                ListViewItem itm = listStatus.Items.Add(st.Last());
+
+              for (int i = 0;i<st.Length-1;i++)
+                    itm.SubItems.Add(st[i]);
+            }
+        }
+
+        void InitializeComponent(Icon icon)
+        {
+            listStatus = new ListView();
+            SuspendLayout();
+
+            listStatus.Dock = DockStyle.Fill;
+            listStatus.UseCompatibleStateImageBehavior = false;
+            listStatus.View = View.Details;
+            listStatus.Columns.AddRange(new ColumnHeader[] 
+            {
+                new ColumnHeader() { Text="Status", Width=-2},
+                new ColumnHeader() { Text="Device", Width = -2},
+                new ColumnHeader() { Text="Device Name", Width=-2},
+                new ColumnHeader() { Text="Object Id", Width=-2},
+                new ColumnHeader() { Text="Object Name", Width = -2},
+                new ColumnHeader() { Text="Property", Width = -2},
+                new ColumnHeader() { Text="Value", Width = -2}
+            }) ;
+
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(800, 450);
+            Controls.Add(listStatus);
+            Text = "SnapShot or Write Status";
+            Icon = icon;
+            ResumeLayout(false);
+
+        }
+
     }
 }

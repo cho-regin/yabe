@@ -1,0 +1,15 @@
+# Comment lines, like these 7 first lines, must start with a #, blank lines allowed
+# This file is to be used with the parametrable User Command Write_Recipe and SnapShort
+Bacnet deviceId; Device Frendly Name; Object:Id; Object Frendly Name; Property; Priority; Value
+# Frendly Name for both Device and Object are only used for Snapshot report and can be left empty for Write_Recipe
+# Prority and Value are used for Write_Recipe and can be left  empty for Snapshot
+# The Devices must be already present in the Device View, no previous read are required 
+# If a Value String with semicolon should be write it's wihtout problem (not very readble but OK)
+
+# two objects from the device 314159, first is Present value 45 at priority 1 and 0 (default)
+# Object and Property Name can be written in low case et wihout _
+314159;A good Pi Device;ANALOG_VALUE:0;An fine Analog Value;PRESENT_VALUE;1;45
+314159;A good Pi Device;Binary Output:1;Boiler On/Off;Present Value;0;1
+
+# one object from the device 271828, Out of Service True at priority 0 
+271828;An exponential Device;BINARY_INPUT:4;Binary Switch;OUT_OF_SERVICE;0;True

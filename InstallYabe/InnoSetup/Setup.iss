@@ -69,6 +69,7 @@ Source: "..\..\Docs\Treeview_license.txt"; DestDir: "{app}"; Flags: ignoreversio
 Source: "..\..\Yabe\bin\Debug\ReadSinglePropDescr.Xml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\SimplifiedViewFilter.Xml"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\YabeMenuCmd.Txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\RecipeSample.csv"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\AdvertiseSample.cov"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\VendorPropertyMapping.csv"; DestDir: "{app}"; Flags: ignoreversion
 
