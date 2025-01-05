@@ -722,15 +722,17 @@ namespace Yabe
         {
             if (ForceRead == false)
             {
-                return (GetObjectName(object_id));
+                String Name = GetObjectName(object_id);
+                if (Name != null)
+                    return (Name);
             }
             try
             {
                 IList<BacnetValue> value;
                 if (!ReadPropertyRequest(object_id, BacnetPropertyIds.PROP_OBJECT_NAME, out value))
-                    return "";
+                    return null;
                 if (value == null || value.Count == 0)
-                    return "";
+                    return null;
                 else
                 {
                     UpdateObjectNameMapping(object_id, value[0].Value.ToString());;
@@ -739,7 +741,7 @@ namespace Yabe
             }
             catch
             {
-                return "";
+                return null;
             }
         }
         #endregion

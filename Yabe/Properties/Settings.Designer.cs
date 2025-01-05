@@ -683,5 +683,29 @@ namespace Yabe.Properties {
                 this["GridAlwaysExpandProperties"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string DeviceClassStructure {
+            get {
+                return ((string)(this["DeviceClassStructure"]));
+            }
+            set {
+                this["DeviceClassStructure"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("NetworkThenDeviceClass")]
+        public global::Yabe.DeviceTreeViewType DeviceViewMode {
+            get {
+                return ((global::Yabe.DeviceTreeViewType)(this["DeviceViewMode"]));
+            }
+            set {
+                this["DeviceViewMode"] = value;
+            }
+        }
     }
 }

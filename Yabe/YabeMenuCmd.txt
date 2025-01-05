@@ -1,7 +1,7 @@
 # Menu Label;KeyShortCut;YabeCommand;Parameter(s)
-# Label puts in the Menu; 1 char optional key shortcut; YabeCommand from a little list of possiblity;  Parameters (without ;)
+# Label of the Menu; 1 char optional key shortcut; YabeCommand from a little list of possiblity;  Parameters (without ;)
 # Short cut can be preceeded by a key modifier 1 for Control (default), 2 for Alt, 3 for Control+Alt, and add 4 for Shift
-# Ctrl Alt N and Ctrl Alt S are already in usage, do not use them.
+# Ctrl Alt N, Ctrl Alt S and Ctrl Alt 0..9 are already in usage, do not use them.
 # Remove/delete/modify this file. 
 # Line starting with # are comments.
 # File read only at start time if present (original Name only).
@@ -38,11 +38,16 @@ SubStart Read, Write several Devices/Objects/Properties;;None
 # Write a set of values into one or several devices. Param is the file with Device;Object;Property;Priority;Value. See RecipeSample.csv for syntax 
 Shutdown all lights on floor level 1;;Write_Recipe;RecipeSample.csv
 # Take a snapshot of several values into several devices. First param is the same file as Write_Recipe, second is the result file. 
-# If no result file is provided a display form displayed 
-Take a snapshot of floor level 1;;SnapShot;RecipeSample.csv,C:\Users\Fred\Desktop\Yabe\SnapShotReport.csv
+# If no result file is provided a display form is displayed, or add a third dummy parameter to save & display.
+# The result file can contains the wildcard %d automaticaly replaced by the current date/time
+Take a snapshot of floor level 1;;SnapShot;RecipeSample.csv,C:\Users\Fred\Desktop\Yabe\SnapShotReport%d.csv,showalso
 Edit RecipeSample.csv to change the Recipe/Snapshot file;;Launch;.,notepad,RecipeSample.csv
 
 SubClose;;None
+
+# Settings changes with a restart or not. Param is Settings Name = Value , Name = Value , Name = Value ,restart or norestart
+# The Value could unfortunatly be a String with separator , and ; Replace , by § and ; by ^ like the sample here
+Set a Device Class Structure (from Readme.txt);;Settings;Device Class Structure=HVAC(3§9)^Lighting(9§23)^Building(HVAC§Lighting§40§27)^Not Affected(),restart
 
 # To be remove by you
 Sep;;None
@@ -52,4 +57,5 @@ Edit YabeMenuCmd.txt to modify/remove this menu content;7Y;Launch;.,notepad,Yabe
 # Subscribe to some very important objects;2S;Subscribe_Files;C:\Users\Fred\Desktop\Yabe\File1.cov,C:\Users\Fred\Desktop\Yabe\File2.cov
 
 # Some idea of generic commands to be added, useful for the community, let me know ... or better, post the code !
+# Source code is inside MainDialog.UserCmd.cs
 # Batch command to be done with a file of a sequence of these previous commands

@@ -167,5 +167,11 @@
     <Setting Name="GridAlwaysExpandProperties" Type="System.String" Scope="User">
       <Value Profile="(Default)">Priority Array</Value>
     </Setting>
+    <Setting Name="DeviceClassStructure" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="DeviceViewMode" Type="Yabe.DeviceTreeViewType" Scope="User">
+      <Value Profile="(Default)">NetworkThenDeviceClass</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

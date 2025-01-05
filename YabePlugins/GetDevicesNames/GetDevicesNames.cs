@@ -71,7 +71,7 @@ namespace GetDevicesNames // namespace should have the same name as the dll file
             {
                 Trace.WriteLine("call to the GetDevicesNames plugin");
 
-                foreach (TreeNode tn in yabeFrm.m_DeviceTree.Nodes[0].Nodes)
+                foreach (TreeNode tn in yabeFrm.NetworkViewTreeNode.Nodes)
                     FullFillDeviceTreeWithNames((BacnetClient)tn.Tag, tn.Nodes);
 
             }
@@ -95,6 +95,8 @@ namespace GetDevicesNames // namespace should have the same name as the dll file
                             tn.ToolTipText = tn.Text;   // IP or MSTP node id -> in the Tooltip
                             tn.Text = Name + " [" + device_id.ToString() + "] ";  // change @ by the Name  
                         }
+
+                        yabeFrm.UpdateTreeNodeDeviceName(device, tn);
                     }
                     catch { }
 

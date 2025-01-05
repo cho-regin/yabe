@@ -31,7 +31,6 @@
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.ImageList m_ImageList;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(YabeMainDialog));
-            System.Windows.Forms.TreeNode treeNode1 = new System.Windows.Forms.TreeNode("Network View");
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.m_SearchToolButton = new System.Windows.Forms.ToolStripButton();
             this.m_RemoveToolButton = new System.Windows.Forms.ToolStripButton();
@@ -41,6 +40,7 @@
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cleanToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.restartToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.addDevicesearchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -266,6 +266,7 @@
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.objectNameBaseToolStripMenuItem,
+            this.restartToolStripMenuItem,
             this.quitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
@@ -305,6 +306,14 @@
             this.cleanToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
             this.cleanToolStripMenuItem.Text = "Clean all";
             this.cleanToolStripMenuItem.Click += new System.EventHandler(this.cleanToolStripMenuItem_Click);
+            // 
+            // restartToolStripMenuItem
+            // 
+            this.restartToolStripMenuItem.Image = global::Yabe.Properties.Resources.magnifier;
+            this.restartToolStripMenuItem.Name = "restartToolStripMenuItem";
+            this.restartToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
+            this.restartToolStripMenuItem.Text = "Restart";
+            this.restartToolStripMenuItem.Click += new System.EventHandler(this.restartToolStripMenuItem_Click);
             // 
             // quitToolStripMenuItem
             // 
@@ -681,10 +690,6 @@
             this.m_DeviceTree.ImageList = m_ImageList;
             this.m_DeviceTree.Location = new System.Drawing.Point(0, 23);
             this.m_DeviceTree.Name = "m_DeviceTree";
-            treeNode1.Name = "Node0";
-            treeNode1.Text = "Network View";
-            this.m_DeviceTree.Nodes.AddRange(new System.Windows.Forms.TreeNode[] {
-            treeNode1});
             this.m_DeviceTree.SelectedImageIndex = 0;
             this.m_DeviceTree.ShowNodeToolTips = true;
             this.m_DeviceTree.ShowRootLines = false;
@@ -1562,7 +1567,7 @@
         private System.Windows.Forms.ToolStripMenuItem sendUnicastUdpWhoIsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem iPFunctionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editBBMDTablesToolStripMenuItem;
-        public System.Windows.Forms.TreeView m_DeviceTree;
+        private System.Windows.Forms.TreeView m_DeviceTree;
         public CodersLab.Windows.Controls.TreeView m_AddressSpaceTree;
         public System.Windows.Forms.ToolStripMenuItem pluginsToolStripMenuItem;
         private System.Windows.Forms.SplitContainer splitCOV;
@@ -1598,6 +1603,7 @@
         private System.Windows.Forms.ToolStripMenuItem addRemoteBacnetIPNodeListToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem userCommandToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem ToggleViewMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem restartToolStripMenuItem;
     }
 }
 

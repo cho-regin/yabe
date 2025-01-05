@@ -114,6 +114,8 @@ namespace Yabe
         bool ToogleViewSimplified = false; // Used to change the view mode independently of the chosen setting mode (short cut : ctrl alt S)
         string AddrSpaceTxt = "Objects";
 
+        public TreeNode NetworkViewTreeNode, DeviceClassViewTreeNode;
+
         public bool GetSetting_TimeSynchronize_UTC() // GlobalCommander is using it
         {
             return Properties.Settings.Default.TimeSynchronize_UTC;
@@ -166,8 +168,6 @@ namespace Yabe
             CovOpn.Checked = !Properties.Settings.Default.UsePollingByDefault;
             PollOpn.Checked = Properties.Settings.Default.UsePollingByDefault;
 
-            m_DeviceTree.ExpandAll();
-
             // COV Graph
             Pane = CovGraph.GraphPane;
             Pane.Title.Text = null;
@@ -190,7 +190,6 @@ namespace Yabe
             //load splitter setup & SubsciptionView columns order&size
             try
             {
-
                 if (Properties.Settings.Default.GUI_FormSize != new Size(0, 0))
                     this.Size = Properties.Settings.Default.GUI_FormSize;
                 FormWindowState state = (FormWindowState)Enum.Parse(typeof(FormWindowState), Properties.Settings.Default.GUI_FormState);
@@ -258,8 +257,6 @@ namespace Yabe
            
             //display nice floats in propertygrid
             Utilities.CustomSingleConverter.DontDisplayExactFloats = true;
-
-            m_DeviceTree.TreeViewNodeSorter = new NodeSorter();
 
             // List of properties always expanded in the properties grid such as Priority Array, ...
             if (Properties.Settings.Default.GridAlwaysExpandProperties != "")
@@ -375,6 +372,19 @@ namespace Yabe
                 }
             });
 
+            NetworkViewTreeNode = new TreeNode("Network View");
+            NetworkViewTreeNode.Tag = -1; // For the Node sorter
+
+            if (Properties.Settings.Default.DeviceViewMode != DeviceTreeViewType.Network)
+                DeviceClassViewTreeNode = CreateDeviceClassView();
+
+            if ((!(Properties.Settings.Default.DeviceViewMode==DeviceTreeViewType.DeviceClass)) || (DeviceClassViewTreeNode==null))
+                m_DeviceTree.Nodes.Add(NetworkViewTreeNode);
+
+            m_DeviceTree.ExpandAll();
+
+            m_DeviceTree.TreeViewNodeSorter = new NodeSorter(Properties.Settings.Default.DeviceViewMode == DeviceTreeViewType.NetworkThenDeviceClass);
+
             ThreadPool.QueueUserWorkItem( _ => 
             {
                 Thread.Sleep(100);
@@ -382,6 +392,83 @@ namespace Yabe
             });
             
         }
+        TreeNode CreateDeviceClassView()
+        {
+            String Descr = Properties.Settings.Default.DeviceClassStructure;
+            if (string.IsNullOrEmpty(Descr))
+                return null;
+
+            String[] Groups = Descr.Split(';');
+            TreeNode tnDeviceClass = new TreeNode("Device Class View");
+            tnDeviceClass.Tag = -2;    // For the Node sorter
+
+            List<TreeNode> AddedTn = new List<TreeNode>();
+
+            int Count = -1;
+            foreach (string Group in Groups)
+            {
+                string[] elements = Group.Split(new char[] { '(', ')', ',' });
+                TreeNode tnGroup= new TreeNode(elements[0].Trim(), 11,11); // with a folder icon
+                List<int> DeviceIds = new List<int>();
+                DeviceIds.Add(Count--); // For the Node sorter, and cannot be a DeviceId
+                for (int i=1;i<elements.Length;i++)
+                {
+                    if (!string.IsNullOrWhiteSpace(elements[i]))
+                        if (Int32.TryParse(elements[i], out int id)==true)  // It's a DeviceId
+                            DeviceIds.Add(id);
+                        else // It's a reference to a previous group
+                        {
+                            int idx=AddedTn.FindIndex(o => o.Text.ToLower() == elements[i].Trim().ToLower());
+                            if (idx!=-1) // maybe an error
+                            {
+                                tnGroup.Nodes.Add(AddedTn[idx]);
+                                AddedTn.Remove(AddedTn[idx]);
+                            }
+                        }
+                }
+                tnGroup.Tag = DeviceIds;
+                AddedTn.Add(tnGroup);
+            }
+
+            foreach (TreeNode tn in AddedTn)
+                tnDeviceClass.Nodes.Add(tn);
+
+            if (tnDeviceClass.Nodes.Count > 1) // No view if to small
+            {
+                m_DeviceTree.Nodes.Add(tnDeviceClass);
+                return tnDeviceClass;
+            }
+            else
+                return null;
+        }
+        // By default device are added first in the Network view, then cloned to be add in this view
+        bool AddToDeviceClassView(TreeNode deviceNode, TreeNode CurrentNode=null, bool IsAffected=false) 
+        {
+            if (DeviceClassViewTreeNode == null) return false;
+
+            if (CurrentNode == null) CurrentNode = DeviceClassViewTreeNode;
+
+            // Find and add at all right places
+            foreach (TreeNode tn in CurrentNode.Nodes)
+                if (!(tn.Tag is BACnetDevice)) // The Node is a folder or not
+                    if (AddToDeviceClassView(deviceNode, tn, IsAffected)==true) // It's a folder recursive call
+                        IsAffected = true;
+
+            if (CurrentNode.Tag is List<int> DeviceIds) 
+            {
+                if (DeviceIds.Contains((int)(deviceNode.Tag as BACnetDevice).deviceId))
+                {
+                    CurrentNode.Nodes.Add((TreeNode)deviceNode.Clone());
+                    IsAffected = true;
+                }
+                // Not added, put it in the folder for all not affected devices
+                if ((DeviceIds.Count == 1) && (IsAffected == false))
+                    CurrentNode.Nodes.Add((TreeNode)deviceNode.Clone());
+            }
+
+            return IsAffected;
+        }
+
         private void MainDialog_FormClosing(object sender, FormClosingEventArgs e)
         {
             try
@@ -412,6 +499,43 @@ namespace Yabe
             {
                 //ignore
             }
+        }
+        // Devices can be at several places, so a modification of the Tree node at one place must be propagated to each clone
+        public void UpdateTreeNodeDeviceName(BACnetDevice device, TreeNode original, TreeNodeCollection Root = null)
+        {
+            if (Root == null)
+                Root = m_DeviceTree.Nodes;
+
+            foreach (TreeNode t in Root)
+            {
+                if (t == original)
+                    continue;
+
+                if ((t.Tag is BACnetDevice dev) && (dev == device))
+                {
+                    t.ToolTipText = original.ToolTipText;
+                    t.Text = original.Text;
+                }
+                if (t.Nodes.Count != 0)
+                    UpdateTreeNodeDeviceName(device, original, t.Nodes);
+            }
+        }
+
+        public void DeleteTreeNodeDevice(BACnetDevice device, TreeNodeCollection Root = null)
+        {
+            if (Root == null)
+                Root = m_DeviceTree.Nodes;
+
+            // never delete inside the iterator and never in the forward direction
+            int RootCount=Root.Count;
+            for (int i=0;i< RootCount; i++)
+            {
+                if ((Root[RootCount-i-1].Nodes.Count != 0))
+                    DeleteTreeNodeDevice(device, Root[RootCount - i - 1].Nodes);
+                if ((Root[RootCount - i - 1].Tag is BACnetDevice dev) && (dev == device))
+                    Root.Remove(Root[RootCount - i - 1]);
+            }
+
         }
         string CovGraph_PointValueEvent(ZedGraphControl sender, GraphPane pane, CurveItem curve, int iPt)
         {
@@ -729,6 +853,8 @@ namespace Yabe
                             s.ToolTipText = "";
                         }
 
+                        UpdateTreeNodeDeviceName(entry, s);
+
                         return;
                     }
                 }
@@ -761,6 +887,7 @@ namespace Yabe
                     }
                 //add simply
                 parent.Nodes.Add(newNode);
+                AddToDeviceClassView(newNode);
                 m_DeviceTree.ExpandAll();
             });
         }
@@ -780,7 +907,7 @@ namespace Yabe
                 product = this.GetType().Assembly.GetName().Name;
             }
 
-            MessageBox.Show(this, product + "\nVersion " + this.GetType().Assembly.GetName().Version + "\nBy Morten Kvistgaard - Copyright 2014-2017\nBy Frederic Chaxel - Copyright 2015-2024\n" +
+            MessageBox.Show(this, product + "\nVersion " + this.GetType().Assembly.GetName().Version + "\nBy Morten Kvistgaard - Copyright 2014-2017\nBy Frederic Chaxel - Copyright 2015-2025\n" +
                 "\nReferences:"+
                 "\nhttp://bacnet.sourceforge.net/" + 
                 "\nhttp://www.unified-automation.com/products/development-tools/uaexpert.html" +
@@ -812,7 +939,7 @@ namespace Yabe
                 catch { return ; }
 
                 //add to tree
-                TreeNode node = m_DeviceTree.Nodes[0].Nodes.Add(comm.ToString());
+                TreeNode node = NetworkViewTreeNode.Nodes.Add(comm.ToString());
                 node.Tag = comm;
                 switch (comm.Transport.Type)
                 {
@@ -1021,6 +1148,7 @@ namespace Yabe
             if (m_DeviceTree.SelectedNode == null) return;
             else if (m_DeviceTree.SelectedNode.Tag == null) return;
             BACnetDevice device_entry = m_DeviceTree.SelectedNode.Tag as BACnetDevice;
+
             BacnetClient comm_entry; 
             if (m_DeviceTree.SelectedNode.Tag is BacnetClient)    
                 comm_entry = m_DeviceTree.SelectedNode.Tag as BacnetClient;
@@ -1031,35 +1159,39 @@ namespace Yabe
             {
                 if (MessageBox.Show(m_DeviceTree.SelectedNode.Text+"\r\nDelete this device?", "Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                 {
-                    BacnetClient comm;
-                    if (m_DeviceTree.SelectedNode.Parent.Tag is BacnetClient)
-                        comm = m_DeviceTree.SelectedNode.Parent.Tag as BacnetClient;
-                    else
-                        comm = m_DeviceTree.SelectedNode.Parent.Parent.Tag as BacnetClient; // device under a router
-
                     m_AddressSpaceTree.Nodes.Clear();   //clear address space
                     AddSpaceLabel.Text = AddrSpaceTxt;
                     m_DataGrid.SelectedObject = null;   //clear property grid
 
-                    m_devices[comm].Devices.Remove(device_entry);
-
-                    m_DeviceTree.Nodes.Remove(m_DeviceTree.SelectedNode);
+                    DeleteTreeNodeDevice(device_entry);
+                    _selectedDevice = null;
                     RemoveSubscriptions(device_entry, null);
+
+                    lock (m_devices)
+                        m_devices[device_entry.channel].Devices.Remove(device_entry);
+
                 }
             }
             else if (comm_entry != null)
             {
                 if (MessageBox.Show(m_DeviceTree.SelectedNode.Text + "\r\nDelete this transport?", "Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                 {
-                    if (_selectedDevice ==null || (_selectedDevice.Tag is BACnetDevice currentDelectedDeviceComms && m_devices[comm_entry].Devices.Contains(currentDelectedDeviceComms)))
+                    if (_selectedDevice == null || (_selectedDevice.Tag is BACnetDevice currentDelectedDeviceComms && m_devices[comm_entry].Devices.Contains(currentDelectedDeviceComms)))
                     {
                             m_AddressSpaceTree.Nodes.Clear();   //clear address space
                             AddSpaceLabel.Text = AddrSpaceTxt;
                             m_DataGrid.SelectedObject = null;   //clear property grid
                     }
 
-                    m_Server.RemoveCom(comm_entry);
-                    m_devices.Remove(comm_entry);
+                    if (m_Server!=null)
+                        m_Server.RemoveCom(comm_entry);
+
+                    lock (m_devices)
+                    {
+                        foreach (BACnetDevice dev in m_devices[comm_entry].Devices)
+                            DeleteTreeNodeDevice(dev);
+                        m_devices.Remove(comm_entry);
+                    }
                     m_DeviceTree.Nodes.Remove(m_DeviceTree.SelectedNode);
                     RemoveSubscriptions(null, comm_entry);
                     comm_entry.Dispose();
@@ -1321,18 +1453,20 @@ namespace Yabe
         }
         private void m_DeviceTree_AfterSelect(object sender, TreeViewEventArgs e)
         {
+            TreeNode node = e.Node;
+            if (node == null) return;   // Normally cannot be
+
+            if ((sender as String == "ObjRename") || (sender == manual_refresh_objects)|| (sender as String == "ObjNewDelete"))
+                _selectedDevice = null; // invalidate the current selection to force a renew
+
+            BACnetDevice device = node.Tag as BACnetDevice;
+            if (device == null) return;  // Not a TreeNode linked to a device
+
+            if (_selectedDevice != null)
+                if ((_selectedDevice.Tag == device)) return;
 
             AsynchRequestId++; // disabled a possible thread pool work (update) on the AddressSpaceTree
             SetSimplifiedLabels();
-
-            TreeNode node = e.Node;
-
-            if (node == null) return;
-
-            //_selectedDevice = null;
-            BACnetDevice device = node.Tag as BACnetDevice;
-
-            if (device == null) return;  // Not a TreeNode linked to a device
 
             if ((sender == manual_refresh_objects) || (sender as String == "ObjNewDelete" ) || (!Properties.Settings.Default.UseObjectsCache))
                 device.ClearCache();
@@ -1390,6 +1524,7 @@ namespace Yabe
                         {
                             node.ToolTipText = node.Text;
                             node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
+                            UpdateTreeNodeDeviceName(device, node);
                         }
                     }
 
@@ -1440,6 +1575,7 @@ namespace Yabe
                                 {
                                     node.ToolTipText = node.Text;
                                     node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
+                                    UpdateTreeNodeDeviceName(device, node);
                                 }
                             }
                         }
@@ -1460,7 +1596,6 @@ namespace Yabe
                 node.ForeColor = Color.Red;
             else
                 node.ForeColor = Color.Black;
-        
         }
 
         private void FetchViewObjects(BACnetDevice device, BacnetObjectId object_id, TreeNodeCollection nodes, bool ForceRead=false)
@@ -2752,24 +2887,23 @@ namespace Yabe
 
             try
             {
-                if (m_DeviceTree.SelectedNode.Tag is BacnetClient)  // A Channel is selected
+                if (m_DeviceTree.SelectedNode.Tag is BacnetClient)
+                {
                     comm = m_DeviceTree.SelectedNode.Tag as BacnetClient;
-                else
-                    if (m_DeviceTree.SelectedNode.Parent.Tag is BacnetClient) // A Device is selected
-                    comm = m_DeviceTree.SelectedNode.Parent.Tag as BacnetClient;
-                else
-                    if (m_DeviceTree.SelectedNode.Parent.Parent.Tag is BacnetClient) // A routed Device is selected
-                        comm = m_DeviceTree.SelectedNode.Parent.Parent.Tag as BacnetClient;
+                }
+                if (m_DeviceTree.SelectedNode.Tag is BACnetDevice)
+                {
+                    comm = (m_DeviceTree.SelectedNode.Tag as BACnetDevice).channel;
+                }
 
-                comm?.WhoIs();
+                comm.WhoIs();
             }
             catch
             {
-                foreach (TreeNode tn in m_DeviceTree.Nodes[0].Nodes)    // Nothing is selected, send on every available channel
+                foreach (TreeNode tn in NetworkViewTreeNode.Nodes)    // Nothing is selected, send on every available channel
                 {
                     comm = (BacnetClient)tn.Tag;
                     comm?.WhoIs();
-
                 }
             }
         }
@@ -2777,136 +2911,90 @@ namespace Yabe
         private void AddRemoteIpToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
-            BacnetClient comm = null;
+            BacnetClient comm = FetchIPv4ClientEndPoint();
+            if (comm == null) return;
+
             try
-            {
-                if (m_DeviceTree.SelectedNode == null) return;
-                else if (m_DeviceTree.SelectedNode.Tag == null) return;
+            { 
+            var Input =
+                    new GenericInputBox<TextBox>("Ipv4/Udp Bacnet Node", "DeviceId - xx.xx.xx.xx:47808",
+                        (o) =>
+                        {
+                            // adjustment to the generic control
+                        }, 1, true, "Unknown device Id can be replaced by 4194303 or ?");
+                DialogResult res = Input.ShowDialog();
 
-                if ((m_DeviceTree.SelectedNode.Tag is BacnetClient))
+                if (res == DialogResult.OK)
                 {
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Tag;
-                }
-                else if (!(m_DeviceTree.SelectedNode.Parent.Tag is BacnetClient))
-                {
-                    comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Tag;
-                }
-                else
-                {
-                    return;
+                    string[] entry=Input.genericInput.Text.Split('-');
+                    if (entry[0][0] == '?') entry[0] = "4194303";
+                    OnIam(comm, new BacnetAddress(BacnetAddressTypes.IP, entry[1].Trim()), Convert.ToUInt32(entry[0]), 0, BacnetSegmentations.SEGMENTATION_NONE, 0);
                 }
 
-                if (comm.Transport is BacnetIpUdpProtocolTransport) // only IPv4 today, v6 maybe a day
-                {
-
-                    var Input =
-                        new GenericInputBox<TextBox>("Ipv4/Udp Bacnet Node", "DeviceId - xx.xx.xx.xx:47808",
-                          (o) =>
-                          {
-                              // adjustment to the generic control
-                          }, 1, true, "Unknown device Id can be replaced by 4194303 or ?");
-                    DialogResult res = Input.ShowDialog();
-
-                    if (res == DialogResult.OK)
-                    {
-                        string[] entry=Input.genericInput.Text.Split('-');
-                        if (entry[0][0] == '?') entry[0] = "4194303";
-                        OnIam(comm, new BacnetAddress(BacnetAddressTypes.IP, entry[1].Trim()), Convert.ToUInt32(entry[0]), 0, BacnetSegmentations.SEGMENTATION_NONE, 0);
-                    }
-                }
-                else
-                {
-                    MessageBox.Show(this, "Please select an \"IPv4 transport\" node first", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
             }
             catch 
             {
                 MessageBox.Show(this, "Invalid parameter", "Wrong node or IP @", MessageBoxButtons.OK, MessageBoxIcon.Information);          
             }
         }
-
+        
         private void AddRemoteIpListToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
-            BacnetClient comm = null;
+            BacnetClient comm = FetchIPv4ClientEndPoint();
+            if (comm == null) return;
 
-            // Make sure we are connected
-            if (m_DeviceTree.SelectedNode == null) return;
-            else if (m_DeviceTree.SelectedNode.Tag == null) return;
+            //select file to store
+            OpenFileDialog dlg = new OpenFileDialog();
+            if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
+            Application.DoEvents();
+            string fileName = dlg.FileName;
 
-            if ((m_DeviceTree.SelectedNode.Tag is BacnetClient))
+            try
             {
-                comm = (BacnetClient)m_DeviceTree.SelectedNode.Tag;
-            }
-            else if (!(m_DeviceTree.SelectedNode.Parent.Tag is BacnetClient))
-            {
-                comm = (BacnetClient)m_DeviceTree.SelectedNode.Parent.Tag;
-            }
-            else
-            {
-                return;
-            }
+                this.Cursor = Cursors.WaitCursor;
 
-            comm = (BacnetClient)m_DeviceTree.SelectedNode.Tag;
-
-            if (comm.Transport is BacnetIpUdpProtocolTransport) // only IPv4 today, v6 maybe a day
-            {
-                //select file to store
-                OpenFileDialog dlg = new OpenFileDialog();
-                if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
-                Application.DoEvents();
-                string fileName = dlg.FileName;
-
-                try
+                string[] lines = File.ReadAllLines(fileName);
+                foreach (string line in lines)
                 {
-                    this.Cursor = Cursors.WaitCursor;
-
-                    string[] lines = File.ReadAllLines(fileName);
-                    foreach (string line in lines)
+                    if (!line.StartsWith("#"))  // Comment
                     {
-                        if (!line.StartsWith("#"))  // Comment
+                        Application.DoEvents();
+                        string[] entry = line.Split('-');
+                        if (entry.Length != 2)
                         {
-                            Application.DoEvents();
-                            string[] entry = line.Split('-');
-                            if (entry.Length != 2)
-                            {
-                                Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: \"{0}\" is not in the correct format (DeviceId - IP1.IP2.IP3.IP4:Port).", line.Trim()));
-                                continue;
-                            }
-                            if (!uint.TryParse(entry[0].Trim(), out uint deviceIdIn))
-                            {
-                                Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: \"{0}\" is not in the correct format (DeviceId - IP1.IP2.IP3.IP4:Port).", line.Trim()));
-                                continue;
-                            }
-                            if (!TryParseIPEndPoint(entry[1].Trim(), out IPEndPoint ipIn))
-                            {
-                                Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: \"{0}\" is not in the correct format (DeviceId - IP1.IP2.IP3.IP4:Port).", line.Trim()));
-                                continue;
-                            }
-                            if (entry[0][0] == '?') entry[0] = "4194303";
-                            try
-                            {
-                                OnIam(comm, new BacnetAddress(BacnetAddressTypes.IP, entry[1].Trim()), Convert.ToUInt32(entry[0]), 0, BacnetSegmentations.SEGMENTATION_NONE, 0);
-                            }
-                            catch (Exception ex)
-                            {
-                                Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: {0} - {1}", ex.GetType().Name, ex.Message));
-                                continue;
-
-                            }
-                            Trace.TraceInformation(String.Format("Added remote IPv4 node: {0} - {1}", deviceIdIn.ToString(), ipIn.ToString()));
+                            Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: \"{0}\" is not in the correct format (DeviceId - IP1.IP2.IP3.IP4:Port).", line.Trim()));
+                            continue;
                         }
+                        if (!uint.TryParse(entry[0].Trim(), out uint deviceIdIn))
+                        {
+                            Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: \"{0}\" is not in the correct format (DeviceId - IP1.IP2.IP3.IP4:Port).", line.Trim()));
+                            continue;
+                        }
+                        if (!TryParseIPEndPoint(entry[1].Trim(), out IPEndPoint ipIn))
+                        {
+                            Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: \"{0}\" is not in the correct format (DeviceId - IP1.IP2.IP3.IP4:Port).", line.Trim()));
+                            continue;
+                        }
+                        if (entry[0][0] == '?') entry[0] = "4194303";
+                        try
+                        {
+                            OnIam(comm, new BacnetAddress(BacnetAddressTypes.IP, entry[1].Trim()), Convert.ToUInt32(entry[0]), 0, BacnetSegmentations.SEGMENTATION_NONE, 0);
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: {0} - {1}", ex.GetType().Name, ex.Message));
+                            continue;
+
+                        }
+                        Trace.TraceInformation(String.Format("Added remote IPv4 node: {0} - {1}", deviceIdIn.ToString(), ipIn.ToString()));
                     }
                 }
-                catch { }
-                finally
-                {
-                    this.Cursor = Cursors.Default;
-                }
             }
-            else
+            catch { }
+            finally
             {
-                MessageBox.Show(this, "Please select an \"IPv4 transport\" node first", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.Cursor = Cursors.Default;
             }
             
         }
@@ -2961,7 +3049,6 @@ namespace Yabe
             }
 
         } 
-
         private void subscribeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
@@ -2994,7 +3081,6 @@ namespace Yabe
                     return;
             }
         }
-
         private void m_subscriptionRenewTimer_Tick(object sender, EventArgs e)
         {
 
@@ -3045,7 +3131,30 @@ namespace Yabe
                 }
             }
         }
-  
+        BacnetClient FetchIPv4ClientEndPoint()
+        {
+            BacnetClient comm = null;
+            // Make sure we are connected
+            if (m_DeviceTree.SelectedNode == null) return null;
+            else if (m_DeviceTree.SelectedNode.Tag == null) return null;
+
+            if (m_DeviceTree.SelectedNode.Tag is BacnetClient)
+            {
+                comm = m_DeviceTree.SelectedNode.Tag as BacnetClient;
+            }
+            if (m_DeviceTree.SelectedNode.Tag is BACnetDevice)
+            {
+                comm = (m_DeviceTree.SelectedNode.Tag as BACnetDevice).channel;
+            }
+
+            if ((comm == null) || !(comm.Transport is BacnetIpUdpProtocolTransport))
+            {
+                MessageBox.Show(this, "Please select an \"IP transport\" node first", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return null;
+            }
+
+            return comm;
+        }
         // Get the current device associated to the current node, or a node
         private BACnetDevice FetchEndPoint() => FetchEndPoint(m_DeviceTree.SelectedNode);
         private BACnetDevice FetchEndPoint(TreeNode node)
@@ -3070,8 +3179,7 @@ namespace Yabe
                 endPoints=m_devices.Values.SelectMany(line => line.Devices).ToList();
             }
         }
-
-        private BACnetDevice GetDeviceFromDeviceId(uint deviceId)
+        private BACnetDevice FetchDeviceFromDeviceId(uint deviceId)
         {
             lock (m_devices)
             {
@@ -3084,40 +3192,18 @@ namespace Yabe
                 return null;
             }
         }
-        private TreeNode GetTreeNodeFromDeviceId(uint deviceId)
-        {
-            // Enumerate each Transport Layer:
-            foreach (TreeNode transport in m_DeviceTree.Nodes[0].Nodes)
-            {
-                //Enumerate each Parent Device:
-                foreach (TreeNode node in transport.Nodes)
-                {
-                    if ((node.Tag is BACnetDevice endPoint) && (endPoint.deviceId == deviceId))
-                        return (node);
-
-                    foreach(TreeNode routedNode in node.Nodes)
-                    {
-                        if ((routedNode.Tag is BACnetDevice routedEndPoint) && (routedEndPoint.deviceId == deviceId))
-                            return (routedNode);
-                    }
-                        
-                }
-            }
-            return null;
-        }
         TreeNode FindCommTreeNode(BacnetClient comm)
         {
-            foreach (TreeNode node in m_DeviceTree.Nodes[0].Nodes)
+            foreach (TreeNode node in NetworkViewTreeNode.Nodes)
             {
                 BacnetClient c = node.Tag as BacnetClient;
                 if (c != null && c.Equals(comm)) return node;
             }
             return null;
         }
-
         TreeNode FindCommTreeNode(IBacnetTransport transport)
         {
-            foreach (TreeNode node in m_DeviceTree.Nodes[0].Nodes)
+            foreach (TreeNode node in NetworkViewTreeNode.Nodes)
             {
                 BacnetClient c = node.Tag as BacnetClient;
                 if (c != null && c.Transport.Equals(transport)) return node;
@@ -3180,22 +3266,12 @@ namespace Yabe
         private void foreignDeviceRegistrationToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
-            BacnetClient comm = null;
-            try
-            {
-                if (m_DeviceTree.SelectedNode == null) return;
-                else if (m_DeviceTree.SelectedNode.Tag == null) return;
-                else if (!(m_DeviceTree.SelectedNode.Tag is BacnetClient)) return;
-                comm = (BacnetClient)m_DeviceTree.SelectedNode.Tag;
-            }
-            finally
-            {
-
-                if (comm == null) MessageBox.Show(this, "Please select an \"IP transport\" node first", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
+            BacnetClient comm = FetchIPv4ClientEndPoint();
+            if (comm == null) return;
 
             Form F = new ForeignRegistry(comm);
             F.ShowDialog();
+
         }
         private void alarmSummaryToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -3297,7 +3373,7 @@ namespace Yabe
             if (IsOK)
             {
                 // We did not update the tree as we went (for speed), so do it all at once now
-                m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(this._selectedDevice));
+                m_DeviceTree_AfterSelect("ObjRename", new TreeViewEventArgs(this._selectedDevice));
                 this.Cursor = Cursors.Default;
             }
             else
@@ -3482,8 +3558,8 @@ namespace Yabe
                 BACnetDevice.objectNamesChangedFlag = true;
                 DoSaveObjectNames();
                 // Enumerate each Transport Layer:
-                foreach (TreeNode transport in m_DeviceTree.Nodes[0].Nodes)
-                {
+                foreach (TreeNode transport in NetworkViewTreeNode.Nodes)
+                {   
                     //Enumerate each Parent Device:
                     foreach (TreeNode node in transport.Nodes)
                     {
@@ -4102,6 +4178,11 @@ namespace Yabe
             m_LogText.Text = "";    // Clear the Log
         }
 
+        private void restartToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Application.Restart();
+        }
+
         private void ToggleViewMenuItem_Click(object sender, EventArgs e)
         {
 
@@ -4109,7 +4190,7 @@ namespace Yabe
             Subscription sub = _selectedNode as Subscription;
 
             ToogleViewSimplified = !ToogleViewSimplified;
-            m_DeviceTree_AfterSelect(null, new TreeViewEventArgs(this._selectedDevice));
+            m_DeviceTree_AfterSelect("ObjRename", new TreeViewEventArgs(this._selectedDevice));
             if (stn != null)
             {
                 UpdateGrid(stn); // maybe the object is no more displayed, it's not a problem
@@ -4214,23 +4295,42 @@ namespace Yabe
         }
     }
     #endregion
-    // Used to sort the devices Tree by device_id
+    // Used to sort the devices Tree
     public class NodeSorter : IComparer
     {
+        bool NetworkBeforeClass;
+        public NodeSorter(bool NetworkBeforeClass)
+        {
+            this.NetworkBeforeClass = NetworkBeforeClass;
+        }
         public int Compare(object x, object y)
         {
             TreeNode tx = x as TreeNode;
             TreeNode ty = y as TreeNode;
 
+            // Two Devices node, orderd by deviceId
+            if ((tx.Tag is BACnetDevice txdev) && (ty.Tag is BACnetDevice tydev))
+                return txdev.deviceId.CompareTo(tydev.deviceId);
 
-            BACnetDevice entryx = tx.Tag as BACnetDevice;
-            BACnetDevice entryy = ty.Tag as BACnetDevice;
+            // Two Group Nodes
+            if ((tx.Tag is List<int> txList) && (ty.Tag is List<int> tyList))
+                return tyList[0].CompareTo(txList[0]);
 
-            // Two device, compare the device_id
-            if ((entryx != null) && (entryy != null))
-                return entryx.deviceId.CompareTo(entryy.deviceId);
-            else // something must be provide
-                return tx.Text.CompareTo(ty.Text);
+            // A Group and a device
+            if ((tx.Tag is BACnetDevice) && (ty.Tag is List<int>))
+                return 1;
+            if ((tx.Tag is List<int>) && (ty.Tag is BACnetDevice))
+                return -1;
+
+            // The Two Root nodes ordered with the user choice
+            if ((tx.Tag is int txidev) && (ty.Tag is int tyidev))
+            if (NetworkBeforeClass)
+                return tyidev.CompareTo(txidev);
+            else
+                return txidev.CompareTo(tyidev);
+
+
+            return 0;   // Don't care
         }
     }
 
@@ -4240,5 +4340,13 @@ namespace Yabe
         Structured,
         Both,
         FieldTechnician
+    }
+
+    public enum DeviceTreeViewType
+    {
+        Network,
+        DeviceClass,
+        NetworkThenDeviceClass,
+        DeviceClassThenNetwork
     }
 }

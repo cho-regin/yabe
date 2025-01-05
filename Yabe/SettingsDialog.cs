@@ -43,12 +43,12 @@ namespace Yabe
 {
     public partial class SettingsDialog : Form
     {
-        enum SplitterOrientation
+        internal enum SplitterOrientation
         {
             Horizontal,
             Vertical
         }
-        enum BaudRate
+        internal enum BaudRate
         {
             [Description("9600 Baud")]
             Rate9600 = 9600,
@@ -104,7 +104,7 @@ namespace Yabe
         /// <summary>
         /// Wrapper class to provide some description of each <see cref="Properties.Settings">settings</see> property to the user. 
         /// </summary>
-        class SettingsDescriptor
+        internal class SettingsDescriptor
         {
             #region Constants.Category
             const string CAT_GENERAL = "General";
@@ -137,8 +137,19 @@ namespace Yabe
                 }
             }
 
-
+            //DeviceViewMode
             #region Properties
+
+            [DisplayName("Device Class Structure")]
+            [Description("Activates/Describes the Class View in parallel with the Network View. Value is a semicon string with Groups name and device Ids inside like HVAC(3,9);Lighting(9,23);Building(HVAC,Lighting,40,27);Not Affected(). Only one group should appears without device.")]
+            [Category(CAT_GUI)]
+            public string DeviceClassStructure { set { instance.DeviceClassStructure = value; } get { return instance.DeviceClassStructure; }}
+
+            [DisplayName("Device Mode View")]
+            [Description("Specify how the Device view should be organised")]
+            [Category(CAT_GUI)]
+            public DeviceTreeViewType DeviceViewMode { set { instance.DeviceViewMode = value; } get { return instance.DeviceViewMode; } }
+
             [DisplayName("Object splitter orientation")]
             [Description("Global windows split organisation in the GUI interface.")]
             [Category(CAT_GUI)]
@@ -351,16 +362,13 @@ namespace Yabe
             public string GUI_LastFilename { set { instance.GUI_LastFilename = value; } get { return instance.GUI_LastFilename; } }
             [Browsable(false)]
             public string GUI_SubscriptionColumns { set { instance.GUI_SubscriptionColumns = value; } get { return instance.GUI_SubscriptionColumns; } }
-            #endregion
-            #region Properties.Unknown
+
             [Browsable(false)]
             public bool SettingsUpgradeRequired { set { instance.SettingsUpgradeRequired = value; } get { return instance.SettingsUpgradeRequired; } }
+
             #endregion
-
-
             Properties.Settings instance;
         }
-
 
         internal SettingsDialog(Properties.Settings instance)
         {
@@ -368,7 +376,7 @@ namespace Yabe
             // Adjust the grid by writing into a private field, no need to try catch
             try
             {
-		// Encapsulation principle violation, but why labelRatio or size is not accessible ?
+		        // Encapsulation principle violation, but why labelRatio or size is not accessible ?
                 Control view = (Control)m_SettingsGrid.GetType().GetField("gridView", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(m_SettingsGrid);
                 FieldInfo fi = view.GetType().GetField("labelRatio", BindingFlags.Instance | BindingFlags.Public);
                 fi.SetValue(view, 2.5); 

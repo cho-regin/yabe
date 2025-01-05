@@ -26,11 +26,13 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Configuration;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.IO.BACnet;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -43,8 +45,8 @@ namespace Yabe
     public partial class YabeMainDialog
     {
         static readonly string[] CommandList = { "none", "launch", "send_iam", "send_whois", "leave_devices", "subscribe_files",
-                                                "snapshot", "write_recipe", "exec_batch" };
-        // Action array cannot be filed here, methods cannot be static to access simply to all Yabe elements, done in InitUserCmd
+                                                "snapshot", "write_recipe", "settings", "exec_batch" };
+        // Action array cannot be filled here, methods cannot be static to access simply to all Yabe elements, done in InitUserCmd
         Action<String>[] UserCmdCommands;
         Keys ShortCut(String s) // Must contains Control or Altrecipes
         {
@@ -71,7 +73,7 @@ namespace Yabe
             {
                 // Init the Array of link to Methods associated to each commands
                 UserCmdCommands = new Action<String>[] { UserCmd_None, UserCmd_Launch, UserCmd_Iam, UserCmd_WhoIs,
-                     UserCmd_RemoveDevices, UserCmd_SubscribeFiles, UserCmd_SnapShot, UserCmd_WriteRecipe, null };
+                     UserCmd_RemoveDevices, UserCmd_SubscribeFiles, UserCmd_SnapShot, UserCmd_WriteRecipe, UserCmd_Settings, UserCmd_None };
 
                 if ((Debugger.IsAttached) && (UserCmdCommands.Length != CommandList.Length))
                 {
@@ -195,11 +197,56 @@ namespace Yabe
             return;
         }
 
+        void UserCmd_Settings(String Parameters)
+        {
+            if (Parameters == null) return;
+            String[] P = Parameters.Split(',');
+
+            SettingsDialog.SettingsDescriptor description = new SettingsDialog.SettingsDescriptor(Properties.Settings.Default);
+            PropertyInfo[] allProp = typeof(SettingsDialog.SettingsDescriptor).GetProperties();
+            for (int i=0;i<P.Length;i++)
+            {
+
+                String[] Setting = P[i].Split('=');
+                if (Setting.Length == 1)    // End 
+                {
+                    Properties.Settings.Default.Save();
+                    if ((P[i].ToLower() == "restart"))
+                        Application.Restart();
+                }
+
+                foreach (PropertyInfo prop in allProp)
+                {
+                    object[] o = prop.GetCustomAttributes(true);
+                    if ((o.Length == 3) && (o[0].GetType() == typeof(System.ComponentModel.DisplayNameAttribute)))
+                    {
+                        String s = (o[0] as System.ComponentModel.DisplayNameAttribute).DisplayName.ToString();
+                        if (s == Setting[0].Trim()) // Bingo it's the good property
+                        {
+                            String ValToSet = Setting[1].Replace('§', ',').Replace('^', ';');
+                            Type typeorigin = prop.PropertyType;
+                            
+                            try
+                            {
+                                if (typeorigin.IsEnum)
+                                    prop.SetValue(description, Enum.Parse(typeorigin, ValToSet, true));
+                                else
+                                    prop.SetValue(description, Convert.ChangeType(ValToSet, typeorigin));
+                            }
+                            catch { }
+                            break;
+                        }
+                    }
+                }
+            }
+
+        }
+
         void UserCmd_Iam(String Parameters)
         {
             if (Properties.Settings.Default.YabeDeviceId >= 0)
             { 
-                foreach (TreeNode Tn in m_DeviceTree.Nodes[0].Nodes)
+                foreach (TreeNode Tn in NetworkViewTreeNode.Nodes)
                 {
                     BacnetClient cli = Tn.Tag as BacnetClient;
                     try
@@ -234,13 +281,14 @@ namespace Yabe
             }
             catch {}
 
-            foreach (TreeNode Tn in m_DeviceTree.Nodes[0].Nodes)
-            {
-                BacnetClient cli = Tn.Tag as BacnetClient;
-                foreach (var devId in Id)
-                    try { cli.WhoIs(devId.Item1, devId.Item2); } catch { }
-            }
-            return;
+            lock (m_devices)
+                foreach (var v in m_devices)
+                {
+                    BacnetClient cli = v.Key;
+                    foreach (var devId in Id)
+                        try { cli.WhoIs(devId.Item1, devId.Item2); } catch { }
+                }
+                return;
         }
         void UserCmd_RemoveDevices(String Parameters)
         {
@@ -256,8 +304,14 @@ namespace Yabe
             }
             catch { return; }
 
-            List<Tuple<TreeNode, BacnetClient, BACnetDevice>> tnremove = new List<Tuple<TreeNode, BacnetClient, BACnetDevice>>();
-            foreach (TreeNode TnClient in m_DeviceTree.Nodes[0].Nodes)
+            List<Tuple<BacnetClient, BACnetDevice>> tnremove = new List<Tuple<BacnetClient, BACnetDevice>>();
+
+            // If a router is to be remove all routed nodes as to be in the removed list before
+            // otherwise it is not
+            // All devices are always in the NetworkViewTreeNode (even hidden) and it's 
+            // the only way to know if a device is routed by another one visible in the TreeView.
+            // So behaviour here is not exactly the same as in Yabe interface, but it's wanted
+            foreach (TreeNode TnClient in NetworkViewTreeNode.Nodes)
             {
                 BacnetClient cli = TnClient.Tag as BacnetClient;
                 foreach (TreeNode Tn in TnClient.Nodes)
@@ -270,7 +324,7 @@ namespace Yabe
                             BACnetDevice device = Tn2.Tag as BACnetDevice;
                             if (!Id.Contains(device.deviceId))
                             {
-                                tnremove.Add(new Tuple<TreeNode, BacnetClient, BACnetDevice>(Tn2, cli, device));
+                                tnremove.Add(new Tuple<BacnetClient, BACnetDevice>(cli, device));
                                 count++;
                             }
                         }
@@ -279,7 +333,7 @@ namespace Yabe
                     {
                         BACnetDevice device = Tn.Tag as BACnetDevice;
                         if (!Id.Contains(device.deviceId))
-                            tnremove.Add(new Tuple<TreeNode, BacnetClient, BACnetDevice>(Tn, cli, device));
+                            tnremove.Add(new Tuple<BacnetClient, BACnetDevice>(cli, device));
                     }
                 }
             }
@@ -287,9 +341,9 @@ namespace Yabe
             lock (m_devices)
                 foreach (var remove in tnremove)
                 {
-                    RemoveSubscriptions(remove.Item3, null);
-                    m_DeviceTree.Nodes.Remove(remove.Item1);
-                    m_devices[remove.Item2].Devices.Remove(remove.Item3);
+                    RemoveSubscriptions(remove.Item2, null);
+                    DeleteTreeNodeDevice(remove.Item2);
+                    m_devices[remove.Item1].Devices.Remove(remove.Item2);
                 }
 
             m_AddressSpaceTree.Nodes.Clear();   //clear address space
@@ -345,7 +399,7 @@ namespace Yabe
                     {
                         if (UInt32.TryParse(Commande[0], out uint device_id)) // fail with the first line if it's the header
                         {
-                            BACnetDevice device = GetDeviceFromDeviceId(device_id);
+                            BACnetDevice device = FetchDeviceFromDeviceId(device_id);
 
                             if (device == null)
                             {
@@ -430,9 +484,12 @@ namespace Yabe
                     foreach (String s in status)
                         sb.AppendLine(s);
 
-                    File.WriteAllText(Param[1], sb.ToString());
+                    String FileName = Param[1].Replace("%d", DateTime.Now.ToString().Replace('/', '_').Replace(':', '_'));
+
+                    File.WriteAllText(FileName, sb.ToString());
                 }
-                else
+                
+                if ((Param.Length==1)|| (Param.Length>2))
                     new WriteRecipeForm(this.Icon, status).ShowDialog();
             }
 

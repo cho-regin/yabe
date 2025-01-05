@@ -267,6 +267,22 @@
 		2.7.16 Plugins
 			List of plugins to be loaded (see  2.9).
 
+		2.7.17 Network View & Device Class View
+			Devices are by default displayed according to the network structure.
+			A "User" configurable view can also be added with hierachical Folders.
+			This is done using two parameters in the settings GUI section.
+			"Device Mode View" can change the mode.
+			"Device Class Structure" describe the hierarchy to use such as :
+			HVAC(3,9);Lighting(9,23);Building(HVAC,Lighting,40,27);Not Affected()
+			HVAC, Lighting, ... are folders. When device 9 is discovered, it is
+			added to two locations while device 3 is only placed in the HVAC folder.
+			The two folders are in a main folder named Building where devices
+			40 and 27 are also placed. Finally all others devices (eg 500) are
+			placed in the last folder with an empty list. It can be removed so 
+			unknown devices are not displayed.
+			Names ( , ) ; syntax symbols should be repected for a correct 
+			interpretation. Changes require Yabe restart.
+
 	2.8 Bacnet Object name
 			By default Bacnet objects are displayed using the object identifier eg : 
 			ANALOG_INPUT:0, DEVICE:333 ...
