@@ -122,7 +122,7 @@ namespace Yabe
                                     else if (MenuCommand[0].StartsWith("SubClose"))
                                     {
                                         if (YabeUserMenu.Tag is ToolStripMenuItem)
-                                            YabeUserMenu = YabeUserMenu.Tag as ToolStripMenuItem;
+                                            YabeUserMenu =  YabeUserMenu.Tag as ToolStripMenuItem;
                                     }
                                     else if ((MenuCommand[0] != "Sep") && (Cmd.Item1 >= 0))
                                     {

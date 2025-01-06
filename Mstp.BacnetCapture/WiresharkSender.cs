@@ -120,7 +120,7 @@ namespace Wireshark
         string pipe_name;
         UInt32 pcap_netid;
 
-        object verrou = new object();
+        Thread thread;
 
         public WiresharkSender(string pipe_name, UInt32 pcap_netid)
         {
@@ -128,14 +128,23 @@ namespace Wireshark
             this.pcap_netid = pcap_netid;
 
             // Open the pipe and wait to Wireshark on a background thread
-            Thread th = new Thread(PipeCreate);
-            th.IsBackground = true;
-            th.Start();
+            thread = new Thread(PipeCreate);
+            thread.IsBackground = true;
+            thread.Start();
+        }
+        public bool isConnected
+        {
+            get { return IsConnected; }
         }
 
+        public void Disconnect()
+        {
+            IsConnected = false;
+            thread.Join(100);  // Waiting a few for the current packet to be sent 
+            WiresharkPipe.Close();
+        }
         private void PipeCreate()
         {
-            
             try
             {
                 WiresharkPipe = new NamedPipeServerStream(pipe_name, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
@@ -152,11 +161,6 @@ namespace Wireshark
             }
             catch { }
 
-        }
-
-        public bool isConnected
-        {
-            get { return IsConnected; }
         }
 
         private UInt32 DateTimeToUnixTimestamp(DateTime dateTime)
@@ -202,13 +206,14 @@ namespace Wireshark
             }
             catch (System.IO.IOException)
             {
-                // broken pipe, try to restart
+                // broken pipe, each time wireshark is closing, try to restart
                 IsConnected = false;
                 WiresharkPipe.Close();
                 WiresharkPipe.Dispose();
-                Thread th = new Thread(PipeCreate);
-                th.IsBackground = true;
-                th.Start();
+                lock (thread)
+                    thread = new Thread(PipeCreate);
+                thread.IsBackground = true;
+                thread.Start();
                 return false;
             }
             catch (Exception)

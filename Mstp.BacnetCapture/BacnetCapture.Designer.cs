@@ -46,8 +46,9 @@
             this.checkTest = new System.Windows.Forms.CheckBox();
             this.checkData = new System.Windows.Forms.CheckBox();
             this.label7 = new System.Windows.Forms.Label();
-            this.treeView = new Mstp.BacnetCapture.BufferedTreeView();
             this.linkLabel1 = new System.Windows.Forms.LinkLabel();
+            this.label6 = new System.Windows.Forms.Label();
+            this.treeView = new Mstp.BacnetCapture.BufferedTreeView();
             ((System.ComponentModel.ISupportInitialize)(this.checksbox)).BeginInit();
             this.SuspendLayout();
             // 
@@ -209,21 +210,11 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(81, 42);
+            this.label7.Location = new System.Drawing.Point(8, 39);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(309, 13);
             this.label7.TabIndex = 19;
             this.label7.Text = "... start it with the command  : Wireshark.exe -ni \\\\.\\pipe\\bacnet";
-            // 
-            // treeView
-            // 
-            this.treeView.ImageIndex = 0;
-            this.treeView.ImageList = this.imageList;
-            this.treeView.Location = new System.Drawing.Point(121, 183);
-            this.treeView.Name = "treeView";
-            this.treeView.SelectedImageIndex = 0;
-            this.treeView.Size = new System.Drawing.Size(271, 244);
-            this.treeView.TabIndex = 10;
             // 
             // linkLabel1
             // 
@@ -236,11 +227,33 @@
             this.linkLabel1.Text = "Start Wireshark";
             this.linkLabel1.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel1_LinkClicked);
             // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(31, 118);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(306, 13);
+            this.label6.TabIndex = 21;
+            this.label6.Text = "This tool can be used without Yabe (but Port cannot be shared)";
+            this.label6.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.label6.Visible = false;
+            // 
+            // treeView
+            // 
+            this.treeView.ImageIndex = 0;
+            this.treeView.ImageList = this.imageList;
+            this.treeView.Location = new System.Drawing.Point(121, 183);
+            this.treeView.Name = "treeView";
+            this.treeView.SelectedImageIndex = 0;
+            this.treeView.Size = new System.Drawing.Size(271, 244);
+            this.treeView.TabIndex = 10;
+            // 
             // BacnetCapture
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(404, 626);
+            this.Controls.Add(this.label6);
             this.Controls.Add(this.linkLabel1);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.checkData);
@@ -262,6 +275,7 @@
             this.MaximizeBox = false;
             this.Name = "BacnetCapture";
             this.Text = "Wireshark Mstp.BacnetCapture";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.BacnetCapture_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.Resize += new System.EventHandler(this.Form1_Resize);
             ((System.ComponentModel.ISupportInitialize)(this.checksbox)).EndInit();
@@ -290,6 +304,7 @@
         private BufferedTreeView treeView;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.LinkLabel linkLabel1;
+        private System.Windows.Forms.Label label6;
     }
 }
 

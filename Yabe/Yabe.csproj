@@ -90,6 +90,20 @@
     <Compile Include="..\DemoServer\DeviceStorage.cs">
       <Link>DeviceStorage.cs</Link>
     </Compile>
+    <Compile Include="..\Mstp.BacnetCapture\BacnetCapture.cs">
+      <Link>MstpCapture\BacnetCapture.cs</Link>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="..\Mstp.BacnetCapture\BacnetCapture.Designer.cs">
+      <Link>MstpCapture\BacnetCapture.Designer.cs</Link>
+      <DependentUpon>BacnetCapture.cs</DependentUpon>
+    </Compile>
+    <Compile Include="..\Mstp.BacnetCapture\BacnetNode.cs">
+      <Link>MstpCapture\BacnetNode.cs</Link>
+    </Compile>
+    <Compile Include="..\Mstp.BacnetCapture\WiresharkSender.cs">
+      <Link>MstpCapture\WiresharkSender.cs</Link>
+    </Compile>
     <Compile Include="AlarmSummary.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -202,6 +216,10 @@
       <DependentUpon>SourceAddressDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="YabeDevice.cs" />
+    <EmbeddedResource Include="..\Mstp.BacnetCapture\BacnetCapture.resx">
+      <Link>MstpCapture\BacnetCapture.resx</Link>
+      <DependentUpon>BacnetCapture.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="AlarmSummary.resx">
       <DependentUpon>AlarmSummary.cs</DependentUpon>
     </EmbeddedResource>
@@ -287,6 +305,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\user-gray.png" />
+    <None Include="Resources\wsicon16.png" />
     <Content Include="SimplifiedViewFilter.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -362,6 +381,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

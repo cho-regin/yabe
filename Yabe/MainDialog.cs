@@ -25,6 +25,7 @@
 *
 *********************************************************************/
 
+using Mstp.BacnetCapture;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -444,7 +445,7 @@ namespace Yabe
         // By default device are added first in the Network view, then cloned to be add in this view
         bool AddToDeviceClassView(TreeNode deviceNode, TreeNode CurrentNode=null, bool IsAffected=false) 
         {
-            if (DeviceClassViewTreeNode == null) return false;
+            if ((DeviceClassViewTreeNode == null)||(deviceNode==null)) return false;
 
             if (CurrentNode == null) CurrentNode = DeviceClassViewTreeNode;
 
@@ -821,7 +822,6 @@ namespace Yabe
                 else
                 {
                     m_devices[sender].Devices[idx].vendor_Id = vendor_id; // Update vendor id (mstp case)
-                    m_devices[sender].Devices[idx].deviceId= device_id; // Needed only with a remote device with unknown id 0X3FFFFF
                     m_devices[sender].Devices[idx].MaxAPDULenght= max_apdu;
                     m_devices[sender].Devices[idx].Segmentation= segmentation;
                 }
@@ -830,6 +830,7 @@ namespace Yabe
             //update GUI
             this.Invoke((MethodInvoker)delegate
             {
+
                 TreeNode parent = FindCommTreeNode(sender);
                 if (parent == null) return; // should never occur
 
@@ -837,13 +838,14 @@ namespace Yabe
 
                 foreach (TreeNode s in parent.Nodes)
                 {
+                       
                     BACnetDevice entry = s.Tag as BACnetDevice;
 
-                    //update existing (this can happen in MSTP) // dead code ... to be removes after tests
-                    if (entry.Equals(new_device))   
+                    // update existing (this can happen in MSTP)
+                    if ((entry!=null)&&(entry.Equals(new_device)))
                     {
                         s.Text = "Device " + new_device.deviceId + " - " + new_device.BacAdr.ToString(s.Parent.Parent != null);
-                        if (Identifier!=null)
+                        if (Identifier != null)
                         {
                             s.ToolTipText = s.Text;
                             s.Text = Identifier + " [" + device_id.ToString() + "] ";
@@ -858,7 +860,7 @@ namespace Yabe
                         return;
                     }
                 }
-
+  
                 TreeNode newNode = new TreeNode("Device " + new_device.deviceId + " - " + new_device.BacAdr.ToString(true));
                 newNode.ImageIndex = 2;
                 newNode.SelectedImageIndex = newNode.ImageIndex;
@@ -879,16 +881,18 @@ namespace Yabe
                     {
                         BACnetDevice router = s.Tag as BACnetDevice;
                         if (router != null && router.BacAdr.IsMyRouter(adr))
-                        {  
+                        {
                             s.Nodes.Add(newNode);
                             m_DeviceTree.ExpandAll();
                             return;
                         }
                     }
+
                 //add simply
                 parent.Nodes.Add(newNode);
                 AddToDeviceClassView(newNode);
                 m_DeviceTree.ExpandAll();
+  
             });
         }
 
@@ -1027,7 +1031,7 @@ namespace Yabe
                 {
                     m_devices.Remove(comm);
                     node.Remove();
-                    MessageBox.Show(this, "Couldn't start Bacnet communication: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(this, "Couldn't start BACnet communication: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
 
             }
@@ -1078,7 +1082,7 @@ namespace Yabe
                         {
                             this.Invoke((MethodInvoker)delegate
                             {
-                                MessageBox.Show(this, "Selected source address seems to be occupied!", "Collision detected", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                                Trace.WriteLine("Mstp Collision detected");
                             });
                         }
                     }
@@ -1327,6 +1331,14 @@ namespace Yabe
                 FetchStructuredObjects(device, object_id.Instance, node.Nodes, ForceRead);
             }
 
+            if ((device.DeviceIdUnconfigured) && (object_id.type == BacnetObjectTypes.OBJECT_DEVICE)) // Mstp & Remote Device with 0x3FFFFF
+            {
+                device.deviceId = object_id.Instance;
+
+                AddToDeviceClassView(_selectedDevice);
+                m_DeviceTree.ExpandAll();
+            }
+
             if (object_id.type == BacnetObjectTypes.OBJECT_STRUCTURED_VIEW)
             {
                 if (_structuredViewParents != null)
@@ -1453,20 +1465,23 @@ namespace Yabe
         }
         private void m_DeviceTree_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            TreeNode node = e.Node;
-            if (node == null) return;   // Normally cannot be
+            SetSimplifiedLabels();
 
-            if ((sender as String == "ObjRename") || (sender == manual_refresh_objects)|| (sender as String == "ObjNewDelete"))
-                _selectedDevice = null; // invalidate the current selection to force a renew
+            TreeNode node = e.Node;
+            if (node == null) return; // Toogle Simplified View without selected node
 
             BACnetDevice device = node.Tag as BACnetDevice;
             if (device == null) return;  // Not a TreeNode linked to a device
 
+            if ((sender as String == "ObjRename") || (sender == manual_refresh_objects)|| (sender as String == "ObjNewDelete"))
+                _selectedDevice = null; // invalidate the current selection to force a renew
+
             if (_selectedDevice != null)
-                if ((_selectedDevice.Tag == device)) return;
+                if ((_selectedDevice.Tag == device)) return;  // Same device, on a clone TreeNode
+
+            _selectedDevice = node;
 
             AsynchRequestId++; // disabled a possible thread pool work (update) on the AddressSpaceTree
-            SetSimplifiedLabels();
 
             if ((sender == manual_refresh_objects) || (sender as String == "ObjNewDelete" ) || (!Properties.Settings.Default.UseObjectsCache))
                 device.ClearCache();
@@ -1477,6 +1492,7 @@ namespace Yabe
             BacnetClient comm = device.channel;
             BacnetAddress adr = device.BacAdr;
             uint device_id = device.deviceId;
+
 
             //unconfigured MSTP?
             if (comm.Transport is BacnetMstpProtocolTransport && ((BacnetMstpProtocolTransport)comm.Transport).SourceAddress == -1)
@@ -1568,7 +1584,6 @@ namespace Yabe
                             // If the Device name not set, try to update it
                             if (node.ToolTipText == "")   // already update with the device name
                             {
-
                                 String Identifier = device.ReadObjectName(bobj_id);
 
                                 if (!string.IsNullOrWhiteSpace(Identifier))
@@ -1582,7 +1597,6 @@ namespace Yabe
                         AddObjectEntry(device, null, bobj_id, m_AddressSpaceTree.Nodes);
                     }
                 }
-                _selectedDevice = node;
             }
             catch { }
             finally
@@ -2911,7 +2925,7 @@ namespace Yabe
         private void AddRemoteIpToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
-            BacnetClient comm = FetchIPv4ClientEndPoint();
+            BacnetClient comm = FetchTransportClientEndPoint(typeof(BacnetIpUdpProtocolTransport));
             if (comm == null) return;
 
             try
@@ -2941,7 +2955,7 @@ namespace Yabe
         private void AddRemoteIpListToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
-            BacnetClient comm = FetchIPv4ClientEndPoint();
+            BacnetClient comm = FetchTransportClientEndPoint(typeof(BacnetIpUdpProtocolTransport));
             if (comm == null) return;
 
             //select file to store
@@ -3131,7 +3145,7 @@ namespace Yabe
                 }
             }
         }
-        BacnetClient FetchIPv4ClientEndPoint()
+        BacnetClient FetchTransportClientEndPoint(Type transportType, bool WithErrorMessage=true)
         {
             BacnetClient comm = null;
             // Make sure we are connected
@@ -3146,10 +3160,17 @@ namespace Yabe
             {
                 comm = (m_DeviceTree.SelectedNode.Tag as BACnetDevice).channel;
             }
-
-            if ((comm == null) || !(comm.Transport is BacnetIpUdpProtocolTransport))
+            // BacnetIpUdpProtocolTransport  transportType.IsInstanceOfType
+            //if ((comm == null) || !(comm.Transport is transportType.))
+            if ((comm == null) || (!transportType.IsInstanceOfType(comm.Transport)))
             {
-                MessageBox.Show(this, "Please select an \"IP transport\" node first", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if ((WithErrorMessage==true)&&(transportType == typeof(BacnetIpUdpProtocolTransport)))
+                    MessageBox.Show(this, "Please select an \"IP V4 transport\" node first", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                else if ((WithErrorMessage == true) && (transportType == typeof(BacnetMstpProtocolTransport)))
+                    MessageBox.Show(this, "Please select an \"Mstp transport\" node first", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                else
+                    MessageBox.Show(this, "Please select a \"transport "+ transportType.Name+ "\" node first", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
                 return null;
             }
 
@@ -3266,7 +3287,7 @@ namespace Yabe
         private void foreignDeviceRegistrationToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //fetch end point
-            BacnetClient comm = FetchIPv4ClientEndPoint();
+            BacnetClient comm = FetchTransportClientEndPoint(typeof(BacnetIpUdpProtocolTransport));
             if (comm == null) return;
 
             Form F = new ForeignRegistry(comm);
@@ -4183,6 +4204,21 @@ namespace Yabe
             Application.Restart();
         }
 
+        Mstp.BacnetCapture.BacnetCapture CaptureForm;
+        private void mstpCaptureToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!BacnetCapture.SingletonIsRunning)
+            {
+                BacnetClient comm = FetchTransportClientEndPoint(typeof(BacnetMstpProtocolTransport));
+                if (comm != null)
+                {
+                    CaptureForm = new Mstp.BacnetCapture.BacnetCapture((BacnetMstpProtocolTransport)comm.Transport);
+                    CaptureForm.Show();
+                }
+            }
+            else
+                CaptureForm.BringToFront();
+        }
         private void ToggleViewMenuItem_Click(object sender, EventArgs e)
         {
 
@@ -4190,6 +4226,12 @@ namespace Yabe
             Subscription sub = _selectedNode as Subscription;
 
             ToogleViewSimplified = !ToogleViewSimplified;
+
+            if (ToogleViewSimplified)
+                toolStripMenuView2.Text = toolStripMenuView1.Text = "Full Normal View";
+            else
+                toolStripMenuView2.Text = toolStripMenuView1.Text = "Simplified View";
+
             m_DeviceTree_AfterSelect("ObjRename", new TreeViewEventArgs(this._selectedDevice));
             if (stn != null)
             {

@@ -75,7 +75,7 @@ namespace DemoServer
 
                 //create pipe (MSTP) service point
                 BacnetPipeTransport pipe_transport = new BacnetPipeTransport("COM1003", true);
-                BacnetMstpProtocolTransport mstp_transport = new BacnetMstpProtocolTransport(pipe_transport, 0, 127, 1);
+                BacnetMstpProtocolTransport mstp_transport = new BacnetMstpProtocolTransport(pipe_transport, 0, 10, 1);
                 mstp_transport.StateLogging = false;        //if you enable this, it will display a lot of information about the StateMachine
                 m_mstp_server = new BacnetClient(mstp_transport);
                 m_mstp_server.OnWhoIs += new BacnetClient.WhoIsHandler(OnWhoIs);

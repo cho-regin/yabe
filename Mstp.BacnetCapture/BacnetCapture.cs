@@ -49,39 +49,54 @@ namespace Mstp.BacnetCapture
         // "C:\Program Files\Wireshark\Wireshark.exe" -ni \\.\pipe\bacnet
         // or something equivalent on Linux ... but for Mono BufferedTreeView class must be removed
 
-        WiresharkSender Wireshark = new WiresharkSender("bacnet",165);  // 165 = bacnet mstp
+        public static bool SingletonIsRunning { get; private set; }
+        WiresharkSender Wireshark;
         BacnetMstpProtocolTransport Serial;
         List<BacnetNode> NoeudsMstp = new List<BacnetNode>();
         String Master = "Node ";
 
         bool[] FiltreMessages=new bool[8];
 
-        public BacnetCapture()
+        public BacnetCapture(BacnetMstpProtocolTransport MstpTransport)
         {
+            Serial = MstpTransport;
             InitializeComponent();
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            string[] ports = SerialPort.GetPortNames();
+            SingletonIsRunning = true;
 
-            // Get the serial ports list
-            foreach (string s in ports)
-                comboPort.Items.Add(s);
-            
-            // select the last one which is certainly an Usb to Rs485 adapter 
-            if (ports != null)
-                if (ports.Length!=0)
-                    comboPort.Text = ports[ports.Length-1];
+            if (Serial == null)
+            {
+                string[] ports = SerialPort.GetPortNames();
 
-            // Get also Morten's Pipe transport
-            // for test purpose : can see Pool for Master activity with DemoServer
-            ports = BacnetPipeTransport.AvailablePorts;
-            foreach (string str in ports)
-                if (str.StartsWith("com", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    comboPort.Items.Add(str);;
-                }
+                // Get the serial ports list
+                foreach (string s in ports)
+                    comboPort.Items.Add(s);
+
+                // select the last one which is certainly an Usb to Rs485 adapter 
+                if (ports != null)
+                    if (ports.Length != 0)
+                        comboPort.Text = ports[ports.Length - 1];
+
+                // Get also Morten's Pipe transport
+                // for test purpose : can see Pool for Master activity with DemoServer
+                ports = BacnetPipeTransport.AvailablePorts;
+                foreach (string str in ports)
+                    if (str.StartsWith("com", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        comboPort.Items.Add(str); ;
+                    }
+            }
+            else // launch from Yabe
+            {
+                label2.Visible=label3.Visible=false;
+                comboPort.Visible=comboSpeed.Visible=false;
+                label6.Visible = true;
+                buttonGo.Visible = false;
+            }
+
 
             System.Windows.Forms.ToolTip ToolTip1 = new System.Windows.Forms.ToolTip();
             ToolTip1.SetToolTip(this, "© Frederic Chaxel, Morten Kvistgaard 2015\r\n MIT License\r\n Thanks to http://icons8.com/");
@@ -91,8 +106,21 @@ namespace Mstp.BacnetCapture
 
             Form1_Resize(null, null);
 
-        }
+            if (Serial != null)
+                buttonGo_Click(null, null);
 
+        }
+        private void BacnetCapture_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            SingletonIsRunning = false;
+
+            if (Serial != null)
+                Serial.RawMessageRecieved -= new BacnetMstpProtocolTransport.RawMessageReceivedHandler(Serial_RawMessageRecieved);
+
+            if (Wireshark != null)
+                Wireshark.Disconnect();
+            // Do not close the Port, if launched by Yabe it's alerady in usage, if not Windows will do the job
+        }
         // change language
         // too much simple for using ressources class for that.
         private void toFrench()
@@ -106,6 +134,8 @@ namespace Mstp.BacnetCapture
                 label3.Text = "Vitesse :";
                 label4.Text = "Filtre de suppression";
                 label5.Text = "Statistiques d\'envois";
+                label6.Text = "Cet outil peut être utilisé sans Yabe (mais le port ne peut pas être partagé)";
+                label7.Text = "... démarrer le avec la commande : Wireshark.exe -ni \\\\.\\pipe\\bacnet";
                 Master = "Noeud ";
             }
         }
@@ -116,16 +146,23 @@ namespace Mstp.BacnetCapture
 
             try
             {
-                int com_number = 0;
-                if (comboPort.Text.Length >= 3) int.TryParse(comboPort.Text.Substring(3), out com_number);
-                if (com_number >= 1000)      // these are Morten's special "pipe" com ports 
-                    Serial = new BacnetMstpProtocolTransport(new BacnetPipeTransport(comboPort.Text), -1);
+                Wireshark = new WiresharkSender("bacnet", 165);  // 165 = bacnet mstp
+
+                if (Serial == null) // Standalone application
+                {
+                    int com_number = 0;
+                    if (comboPort.Text.Length >= 3) int.TryParse(comboPort.Text.Substring(3), out com_number);
+                    if (com_number >= 1000)      // these are Morten's special "pipe" com ports 
+                        Serial = new BacnetMstpProtocolTransport(new BacnetPipeTransport(comboPort.Text), -1);
+                    else
+                        Serial = new BacnetMstpProtocolTransport(comboPort.Text, Convert.ToInt32(comboSpeed.Text), -1);
+
+                    Serial.RawMessageRecieved += new BacnetMstpProtocolTransport.RawMessageReceivedHandler(Serial_RawMessageRecieved);
+
+                    Serial.Start_SpyMode();
+                }
                 else
-                    Serial = new BacnetMstpProtocolTransport(comboPort.Text, Convert.ToInt32(comboSpeed.Text), -1);
-
-                Serial.RawMessageRecieved += new BacnetMstpProtocolTransport.RawMessageReceivedHandler(Serial_RawMessageRecieved);
-
-                Serial.Start_SpyMode();
+                    Serial.RawMessageRecieved += new BacnetMstpProtocolTransport.RawMessageReceivedHandler(Serial_RawMessageRecieved);
 
                 buttonGo.Enabled = false;
             }
@@ -210,6 +247,9 @@ namespace Mstp.BacnetCapture
             Tn[0].Nodes[0].Nodes[0].Text = noeud.TotalFrames.ToString() + " Total";
             Tn[0].Nodes[0].Nodes[1].Text = noeud.MeanTimeTokenRotation.ToString() + " ms MTTR";
 
+            if (treeView.Nodes.Count == 1) // Expand the first node
+                treeView.ExpandAll();
+
             treeView.EndUpdate();
         }
        
@@ -256,6 +296,7 @@ namespace Mstp.BacnetCapture
                 System.Windows.Forms.MessageBox.Show("Error starting Wireshark");
             }
         }
+
     }
 
     // treeview comparer base on the (int)Tag associated to the TreeNode

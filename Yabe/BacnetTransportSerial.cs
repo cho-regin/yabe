@@ -1100,7 +1100,7 @@ namespace System.IO.BACnet
 
                             // No need to use the thread pool, if the pipe is too slow
                             // frames task list will grow infinitly
-                            RawMessageRecieved(packet, 0, length);
+                            RawMessageRecieved?.Invoke(packet, 0, length);
                         }
 
                         RemoveCurrentMessage(msg_length);
@@ -1876,13 +1876,34 @@ namespace System.IO.BACnet
 
             if (StateLogging) Trace.WriteLine("" + frame_type + " " + destination_address.ToString("X2") + " ");
 
+            // raw frame event client (sniffer) ?
+            if (RawMessageRecieved != null)
+            {
+
+                int length = msg_length + MSTP.MSTP_HEADER_LENGTH + (msg_length > 0 ? 2 : 0);
+
+                // Array copy
+                // after that it could be put asynchronously another time in the Main message loop
+                // without any problem
+                byte[] packet = new byte[length];
+                Array.Copy(m_local_buffer, 0, packet, 0, length);
+
+                // No need to use the thread pool, if the pipe is too slow
+                // frames task list will grow infinitly
+                RawMessageRecieved?.Invoke(packet, 0, length);
+            }
+
             //done
             return GetMessageStatus.Good;
         }
 
         public int Send(byte[] buffer, int offset, int data_length, BacnetAddress address, bool wait_for_transmission, int timeout)
         {
-            if (m_TS == -1) throw new Exception("Source address must be set up before sending messages");
+            if (m_TS == -1)
+            {
+                Trace.WriteLine(" Mstp source address must be set up before sending messages");
+                return 0; //throw new Exception("Source address must be set up before sending messages");
+            }
 
             //add to queue
             BacnetNpduControls function = NPDU.DecodeFunction(buffer, offset);

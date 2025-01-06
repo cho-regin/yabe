@@ -11,7 +11,7 @@ Start Bacnet.Room.Simulator;1R;Launch;AddOn,Bacnet.Room.Simulator.exe
 Start Wheather2_to_Bacnet;2W;Launch;AddOn,Wheather2_to_Bacnet.exe
 Start DemoServer;;Launch;AddOn,DemoServer.exe
 
-# Insert a separator (Label mandatory Sep, Command None)
+# Insert a Menu separator (Label mandatory Sep, Command None)
 Sep;;None
 
 # Iam on all open interfaces
@@ -45,9 +45,9 @@ Edit RecipeSample.csv to change the Recipe/Snapshot file;;Launch;.,notepad,Recip
 
 SubClose;;None
 
-# Settings changes with a restart or not. Param is Settings Name = Value , Name = Value , Name = Value ,restart or norestart
-# The Value could unfortunatly be a String with separator , and ; Replace , by § and ; by ^ like the sample here
-Set a Device Class Structure (from Readme.txt);;Settings;Device Class Structure=HVAC(3§9)^Lighting(9§23)^Building(HVAC§Lighting§40§27)^Not Affected(),restart
+# Settings changes with a restart or not. Param is Settings Name = Value , Name = Value , Name = Value ... ,restart or norestart
+# The Value could unfortunatly be a String with separators ,; Replace , by § and ; by ^ like the example here
+Set the Device Class Structure described in Readme.txt;;Settings;Device Class Structure=HVAC(3§9)^Lighting(9§23)^Building(HVAC§Lighting§40§27)^Not Affected(),restart
 
 # To be remove by you
 Sep;;None
@@ -57,5 +57,5 @@ Edit YabeMenuCmd.txt to modify/remove this menu content;7Y;Launch;.,notepad,Yabe
 # Subscribe to some very important objects;2S;Subscribe_Files;C:\Users\Fred\Desktop\Yabe\File1.cov,C:\Users\Fred\Desktop\Yabe\File2.cov
 
 # Some idea of generic commands to be added, useful for the community, let me know ... or better, post the code !
-# Source code is inside MainDialog.UserCmd.cs
+# Source code is inside MainDialog.UserCmd.cs, expand MainDialog.cs virtual folder in VS
 # Batch command to be done with a file of a sequence of these previous commands

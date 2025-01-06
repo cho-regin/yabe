@@ -48,6 +48,7 @@ namespace Yabe
                 // Don't care with Exception in thread without try catch.
                 // Normally here not exist ... but who knows ?
             };
+            
 
             // Load Embbeded dll
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>

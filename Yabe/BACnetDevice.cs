@@ -60,6 +60,8 @@ namespace Yabe
         // Don't sort it if ReadListOneShort or it will be displayed on two different ways when getting back the cache
         public bool SortableDictionnary { get { return ReadObjectsListOneShot; } }    
 
+        public bool DeviceIdUnconfigured { get { return deviceId >= 0x3FFFFF; } }
+
         // PROP_OBJECT_LIST  cache
         uint ListCountExpected; // Number of objects expected in the object_list
         List<BacnetObjectId> Prop_ObjectList;
@@ -89,8 +91,13 @@ namespace Yabe
         {
             if (obj is BACnetDevice other)
             {
+                if ((deviceId >= 0x3FFFFF) || (other.deviceId >= 0x3FFFFF))
+                    return BacAdr.Equals(other.BacAdr);
+
                 if (this.deviceId != other.deviceId) return false;
+
                 if (!BacAdr.Equals(other.BacAdr)) return false;
+
                 return true;
             }
             return false;
