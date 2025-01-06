@@ -223,7 +223,7 @@ namespace Yabe
                         String s = (o[0] as System.ComponentModel.DisplayNameAttribute).DisplayName.ToString();
                         if (s == Setting[0].Trim()) // Bingo it's the good property
                         {
-                            String ValToSet = Setting[1].Replace('§', ',').Replace('^', ';');
+                            String ValToSet = Setting[1].Replace('?', ',').Replace('^', ';');
                             Type typeorigin = prop.PropertyType;
                             
                             try

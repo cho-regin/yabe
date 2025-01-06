@@ -46,8 +46,8 @@ Edit RecipeSample.csv to change the Recipe/Snapshot file;;Launch;.,notepad,Recip
 SubClose;;None
 
 # Settings changes with a restart or not. Param is Settings Name = Value , Name = Value , Name = Value ... ,restart or norestart
-# The Value could unfortunatly be a String with separators ,; Replace , by § and ; by ^ like the example here
-Set the Device Class Structure described in Readme.txt;;Settings;Device Class Structure=HVAC(3§9)^Lighting(9§23)^Building(HVAC§Lighting§40§27)^Not Affected(),restart
+# The Value could unfortunatly be a String with separators ,; Replace , by ? and ; by ^ like the example here
+Set the Device Class Structure described in Readme.txt 2.7.17;;Settings;Device Class Structure=HVAC(3?9)^Lighting(9?23)^Building(HVAC?Lighting?40?27)^Not Affected(),restart
 
 # To be remove by you
 Sep;;None

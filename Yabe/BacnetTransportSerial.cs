@@ -1086,23 +1086,7 @@ namespace System.IO.BACnet
                     }
                     else if (status == GetMessageStatus.Good)
                     {
-                        // frame event client ?
-                        if (RawMessageRecieved != null)
-                        {
-
-                            int length = msg_length + MSTP.MSTP_HEADER_LENGTH + (msg_length > 0 ? 2 : 0);
-
-                            // Array copy
-                            // after that it could be put asynchronously another time in the Main message loop
-                            // without any problem
-                            byte[] packet = new byte[length];
-                            Array.Copy(m_local_buffer, 0, packet, 0, length);
-
-                            // No need to use the thread pool, if the pipe is too slow
-                            // frames task list will grow infinitly
-                            RawMessageRecieved?.Invoke(packet, 0, length);
-                        }
-
+                        // Message Sent in GetNextMessage 
                         RemoveCurrentMessage(msg_length);
                     }
                 }
@@ -1196,22 +1180,39 @@ namespace System.IO.BACnet
         private void SendFrame(MessageFrame frame)
         {
             if (m_TS == -1 || m_port == null) return;
-            int tx;
+            int tx; byte[] transmitedBuf;
             if (frame.data == null || frame.data.Length == 0)
             {
                 byte[] tmp_transmit_buffer = new byte[MSTP.MSTP_HEADER_LENGTH];
                 tx = MSTP.Encode(tmp_transmit_buffer, 0, frame.frame_type, frame.destination_address, (byte)m_TS, 0);
                 m_port.Write(tmp_transmit_buffer, 0, tx);
+                transmitedBuf = tmp_transmit_buffer;
             }
             else
             {
                 tx = MSTP.Encode(frame.data, 0, frame.frame_type, frame.destination_address, (byte)m_TS, frame.data_length);
                 m_port.Write(frame.data, 0, tx);
+
+                transmitedBuf = frame.data;              
             }
             frame.send_mutex.Set();
 
             //debug
             if (StateLogging) Trace.WriteLine("         " + frame.frame_type + " " + frame.destination_address.ToString("X2") + " ");
+
+            // raw frame event client (sniffer) ?
+            if (RawMessageRecieved != null)
+            {
+                // Array copy
+                // after that it could be put asynchronously another time in the Main message loop
+                // without any problem
+                byte[] packet = new byte[tx];
+                Array.Copy(transmitedBuf, 0, packet, 0, tx);
+
+                // No need to use the thread pool, if the pipe is too slow
+                // frames task list will grow infinitly
+                RawMessageRecieved?.Invoke(packet, 0, tx);
+            }
         }
 
         private void RemoveCurrentMessage(int msg_length)
