@@ -219,12 +219,13 @@
             // linkLabel1
             // 
             this.linkLabel1.AutoSize = true;
-            this.linkLabel1.Location = new System.Drawing.Point(310, 64);
+            this.linkLabel1.Enabled = false;
+            this.linkLabel1.Location = new System.Drawing.Point(12, 68);
             this.linkLabel1.Name = "linkLabel1";
-            this.linkLabel1.Size = new System.Drawing.Size(80, 13);
+            this.linkLabel1.Size = new System.Drawing.Size(191, 13);
             this.linkLabel1.TabIndex = 20;
             this.linkLabel1.TabStop = true;
-            this.linkLabel1.Text = "Start Wireshark";
+            this.linkLabel1.Text = "Start Wireshark with immediate capture";
             this.linkLabel1.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel1_LinkClicked);
             // 
             // label6

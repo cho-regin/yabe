@@ -84,6 +84,12 @@
             this.m_DeviceTreeMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addDeviceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeDeviceToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.DCViewtoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.InserttoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.RenameStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.DeletetoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.duplicateDeviceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.removeDeviceToolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.sendWhoIsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exportDeviceDBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -95,6 +101,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.manual_refresh_objects = new System.Windows.Forms.Button();
             this.TbxHighlightAddress = new System.Windows.Forms.TextBox();
+            this.m_AddressSpaceTree = new CodersLab.Windows.Controls.TreeView();
             this.m_AddressSpaceMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.subscribeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.downloadFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -149,7 +156,6 @@
             this.m_subscriptionRenewTimer = new System.Windows.Forms.Timer(this.components);
             this.SaveObjectNamesTimer = new System.Windows.Forms.Timer(this.components);
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.m_AddressSpaceTree = new CodersLab.Windows.Controls.TreeView();
             m_ImageList = new System.Windows.Forms.ImageList(this.components);
             this.toolStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
@@ -697,6 +703,7 @@
             // 
             // m_DeviceTree
             // 
+            this.m_DeviceTree.AllowDrop = true;
             this.m_DeviceTree.ContextMenuStrip = this.m_DeviceTreeMenuStrip;
             this.m_DeviceTree.Dock = System.Windows.Forms.DockStyle.Fill;
             this.m_DeviceTree.ImageIndex = 0;
@@ -708,7 +715,10 @@
             this.m_DeviceTree.ShowRootLines = false;
             this.m_DeviceTree.Size = new System.Drawing.Size(189, 521);
             this.m_DeviceTree.TabIndex = 0;
+            this.m_DeviceTree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.m_DeviceTree_ItemDrag);
             this.m_DeviceTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.m_DeviceTree_AfterSelect);
+            this.m_DeviceTree.DragDrop += new System.Windows.Forms.DragEventHandler(this.m_DeviceTree_DragDrop);
+            this.m_DeviceTree.DragEnter += new System.Windows.Forms.DragEventHandler(this.m_DeviceTree_DragEnter);
             this.m_DeviceTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TreeView_MouseDown);
             // 
             // m_DeviceTreeMenuStrip
@@ -716,6 +726,7 @@
             this.m_DeviceTreeMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.addDeviceToolStripMenuItem,
             this.removeDeviceToolStripMenuItem1,
+            this.DCViewtoolStripMenuItem,
             this.toolStripMenuItem1,
             this.sendWhoIsToolStripMenuItem,
             this.exportDeviceDBToolStripMenuItem,
@@ -725,7 +736,7 @@
             this.readPropertiesNameToolStripMenuItem,
             this.createObjectToolStripMenuItem});
             this.m_DeviceTreeMenuStrip.Name = "m_DeviceTreeMenuStrip";
-            this.m_DeviceTreeMenuStrip.Size = new System.Drawing.Size(235, 208);
+            this.m_DeviceTreeMenuStrip.Size = new System.Drawing.Size(235, 230);
             // 
             // addDeviceToolStripMenuItem
             // 
@@ -742,6 +753,54 @@
             this.removeDeviceToolStripMenuItem1.Size = new System.Drawing.Size(234, 22);
             this.removeDeviceToolStripMenuItem1.Text = "Remove Channel/Device";
             this.removeDeviceToolStripMenuItem1.Click += new System.EventHandler(this.removeDeviceToolStripMenuItem_Click);
+            // 
+            // DCViewtoolStripMenuItem
+            // 
+            this.DCViewtoolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.InserttoolStripMenuItem,
+            this.RenameStripMenuItem,
+            this.DeletetoolStripMenuItem,
+            this.duplicateDeviceToolStripMenuItem,
+            this.removeDeviceToolStripMenuItem2});
+            this.DCViewtoolStripMenuItem.Image = global::Yabe.Properties.Resources.folder;
+            this.DCViewtoolStripMenuItem.Name = "DCViewtoolStripMenuItem";
+            this.DCViewtoolStripMenuItem.Size = new System.Drawing.Size(234, 22);
+            this.DCViewtoolStripMenuItem.Text = "Devices View Folders";
+            // 
+            // InserttoolStripMenuItem
+            // 
+            this.InserttoolStripMenuItem.Name = "InserttoolStripMenuItem";
+            this.InserttoolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.InserttoolStripMenuItem.Text = "Insert Folder";
+            this.InserttoolStripMenuItem.Click += new System.EventHandler(this.DCVViewToolStripMenuItem_Click);
+            // 
+            // RenameStripMenuItem
+            // 
+            this.RenameStripMenuItem.Name = "RenameStripMenuItem";
+            this.RenameStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.RenameStripMenuItem.Text = "Rename Folder";
+            this.RenameStripMenuItem.Click += new System.EventHandler(this.DCVViewToolStripMenuItem_Click);
+            // 
+            // DeletetoolStripMenuItem
+            // 
+            this.DeletetoolStripMenuItem.Name = "DeletetoolStripMenuItem";
+            this.DeletetoolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.DeletetoolStripMenuItem.Text = "Delete Folder";
+            this.DeletetoolStripMenuItem.Click += new System.EventHandler(this.DCVViewToolStripMenuItem_Click);
+            // 
+            // duplicateDeviceToolStripMenuItem
+            // 
+            this.duplicateDeviceToolStripMenuItem.Name = "duplicateDeviceToolStripMenuItem";
+            this.duplicateDeviceToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.duplicateDeviceToolStripMenuItem.Text = "Duplicate Device";
+            this.duplicateDeviceToolStripMenuItem.Click += new System.EventHandler(this.duplicateDeviceToolStripMenuItem_Click);
+            // 
+            // removeDeviceToolStripMenuItem2
+            // 
+            this.removeDeviceToolStripMenuItem2.Name = "removeDeviceToolStripMenuItem2";
+            this.removeDeviceToolStripMenuItem2.Size = new System.Drawing.Size(180, 22);
+            this.removeDeviceToolStripMenuItem2.Text = "Unaffect Device";
+            this.removeDeviceToolStripMenuItem2.Click += new System.EventHandler(this.UnaffectDeviceToolStripMenuItem2_Click);
             // 
             // toolStripMenuItem1
             // 
@@ -843,6 +902,24 @@
             this.TbxHighlightAddress.Visible = global::Yabe.Properties.Settings.Default.ShowHighLightFilter;
             this.TbxHighlightAddress.KeyDown += new System.Windows.Forms.KeyEventHandler(this.TbxHighlightTreeView_KeyDown);
             this.TbxHighlightAddress.Leave += new System.EventHandler(this.TbxHighlightTreeView_Update);
+            // 
+            // m_AddressSpaceTree
+            // 
+            this.m_AddressSpaceTree.ContextMenuStrip = this.m_AddressSpaceMenuStrip;
+            this.m_AddressSpaceTree.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_AddressSpaceTree.ImageIndex = 0;
+            this.m_AddressSpaceTree.ImageList = m_ImageList;
+            this.m_AddressSpaceTree.Location = new System.Drawing.Point(0, 23);
+            this.m_AddressSpaceTree.Name = "m_AddressSpaceTree";
+            this.m_AddressSpaceTree.SelectedImageIndex = 0;
+            this.m_AddressSpaceTree.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            this.m_AddressSpaceTree.SelectionMode = CodersLab.Windows.Controls.TreeViewSelectionMode.MultiSelectSameLevel;
+            this.m_AddressSpaceTree.ShowNodeToolTips = true;
+            this.m_AddressSpaceTree.Size = new System.Drawing.Size(258, 521);
+            this.m_AddressSpaceTree.TabIndex = 0;
+            this.m_AddressSpaceTree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.m_AddressSpaceTree_ItemDrag);
+            this.m_AddressSpaceTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.m_AddressSpaceTree_AfterSelect);
+            this.m_AddressSpaceTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TreeView_MouseDown);
             // 
             // m_AddressSpaceMenuStrip
             // 
@@ -1372,7 +1449,7 @@
             this.m_ProperiesMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripMenuView1});
             this.m_ProperiesMenuStrip.Name = "m_ProperiesMenuStrip";
-            this.m_ProperiesMenuStrip.Size = new System.Drawing.Size(219, 48);
+            this.m_ProperiesMenuStrip.Size = new System.Drawing.Size(219, 26);
             // 
             // toolStripMenuView1
             // 
@@ -1424,24 +1501,6 @@
             // 
             this.SaveObjectNamesTimer.Interval = 240000;
             this.SaveObjectNamesTimer.Tick += new System.EventHandler(this.SaveObjectNamesTimer_Tick);
-            // 
-            // m_AddressSpaceTree
-            // 
-            this.m_AddressSpaceTree.ContextMenuStrip = this.m_AddressSpaceMenuStrip;
-            this.m_AddressSpaceTree.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.m_AddressSpaceTree.ImageIndex = 0;
-            this.m_AddressSpaceTree.ImageList = m_ImageList;
-            this.m_AddressSpaceTree.Location = new System.Drawing.Point(0, 23);
-            this.m_AddressSpaceTree.Name = "m_AddressSpaceTree";
-            this.m_AddressSpaceTree.SelectedImageIndex = 0;
-            this.m_AddressSpaceTree.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            this.m_AddressSpaceTree.SelectionMode = CodersLab.Windows.Controls.TreeViewSelectionMode.MultiSelectSameLevel;
-            this.m_AddressSpaceTree.ShowNodeToolTips = true;
-            this.m_AddressSpaceTree.Size = new System.Drawing.Size(258, 521);
-            this.m_AddressSpaceTree.TabIndex = 0;
-            this.m_AddressSpaceTree.ItemDrag += new System.Windows.Forms.ItemDragEventHandler(this.m_AddressSpaceTree_ItemDrag);
-            this.m_AddressSpaceTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.m_AddressSpaceTree_AfterSelect);
-            this.m_AddressSpaceTree.MouseDown += new System.Windows.Forms.MouseEventHandler(this.TreeView_MouseDown);
             // 
             // YabeMainDialog
             // 
@@ -1639,6 +1698,12 @@
         private System.Windows.Forms.ToolStripMenuItem mstpCaptureToolToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip m_ProperiesMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuView1;
+        private System.Windows.Forms.ToolStripMenuItem DCViewtoolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem InserttoolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem RenameStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem DeletetoolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem duplicateDeviceToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem removeDeviceToolStripMenuItem2;
     }
 }
 

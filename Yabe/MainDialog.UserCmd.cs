@@ -39,8 +39,8 @@ using System.Windows.Forms;
 using Yabe.Properties;
 
 namespace Yabe
-{ 
-    class DummyMainDialogUserCmd { } // A dummy class required to avoid opening an empty Form with the designer  
+{
+    class DummyUserCmd { } // A dummy class required to avoid opening an empty Form with the designer  
 
     public partial class YabeMainDialog
     {
@@ -96,6 +96,15 @@ namespace Yabe
                             LineCount++;
                             if (!l.StartsWith("#"))
                             {
+
+                                // Identify a String
+                                String[] StringwithSep= l.Split('"');
+                                if (StringwithSep.Length == 3)
+                                {
+                                    // Change with unusable separator
+                                    l = StringwithSep[0] + StringwithSep[1].Replace(',', (char)4).Replace(';', (char)3) + StringwithSep[2];
+                                }
+
                                 String[] MenuCommand = l.Split(';');
                                 Tuple<int, string> Cmd = null;
 
@@ -223,7 +232,7 @@ namespace Yabe
                         String s = (o[0] as System.ComponentModel.DisplayNameAttribute).DisplayName.ToString();
                         if (s == Setting[0].Trim()) // Bingo it's the good property
                         {
-                            String ValToSet = Setting[1].Replace('?', ',').Replace('^', ';');
+                            String ValToSet = Setting[1].Replace((char)4,',').Replace((char)3,';');
                             Type typeorigin = prop.PropertyType;
                             
                             try

@@ -46,7 +46,6 @@ using System.Windows.Forms;
 using System.Xml.Serialization;
 using WebSocketSharp;
 using ZedGraph;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar;
 
 namespace Yabe
 {
@@ -379,6 +378,9 @@ namespace Yabe
             if (Properties.Settings.Default.DeviceViewMode != DeviceTreeViewType.Network)
                 DeviceClassViewTreeNode = CreateDeviceClassView();
 
+            if (DeviceClassViewTreeNode == null) DCViewtoolStripMenuItem.Visible = false;
+
+            // Network View present if the Device View is not defined (normally it is)
             if ((!(Properties.Settings.Default.DeviceViewMode==DeviceTreeViewType.DeviceClass)) || (DeviceClassViewTreeNode==null))
                 m_DeviceTree.Nodes.Add(NetworkViewTreeNode);
 
@@ -393,83 +395,6 @@ namespace Yabe
             });
             
         }
-        TreeNode CreateDeviceClassView()
-        {
-            String Descr = Properties.Settings.Default.DeviceClassStructure;
-            if (string.IsNullOrEmpty(Descr))
-                return null;
-
-            String[] Groups = Descr.Split(';');
-            TreeNode tnDeviceClass = new TreeNode("Device Class View");
-            tnDeviceClass.Tag = -2;    // For the Node sorter
-
-            List<TreeNode> AddedTn = new List<TreeNode>();
-
-            int Count = -1;
-            foreach (string Group in Groups)
-            {
-                string[] elements = Group.Split(new char[] { '(', ')', ',' });
-                TreeNode tnGroup= new TreeNode(elements[0].Trim(), 11,11); // with a folder icon
-                List<int> DeviceIds = new List<int>();
-                DeviceIds.Add(Count--); // For the Node sorter, and cannot be a DeviceId
-                for (int i=1;i<elements.Length;i++)
-                {
-                    if (!string.IsNullOrWhiteSpace(elements[i]))
-                        if (Int32.TryParse(elements[i], out int id)==true)  // It's a DeviceId
-                            DeviceIds.Add(id);
-                        else // It's a reference to a previous group
-                        {
-                            int idx=AddedTn.FindIndex(o => o.Text.ToLower() == elements[i].Trim().ToLower());
-                            if (idx!=-1) // maybe an error
-                            {
-                                tnGroup.Nodes.Add(AddedTn[idx]);
-                                AddedTn.Remove(AddedTn[idx]);
-                            }
-                        }
-                }
-                tnGroup.Tag = DeviceIds;
-                AddedTn.Add(tnGroup);
-            }
-
-            foreach (TreeNode tn in AddedTn)
-                tnDeviceClass.Nodes.Add(tn);
-
-            if (tnDeviceClass.Nodes.Count > 1) // No view if to small
-            {
-                m_DeviceTree.Nodes.Add(tnDeviceClass);
-                return tnDeviceClass;
-            }
-            else
-                return null;
-        }
-        // By default device are added first in the Network view, then cloned to be add in this view
-        bool AddToDeviceClassView(TreeNode deviceNode, TreeNode CurrentNode=null, bool IsAffected=false) 
-        {
-            if ((DeviceClassViewTreeNode == null)||(deviceNode==null)) return false;
-
-            if (CurrentNode == null) CurrentNode = DeviceClassViewTreeNode;
-
-            // Find and add at all right places
-            foreach (TreeNode tn in CurrentNode.Nodes)
-                if (!(tn.Tag is BACnetDevice)) // The Node is a folder or not
-                    if (AddToDeviceClassView(deviceNode, tn, IsAffected)==true) // It's a folder recursive call
-                        IsAffected = true;
-
-            if (CurrentNode.Tag is List<int> DeviceIds) 
-            {
-                if (DeviceIds.Contains((int)(deviceNode.Tag as BACnetDevice).deviceId))
-                {
-                    CurrentNode.Nodes.Add((TreeNode)deviceNode.Clone());
-                    IsAffected = true;
-                }
-                // Not added, put it in the folder for all not affected devices
-                if ((DeviceIds.Count == 1) && (IsAffected == false))
-                    CurrentNode.Nodes.Add((TreeNode)deviceNode.Clone());
-            }
-
-            return IsAffected;
-        }
-
         private void MainDialog_FormClosing(object sender, FormClosingEventArgs e)
         {
             try
@@ -1161,7 +1086,7 @@ namespace Yabe
 
             if (device_entry != null)
             {
-                if (MessageBox.Show(m_DeviceTree.SelectedNode.Text+"\r\nDelete this device?", "Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                if (MessageBox.Show(m_DeviceTree.SelectedNode.Text+ "\r\nDelete this device from everywhere?", "Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
                 {
                     m_AddressSpaceTree.Nodes.Clear();   //clear address space
                     AddSpaceLabel.Text = AddrSpaceTxt;
@@ -4356,13 +4281,13 @@ namespace Yabe
 
             // Two Group Nodes
             if ((tx.Tag is List<int> txList) && (ty.Tag is List<int> tyList))
-                return tyList[0].CompareTo(txList[0]);
+                return tx.Name.CompareTo(ty.Name);
 
             // A Group and a device
             if ((tx.Tag is BACnetDevice) && (ty.Tag is List<int>))
-                return 1;
-            if ((tx.Tag is List<int>) && (ty.Tag is BACnetDevice))
                 return -1;
+            if ((tx.Tag is List<int>) && (ty.Tag is BACnetDevice))
+                return 1;
 
             // The Two Root nodes ordered with the user choice
             if ((tx.Tag is int txidev) && (ty.Tag is int tyidev))
@@ -4371,8 +4296,7 @@ namespace Yabe
             else
                 return txidev.CompareTo(tyidev);
 
-
-            return 0;   // Don't care
+            return 0;   // Don't care, equal
         }
     }
 

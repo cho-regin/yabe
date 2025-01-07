@@ -137,13 +137,17 @@ namespace Yabe
                 }
             }
 
-            //DeviceViewMode
             #region Properties
 
             [DisplayName("Device Class Structure")]
-            [Description("Activates/Describes the Class View in parallel with the Network View. Value is a semicon string with Groups name and device Ids inside like HVAC(3,9);Lighting(9,23);Building(HVAC,Lighting,40,27);Not Affected(). Only one group should appears without device.")]
+            [Description("Activates/Describes the Class View in parallel with the Network View. Value is a semicon string with Groups name and device Ids inside like HVAC(3,9);Lighting(9,23);Building(HVAC,Lighting,40,27)")]
             [Category(CAT_GUI)]
             public string DeviceClassStructure { set { instance.DeviceClassStructure = value; } get { return instance.DeviceClassStructure; }}
+         
+            [DisplayName("Device Mode View Not Affected name")]
+            [Description("Name of the Folder for no affected Devices")]
+            [Category(CAT_GUI)]
+            public string NotAffectedFolderName { set { instance.NotAffectedFolderName = value; } get { return instance.NotAffectedFolderName; } }
 
             [DisplayName("Device Mode View")]
             [Description("Specify how the Device view should be organised")]

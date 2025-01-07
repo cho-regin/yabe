@@ -161,6 +161,9 @@
     <Compile Include="MainDialog.UserCmd.cs">
       <DependentUpon>MainDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="MainDialog.DeviceView.cs">
+      <DependentUpon>MainDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="MainDialog.Export.cs">
       <DependentUpon>MainDialog.cs</DependentUpon>
     </Compile>
@@ -306,6 +309,7 @@
   <ItemGroup>
     <None Include="Resources\user-gray.png" />
     <None Include="Resources\wsicon16.png" />
+    <None Include="Resources\folder.png" />
     <Content Include="SimplifiedViewFilter.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

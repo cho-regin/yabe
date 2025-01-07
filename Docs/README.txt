@@ -270,18 +270,19 @@
 		2.7.17 Network View & Device Class View
 			Devices are by default displayed according to the network structure.
 			A "User" configurable view can also be added with hierachical Folders.
-			This is done using two parameters in the settings GUI section.
-			"Device Mode View" can change the mode.
+			This is done using three parameters in the settings GUI section.
+			"Device Mode View" can change the mode. "Not Affected name" is the 
+			intial name of the folder where unknown devices are placed.
 			"Device Class Structure" describe the hierarchy to use such as :
-			HVAC(3,9);Lighting(9,23);Building(HVAC,Lighting,40,27);Not Affected()
+			HVAC(3,9);Lighting(9,23);Building(HVAC,Lighting,40,27)
 			HVAC, Lighting, ... are folders. When device 9 is discovered, it is
 			added to two locations while device 3 is only placed in the HVAC folder.
 			The two folders are in a main folder named Building where devices
 			40 and 27 are also placed. Finally all others devices (eg 500) are
-			placed in the last folder with an empty list. It can be removed so 
-			unknown devices are not displayed.
-			Names ( , ) ; syntax symbols should be repected for a correct 
-			interpretation. Changes require Yabe restart.
+			placed in the special folder 'Not Affected'.
+			Re-organisation can be done with Drag/Drop operations by moving
+			Folders in Folder, and Devices in Folder.
+			A menu View Folders can be used to delete/rename/insert Folder.
 
 	2.8 Bacnet Object name
 			By default Bacnet objects are displayed using the object identifier eg : 

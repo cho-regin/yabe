@@ -171,7 +171,10 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="DeviceViewMode" Type="Yabe.DeviceTreeViewType" Scope="User">
-      <Value Profile="(Default)">NetworkThenDeviceClass</Value>
+      <Value Profile="(Default)">Network</Value>
+    </Setting>
+    <Setting Name="NotAffectedFolderName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Not Affected</Value>
     </Setting>
   </Settings>
 </SettingsFile>

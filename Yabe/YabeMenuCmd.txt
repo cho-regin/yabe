@@ -9,7 +9,7 @@
 # Start somes samples. Parameters: Directory,App,optional command line Arguments
 Start Bacnet.Room.Simulator;1R;Launch;AddOn,Bacnet.Room.Simulator.exe
 Start Wheather2_to_Bacnet;2W;Launch;AddOn,Wheather2_to_Bacnet.exe
-Start DemoServer;;Launch;AddOn,DemoServer.exe
+Start DemoServer (Mstp simulation on COM1003);;Launch;AddOn,DemoServer.exe
 
 # Insert a Menu separator (Label mandatory Sep, Command None)
 Sep;;None
@@ -46,8 +46,9 @@ Edit RecipeSample.csv to change the Recipe/Snapshot file;;Launch;.,notepad,Recip
 SubClose;;None
 
 # Settings changes with a restart or not. Param is Settings Name = Value , Name = Value , Name = Value ... ,restart or norestart
-# The Value could unfortunatly be a String with separators ,; Replace , by ? and ; by ^ like the example here
-Set the Device Class Structure described in Readme.txt 2.7.17;;Settings;Device Class Structure=HVAC(3?9)^Lighting(9?23)^Building(HVAC?Lighting?40?27)^Not Affected(),restart
+# The Value could unfortunatly be a String with separators ,; Mandatory put the value between "  ". String with " inside cannot be used.
+# In such a case only one parameter of this type can be affected.
+Set the Device Class Structure described in Readme.txt 2.7.17;;Settings;Device Class Structure="HVAC(3,9);Lighting(9,23);Building(HVAC,Lighting,40,27)",restart
 
 # To be remove by you
 Sep;;None

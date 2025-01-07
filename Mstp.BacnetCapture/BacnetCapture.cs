@@ -37,6 +37,8 @@ using Wireshark;
 using System.Collections;
 using System.IO.BACnet;
 using System.Runtime.InteropServices;
+using static System.Windows.Forms.AxHost;
+using System.Text.RegularExpressions;
 
 // Thank's to http://icons8.com/ for shark icon
 
@@ -136,6 +138,7 @@ namespace Mstp.BacnetCapture
                 label5.Text = "Statistiques d\'envois";
                 label6.Text = "Cet outil peut être utilisé sans Yabe (mais le port ne peut pas être partagé)";
                 label7.Text = "... démarrer le avec la commande : Wireshark.exe -ni \\\\.\\pipe\\bacnet";
+                linkLabel1.Text = "Démarrer Wireshark avec capture immédiate";
                 Master = "Noeud ";
             }
         }
@@ -165,6 +168,7 @@ namespace Mstp.BacnetCapture
                     Serial.RawMessageRecieved += new BacnetMstpProtocolTransport.RawMessageReceivedHandler(Serial_RawMessageRecieved);
 
                 buttonGo.Enabled = false;
+                linkLabel1.Enabled = true;
             }
             catch { }
         }
@@ -288,7 +292,7 @@ namespace Mstp.BacnetCapture
                 // third attempt retrieving the path from system, to test: Other harddrive than C:
                 string programFiles = Environment.ExpandEnvironmentVariables("%ProgramW6432%");
                 string cmd = programFiles + "\\Wireshark\\Wireshark.exe";
-                string args = "-ni \\\\.\\pipe\\bacnet";
+                string args = "-ni \\\\.\\pipe\\bacnet -k";
                 System.Diagnostics.Process.Start(cmd, args);
             }
             catch

@@ -698,13 +698,25 @@ namespace Yabe.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("NetworkThenDeviceClass")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Network")]
         public global::Yabe.DeviceTreeViewType DeviceViewMode {
             get {
                 return ((global::Yabe.DeviceTreeViewType)(this["DeviceViewMode"]));
             }
             set {
                 this["DeviceViewMode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Not Affected")]
+        public string NotAffectedFolderName {
+            get {
+                return ((string)(this["NotAffectedFolderName"]));
+            }
+            set {
+                this["NotAffectedFolderName"] = value;
             }
         }
     }

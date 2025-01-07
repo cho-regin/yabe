@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using System.Windows.Forms;
 
 namespace Mstp.BacnetCapture
 {
@@ -39,7 +40,7 @@ namespace Mstp.BacnetCapture
 
         static Stopwatch St = new Stopwatch();
         
-        long mTTR;
+        long mTTR=-1;
 
         long LastTick;
 
@@ -86,8 +87,11 @@ namespace Mstp.BacnetCapture
             }
 
             tick = St.ElapsedTicks;
-            // smoothing
-            mTTR = ((tick - LastTick) + 100 * mTTR) / 101;
+            if (mTTR >= 0)
+                mTTR = ((tick - LastTick) + 100 * mTTR) / 101; // smoothing 
+            else
+                mTTR = (tick - LastTick);   // first value
+
             LastTick = tick;
 
         }
