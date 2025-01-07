@@ -735,7 +735,7 @@ namespace Yabe
                 sender.SimpleAckResponse(adr, BacnetConfirmedServices.SERVICE_CONFIRMED_COV_NOTIFICATION, invoke_id);
             }
         }
-        
+
         void OnIam(BacnetClient sender, BacnetAddress adr, uint device_id, uint max_apdu, BacnetSegmentations segmentation, ushort vendor_id)
         {
             BACnetDevice new_device = new BACnetDevice(sender, adr, device_id, max_apdu, segmentation, vendor_id);
@@ -747,8 +747,9 @@ namespace Yabe
                 else
                 {
                     m_devices[sender].Devices[idx].vendor_Id = vendor_id; // Update vendor id (mstp case)
-                    m_devices[sender].Devices[idx].MaxAPDULenght= max_apdu;
-                    m_devices[sender].Devices[idx].Segmentation= segmentation;
+                    m_devices[sender].Devices[idx].MaxAPDULenght = max_apdu;
+                    m_devices[sender].Devices[idx].Segmentation = segmentation;
+                    return;
                 }
             }
 
@@ -763,11 +764,11 @@ namespace Yabe
 
                 foreach (TreeNode s in parent.Nodes)
                 {
-                       
+
                     BACnetDevice entry = s.Tag as BACnetDevice;
 
                     // update existing (this can happen in MSTP)
-                    if ((entry!=null)&&(entry.Equals(new_device)))
+                    if ((entry != null) && (entry.Equals(new_device)))
                     {
                         s.Text = "Device " + new_device.deviceId + " - " + new_device.BacAdr.ToString(s.Parent.Parent != null);
                         if (Identifier != null)
@@ -785,7 +786,7 @@ namespace Yabe
                         return;
                     }
                 }
-  
+
                 TreeNode newNode = new TreeNode("Device " + new_device.deviceId + " - " + new_device.BacAdr.ToString(true));
                 newNode.ImageIndex = 2;
                 newNode.SelectedImageIndex = newNode.ImageIndex;
@@ -800,7 +801,7 @@ namespace Yabe
                     newNode.ToolTipText = "";
                 }
 
-                // Try to add it under a router if any 
+                // Try to add it under a router if any
                 if ((new_device.BacAdr.RoutedSource != null))
                     foreach (TreeNode s in parent.Nodes)
                     {
@@ -808,6 +809,7 @@ namespace Yabe
                         if (router != null && router.BacAdr.IsMyRouter(adr))
                         {
                             s.Nodes.Add(newNode);
+                            AddToDeviceClassView(newNode);
                             m_DeviceTree.ExpandAll();
                             return;
                         }
@@ -817,7 +819,7 @@ namespace Yabe
                 parent.Nodes.Add(newNode);
                 AddToDeviceClassView(newNode);
                 m_DeviceTree.ExpandAll();
-  
+
             });
         }
 
@@ -2301,10 +2303,10 @@ namespace Yabe
 
         private bool CreateSubscription(BACnetDevice device, BacnetObjectId object_id, bool WithGraph, int pollPeriod = -1)
         {
-            uint FetchDeviceId(BacnetClient _comm, BacnetAddress _adr)
+            uint FetchDeviceId(BACnetDevice dev)
             {
                 IList<BacnetValue> value;
-                if (_comm.ReadPropertyRequest(_adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE), BacnetPropertyIds.PROP_OBJECT_IDENTIFIER, out value))
+                if (device.ReadPropertyRequest(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE), BacnetPropertyIds.PROP_OBJECT_IDENTIFIER, out value))
                 {
                     if (value != null && value.Count > 0 && value[0].Value is BacnetObjectId)
                     {
@@ -2327,11 +2329,9 @@ namespace Yabe
             {
                 String CurveToolTip;
                 //fetch device_id if needed
-                if (device_id >= System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE)
-                {
-                    device_id = FetchDeviceId(comm, adr);
-                }
-
+                if (device_id >= System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE) // Never occur today
+                    device_id = FetchDeviceId(device);
+                
                 m_next_subscription_id++;
                 string sub_key = adr.ToString() + ":" + device_id + ":" + m_next_subscription_id;
                 Subscription sub = new Subscription(device, object_id, sub_key, m_next_subscription_id);
@@ -3085,9 +3085,8 @@ namespace Yabe
             {
                 comm = (m_DeviceTree.SelectedNode.Tag as BACnetDevice).channel;
             }
-            // BacnetIpUdpProtocolTransport  transportType.IsInstanceOfType
-            //if ((comm == null) || !(comm.Transport is transportType.))
-            if ((comm == null) || (!transportType.IsInstanceOfType(comm.Transport)))
+
+            if ((comm == null) || (comm.Transport?.GetType() != transportType))
             {
                 if ((WithErrorMessage==true)&&(transportType == typeof(BacnetIpUdpProtocolTransport)))
                     MessageBox.Show(this, "Please select an \"IP V4 transport\" node first", "Wrong node", MessageBoxButtons.OK, MessageBoxIcon.Information);

@@ -247,10 +247,8 @@ namespace Yabe
 
             TreeNode Node = m_DeviceTree.SelectedNode;
 
-            if (!(Node.Tag is List<int>)) return;
-
             if (sender == InserttoolStripMenuItem)
-                if (Node == DeviceClassViewTreeNode)
+                if ((Node == DeviceClassViewTreeNode)||(Node?.Parent == DeviceClassViewTreeNode))
                 {
                     var Input =
                     new GenericInputBox<TextBox>("Device View Class", "New Folder name",
@@ -268,9 +266,11 @@ namespace Yabe
                         Node.Nodes.Add(tn);
                         m_DeviceTree.ExpandAll();
                         RewriteSetting();
-                        return;
                     }
+                    return;
                 }
+
+            if (!(Node.Tag is List<int>)) return;
 
             if ((sender == DeletetoolStripMenuItem) && (Node != DCVNodeNotAffected))
             {

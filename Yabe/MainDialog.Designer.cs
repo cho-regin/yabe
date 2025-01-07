@@ -156,6 +156,7 @@
             this.m_subscriptionRenewTimer = new System.Windows.Forms.Timer(this.components);
             this.SaveObjectNamesTimer = new System.Windows.Forms.Timer(this.components);
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             m_ImageList = new System.Windows.Forms.ImageList(this.components);
             this.toolStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
@@ -726,6 +727,7 @@
             this.m_DeviceTreeMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.addDeviceToolStripMenuItem,
             this.removeDeviceToolStripMenuItem1,
+            this.toolStripSeparator1,
             this.DCViewtoolStripMenuItem,
             this.toolStripMenuItem1,
             this.sendWhoIsToolStripMenuItem,
@@ -736,7 +738,7 @@
             this.readPropertiesNameToolStripMenuItem,
             this.createObjectToolStripMenuItem});
             this.m_DeviceTreeMenuStrip.Name = "m_DeviceTreeMenuStrip";
-            this.m_DeviceTreeMenuStrip.Size = new System.Drawing.Size(235, 230);
+            this.m_DeviceTreeMenuStrip.Size = new System.Drawing.Size(235, 258);
             // 
             // addDeviceToolStripMenuItem
             // 
@@ -1502,6 +1504,11 @@
             this.SaveObjectNamesTimer.Interval = 240000;
             this.SaveObjectNamesTimer.Tick += new System.EventHandler(this.SaveObjectNamesTimer_Tick);
             // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(231, 6);
+            // 
             // YabeMainDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1704,6 +1711,7 @@
         private System.Windows.Forms.ToolStripMenuItem DeletetoolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem duplicateDeviceToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem removeDeviceToolStripMenuItem2;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
     }
 }
 

@@ -37,6 +37,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using System.ComponentModel;
 using System.Net.NetworkInformation;
+using System.Linq;
 
 namespace System.IO.BACnet
 {
@@ -8193,36 +8194,29 @@ namespace System.IO.BACnet
         public override bool Equals(object obj)
         {
             if (!(obj is BacnetAddress)) return false;
-            BacnetAddress d = (BacnetAddress)obj;
-            if (adr == null && d.adr == null) return true;
-            else if (adr == null || d.adr == null) return false;
-            else if (adr.Length != d.adr.Length) return false;
-            else
-            {
-                for (int i = 0; i < adr.Length; i++)
-                    if (adr[i] != d.adr[i]) return false;
 
-                // Modif FC
-                if ((RoutedSource == null) && (d.RoutedSource != null))
-                    return false;
-                if ((d.RoutedSource==null)&&(RoutedSource == null)) return true;
-                return RoutedSource.Equals(d.RoutedSource);
+            BacnetAddress Me = this;
+            if (Me.RoutedSource != null)
+                Me = RoutedSource;
 
-            }
+            BacnetAddress Other = (BacnetAddress)obj;
+            if (Other.RoutedSource != null)
+                Other = Other.RoutedSource;
 
+            if (Me.adr == null && Other.adr == null) return true;
+            else if (Me.adr == null || Other.adr == null) return false;
+            else if (Me.net != Other.net) return false;
+            return Me.adr.SequenceEqual(Other.adr);
         }
 
         // checked if device is routed by curent equipement
         public bool IsMyRouter(BacnetAddress device)
         {
-            if ((device.RoutedSource == null)||(RoutedSource!=null))
+            if ((device.RoutedSource == null) || (RoutedSource != null))
                 return false;
-            if (adr.Length != device.adr.Length) return false;
 
-            for (int i = 0; i < adr.Length; i++)
-                if (adr[i] != device.adr[i]) return false;
+            return adr.SequenceEqual(device.adr);
 
-            return true;
         }
 
         public void ASN1encode(EncodeBuffer buffer)

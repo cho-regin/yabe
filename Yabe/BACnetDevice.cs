@@ -47,6 +47,8 @@ namespace Yabe
         public uint MaxAPDULenght;
         public BacnetSegmentations Segmentation;
 
+        public BACnetDevice Router;
+
         public object Tag; // Free usage
         static public event EventHandler<(string message, int progress, int goal)> DoEvents;
 
@@ -84,7 +86,11 @@ namespace Yabe
 
         public int CompareTo(BACnetDevice other)
         {
-            return deviceId.CompareTo(other.deviceId); 
+            bool ret = BacAdr.Equals(other.BacAdr);
+            if (ret == true)
+                return 0;
+            else
+                return deviceId.CompareTo(other.deviceId);
         }
 
         public override bool Equals(object obj)

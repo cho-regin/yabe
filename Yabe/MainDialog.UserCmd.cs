@@ -73,7 +73,7 @@ namespace Yabe
             {
                 // Init the Array of link to Methods associated to each commands
                 UserCmdCommands = new Action<String>[] { UserCmd_None, UserCmd_Launch, UserCmd_Iam, UserCmd_WhoIs,
-                     UserCmd_RemoveDevices, UserCmd_SubscribeFiles, UserCmd_SnapShot, UserCmd_WriteRecipe, UserCmd_Settings, UserCmd_None };
+                     UserCmd_RemoveDevices, UserCmd_SubscribeFiles, UserCmd_SnapShot, UserCmd_WriteRecipe, UserCmd_Settings, UserCmd_ExecBatch };
 
                 if ((Debugger.IsAttached) && (UserCmdCommands.Length != CommandList.Length))
                 {
@@ -98,7 +98,7 @@ namespace Yabe
                             {
 
                                 // Identify a String
-                                String[] StringwithSep= l.Split('"');
+                                String[] StringwithSep = l.Split('"');
                                 if (StringwithSep.Length == 3)
                                 {
                                     // Change with unusable separator
@@ -131,7 +131,7 @@ namespace Yabe
                                     else if (MenuCommand[0].StartsWith("SubClose"))
                                     {
                                         if (YabeUserMenu.Tag is ToolStripMenuItem)
-                                            YabeUserMenu =  YabeUserMenu.Tag as ToolStripMenuItem;
+                                            YabeUserMenu = YabeUserMenu.Tag as ToolStripMenuItem;
                                     }
                                     else if ((MenuCommand[0] != "Sep") && (Cmd.Item1 >= 0))
                                     {
@@ -171,7 +171,8 @@ namespace Yabe
             {
                 Tuple<int, string> Cmd = (Tuple<int, string>)(sender as ToolStripMenuItem).Tag;
                 UserCmdCommands?[Cmd.Item1](Cmd.Item2);
-            } catch { }
+            }
+            catch { }
         }
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////
         void UserCmd_None(String Parameters) // will be used later with an idea of batch command
@@ -186,7 +187,7 @@ namespace Yabe
             if (Parameters == null) return;
             String[] P = Parameters.Split(',');
 
-            if (P.Length <2) return;
+            if (P.Length < 2) return;
 
             try
             {
@@ -194,7 +195,7 @@ namespace Yabe
 
                 ps.WorkingDirectory = P[0];
                 if (P.Length > 2)
-                    ps.Arguments= P[2];
+                    ps.Arguments = P[2];
 
                 if (P.Length == 2)
                     Process.Start(ps);
@@ -202,7 +203,7 @@ namespace Yabe
                     Process.Start(ps);
             }
             catch { }
-            
+
             return;
         }
 
@@ -213,7 +214,7 @@ namespace Yabe
 
             SettingsDialog.SettingsDescriptor description = new SettingsDialog.SettingsDescriptor(Properties.Settings.Default);
             PropertyInfo[] allProp = typeof(SettingsDialog.SettingsDescriptor).GetProperties();
-            for (int i=0;i<P.Length;i++)
+            for (int i = 0; i < P.Length; i++)
             {
 
                 String[] Setting = P[i].Split('=');
@@ -232,9 +233,9 @@ namespace Yabe
                         String s = (o[0] as System.ComponentModel.DisplayNameAttribute).DisplayName.ToString();
                         if (s == Setting[0].Trim()) // Bingo it's the good property
                         {
-                            String ValToSet = Setting[1].Replace((char)4,',').Replace((char)3,';');
+                            String ValToSet = Setting[1].Replace((char)4, ',').Replace((char)3, ';');
                             Type typeorigin = prop.PropertyType;
-                            
+
                             try
                             {
                                 if (typeorigin.IsEnum)
@@ -254,7 +255,7 @@ namespace Yabe
         void UserCmd_Iam(String Parameters)
         {
             if (Properties.Settings.Default.YabeDeviceId >= 0)
-            { 
+            {
                 foreach (TreeNode Tn in NetworkViewTreeNode.Nodes)
                 {
                     BacnetClient cli = Tn.Tag as BacnetClient;
@@ -280,15 +281,15 @@ namespace Yabe
                     {
                         String[] Param2 = Param[i].Split('.');
                         Min = Convert.ToInt32(Param2[0]);
-                        Max= Convert.ToInt32(Param2[2]);
+                        Max = Convert.ToInt32(Param2[2]);
                     }
                     else
                         Min = Max = Convert.ToInt32(Param[i]);
 
-                    Id.Add(new Tuple<int, int>(Min,Max));
+                    Id.Add(new Tuple<int, int>(Min, Max));
                 }
             }
-            catch {}
+            catch { }
 
             lock (m_devices)
                 foreach (var v in m_devices)
@@ -297,7 +298,7 @@ namespace Yabe
                     foreach (var devId in Id)
                         try { cli.WhoIs(devId.Item1, devId.Item2); } catch { }
                 }
-                return;
+            return;
         }
         void UserCmd_RemoveDevices(String Parameters)
         {
@@ -365,7 +366,7 @@ namespace Yabe
             if (Parameters == null) return;
             String[] Param = Parameters.Split(',');
 
-            foreach (String ParamStr in Param) 
+            foreach (String ParamStr in Param)
             {
                 if (File.Exists(ParamStr))
                     try
@@ -466,7 +467,7 @@ namespace Yabe
                         else
                             continue;
                     }
-                    catch 
+                    catch
                     {
                         ReadWriteStatus += ";Syntax Error";
                     }
@@ -497,8 +498,8 @@ namespace Yabe
 
                     File.WriteAllText(FileName, sb.ToString());
                 }
-                
-                if ((Param.Length==1)|| (Param.Length>2))
+
+                if ((Param.Length == 1) || (Param.Length > 2))
                     new WriteRecipeForm(this.Icon, status).ShowDialog();
             }
 
@@ -506,10 +507,22 @@ namespace Yabe
         void UserCmd_WriteRecipe(String Parameters)
         {
             List<String> status = UserCmd_WriteRecipeSnapShotCommon(Parameters, false);
-            new WriteRecipeForm(this.Icon,status).ShowDialog();
+            new WriteRecipeForm(this.Icon, status).ShowDialog();
+        }
+        void UserCmd_ExecBatch(String Parameters)
+        {
+            if (Parameters == null) return;
+            if (!File.Exists(Parameters)) return;
+
+            String[] lines = File.ReadAllLines(Parameters);
+            foreach (String line in lines)
+            {
+                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
+                    continue;
+                // Todo
+            }
         }
     }
-
     class WriteRecipeForm : Form
     {
         private ListView listStatus;
