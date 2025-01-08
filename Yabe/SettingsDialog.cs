@@ -145,7 +145,7 @@ namespace Yabe
             public string DeviceClassStructure { set { instance.DeviceClassStructure = value; } get { return instance.DeviceClassStructure; }}
          
             [DisplayName("Device Mode View Not Affected name")]
-            [Description("Name of the Folder for no affected Devices")]
+            [Description("Name of the Folder for no affected Devices. Hidden if name is left blank")]
             [Category(CAT_GUI)]
             public string NotAffectedFolderName { set { instance.NotAffectedFolderName = value; } get { return instance.NotAffectedFolderName; } }
 

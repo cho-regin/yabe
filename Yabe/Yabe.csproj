@@ -158,6 +158,9 @@
     <Compile Include="MainDialog.Designer.cs">
       <DependentUpon>MainDialog.cs</DependentUpon>
     </Compile>
+    <Compile Include="MainDialog.Menus.cs">
+      <DependentUpon>MainDialog.cs</DependentUpon>
+    </Compile>
     <Compile Include="MainDialog.UserCmd.cs">
       <DependentUpon>MainDialog.cs</DependentUpon>
     </Compile>

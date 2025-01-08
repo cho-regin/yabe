@@ -1,7 +1,8 @@
+# YabeMenuV1
 # Menu Label;KeyShortCut;YabeCommand;Parameter(s)
 # Label of the Menu; 1 char optional key shortcut; YabeCommand from a little list of possiblity;  Parameters (without ;)
 # Short cut can be preceeded by a key modifier 1 for Control (default), 2 for Alt, 3 for Control+Alt, and add 4 for Shift
-# Ctrl Alt N, Ctrl Alt S and Ctrl Alt 0..9 are already in usage, do not use them.
+# Ctrl Alt N, Ctrl Alt S and Ctrl Alt 0..9 are already in usage, you cannot use them.
 # Remove/delete/modify this file. 
 # Line starting with # are comments.
 # File read only at start time if present (original Name only).
@@ -46,9 +47,8 @@ Edit RecipeSample.csv to change the Recipe/Snapshot file;;Launch;.,notepad,Recip
 SubClose;;None
 
 # Settings changes with a restart or not. Param is Settings Name = Value , Name = Value , Name = Value ... ,restart or norestart
-# The Value could unfortunatly be a String with separators ,; Mandatory put the value between "  ". String with " inside cannot be used.
-# In such a case only one parameter of this type can be affected.
-Set the Device Class Structure described in Readme.txt 2.7.17;;Settings;Device Class Structure="HVAC(3,9);Lighting(9,23);Building(HVAC,Lighting,40,27)",restart
+# The Value could sometimes be a String with the symbols used as separators ,; Mandatory Escape them \; and \,
+Set the Device Class Structure described in Readme.txt 2.7.17;;Settings;Device Class Structure=HVAC(3\,9)\;Lighting(9\,23)\;Building(HVAC\,Lighting\,40\,27),restart
 
 # To be remove by you
 Sep;;None
@@ -57,6 +57,16 @@ Edit YabeMenuCmd.txt to modify/remove this menu content;7Y;Launch;.,notepad,Yabe
 # Subscription similar to the drop action of a file in the Subscription view. Param is a list of files with , as separator
 # Subscribe to some very important objects;2S;Subscribe_Files;C:\Users\Fred\Desktop\Yabe\File1.cov,C:\Users\Fred\Desktop\Yabe\File2.cov
 
+# Batch command to be done with a file of a sequence of these previous commands. Param is the file name of a file with quit the same
+# structure as this one, apat the missing two first items : menu name & key shortcut
+# A Batch of User Commands;;Exec_Batch;C:\Users\Fred\Desktop\Yabe\SampleCommande.txt
+# None can be used with a delay (in millisecond) such as this batch
+#	Send_Whois;1..4
+#   # A 1 second delay, waiting for Iam responses, before snapshot
+#	None;1000
+#	SnapShot;RecipeSample.csv
+
+
 # Some idea of generic commands to be added, useful for the community, let me know ... or better, post the code !
 # Source code is inside MainDialog.UserCmd.cs, expand MainDialog.cs virtual folder in VS
-# Batch command to be done with a file of a sequence of these previous commands
+

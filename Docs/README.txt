@@ -58,7 +58,7 @@
 		The projected is created by Morten Kvistgaard, anno 2014. 
 		F. Chaxel has contributed a lot of the later additions (eg Foreign Device
 		Registration, BBMD services, TrendLog & Schedule display, Calendar editor,
-		Alarms summary, Bacnet on Ethernet, Bacnet IPv6, Bacnet Secure Connect).
+		Alarms summary, BACnet on Ethernet, BACnet IPv6, BACnet Secure Connect).
 		A few patches and input has been given by the community.
 		Graphics are the usual FamFamFam: http://www.famfamfam.com/
 		Serializing (most/some) is ported from project by Steve Karg:
@@ -283,6 +283,7 @@
 			Re-organisation can be done with Drag/Drop operations by moving
 			Folders in Folder, and Devices in Folder.
 			A menu View Folders can be used to delete/rename/insert Folder.
+			To experience this mode just change "Device Mode View" and restart.
 
 	2.8 Bacnet Object name
 			By default Bacnet objects are displayed using the object identifier eg : 
@@ -372,14 +373,16 @@
 		- CAS BACnet Explorer
 	'Segmentation' has been verified with Wireshark, and Wago 750/830
 	BACNET/PTP has not been tested with any 3rd parties.
+		- please HELP !
     	BACnet/MSTP has been tested with an Ftdi Usb/Rs485 adaptor and
 	    	- Trane Uc800 (vendor Id 2)
 		- Metz Connect I/O modules (BTR Netcom vendor Id 421)
 		- Schneider Electric SE8350 (vendor Id 10)
 		- Contemporary Control MSTP/IP Router (vendor Id 245)
+		- and much more
 	BACnet/Ethernet has been tested with
 		- Delta Controls devices (vendor Id 8)
-	BACnet/IP has been tested with a very long list of devices 
+	BACnet/IP has been tested with certainly all devices on the market
 	BBMD services has been tested with peers :
 		- Wago 750/830 (vendor Id 222)
 		- Newron DoGate (vendor Id 451)
@@ -387,10 +390,11 @@
 	BACnet/SC has been tested with
 		- BACnet Reference Stack tools
  		- ScadaEngine BACnet Simulator
+ 		- MBS Hub/Router device in the field of BACnet/SC plugfest plateform.
 
 5.  SUPPORT
-	There's no support for the project at this time. That's reserved for our 
-	customers. If you write to me, I'm unlikely to answer. 
+	There's no support for the project at this time. 
+	If you write to me, I'm unlikely to answer. 
 
 6.  REPORT ERRORS
 	Yeh, there be errors alright. There always are. Many won't be interesting
@@ -404,8 +408,8 @@
 
 7.  CONTRIBUTE
 	Really? You think it's missing something? It's not really meant as a huge 
-	glorified project you know, but if you really must, try contacting us
-	at fchaxel@free.fr or mk@pch-engineering.dk.
+	glorified project you know, but if you really must, try contacting 
+	fchaxel@free.fr.
 	
 8.  MISC
 	Project web page is located at: 
@@ -414,7 +418,7 @@
 9.  CONTRIBUTORS, in order of apearance
 	Morten Kvistgaard	2014-2016	PCH Engineering/Danemark
 	Frédéric Chaxel		2015-2024	University of Lorraine/France
-	Adam Guzik			2015		Quark Communications, Inc/USA
+	Adam Guzik		2015		Quark Communications, Inc/USA
 	Christopher Günther	2015, 2019
 	Thamer Al-Salek		2016
 	Alexander Jaszkowski	2016-2024	Sauter/Germany

@@ -38,12 +38,12 @@ namespace Yabe
 {
     public partial class NotificationEditor : Form
     {
-        BacnetClient comm; BacnetAddress adr; BacnetObjectId object_id;
+        BacnetObjectId object_id;
+        BACnetDevice device;
 
-        public NotificationEditor(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id)
+        public NotificationEditor(BACnetDevice device, BacnetObjectId object_id)
         {            
-            this.comm=comm;
-            this.adr=adr;
+            this.device= device;
             this.object_id=object_id;
 
             InitializeComponent();
@@ -63,7 +63,7 @@ namespace Yabe
             props.Add(new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_RECIPIENT_LIST, ASN1.BACNET_ARRAY_ALL));
             props.Add(new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_PRIORITY, ASN1.BACNET_ARRAY_ALL));
             IList<BacnetReadAccessResult> PropertiesValues;
-            comm.ReadPropertyMultipleRequest(adr, object_id, props, out PropertiesValues);
+            device.ReadPropertyMultipleRequest(object_id, props, out PropertiesValues);
 
             foreach (BacnetPropertyValue aProp in PropertiesValues[0].values)
             {
@@ -103,13 +103,14 @@ namespace Yabe
         {
             try // Write Priorities
             {
-                List<BacnetValue> PropVal=new List<BacnetValue>();
+                List<BacnetValue> PropVal = new List<BacnetValue>
+                {
+                    new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_UNSIGNED_INT, Convert.ToUInt32(P_Off.Text)),
+                    new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_UNSIGNED_INT, Convert.ToUInt32(P_Fault.Text)),
+                    new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_UNSIGNED_INT, Convert.ToUInt32(P_Normal.Text))
+                };
 
-                PropVal.Add(new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_UNSIGNED_INT, Convert.ToUInt32(P_Off.Text)));
-                PropVal.Add(new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_UNSIGNED_INT, Convert.ToUInt32(P_Fault.Text)));
-                PropVal.Add(new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_UNSIGNED_INT, Convert.ToUInt32(P_Normal.Text)));
-                
-                comm.WritePropertyRequest(adr, object_id, BacnetPropertyIds.PROP_PRIORITY, PropVal);
+                device.WritePropertyRequest(object_id, BacnetPropertyIds.PROP_PRIORITY, PropVal);
             }
             catch { }
             try  // Write recipient List
@@ -130,7 +131,7 @@ namespace Yabe
                     }
                 }
 
-                comm.WritePropertyRequest(adr, object_id, BacnetPropertyIds.PROP_RECIPIENT_LIST, PropVal);
+                device.WritePropertyRequest(object_id, BacnetPropertyIds.PROP_RECIPIENT_LIST, PropVal);
             }
             catch { }
         }

@@ -44,7 +44,7 @@ namespace Yabe
     {
         int Logsize;
         PointPairList[] Pointslists;
-        BacnetClient comm; BacnetAddress adr; BacnetObjectId object_id;
+        BACnetDevice device; BacnetObjectId object_id;
         // Number of records read per ReadRange request
         // 60 is a good value for quite full Udp/Ipv4/Ethernet packets
         // otherwise it could be rejected, or fragmented by Ip, or ...
@@ -53,12 +53,11 @@ namespace Yabe
 
         bool StopDownload = false;
 
-        public TrendLogDisplay(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id)
+        public TrendLogDisplay(BACnetDevice device, BacnetObjectId object_id)
         {
 
             InitializeComponent();
-            this.comm = comm;
-            this.adr = adr;
+            this.device = device;
             this.object_id = object_id;
         }
 
@@ -81,16 +80,16 @@ namespace Yabe
             // antiaslias is clean for curves but not for the text
             // to set antialias for fonts ZedGraph.FontSpec.Default.IsAntiAlias=true can be used
 
-            Logsize = ReadRangeSize(comm, adr, object_id);
+            Logsize = ReadRangeSize(device, object_id);
             if (Logsize < 0) Logsize = 0;
             m_progresslabel.Text = "Downloads of " + Logsize + " records in progress (0%)";
             m_progressBar.Maximum = Logsize;
 
-            m_zedGraphCtl.GraphPane.Title.Text = ReadCurveName(comm, adr, object_id);
+            m_zedGraphCtl.GraphPane.Title.Text = ReadCurveName(device, object_id);
 
             // get the number of Trend in the Log, 1 for basic TrendLog
             if (object_id.type == BacnetObjectTypes.OBJECT_TREND_LOG_MULTIPLE)
-                CurvesNumber = ReadNumberofCurves(comm, adr, object_id);
+                CurvesNumber = ReadNumberofCurves(device, object_id);
 
             m_zedGraphCtl.ContextMenuBuilder += new ZedGraphControl.ContextMenuBuilderEventHandler(m_zedGraphCtl_ContextMenuBuilder);
             m_zedGraphCtl.PointValueEvent += new ZedGraphControl.PointValueHandler(m_zedGraphCtl_PointValueEvent);
@@ -160,12 +159,12 @@ namespace Yabe
         }
 
         // Get the numbers of records in the Log
-        private int ReadRangeSize(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id)
+        private int ReadRangeSize(BACnetDevice device, BacnetObjectId object_id)
         {
             IList<BacnetValue> value;
             try
             {
-                if (!comm.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_RECORD_COUNT, out value))
+                if (!device.ReadPropertyRequest(object_id, BacnetPropertyIds.PROP_RECORD_COUNT, out value))
                     return -1;
                 if (value == null || value.Count == 0)
                     return -1;
@@ -179,12 +178,12 @@ namespace Yabe
         }
 
         // PROP_OBJECT_NAME is used, could be PROP_OBJECT_DESCRIPTION maybe
-        private string ReadCurveName(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id)
+        private string ReadCurveName(BACnetDevice device, BacnetObjectId object_id)
         {
             IList<BacnetValue> value;
             try
             {
-                if (!comm.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_OBJECT_NAME, out value))
+                if (!device.ReadPropertyRequest(object_id, BacnetPropertyIds.PROP_OBJECT_NAME, out value))
                     return "";
                 if (value == null || value.Count == 0)
                     return "";
@@ -196,12 +195,12 @@ namespace Yabe
             }
         }
         // Only for MULTIPLE TREND LOG
-        private int ReadNumberofCurves(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id)
+        private int ReadNumberofCurves(BACnetDevice device, BacnetObjectId object_id)
         {
             IList<BacnetValue> value;
             try
             {
-                if (!comm.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_LOG_DEVICE_OBJECT_PROPERTY, out value))
+                if (!device.ReadPropertyRequest(object_id, BacnetPropertyIds.PROP_LOG_DEVICE_OBJECT_PROPERTY, out value))
                     return 0;
                 return (value == null ? 0 : value.Count);
 
@@ -235,7 +234,7 @@ namespace Yabe
                         Idx = 951;
 
                     //read
-                    if ((comm.ReadRangeRequest(adr, object_id, (uint)Idx, ref ItemCount, out TrendBuffer) == false) || (ItemCount <= 0))
+                    if ((device.ReadRangeRequest(object_id, (uint)Idx, ref ItemCount, out TrendBuffer) == false) || (ItemCount <= 0))
                     {
                         Trace.TraceError("Couldn't load log data");
                         BeginInvoke(new Action<bool>(UpdateEnd), false);

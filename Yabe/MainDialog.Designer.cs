@@ -31,10 +31,10 @@
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.ImageList m_ImageList;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(YabeMainDialog));
-            this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.toolStripAddRemove = new System.Windows.Forms.ToolStrip();
             this.m_SearchToolButton = new System.Windows.Forms.ToolStripButton();
             this.m_RemoveToolButton = new System.Windows.Forms.ToolStripButton();
-            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.m_MainMenu = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.objectNameBaseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -84,6 +84,7 @@
             this.m_DeviceTreeMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.addDeviceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeDeviceToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.DCViewtoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.InserttoolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.RenameStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -155,11 +156,9 @@
             this.LblLog = new System.Windows.Forms.Label();
             this.m_subscriptionRenewTimer = new System.Windows.Forms.Timer(this.components);
             this.SaveObjectNamesTimer = new System.Windows.Forms.Timer(this.components);
-            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             m_ImageList = new System.Windows.Forms.ImageList(this.components);
-            this.toolStrip1.SuspendLayout();
-            this.menuStrip1.SuspendLayout();
+            this.toolStripAddRemove.SuspendLayout();
+            this.m_MainMenu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_SplitContainerButtom)).BeginInit();
             this.m_SplitContainerButtom.Panel1.SuspendLayout();
             this.m_SplitContainerButtom.Panel2.SuspendLayout();
@@ -228,16 +227,16 @@
             m_ImageList.Images.SetKeyName(16, "error.png");
             m_ImageList.Images.SetKeyName(17, "lock.png");
             // 
-            // toolStrip1
+            // toolStripAddRemove
             // 
-            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripAddRemove.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.m_SearchToolButton,
             this.m_RemoveToolButton});
-            this.toolStrip1.Location = new System.Drawing.Point(0, 24);
-            this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1126, 25);
-            this.toolStrip1.TabIndex = 1;
-            this.toolStrip1.Text = "toolStrip1";
+            this.toolStripAddRemove.Location = new System.Drawing.Point(0, 24);
+            this.toolStripAddRemove.Name = "toolStripAddRemove";
+            this.toolStripAddRemove.Size = new System.Drawing.Size(1126, 25);
+            this.toolStripAddRemove.TabIndex = 1;
+            this.toolStripAddRemove.Text = "toolStrip1";
             // 
             // m_SearchToolButton
             // 
@@ -259,19 +258,19 @@
             this.m_RemoveToolButton.Text = "Remove Channel/Device";
             this.m_RemoveToolButton.Click += new System.EventHandler(this.removeDeviceToolStripMenuItem_Click);
             // 
-            // menuStrip1
+            // m_MainMenu
             // 
-            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.m_MainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.searchToolStripMenuItem,
             this.optionsToolStripMenuItem,
             this.helpToolStripMenuItem});
-            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1126, 24);
-            this.menuStrip1.TabIndex = 2;
-            this.menuStrip1.Text = "menuStrip1";
-            this.menuStrip1.MenuActivate += new System.EventHandler(this.menuStrip1_MenuActivate);
+            this.m_MainMenu.Location = new System.Drawing.Point(0, 0);
+            this.m_MainMenu.Name = "m_MainMenu";
+            this.m_MainMenu.Size = new System.Drawing.Size(1126, 24);
+            this.m_MainMenu.TabIndex = 2;
+            this.m_MainMenu.Text = "menuStrip1";
+            this.m_MainMenu.MenuActivate += new System.EventHandler(this.menuStrip1_MenuActivate);
             // 
             // fileToolStripMenuItem
             // 
@@ -738,7 +737,7 @@
             this.readPropertiesNameToolStripMenuItem,
             this.createObjectToolStripMenuItem});
             this.m_DeviceTreeMenuStrip.Name = "m_DeviceTreeMenuStrip";
-            this.m_DeviceTreeMenuStrip.Size = new System.Drawing.Size(235, 258);
+            this.m_DeviceTreeMenuStrip.Size = new System.Drawing.Size(235, 236);
             // 
             // addDeviceToolStripMenuItem
             // 
@@ -756,6 +755,11 @@
             this.removeDeviceToolStripMenuItem1.Text = "Remove Channel/Device";
             this.removeDeviceToolStripMenuItem1.Click += new System.EventHandler(this.removeDeviceToolStripMenuItem_Click);
             // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(231, 6);
+            // 
             // DCViewtoolStripMenuItem
             // 
             this.DCViewtoolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -772,35 +776,35 @@
             // InserttoolStripMenuItem
             // 
             this.InserttoolStripMenuItem.Name = "InserttoolStripMenuItem";
-            this.InserttoolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.InserttoolStripMenuItem.Size = new System.Drawing.Size(162, 22);
             this.InserttoolStripMenuItem.Text = "Insert Folder";
             this.InserttoolStripMenuItem.Click += new System.EventHandler(this.DCVViewToolStripMenuItem_Click);
             // 
             // RenameStripMenuItem
             // 
             this.RenameStripMenuItem.Name = "RenameStripMenuItem";
-            this.RenameStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.RenameStripMenuItem.Size = new System.Drawing.Size(162, 22);
             this.RenameStripMenuItem.Text = "Rename Folder";
             this.RenameStripMenuItem.Click += new System.EventHandler(this.DCVViewToolStripMenuItem_Click);
             // 
             // DeletetoolStripMenuItem
             // 
             this.DeletetoolStripMenuItem.Name = "DeletetoolStripMenuItem";
-            this.DeletetoolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.DeletetoolStripMenuItem.Size = new System.Drawing.Size(162, 22);
             this.DeletetoolStripMenuItem.Text = "Delete Folder";
             this.DeletetoolStripMenuItem.Click += new System.EventHandler(this.DCVViewToolStripMenuItem_Click);
             // 
             // duplicateDeviceToolStripMenuItem
             // 
             this.duplicateDeviceToolStripMenuItem.Name = "duplicateDeviceToolStripMenuItem";
-            this.duplicateDeviceToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.duplicateDeviceToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
             this.duplicateDeviceToolStripMenuItem.Text = "Duplicate Device";
             this.duplicateDeviceToolStripMenuItem.Click += new System.EventHandler(this.duplicateDeviceToolStripMenuItem_Click);
             // 
             // removeDeviceToolStripMenuItem2
             // 
             this.removeDeviceToolStripMenuItem2.Name = "removeDeviceToolStripMenuItem2";
-            this.removeDeviceToolStripMenuItem2.Size = new System.Drawing.Size(180, 22);
+            this.removeDeviceToolStripMenuItem2.Size = new System.Drawing.Size(162, 22);
             this.removeDeviceToolStripMenuItem2.Text = "Unaffect Device";
             this.removeDeviceToolStripMenuItem2.Click += new System.EventHandler(this.UnaffectDeviceToolStripMenuItem2_Click);
             // 
@@ -1389,7 +1393,6 @@
             this.ack_normal.Size = new System.Drawing.Size(23, 23);
             this.ack_normal.TabIndex = 3;
             this.ack_normal.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.toolTip.SetToolTip(this.ack_normal, "Acknowledge normal");
             this.ack_normal.UseVisualStyleBackColor = true;
             this.ack_normal.Visible = false;
             this.ack_normal.Click += new System.EventHandler(this.ack_icon_Click);
@@ -1402,7 +1405,6 @@
             this.ack_fault.Size = new System.Drawing.Size(23, 23);
             this.ack_fault.TabIndex = 3;
             this.ack_fault.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.toolTip.SetToolTip(this.ack_fault, "Acknowledge fault");
             this.ack_fault.UseVisualStyleBackColor = true;
             this.ack_fault.Visible = false;
             this.ack_fault.Click += new System.EventHandler(this.ack_icon_Click);
@@ -1415,7 +1417,6 @@
             this.ack_offnormal.Size = new System.Drawing.Size(23, 23);
             this.ack_offnormal.TabIndex = 3;
             this.ack_offnormal.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.toolTip.SetToolTip(this.ack_offnormal, "Acknowledge offnormal");
             this.ack_offnormal.UseVisualStyleBackColor = true;
             this.ack_offnormal.Visible = false;
             this.ack_offnormal.Click += new System.EventHandler(this.ack_icon_Click);
@@ -1428,7 +1429,6 @@
             this.manual_refresh_properties.Size = new System.Drawing.Size(29, 23);
             this.manual_refresh_properties.TabIndex = 2;
             this.manual_refresh_properties.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.toolTip.SetToolTip(this.manual_refresh_properties, "Refresh");
             this.manual_refresh_properties.UseVisualStyleBackColor = true;
             this.manual_refresh_properties.Click += new System.EventHandler(this.manual_refresh_properties_Click);
             // 
@@ -1504,31 +1504,26 @@
             this.SaveObjectNamesTimer.Interval = 240000;
             this.SaveObjectNamesTimer.Tick += new System.EventHandler(this.SaveObjectNamesTimer_Tick);
             // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(231, 6);
-            // 
             // YabeMainDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1126, 680);
             this.Controls.Add(this.m_SplitContainerButtom);
-            this.Controls.Add(this.toolStrip1);
-            this.Controls.Add(this.menuStrip1);
+            this.Controls.Add(this.toolStripAddRemove);
+            this.Controls.Add(this.m_MainMenu);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.KeyPreview = true;
-            this.MainMenuStrip = this.menuStrip1;
+            this.MainMenuStrip = this.m_MainMenu;
             this.Name = "YabeMainDialog";
             this.Text = "Yet Another Bacnet Explorer - Yabe";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainDialog_FormClosing);
             this.Load += new System.EventHandler(this.MainDialog_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainDialog_KeyDown);
-            this.toolStrip1.ResumeLayout(false);
-            this.toolStrip1.PerformLayout();
-            this.menuStrip1.ResumeLayout(false);
-            this.menuStrip1.PerformLayout();
+            this.toolStripAddRemove.ResumeLayout(false);
+            this.toolStripAddRemove.PerformLayout();
+            this.m_MainMenu.ResumeLayout(false);
+            this.m_MainMenu.PerformLayout();
             this.m_SplitContainerButtom.Panel1.ResumeLayout(false);
             this.m_SplitContainerButtom.Panel2.ResumeLayout(false);
             this.m_SplitContainerButtom.Panel2.PerformLayout();
@@ -1586,8 +1581,8 @@
 
         #endregion
 
-        private System.Windows.Forms.ToolStrip toolStrip1;
-        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStrip toolStripAddRemove;
+        private System.Windows.Forms.MenuStrip m_MainMenu;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
         private System.Windows.Forms.SplitContainer m_SplitContainerButtom;
@@ -1694,7 +1689,6 @@
         private System.Windows.Forms.ToolStripMenuItem exportEDEFilesSelDeviceToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exportEDEFilesAllDevicesToolStripMenuItem;
         private System.Windows.Forms.Button ack_offnormal;
-        private System.Windows.Forms.ToolTip toolTip;
         private System.Windows.Forms.Button ack_normal;
         private System.Windows.Forms.Button ack_fault;
         private System.Windows.Forms.Button manual_refresh_objects;

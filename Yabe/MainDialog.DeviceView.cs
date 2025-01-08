@@ -35,7 +35,6 @@ namespace Yabe
     // All TreeNode are under a Root "Device Class View"
     // Tag is a BacnetDevice or for Folder a List<int> with deviceId of all affected devices
     // DCVNodeNotAffected is the Folder Node for devices with unknow destination
-    // Folder TreeNode Nodes are Devices or Folder.
     public partial class YabeMainDialog
     {
         TreeNode DCVNodeNotAffected; // The Tree Node for NotAffected Devices
@@ -86,16 +85,20 @@ namespace Yabe
 
             if (AddedTn.Count==0)
             {
-                TreeNode tn = new TreeNode("Initial Folder (to be renamed)", 11, 11);
+                TreeNode tn = new TreeNode("New Folder", 11, 11);
                 tn.Tag = new List<int>(); // Empty List
                 tn.Name = tn.Text;
                 AddedTn.Add(tn);
             }
 
-            DCVNodeNotAffected = new TreeNode(Properties.Settings.Default.NotAffectedFolderName, 11, 11);
-            DCVNodeNotAffected.Tag = new List<int>(); // Empty List
-            DCVNodeNotAffected.Name = new string((char)255, 1); // For ordering, always last folder
-            AddedTn.Add(DCVNodeNotAffected);
+            // Node for not affecte devices is "hidden" if it's name blank
+            if (!string.IsNullOrEmpty(Properties.Settings.Default.NotAffectedFolderName))
+            {
+                DCVNodeNotAffected = new TreeNode(Properties.Settings.Default.NotAffectedFolderName, 11, 11);
+                DCVNodeNotAffected.Tag = new List<int>(); // Empty List
+                DCVNodeNotAffected.Name = new string((char)255, 1); // For ordering, always last folder
+                AddedTn.Add(DCVNodeNotAffected);
+            }
 
             foreach (TreeNode tn in AddedTn)
                 tnDeviceClass.Nodes.Add(tn);
@@ -113,7 +116,7 @@ namespace Yabe
 
             // Find and add at all right places
             foreach (TreeNode tn in CurrentNode.Nodes)
-                if (!(tn.Tag is BACnetDevice)) // The Node is a folder or not
+                if ((tn.Tag is List<int>)) // Folder node ?
                     if (AddToDeviceClassView(deviceNode, tn, IsAffected) == true) // recursive call
                         IsAffected = true;
 
@@ -127,7 +130,7 @@ namespace Yabe
             }
 
             // Not added, put it in the folder for all not affected devices
-            if ((IsAffected == false)&&(CurrentNode == DeviceClassViewTreeNode))
+            if ((IsAffected == false)&&(CurrentNode == DeviceClassViewTreeNode)&&(DCVNodeNotAffected!=null))
                 DCVNodeNotAffected.Nodes.Add((TreeNode)deviceNode.Clone());
 
             return IsAffected;
@@ -135,25 +138,23 @@ namespace Yabe
 
         #region "DeviceClassViewModification"
 
-        TreeNode OrignalFolderMovedDevice;
-
         private void RewriteDeviceClassStructureSettings(TreeNode tnParent, ref String DeviceClassStructure)
         {
             foreach (TreeNode tn in tnParent.Nodes)
             {
-                if ((tn.Tag is List<int> l)&&(tn!= DCVNodeNotAffected))
+                if ((tn.Tag is List<int> listdevices)&&(tn!= DCVNodeNotAffected))
                 {
-                    RewriteDeviceClassStructureSettings(tn, ref DeviceClassStructure); // recursive call
+                    RewriteDeviceClassStructureSettings(tn, ref DeviceClassStructure); // recursive call to childs
 
                     DeviceClassStructure += tn.Text + "(";
 
                     String Sep = "";
-                    for (int i = 0; i < l.Count; i++)
+                    foreach (int devid in listdevices) // The list of deviceId allowed
                     {
-                        DeviceClassStructure += Sep + l[i];
+                        DeviceClassStructure += Sep + devid;
                         Sep = ",";
                     }
-                    foreach (TreeNode tn2 in tn.Nodes)
+                    foreach (TreeNode tn2 in tn.Nodes) // The list of Folder inside the current Folder
                     {
                         if (tn2.Tag is List<int>)
                             DeviceClassStructure += Sep + tn2.Text;
@@ -166,21 +167,27 @@ namespace Yabe
         }
         private void MoveNode(TreeNode SourceNode, TreeNode DestinationNode)
         {
+
             if (SourceNode.Tag is BACnetDevice dev) // Remove the device identifier for the OrignalDevice list
             {
-                List<int> d = OrignalFolderMovedDevice.Tag as List<int>;
+                List<int> d = SourceNode.Parent.Tag as List<int>;
 
                 if (d == null) return; // should never occurs
 
                 d.Remove((int)dev.deviceId);
-                d = DestinationNode.Tag as List<int>;
-                if (!d.Exists(o => o == (int)dev.deviceId))
-                    d.Add((int)dev.deviceId);
+
+                if (DestinationNode != null)
+                {
+                    d = DestinationNode.Tag as List<int>;
+                    if (!d.Exists(o => o == (int)dev.deviceId))
+                        d.Add((int)dev.deviceId);
+                }
             }
 
             m_DeviceTree.Nodes.Remove(SourceNode);
-            DestinationNode.Nodes.Add(SourceNode);
+            DestinationNode?.Nodes.Add(SourceNode);
 
+            // Rewrite the Setting parameter
             String DeviceClassStructure = "";
             RewriteDeviceClassStructureSettings(DeviceClassViewTreeNode, ref DeviceClassStructure);
             Properties.Settings.Default.DeviceClassStructure = DeviceClassStructure;
@@ -197,15 +204,16 @@ namespace Yabe
             Point DropXY = ((TreeView)sender).PointToClient(new Point(e.X, e.Y));
             TreeNode DestinationNode = ((TreeView)sender).GetNodeAt(DropXY);
 
-            if (SourceNode == DestinationNode) return;
+            // Nothing inside a Device, but assume the target is the parent Folder
+            if (DestinationNode.Tag is BACnetDevice)
+                DestinationNode = DestinationNode.Parent;
 
-            // No Folder inside a Device
-            if (DestinationNode.Tag is BACnetDevice) return;
+            if (SourceNode == DestinationNode) return;
 
             // No Device at the top level
             if ((SourceNode.Tag is BACnetDevice) && (DestinationNode == DeviceClassViewTreeNode)) return;
 
-            // No Folder inside Unaffected Devices Folder
+            // No Folder inside the Unaffected Devices Folder
             if ((SourceNode.Tag is List<int>) && (DestinationNode== DCVNodeNotAffected)) return;
 
             // Not possible too put a parent inside it's child node
@@ -232,9 +240,6 @@ namespace Yabe
                 node = node.Parent;
             if (node == DeviceClassViewTreeNode)
                 m_DeviceTree.DoDragDrop(e.Item, DragDropEffects.Move); // A BacnetDevice Node
-
-            OrignalFolderMovedDevice = (e.Item as TreeNode).Parent; // Parent Folder of the Moved Folder or Device TreeNode
-
         }
         private void DCVViewToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -310,10 +315,10 @@ namespace Yabe
 
         private void UnaffectDeviceToolStripMenuItem2_Click(object sender, EventArgs e)
         {
+
             TreeNode Node = m_DeviceTree.SelectedNode;
             if (!(Node.Tag is BACnetDevice) || !(Node.Parent.Tag is List<int>)) return;
 
-            OrignalFolderMovedDevice = Node.Parent;
             MoveNode(Node, DCVNodeNotAffected);
 
             m_DeviceTree.ExpandAll();
@@ -322,7 +327,11 @@ namespace Yabe
 
         private void duplicateDeviceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            TreeNode Node = m_DeviceTree.SelectedNode;
+            // It's a problem to duplicate a node in the same Folder, when one is move the deviceId is
+            // remove from the accepted list. Don't want to check, so forbideen.
+            if (DCVNodeNotAffected == null) return;
+
+                TreeNode Node = m_DeviceTree.SelectedNode;
             if (!(Node.Tag is BACnetDevice) || !(Node.Parent.Tag is List<int>)) return;
 
             TreeNode newNode=(TreeNode)Node.Clone();

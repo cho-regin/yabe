@@ -25,8 +25,6 @@
 *********************************************************************/
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Configuration;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -36,7 +34,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using Yabe.Properties;
+using ZedGraph;
 
 namespace Yabe
 {
@@ -48,7 +46,7 @@ namespace Yabe
                                                 "snapshot", "write_recipe", "settings", "exec_batch" };
         // Action array cannot be filled here, methods cannot be static to access simply to all Yabe elements, done in InitUserCmd
         Action<String>[] UserCmdCommands;
-        Keys ShortCut(String s) // Must contains Control or Altrecipes
+        Keys ShortCut(String s) // Keys Must contains Control or Alt for keyboard shortcut
         {
             if (s.Length == 1)
                 return Keys.Control | (Keys)s[0];
@@ -56,6 +54,12 @@ namespace Yabe
             {
                 int Ret = (int)s[1];
                 Int32.TryParse(s[0].ToString(), out int ModifierInt);
+
+                // Don't accept Yabe reserved KeySortCut 
+                if ((ModifierInt == 3))
+                    if ((Ret == 'N') || (Ret == 'S') || ((Ret >= '0') && (Ret <= '9')))
+                        return (Keys)Ret;
+
                 // at least Ctrl or Alt is required for a Keyboard Shortcut
                 if (((ModifierInt & 1) == 1) || ((ModifierInt & 3) == 0))
                     Ret = Ret + (int)Keys.Control;
@@ -67,8 +71,29 @@ namespace Yabe
                 return (Keys)Ret;
             }
         }
+        Tuple<int, string> MenuLineToCmd(String line, out String[] MenuCommand)
+        {
+            Tuple<int, string> Cmd = null;
+
+            // Change escaped \; and \, with unusable symbols
+            line = line.Replace("\\,", new string((char)4, 1)).Replace("\\;", new string((char)3, 1));
+            // Operation will be done later to get back ; and ,
+
+            MenuCommand = line.Split(';');
+
+            // Parameters with , are not splited here. Maybe it will be necessary a day inside them and not as a sperator
+
+            if (MenuCommand.Length == 3)
+                Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), null);
+            else if (MenuCommand.Length == 4)
+                    Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), MenuCommand[3]);
+
+            return Cmd;
+        }
         void InitUserCmd()
         {
+            int MenuVersion;
+
             if (File.Exists("YabeMenuCmd.txt"))
             {
                 // Init the Array of link to Methods associated to each commands
@@ -94,66 +119,54 @@ namespace Yabe
                         {
                             string l = sr.ReadLine();
                             LineCount++;
-                            if (!l.StartsWith("#"))
+
+                            // Maybe used a day
+                            if ((LineCount == 1) && (l.Contains("YabeMenuV")))
+                                Int32.TryParse(new string(l.Where(c => char.IsDigit(c)).ToArray()), out MenuVersion);
+
+                            if (string.IsNullOrWhiteSpace(l) || l.StartsWith("#"))
+                                continue;
+
+                            String[] MenuCommand;
+                            Tuple<int, string> Cmd = MenuLineToCmd(l, out MenuCommand); 
+
+                            if (Cmd != null)
                             {
-
-                                // Identify a String
-                                String[] StringwithSep = l.Split('"');
-                                if (StringwithSep.Length == 3)
+                                if (MenuCommand[0].StartsWith("SubStart"))
                                 {
-                                    // Change with unusable separator
-                                    l = StringwithSep[0] + StringwithSep[1].Replace(',', (char)4).Replace(';', (char)3) + StringwithSep[2];
+                                    ToolStripMenuItem MenuItem = new ToolStripMenuItem()
+                                    {
+                                        Text = MenuCommand[0].Substring(9),
+                                        Tag = YabeUserMenu, // To remember the Parent
+                                    };
+
+                                    YabeUserMenu.DropDownItems.Add(MenuItem);
+                                    YabeUserMenu = MenuItem;
                                 }
-
-                                String[] MenuCommand = l.Split(';');
-                                Tuple<int, string> Cmd = null;
-
-                                // Parameters with , are not splited here. Maybe it will be necessary a day inside them and not as a sperator
-
-                                if (MenuCommand.Length == 3)
-                                    Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), null);
-                                else if (MenuCommand.Length == 4)
-                                    Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), MenuCommand[3]);
-
-                                if (Cmd != null)
+                                else if (MenuCommand[0].StartsWith("SubClose"))
                                 {
-                                    if (MenuCommand[0].StartsWith("SubStart"))
-                                    {
-                                        ToolStripMenuItem MenuItem = new ToolStripMenuItem()
-                                        {
-                                            Text = MenuCommand[0].Substring(9),
-                                            Tag = YabeUserMenu, // To remember the Parent
-                                        };
-
-                                        YabeUserMenu.DropDownItems.Add(MenuItem);
-                                        YabeUserMenu = MenuItem;
-                                    }
-                                    else if (MenuCommand[0].StartsWith("SubClose"))
-                                    {
-                                        if (YabeUserMenu.Tag is ToolStripMenuItem)
-                                            YabeUserMenu = YabeUserMenu.Tag as ToolStripMenuItem;
-                                    }
-                                    else if ((MenuCommand[0] != "Sep") && (Cmd.Item1 >= 0))
-                                    {
-                                        // Creates the Menu Item
-                                        ToolStripMenuItem MenuItem = new ToolStripMenuItem()
-                                        {
-                                            Text = MenuCommand[0],
-                                            Tag = Cmd,
-                                        };
-
-                                        if (MenuCommand[1].Length >= 1)
-                                            MenuItem.ShortcutKeys = ShortCut(MenuCommand[1]);
-
-                                        if (Cmd.Item1 > 0)
-                                            MenuItem.Click += new EventHandler(UserMenuItem_Click);
-
-                                        YabeUserMenu.DropDownItems.Add(MenuItem);
-                                    }
-                                    else
-                                        YabeUserMenu.DropDownItems.Add(new ToolStripSeparator());
-
+                                    if (YabeUserMenu.Tag is ToolStripMenuItem)
+                                        YabeUserMenu = YabeUserMenu.Tag as ToolStripMenuItem;
                                 }
+                                else if ((MenuCommand[0] != "Sep") && (Cmd.Item1 >= 0))
+                                {
+                                    // Creates the Menu Item
+                                    ToolStripMenuItem MenuItem = new ToolStripMenuItem()
+                                    {
+                                        Text = MenuCommand[0],
+                                        Tag = Cmd,
+                                    };
+
+                                    if (MenuCommand[1].Length >= 1)
+                                        MenuItem.ShortcutKeys = ShortCut(MenuCommand[1]);
+
+                                    if (Cmd.Item1 > 0)
+                                        MenuItem.Click += new EventHandler(UserMenuItem_Click);
+
+                                    YabeUserMenu.DropDownItems.Add(MenuItem);
+                                }
+                                else
+                                    YabeUserMenu.DropDownItems.Add(new ToolStripSeparator());
                             }
                         }
                     }
@@ -509,18 +522,49 @@ namespace Yabe
             List<String> status = UserCmd_WriteRecipeSnapShotCommon(Parameters, false);
             new WriteRecipeForm(this.Icon, status).ShowDialog();
         }
-        void UserCmd_ExecBatch(String Parameters)
+        void UserCmd_ExecBatch(String Parameters) 
         {
             if (Parameters == null) return;
             if (!File.Exists(Parameters)) return;
 
+            // The file is the same as YabeMenuCmd.txt without the 2 first columns
             String[] lines = File.ReadAllLines(Parameters);
+
+            int LineCount = 0;
+            String LineError = "";
+            String Sep = "";
+
             foreach (String line in lines)
             {
+                LineCount++;
+
                 if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
                     continue;
-                // Todo
+
+                String cmdline=";;"+line;   // Add the two missing items similiar to YabeMenuCmd.txt
+
+                String[] MenuCommand;
+                Tuple<int, string> Cmd = MenuLineToCmd(cmdline, out MenuCommand);
+
+                if (Cmd == null)
+                {
+                    LineError = LineError + Sep + LineCount.ToString();
+                    Sep = ", ";
+                }
+                else
+                    try
+                    {
+                            UserCmdCommands[Cmd.Item1](Cmd.Item2);
+                    }
+                    catch
+                    {
+                        LineError = LineError + LineCount.ToString();
+                        Sep = ", ";
+                    }
             }
+
+            if (LineError != "")
+                MessageBox.Show("Script error lines : " + Sep+LineError, "Script Error");
         }
     }
     class WriteRecipeForm : Form

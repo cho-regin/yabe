@@ -40,18 +40,19 @@ namespace Yabe
 {
     public partial class ScheduleDisplay : Form
     { 
-        BacnetClient comm; BacnetAddress adr; BacnetObjectId schedule_id;
+         BacnetObjectId schedule_id;
+        BACnetDevice device;
         // Default value type here if no values are already present
         // Could be choosen somewhere by the user
         BacnetApplicationTags ScheduleType = BacnetApplicationTags.BACNET_APPLICATION_TAG_DOUBLE;
 
         TreeNode mySelectedScheduleNode;
 
-        public ScheduleDisplay(ImageList img_List, BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id)
+        public ScheduleDisplay(ImageList img_List, BACnetDevice device, BacnetObjectId object_id)
         {
             InitializeComponent();
-            this.comm = comm;
-            this.adr = adr;
+
+            this.device= device;
             this.schedule_id = object_id;
 
             // Get the Present_Value data Type, used for new value in the schedule
@@ -59,7 +60,7 @@ namespace Yabe
             try
             {
                 IList<BacnetValue> value;
-                comm.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, out value);
+                device.ReadPropertyRequest(object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, out value);
 
                 if ((value != null) && (value.Count != 0) && (value[0].Tag != BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL))
                     ScheduleType = value[0].Tag;
@@ -94,7 +95,7 @@ namespace Yabe
             IList<BacnetValue> value;
             try
             {
-                if (comm.ReadPropertyRequest(adr, schedule_id, BacnetPropertyIds.PROP_EFFECTIVE_PERIOD, out value))
+                if (device.ReadPropertyRequest(schedule_id, BacnetPropertyIds.PROP_EFFECTIVE_PERIOD, out value))
                 {
                     DateTime dt=(DateTime)value[0].Value;
                     if (dt.Ticks != 0)  // it's the way always date (encoded FF-FF-FF-FF) is put into a DateTime struct
@@ -117,7 +118,7 @@ namespace Yabe
         private void WriteEffectivePeriod()
         {
             // Manual ASN.1/BER encoding
-            EncodeBuffer b = comm.GetEncodeBuffer(0);
+            EncodeBuffer b = device.channel.GetEncodeBuffer(0);
             ASN1.encode_opening_tag(b, 3);
 
             DateTime dt;
@@ -138,7 +139,7 @@ namespace Yabe
 
             Array.Resize<byte>(ref b.buffer, b.offset);
             byte[] InOutBuffer = b.buffer;
-            comm.RawEncodedDecodedPropertyConfirmedRequest(adr, schedule_id, BacnetPropertyIds.PROP_EFFECTIVE_PERIOD, BacnetConfirmedServices.SERVICE_CONFIRMED_WRITE_PROPERTY, ref InOutBuffer);
+            device.RawEncodedDecodedPropertyConfirmedRequest(schedule_id, BacnetPropertyIds.PROP_EFFECTIVE_PERIOD, BacnetConfirmedServices.SERVICE_CONFIRMED_WRITE_PROPERTY, ref InOutBuffer);
 
         }
 
@@ -169,7 +170,7 @@ namespace Yabe
             try
             {
                 IList<BacnetValue> value;
-                if (comm.ReadPropertyRequest(adr, schedule_id, BacnetPropertyIds.PROP_LIST_OF_OBJECT_PROPERTY_REFERENCES, out value))
+                if (device.ReadPropertyRequest(schedule_id, BacnetPropertyIds.PROP_LIST_OF_OBJECT_PROPERTY_REFERENCES, out value))
                 {
                     foreach (BacnetValue bv in value)
                     {
@@ -201,7 +202,7 @@ namespace Yabe
                 }
             }
 
-            comm.WritePropertyRequest(adr, schedule_id, BacnetPropertyIds.PROP_LIST_OF_OBJECT_PROPERTY_REFERENCES, values);
+            device.WritePropertyRequest(schedule_id, BacnetPropertyIds.PROP_LIST_OF_OBJECT_PROPERTY_REFERENCES, values);
             
         }
 
@@ -213,12 +214,12 @@ namespace Yabe
             {
                 BacnetValue[] bv=new BacnetValue[1];
                 bv[0]= Property.DeserializeValue(TxtScheduleDefault.Text,ScheduleType);
-                comm.WritePropertyRequest(adr, schedule_id, BacnetPropertyIds.PROP_SCHEDULE_DEFAULT, bv);
+                device.WritePropertyRequest(schedule_id, BacnetPropertyIds.PROP_SCHEDULE_DEFAULT, bv);
             }
             catch { }
 
             // Manual ASN.1/BER encoding
-            EncodeBuffer b = comm.GetEncodeBuffer(0);
+            EncodeBuffer b = device.channel.GetEncodeBuffer(0);
             ASN1.encode_opening_tag(b, 3);
 
             // Monday
@@ -255,7 +256,7 @@ namespace Yabe
 
             Array.Resize<byte>(ref b.buffer, b.offset);
             byte[] InOutBuffer = b.buffer;
-            comm.RawEncodedDecodedPropertyConfirmedRequest(adr, schedule_id, BacnetPropertyIds.PROP_WEEKLY_SCHEDULE, BacnetConfirmedServices.SERVICE_CONFIRMED_WRITE_PROPERTY, ref InOutBuffer);
+            device.RawEncodedDecodedPropertyConfirmedRequest(schedule_id, BacnetPropertyIds.PROP_WEEKLY_SCHEDULE, BacnetConfirmedServices.SERVICE_CONFIRMED_WRITE_PROPERTY, ref InOutBuffer);
 
         }
 
@@ -270,7 +271,7 @@ namespace Yabe
             {
                 // first gets the PROP_SCHEDULE_DEFAULT
                 IList<BacnetValue> valuedefault;
-                comm.ReadPropertyRequest(adr, schedule_id, BacnetPropertyIds.PROP_SCHEDULE_DEFAULT, out valuedefault);
+                device.ReadPropertyRequest(schedule_id, BacnetPropertyIds.PROP_SCHEDULE_DEFAULT, out valuedefault);
                 if ((valuedefault != null) && (valuedefault.Count != 0) && (valuedefault[0].Tag != BacnetApplicationTags.BACNET_APPLICATION_TAG_NULL))
                 {
                     ScheduleType = valuedefault[0].Tag;
@@ -278,7 +279,7 @@ namespace Yabe
                 }
 
 
-                if (comm.RawEncodedDecodedPropertyConfirmedRequest(adr, schedule_id, BacnetPropertyIds.PROP_WEEKLY_SCHEDULE, BacnetConfirmedServices.SERVICE_CONFIRMED_READ_PROPERTY, ref InOutBuffer))
+                if (device.RawEncodedDecodedPropertyConfirmedRequest(schedule_id, BacnetPropertyIds.PROP_WEEKLY_SCHEDULE, BacnetConfirmedServices.SERVICE_CONFIRMED_READ_PROPERTY, ref InOutBuffer))
                 {
                     int offset = 0;
                     byte tag_number;

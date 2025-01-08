@@ -25,6 +25,7 @@
 *********************************************************************/
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.BACnet;
@@ -536,6 +537,10 @@ namespace Yabe
         public bool WritePropertyRequest(BacnetObjectId object_id, BacnetPropertyIds property_id, IEnumerable<BacnetValue> value_list) => channel.WritePropertyRequest(BacAdr, object_id, property_id, value_list);
         public void SimpleAckResponse(BacnetConfirmedServices service, byte invoke_id) => channel.SimpleAckResponse(BacAdr, service, invoke_id);
         public bool SubscribeCOVRequest(BacnetObjectId object_id, uint subscribe_id, bool cancel, bool issue_confirmed_notifications, uint lifetime)=>channel.SubscribeCOVRequest(BacAdr, object_id, subscribe_id, cancel, issue_confirmed_notifications, lifetime);
+        public bool DeleteObjectRequest(BacnetObjectId object_id, byte invoke_id = 0) => channel.DeleteObjectRequest(BacAdr, object_id, invoke_id = 0);
+        public bool RawEncodedDecodedPropertyConfirmedRequest(BacnetObjectId object_id, BacnetPropertyIds property_id, BacnetConfirmedServices service_id, ref byte[] InOutBuffer, byte invoke_id = 0) => channel.RawEncodedDecodedPropertyConfirmedRequest(BacAdr, object_id, property_id, service_id, ref InOutBuffer, invoke_id = 0);
+        public bool ReadRangeRequest(BacnetObjectId object_id, uint idxBegin, ref uint Quantity, out byte[] Range, byte invoke_id = 0) => channel.ReadRangeRequest(BacAdr, object_id, idxBegin, ref Quantity, out Range, invoke_id = 0);
+        public bool CreateObjectRequest(BacnetObjectId object_id, ICollection<BacnetPropertyValue> value_list = null, byte invoke_id = 0) => channel.CreateObjectRequest(BacAdr, object_id, value_list = null, invoke_id = 0);
         public static void LoadObjectsDescription()
         {
             // Use to read object properties when ReadMultiple is not accepted (very simple devices on MSTP without segmentation)

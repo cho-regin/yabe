@@ -40,19 +40,18 @@ namespace Yabe
 {
     public partial class CalendarEditor : Form
     {
-        BacnetClient comm; BacnetAddress adr; BacnetObjectId object_id;
+        BACnetDevice device; BacnetObjectId object_id;
         // dates in the bacnetobject
         BACnetCalendarEntry calendarEntries;
 
         DateTime CalendarStartRequested;
         bool InternalListeEntriesSelect=false;
 
-        public CalendarEditor(BacnetClient comm, BacnetAddress adr, BacnetObjectId object_id)
+        public CalendarEditor(BACnetDevice device, BacnetObjectId object_id)
         {
             InitializeComponent();
 
-            this.comm = comm;
-            this.adr = adr;
+            this.device = device;
             this.object_id = object_id;
 
             LoadCalendar();
@@ -61,7 +60,7 @@ namespace Yabe
         private void LoadCalendar()
         {
             IList<BacnetValue> values;
-            comm.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_DATE_LIST, out values);
+            device.ReadPropertyRequest(object_id, BacnetPropertyIds.PROP_DATE_LIST, out values);
 
             if ((values != null) && (values.Count == 1))
                 calendarEntries = (BACnetCalendarEntry)values[0].Value;
@@ -88,7 +87,7 @@ namespace Yabe
             {
                 List<BacnetValue> v = new List<BacnetValue>();
                 v.Add(new BacnetValue(calendarEntries));
-                comm.WritePropertyRequest(adr, object_id, BacnetPropertyIds.PROP_DATE_LIST, v);
+                device.WritePropertyRequest(object_id, BacnetPropertyIds.PROP_DATE_LIST, v);
             }
             catch { }
         }
