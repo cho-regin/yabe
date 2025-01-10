@@ -342,11 +342,11 @@ namespace Yabe
                 new_entry.property = new BacnetPropertyReference((uint)property_id, array_index);
                 new_entry.value = value_list;
 
-                if (FoundInCache == 1)  
-                    ObjCache.values.Add(new_entry); // It the founded Object already in cache
-                else
-                {
-                    if (Array.FindIndex(CachedProperties, o => o == property_id) != -1)
+                if (Array.FindIndex(CachedProperties, o => o == property_id) != -1)
+                { 
+                    if (FoundInCache == 1)  
+                        ObjCache.values.Add(new_entry); // If the founded Object already in cache just add the new property
+                    else
                     {
                         ObjCache.values = new List<BacnetPropertyValue>
                         {
