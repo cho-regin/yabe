@@ -1,0 +1,72 @@
+# YabeMenuV1
+# Menu Label;KeyShortCut;YabeCommand;Parameter(s)
+# Label of the Menu; 1 char optional key shortcut; YabeCommand from a little list of possiblity;  Parameters (without ;)
+# Short cut can be preceeded by a key modifier 1 for Control (default), 2 for Alt, 3 for Control+Alt, and add 4 for Shift
+# Ctrl Alt N, Ctrl Alt S and Ctrl Alt 0..9 are already in usage, you cannot use them.
+# Remove/delete/modify this file. 
+# Line starting with # are comments.
+# File read only at start time if present (original Name only).
+
+# Start somes samples. Parameters: Directory,App,optional command line Arguments
+Start Bacnet.Room.Simulator;1R;Launch;AddOn,Bacnet.Room.Simulator.exe
+Start Wheather2_to_Bacnet;2W;Launch;AddOn,Wheather2_to_Bacnet.exe
+Start DemoServer (Mstp simulation on COM1003);;Launch;AddOn,DemoServer.exe
+
+# Insert a Menu separator (Label mandatory Sep, Command None)
+Sep;;None
+
+# Iam on all open interfaces
+Send Iam;I;Send_Iam
+
+# Insert a Sub Menu Level (Label mandatory start with SubStart)
+SubStart Send Several Whois;;None
+
+# WhoIs to a list of individual devices and within ranges
+To Devices 4,8 to 10, 56;;Send_Whois;4,8..10,56
+To Devices 50 to 100;;Send_Whois;50..100
+
+# Close a Sub Menu Level (Label mandatory SubClose)
+SubClose;;None
+
+Sep;;None
+
+# Purge_DevicesTree using the list of DeviceId not to be Hidden
+Remove Devices others than Office Building;;Leave_Devices;1,3,2,54,6,45455,654564
+Remove Devices others than HVAC;;Leave_Devices;3,9,523
+
+SubStart Read, Write several Devices/Objects/Properties;;None
+
+# Write a set of values into one or several devices. Param is the file with Device;Object;Property;Priority;Value. See RecipeSample.csv for syntax 
+Shutdown all lights on floor level 1;;Write_Recipe;RecipeSample.csv
+# Take a snapshot of several values into several devices. First param is the same file as Write_Recipe, second is the result file. 
+# If no result file is provided a display form is displayed, or add a third dummy parameter to save & display.
+# The result file can contains the wildcard %d automaticaly replaced by the current date/time
+Take a snapshot of floor level 1;;SnapShot;RecipeSample.csv,C:\Users\Fred\Desktop\Yabe\SnapShotReport%d.csv,showalso
+Edit RecipeSample.csv to change the Recipe/Snapshot file;;Launch;.,notepad,RecipeSample.csv
+
+SubClose;;None
+
+# Settings changes with a restart or not. Param is Settings Name = Value , Name = Value , Name = Value ... ,restart or norestart
+# The Value could sometimes be a String with the symbols used as separators ,; Mandatory Escape them \; and \,
+Set the Device Class Structure described in Readme.txt 2.7.17;;Settings;Device Class Structure=HVAC(3\,9)\;Lighting(9\,23)\;Building(HVAC\,Lighting\,40\,27),restart
+
+# To be remove by you
+Sep;;None
+Edit YabeMenuCmd.txt to modify/remove this menu content;7Y;Launch;.,notepad,YabeMenuCmd.txt
+
+# Subscription similar to the drop action of a file in the Subscription view. Param is a list of files with , as separator
+# Subscribe to some very important objects;2S;Subscribe_Files;C:\Users\Fred\Desktop\Yabe\File1.cov,C:\Users\Fred\Desktop\Yabe\File2.cov
+
+# Batch command to be done with a file of a sequence of these previous commands. Param is the file name of a file with quit the same
+# structure as this one, apat the missing two first items : menu name & key shortcut
+# A Batch of User Commands;;Exec_Batch;C:\Users\Fred\Desktop\Yabe\SampleCommande.txt
+# None can be used with a delay (in millisecond) such as this batch
+#	Send_Whois;1..4
+#   # A 1 second delay, waiting for Iam responses, before snapshot
+#	None;1000
+#	SnapShot;RecipeSample.csv
+
+
+# Some idea of generic commands to be added, useful for the community, let me know ... or better, post the code !
+# Source code is inside MainDialog.UserCmd.cs, expand MainDialog.cs virtual folder in VS
+

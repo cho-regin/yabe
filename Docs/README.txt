@@ -271,8 +271,9 @@
 			Devices are by default displayed according to the network structure.
 			A "User" configurable view can also be added with hierachical Folders.
 			This is done using three parameters in the settings GUI section.
-			"Device Mode View" can change the mode. "Not Affected name" is the 
-			intial name of the folder where unknown devices are placed.
+			"Device Mode View" can change the mode. "Not Affected" is the 
+			intial name of the folder where unknown devices are placed. If the name
+			is changed to blank, it will be hidden (for a well-known network).
 			"Device Class Structure" describe the hierarchy to use such as :
 			HVAC(3,9);Lighting(9,23);Building(HVAC,Lighting,40,27)
 			HVAC, Lighting, ... are folders. When device 9 is discovered, it is

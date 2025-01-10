@@ -34,7 +34,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using ZedGraph;
 
 namespace Yabe
 {
@@ -509,7 +508,14 @@ namespace Yabe
 
                     String FileName = Param[1].Replace("%d", DateTime.Now.ToString().Replace('/', '_').Replace(':', '_'));
 
-                    File.WriteAllText(FileName, sb.ToString());
+                    try
+                    {
+                        File.WriteAllText(FileName, sb.ToString());
+                    }
+                    catch 
+                    {
+                        Trace.WriteLine("Fail to write the snapshot File");
+                    }
                 }
 
                 if ((Param.Length == 1) || (Param.Length > 2))

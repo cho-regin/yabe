@@ -121,7 +121,7 @@ namespace Yabe.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
         public decimal DefaultRetries {
             get {
                 return ((decimal)(this["DefaultRetries"]));
@@ -133,7 +133,7 @@ namespace Yabe.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2000")]
+        [global::System.Configuration.DefaultSettingValueAttribute("500")]
         public decimal DefaultTimeout {
             get {
                 return ((decimal)(this["DefaultTimeout"]));

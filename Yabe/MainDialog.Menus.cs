@@ -461,7 +461,7 @@ namespace Yabe
                 if (res == DialogResult.OK)
                 {
                     string[] entry = Input.genericInput.Text.Split('-');
-                    if (entry[0][0] == '?') entry[0] = "4194303";
+                    if (entry[0].Contains('?')) entry[0] = "4194303";
                     OnIam(comm, new BacnetAddress(BacnetAddressTypes.IP, entry[1].Trim()), Convert.ToUInt32(entry[0]), 0, BacnetSegmentations.SEGMENTATION_NONE, 0);
                 }
 
@@ -500,6 +500,7 @@ namespace Yabe
                             Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: \"{0}\" is not in the correct format (DeviceId - IP1.IP2.IP3.IP4:Port).", line.Trim()));
                             continue;
                         }
+                        if (entry[0].Contains('?')) entry[0] = "4194303";
                         if (!uint.TryParse(entry[0].Trim(), out uint deviceIdIn))
                         {
                             Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: \"{0}\" is not in the correct format (DeviceId - IP1.IP2.IP3.IP4:Port).", line.Trim()));
@@ -510,7 +511,6 @@ namespace Yabe
                             Trace.TraceWarning(String.Format("Failed to add a remote IPv4 node: \"{0}\" is not in the correct format (DeviceId - IP1.IP2.IP3.IP4:Port).", line.Trim()));
                             continue;
                         }
-                        if (entry[0][0] == '?') entry[0] = "4194303";
                         try
                         {
                             OnIam(comm, new BacnetAddress(BacnetAddressTypes.IP, entry[1].Trim()), Convert.ToUInt32(entry[0]), 0, BacnetSegmentations.SEGMENTATION_NONE, 0);
@@ -1144,7 +1144,7 @@ namespace Yabe
                         String Identifier = device.ReadObjectName(bobj_id);
                         if (!string.IsNullOrWhiteSpace(Identifier))
                         {
-                            node.ToolTipText = node.Text;
+                            node.ToolTipText = node.Text.Replace("Id?", device_id.ToString());
                             node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
                             UpdateTreeNodeDeviceName(device, node);
                         }
@@ -1194,7 +1194,7 @@ namespace Yabe
 
                                 if (!string.IsNullOrWhiteSpace(Identifier))
                                 {
-                                    node.ToolTipText = node.Text;
+                                    node.ToolTipText = node.Text.Replace("Id?", bobj_id.instance.ToString());
                                     node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
                                     UpdateTreeNodeDeviceName(device, node);
                                 }
@@ -1509,16 +1509,14 @@ namespace Yabe
                             try
                             {
                                 if (sub.is_COV_subscription)
-                                    if (!sub.device.channel.SubscribeCOVRequest(sub.device.BacAdr, sub.object_id, sub.subscribe_id, true, false, 0))
+                                    if (!sub.device.SubscribeCOVRequest(sub.object_id, sub.subscribe_id, true, false, 0))
                                     {
-                                        MessageBox.Show(this, "Couldn't unsubscribe", "Communication Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                                        return;
+                                        Trace.WriteLine("Couldn't unsubscribe, Communication Error");
                                     }
                             }
                             catch (Exception ex)
                             {
-                                MessageBox.Show(this, "Couldn't delete subscription: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                return;
+                                Trace.WriteLine ("Couldn't delete subscription: " + ex.Message);
                             }
                         }
 
@@ -1646,8 +1644,19 @@ namespace Yabe
                 if (!(itm.Tag is Subscription subscription))
                     return;
                 else
-                    UpdateGrid(subscription);
-
+                {
+                    if ((selectedSubscriptions[0].SubItems[6].Text == "Polling stopped") || (selectedSubscriptions[0].SubItems[6].Text == "Offline"))
+                    {
+                        DialogResult res = MessageBox.Show("Try to renew the subscription ?", "Polling stopped, COV not started", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                        if (res == DialogResult.Yes)
+                        {
+                            CreateSubscription(subscription.device, subscription.object_id, selectedSubscriptions[0].SubItems[6].Text == "True", Convert.ToInt32(selectedSubscriptions[0].SubItems[10].Text));
+                            m_SubscriptionView_KeyDown(null, new KeyEventArgs(Keys.Delete));
+                        }
+                    }
+                    else
+                        UpdateGrid(subscription);
+                }
             }
             catch { }
 
