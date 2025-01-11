@@ -276,6 +276,8 @@ namespace Yabe
                     catch { }
                 }
             }
+            else
+                Trace.WriteLine("Cannot send Iam without Yabe device Id");
         }
 
         void UserCmd_WhoIs(String Parameters)
@@ -570,7 +572,7 @@ namespace Yabe
             }
 
             if (LineError != "")
-                MessageBox.Show("Script error lines : " + Sep+LineError, "Script Error");
+                Trace.WriteLine("Script error line(s) : " + LineError);
         }
     }
     class WriteRecipeForm : Form

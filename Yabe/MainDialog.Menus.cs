@@ -10,6 +10,7 @@ using System.Media;
 using System.Net;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading;
 using System.Windows.Forms;
 using WebSocketSharp;
 using ZedGraph;
@@ -1643,18 +1644,33 @@ namespace Yabe
 
                 if (!(itm.Tag is Subscription subscription))
                     return;
-                else
+                
+                if (selectedSubscriptions[0].SubItems[6].Text != "Not started")
                 {
-                    if ((selectedSubscriptions[0].SubItems[6].Text == "Polling stopped") || (selectedSubscriptions[0].SubItems[6].Text == "Offline"))
+                    if (subscription.IsActive==false)
                     {
-                        DialogResult res = MessageBox.Show("Try to renew the subscription ?", "Polling stopped, COV not started", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                        DialogResult res = MessageBox.Show("Try to renew the subscription ?", "Polling fail / Subscription no longer active", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                         if (res == DialogResult.Yes)
                         {
-                            CreateSubscription(subscription.device, subscription.object_id, selectedSubscriptions[0].SubItems[6].Text == "True", Convert.ToInt32(selectedSubscriptions[0].SubItems[10].Text));
-                            m_SubscriptionView_KeyDown(null, new KeyEventArgs(Keys.Delete));
+                            if (subscription.Periode > 0)
+                            {
+                                selectedSubscriptions[0].SubItems[6].Text = "Not started";   //status [6]
+                                ThreadPool.QueueUserWorkItem(_ => ReadPropertySubscriptionPollingInsteadOfCOV(subscription, subscription.Periode));
+                            }
+                            else
+                            {
+                                bool SubOK = subscription.device.SubscribeCOVRequest(subscription.object_id, subscription.subscribe_id, false, Properties.Settings.Default.Subscriptions_IssueConfirmedNotifies, Properties.Settings.Default.Subscriptions_Lifetime);
+                                if (SubOK)
+                                {
+                                    selectedSubscriptions[0].SubItems[6].Text = "OK";
+                                    subscription.IsActive = true;
+                                }
+                                else
+                                    Trace.WriteLine("Couldn't renew subscription");
+                            }
                         }
                     }
-                    else
+                    else 
                         UpdateGrid(subscription);
                 }
             }

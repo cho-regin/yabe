@@ -1567,7 +1567,7 @@ namespace Yabe
                 
                 m_next_subscription_id++;
                 string sub_key = adr.ToString() + ":" + device_id + ":" + m_next_subscription_id;
-                Subscription sub = new Subscription(device, object_id, sub_key, m_next_subscription_id);
+                Subscription sub = new Subscription(device, object_id, sub_key, m_next_subscription_id, pollPeriod);
 
                 string obj_id = object_id.ToString().Substring(7);
                 obj_id = ShortenObjectId(obj_id);
@@ -1649,6 +1649,9 @@ namespace Yabe
                     try
                     {
                         SubscribeOK = device.SubscribeCOVRequest(object_id, m_next_subscription_id, false, Properties.Settings.Default.Subscriptions_IssueConfirmedNotifies, Properties.Settings.Default.Subscriptions_Lifetime);
+                        if (SubscribeOK == true)
+                            sub.IsActive = true;
+
                     }
                     catch(Exception ex) { Trace.TraceWarning("The COV subscription request generated an error: {0} - {1}", ex.GetType().Name, ex.Message); }
 
@@ -1673,6 +1676,7 @@ namespace Yabe
                         period = (int)pollRateSelector.Value;
                     }
 
+                    sub.Periode = period;
                     // Polling - set the period data field to the period we are using.
                     // Note that this field can be displayed as a column on the subscription
                     // table if needed in future.
@@ -1767,6 +1771,7 @@ namespace Yabe
 
                     if (readValuesSuccessfully)
                     {
+                        sub.IsActive = true;
                         lock (m_subscription_list)
                         {
                             if (m_subscription_list.ContainsKey(sub.sub_key))
@@ -1795,6 +1800,8 @@ namespace Yabe
                     break;
                 }
             }
+
+            sub.IsActive = false;
 
             if (statusItemFromListBox!=null && statusItemFromListBox.Text!=null)
             {
@@ -1948,10 +1955,11 @@ namespace Yabe
                 catch { }
 
                 if (itm != null)
-                {
+                {               
+                    Subscription sub = (Subscription)itm.Tag;
                     try
                     {
-                        Subscription sub = (Subscription)itm.Tag;
+
 
                         if (sub.is_COV_subscription == false) // not needs to renew, periodic pooling in operation (or nothing) due to COV subscription refused by the remote device, or "polling" selected in the UI.
                             return;
@@ -1960,12 +1968,14 @@ namespace Yabe
                         {
                             SetSubscriptionStatus(itm, "Offline");
                             Trace.TraceWarning("Couldn't renew subscription " + sub.subscribe_id);
+                            sub.IsActive = false;
                         }
                     }
                     catch (Exception ex)
                     {
                         SetSubscriptionStatus(itm, "Offline");
                         Trace.TraceError("Exception during renew subscription: " + ex.Message);
+                        sub.IsActive = false;
                     }
                 }
             }
@@ -2453,13 +2463,15 @@ namespace Yabe
         public readonly string sub_key;
         public readonly uint subscribe_id;
         public bool is_COV_subscription = true; // false if subscription is refused (fallback to polling) or polling is specified explicitly.
-
-        public Subscription(BACnetDevice device, BacnetObjectId object_id, string sub_key, uint subscribe_id)
+        public int Periode;
+        public bool IsActive = false;
+        public Subscription(BACnetDevice device, BacnetObjectId object_id, string sub_key, uint subscribe_id, int periode)
         {
             this.device = device;
             this.object_id = object_id;
             this.sub_key = sub_key;
             this.subscribe_id = subscribe_id;
+            Periode = periode;
         }
     }
 

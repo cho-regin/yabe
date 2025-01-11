@@ -1434,6 +1434,8 @@
             // 
             // m_DataGrid
             // 
+            this.m_DataGrid.CommandsBackColor = System.Drawing.SystemColors.ControlDark;
+            this.m_DataGrid.CommandsBorderColor = System.Drawing.SystemColors.Control;
             this.m_DataGrid.ContextMenuStrip = this.m_ProperiesMenuStrip;
             this.m_DataGrid.DisabledItemForeColor = System.Drawing.SystemColors.ControlText;
             this.m_DataGrid.Dock = System.Windows.Forms.DockStyle.Fill;
