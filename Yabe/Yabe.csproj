@@ -88,7 +88,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\DemoServer\DeviceStorage.cs">
-      <Link>DeviceStorage.cs</Link>
+      <Link>Utils.cs\DeviceStorage.cs</Link>
     </Compile>
     <Compile Include="..\Mstp.BacnetCapture\BacnetCapture.cs">
       <Link>MstpCapture\BacnetCapture.cs</Link>
@@ -112,8 +112,8 @@
     <Compile Include="BACnetTransportIPv6.cs" />
     <Compile Include="BACnetTransportSecureConnect.cs" />
     <Compile Include="BacnetTransportSerial.cs" />
-    <Compile Include="DynamicPropertyGridContainer.cs" />
-    <Compile Include="FileTransfers.cs" />
+    <Compile Include="Forms\DynamicPropertyGridContainer.cs" />
+    <Compile Include="Utils.cs\FileTransfers.cs" />
     <Compile Include="Forms\AlarmSummary.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -198,8 +198,8 @@
     <Compile Include="Forms\TrendLogDisplay.Designer.cs">
       <DependentUpon>TrendLogDisplay.cs</DependentUpon>
     </Compile>
-    <Compile Include="GenericInputBox.cs" />
-    <Compile Include="IYabePlugin.cs" />
+    <Compile Include="Forms\GenericInputBox.cs" />
+    <Compile Include="Utils.cs\IYabePlugin.cs" />
     <Compile Include="MainDialog.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -218,10 +218,10 @@
     <Compile Include="MainDialog.Export.cs">
       <DependentUpon>MainDialog.cs</DependentUpon>
     </Compile>
-    <Compile Include="Program.cs" />
+    <Compile Include="Utils.cs\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TreeView.cs" />
-    <Compile Include="YabeDevice.cs" />
+    <Compile Include="Forms\TreeView.cs" />
+    <Compile Include="Utils.cs\YabeDevice.cs" />
     <EmbeddedResource Include="..\Mstp.BacnetCapture\BacnetCapture.resx">
       <Link>MstpCapture\BacnetCapture.resx</Link>
       <DependentUpon>BacnetCapture.cs</DependentUpon>
@@ -282,8 +282,13 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <None Include="app.config" />
-    <None Include="BACnetSCConfig.config">
+    <None Include="Common Files\AdvertiseSample.cov">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>AdvertiseSample.cov</TargetPath>
+    </None>
+    <None Include="Common Files\BACnetSCConfig.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>BACnetSCConfig.config</TargetPath>
     </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -294,40 +299,47 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <None Include="RecipeSample.csv">
+    <None Include="Common Files\RecipeSample.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>RecipeSample.csv</TargetPath>
     </None>
-    <None Include="VendorPropertyMapping.csv">
+    <None Include="Common Files\VendorPropertyMapping.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>VendorPropertyMapping.csv</TargetPath>
     </None>
     <EmbeddedResource Include="Resources\ObjectTypes.csv" />
-    <None Include="TestHub.crt">
+    <None Include="Common Files\TestHub.crt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>TestHub.crt</TargetPath>
     </None>
     <EmbeddedResource Include="Resources\Units.csv" />
-    <None Include="Yabe.p12">
+    <None Include="Common Files\Yabe.p12">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>Yabe.p12</TargetPath>
     </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\user-gray.png" />
     <None Include="Resources\wsicon16.png" />
     <None Include="Resources\folder.png" />
-    <Content Include="SimplifiedViewFilter.xml">
+    <Content Include="Common Files\SimplifiedViewFilter.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>SimplifiedViewFilter.xml</TargetPath>
     </Content>
-    <Content Include="YabeMenuCmd.txt">
+    <Content Include="Common Files\YabeMenuCmd.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>YabeMenuCmd.txt</TargetPath>
     </Content>
-    <EmbeddedResource Include="YabeDeviceDescriptor.xml">
+    <EmbeddedResource Include="Common Files\YabeDeviceDescriptor.xml">
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <None Include="Resources\cross.png" />
     <None Include="Resources\add.png" />
     <None Include="Resources\note.png" />
     <Content Include="..\Docs\README.txt">
-      <Link>README.txt</Link>
+      <Link>Common Files\README.txt</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>README.txt</TargetPath>
     </Content>
     <None Include="Resources\database.png" />
     <None Include="Resources\magnifier.png" />
@@ -341,10 +353,11 @@
     <None Include="Resources\calendar_view_week.png" />
     <None Include="Resources\bell.png" />
     <None Include="Resources\date.png" />
-    <Content Include="ReadSinglePropDescr.xml">
+    <Content Include="Common Files\ReadSinglePropDescr.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>ReadSinglePropDescr.xml</TargetPath>
     </Content>
-    <EmbeddedResource Include="ReadSinglePropDescrDefault.xml">
+    <EmbeddedResource Include="Common Files\ReadSinglePropDescrDefault.xml">
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <None Include="Resources\error.png" />
@@ -388,7 +401,9 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Utils.cs\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

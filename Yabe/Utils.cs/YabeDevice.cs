@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO.BACnet;
 using System.IO.BACnet.Storage;
+using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Yabe
 {
@@ -15,7 +17,7 @@ namespace Yabe
             myId = DeviceId;
 
             // Load descriptor from the embedded xml resource
-            m_storage = m_storage = DeviceStorage.Load("Yabe.YabeDeviceDescriptor.xml", (uint)Properties.Settings.Default.YabeDeviceId);
+            m_storage = m_storage = DeviceStorage.Load("Yabe.Common_Files.YabeDeviceDescriptor.xml", (uint)Properties.Settings.Default.YabeDeviceId);
             // A fast way to change the PROP_OBJECT_LIST
             Property Prop = Array.Find<Property>(m_storage.Objects[0].Properties, p => p.Id == BacnetPropertyIds.PROP_OBJECT_LIST);
             Prop.Value[0] = "OBJECT_DEVICE:" + Properties.Settings.Default.YabeDeviceId.ToString();

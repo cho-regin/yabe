@@ -1643,7 +1643,7 @@ namespace Yabe
 
                 // Now either subscribe to the data point, or set up a polling thread.
                 bool SubscribeOK = false;
-
+               
                 if (useCov)
                 {
                     try

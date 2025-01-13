@@ -569,7 +569,7 @@ namespace Yabe
                 // embedded resource
                 System.Reflection.Assembly _assembly;
                 _assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                sr = new StreamReader(_assembly.GetManifestResourceStream("Yabe.ReadSinglePropDescrDefault.xml"));
+                sr = new StreamReader(_assembly.GetManifestResourceStream("Yabe.Common_Files.ReadSinglePropDescrDefault.xml"));
                 objectsDescriptionDefault = (List<BacnetObjectDescription>)xs.Deserialize(sr);
 
                 // External optional file
