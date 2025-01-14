@@ -99,6 +99,8 @@ namespace Yabe
                 }
                 catch { config.VMAC = null; }
             }
+            else
+                config.VMAC = null;
 
             try
             {

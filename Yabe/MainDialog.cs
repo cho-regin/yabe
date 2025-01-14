@@ -1279,6 +1279,7 @@ namespace Yabe
         {
             
             string ReturnPROP_OBJECT_NAME = null;
+            bool ShowPropnumber = Properties.Settings.Default.Show_Property_Id_Numbers;
             try
             {
                 m_DataGrid.SelectedObject = null;   //clear
@@ -1337,11 +1338,11 @@ namespace Yabe
                         // Got two communication parameters about the device, could be used later.
                         case BacnetPropertyIds.PROP_SEGMENTATION_SUPPORTED:
                             device.Segmentation = (BacnetSegmentations)(Convert.ToUInt32(value));
-                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
+                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier, ShowPropnumber), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
                             break;
                         case BacnetPropertyIds.PROP_MAX_APDU_LENGTH_ACCEPTED:
                             device.MaxAPDULenght = Convert.ToUInt32(value);
-                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
+                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier, ShowPropnumber), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
                             break;
                         // PROP_PRESENT_VALUE can be write at null value to clear the prioroityarray if exists
                         case BacnetPropertyIds.PROP_PRESENT_VALUE:
@@ -1354,7 +1355,7 @@ namespace Yabe
                                     t = Type.GetType("System.Nullable`1[" + value.GetType().FullName + "]");
                             }
                             catch { }
-                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, t != null ? t : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
+                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier, ShowPropnumber), value, t != null ? t : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
                             break;
                         case BacnetPropertyIds.PROP_ACKED_TRANSITIONS:
                             if(value is BacnetBitString ackedTrans)
@@ -1372,7 +1373,7 @@ namespace Yabe
                                     showAlarmAck[2] = true;
                                 }
                             }
-                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
+                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier, ShowPropnumber), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
                             break;
                         case BacnetPropertyIds.PROP_EVENT_TIME_STAMPS:
                             for(int i=0;i<b_values.Length;i++)
@@ -1382,11 +1383,11 @@ namespace Yabe
                                     _cachedEventTimeStampsForAcknowledgementButtons[i] = dt;
                                 }
                             }
-                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
+                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier, ShowPropnumber), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
                             break;
 
                         default:
-                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
+                            bag.Add(new Utilities.CustomProperty(device.GetNiceName((BacnetPropertyIds)p_value.property.propertyIdentifier, ShowPropnumber), value, value != null ? value.GetType() : typeof(string), false, "", b_values.Length > 0 ? b_values[0].Tag : (BacnetApplicationTags?)null, null, p_value.property));
                             break;
                     }
 

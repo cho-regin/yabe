@@ -58,7 +58,7 @@ namespace System.IO.BACnet
 
         private BACnetSCConfigChannel configuration;
 
-        private byte[] myVMAC = new byte[6];          // my random VMAC
+        private byte[] myVMAC = new byte[6];        // my fixed or random VMAC, can be re-issued (random) if the HUB request it
         private byte[] RemoteVMAC = new byte[6];    // HUB or Direct connected device VMAC 
 
         // Several frames type
@@ -90,13 +90,15 @@ namespace System.IO.BACnet
 
             configuration = config;
 
-            if ((configuration.VMAC==null)||(configuration.VMAC.Length!=6))
+            if ((configuration.VMAC == null) || (configuration.VMAC.Length != 6))
             {
                 // Random VMAC creation
                 // ensure xxxx0010, § H.7.X EUI - 48 and Random-48 VMAC Address
                 new Random().NextBytes(myVMAC);
                 myVMAC[0] = (byte)((myVMAC[0] & 0xF0) | 0x02); // xxxx0010
             }
+            else
+                Array.Copy(configuration.VMAC, myVMAC, 6);
 
             if (configuration.UseTLS)
             {
