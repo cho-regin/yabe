@@ -662,13 +662,12 @@ namespace Yabe
         {
 
 
-            bool prependNumber = forceShowNumber || Properties.Settings.Default.Show_Property_Id_Numbers;
             string name = property.ToString();
             if (name.StartsWith("PROP_"))
             {
                 name = name.Substring(5);
                 name = name.Replace('_', ' ');
-                if (prependNumber)
+                if (forceShowNumber)
                 {
                     name = String.Format("{0}: {1}", (int)property, System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()));
                 }
@@ -691,7 +690,7 @@ namespace Yabe
 
                 if (name != null)
                 {
-                    if (prependNumber)
+                    if (forceShowNumber)
                     {
                         name = String.Format("Proprietary {0}: {1}", (int)property, System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()));
                     }
