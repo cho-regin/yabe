@@ -60,6 +60,7 @@ namespace System.IO.BACnet
 
         private byte[] myVMAC = new byte[6];        // my fixed or random VMAC, can be re-issued (random) if the HUB request it
         private byte[] RemoteVMAC = new byte[6];    // HUB or Direct connected device VMAC 
+        private int DuplicateVMACCount = 0;
 
         // Several frames type
         // resize will be done after, if needed
@@ -279,12 +280,15 @@ namespace System.IO.BACnet
         }
         private void Websocket_OnError(object sender, WebSocketSharp.ErrorEventArgs e)
         {
-            Trace.TraceError("BACnet/SC Error : ", e.Message);
-            state = BACnetSCState.IDLE;
+            if (DuplicateVMACCount == 0)    // Don't consider a WebSocket error when closing during DuplicateVMACCount 
+            {
+                Trace.TraceError("BACnet/SC Error");
+                state = BACnetSCState.IDLE;
+            }
         }
         private void Websocket_OnClose(object sender, CloseEventArgs e)
         {
-            Trace.TraceInformation("BACnet/SC Close : "+ e.Reason);
+            Trace.TraceInformation("BACnet/SC Close");
             OnChannelDisconnected?.Invoke(this, e);
 
             if (configuration.AutoReconnectDelay>-1)
@@ -297,13 +301,23 @@ namespace System.IO.BACnet
 
                 });
             }
+            else if ((DuplicateVMACCount>0)&&(DuplicateVMACCount<3))
+            {
+                state = BACnetSCState.AWAITING_WEBSOCKET;
+                ThreadPool.QueueUserWorkItem((__) =>
+                {
+                    Websocket.ConnectAsync();
+
+                });
+            }
             else
                 state = BACnetSCState.IDLE;
         }
         private void Websocket_OnLog(LogData log, String Logmessage) 
         {
             // First line is enough
-            Trace.TraceError("BACnet/SC Websocket : " + log.Message.Split(new[] { '\r', '\n' })[0]);
+            if (DuplicateVMACCount==0)
+                Trace.TraceError("BACnet/SC Websocket : " + log.Message.Split(new[] { '\r', '\n' })[0]);
         }
 
         private void Close()
@@ -632,11 +646,14 @@ namespace System.IO.BACnet
                         // Normaly duplicate VMAC should never occur 1.7^13 values. Redo with another random number
                         if ((ErrorClass == (byte)BacnetErrorClasses.ERROR_CLASS_COMMUNICATION) && (ErrorCode == (byte)BacnetErrorCodes.ERROR_CODE_NODE_DUPLICATE_VMAC))
                         {
+                            Trace.TraceInformation("BACnet/SC Duplicate VMAC : trying with a random one");
                             // Random VMAC creation
                             // ensure xxxx0010, § H.7.X EUI - 48 and Random-48 VMAC Address
                             new Random().NextBytes(myVMAC);
                             myVMAC[0] = (byte)((myVMAC[0] & 0xF0) | 0x02); // xxxx0010
-                            BVLC_SC_SendConnectRequest();
+                            DuplicateVMACCount++;
+                            // Normaly the Hub is closing the connexion
+                            Websocket.Close();
                         }
                     }
                     return 0;
