@@ -72,8 +72,8 @@ namespace BACnetSCsampleNode
             {
                 primaryHubURI = "wss://127.0.0.1:47808",
 
-                UUID = "{92fb9be8-bac0-0000-0cab-171d5ec08e6c}",    // unique, invariant, universal
-                VMAC = new byte[6] { 1, 2, 3, 4, 5, 6 },            // if not given a random VMAC is used. 6 bytes exactly, not all 0 nor 0xFF
+                UUID = Guid.NewGuid().ToString(),       // Todo : change to unique, invariant
+                VMAC = null,                            // if not given a random VMAC is used. 6 bytes exactly, not all 0 nor 0xFF
 
                 AutoReconnectDelay = 5, // 5 seconds delay between close or error detection and re-open try, during this sended messages are queued
                 

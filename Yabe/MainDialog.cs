@@ -25,7 +25,6 @@
 *
 *********************************************************************/
 
-using MiscUtil.Conversion;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -93,8 +92,8 @@ namespace Yabe
         private DateTime[] _cachedEventTimeStampsForAcknowledgementButtons = new DateTime[3];
 
         private Dictionary<string, ListViewItem> m_subscription_list = new Dictionary<string, ListViewItem>();
-        private Dictionary<string, RollingPointPairList> m_subscription_points = new Dictionary<string, RollingPointPairList>();        
-        Color[] GraphColor = {Color.Red, Color.Blue, Color.Green, Color.Violet, Color.Chocolate, Color.Orange};
+        private Dictionary<string, RollingPointPairList> m_subscription_points = new Dictionary<string, RollingPointPairList>();
+        Color[] GraphColor = { Color.Red, Color.Blue, Color.Green, Color.Violet, Color.Chocolate, Color.Orange };
         GraphPane Pane;
         private ManualResetEvent _plotterPause;
         private bool _plotterRunningFlag = true; // Change this one initial value to make the graphs start paused (false) or in play mode (true).
@@ -119,7 +118,7 @@ namespace Yabe
             return Properties.Settings.Default.TimeSynchronize_UTC;
         }
 
-        private int AsynchRequestId=0;
+        private int AsynchRequestId = 0;
 
         public YabeMainDialog()
         {
@@ -136,7 +135,7 @@ namespace Yabe
                 }
             }
             catch   // Corrupted xml file
-            { 
+            {
                 Properties.Settings.Default.Reset();
                 Properties.Settings.Default.SettingsUpgradeRequired = false;    // the corrupted file could be previous version one
                 Properties.Settings.Default.Save();
@@ -147,7 +146,7 @@ namespace Yabe
 
             // During "long" call of ReadPropertiesMultiple cutted into several ReadProperty. Could also displays some information.
             // Not very usefull
-            BACnetDevice.DoEvents += (_,__)=> Application.DoEvents();
+            BACnetDevice.DoEvents += (_, __) => Application.DoEvents();
 
             btnPlay.Text = PLAY_BUTTON_TEXT_WHEN_RUNNING;
 
@@ -194,8 +193,8 @@ namespace Yabe
                     splitContainer4.SplitterDistance = Properties.Settings.Default.GUI_SplitterLeft;
                 if (Properties.Settings.Default.GUI_SplitterRight != -1)
                     m_SplitContainerRight.SplitterDistance = Properties.Settings.Default.GUI_SplitterRight;
-                
-                if(Properties.Settings.Default.Vertical_Object_Splitter_Orientation)
+
+                if (Properties.Settings.Default.Vertical_Object_Splitter_Orientation)
                 {
                     splitContainer4.Orientation = Orientation.Vertical;
                 }
@@ -215,7 +214,7 @@ namespace Yabe
                     for (int i = 0; i < colprops.Length / 2; i++)
                     {
                         m_SubscriptionView.Columns[i].DisplayIndex = Convert.ToInt32(colprops[i * 2]);
-                        m_SubscriptionView.Columns[i].Width = Convert.ToInt32(colprops[i * 2+1]);
+                        m_SubscriptionView.Columns[i].Width = Convert.ToInt32(colprops[i * 2 + 1]);
                     }
 
                     m_SubscriptionView.Refresh();
@@ -231,10 +230,23 @@ namespace Yabe
             if (intervalMinutes != Properties.Settings.Default.Auto_Store_Period_Minutes)
                 Properties.Settings.Default.Auto_Store_Period_Minutes = intervalMinutes;
             SaveObjectNamesTimer.Interval = intervalMinutes * 60000;
-            
+
             SaveObjectNamesTimer.Enabled = true;
 
             SetSimplifiedLabels();
+
+            if (Properties.Settings.Default.BackGroundOperations != BackGroundOperationType.None)
+            {
+                // BackGroundOperations are not done in the ThreadPool to have control of the task numbers
+                // BACnet InvokeId is 1 byte, so no more than 255 requests can be done at a time,
+                // A control of the numbers of thread must be done, max 10
+                for (int i = 0; i < Math.Min(Properties.Settings.Default.BackGroundThreadNumber,10); i++)
+                {
+                    Thread th = new Thread(BACnetDeviceBackGroundWorker);
+                    th.IsBackground = true;
+                    th.Start();
+                }
+            }
         }
         private void MainDialog_Load(object sender, EventArgs e)
         {
@@ -245,7 +257,7 @@ namespace Yabe
                 m_subscriptionRenewTimer.Interval = (lifetime / 2) * 1000;
                 m_subscriptionRenewTimer.Enabled = true;
             }
-           
+
             //display nice floats in propertygrid
             Utilities.CustomSingleConverter.DontDisplayExactFloats = true;
 
@@ -258,7 +270,7 @@ namespace Yabe
 
             // Plugins, Vendor Properties, Name mapping file loaded within the ThreadPool
 
-            ThreadPool.QueueUserWorkItem(o=> // speed up start, no need immediatly, Trace listen thread safe.
+            ThreadPool.QueueUserWorkItem(o => // speed up start, no need immediatly, Trace listen thread safe.
             {
                 if (Environment.OSVersion.Platform.ToString().Contains("Win"))
                 {
@@ -371,19 +383,19 @@ namespace Yabe
             if (DeviceClassViewTreeNode == null) DCViewtoolStripMenuItem.Visible = false;
 
             // Network View present if the Device View is not defined (normally it is)
-            if ((!(Properties.Settings.Default.DeviceViewMode==DeviceTreeViewType.DeviceClass)) || (DeviceClassViewTreeNode==null))
+            if ((!(Properties.Settings.Default.DeviceViewMode == DeviceTreeViewType.DeviceClass)) || (DeviceClassViewTreeNode == null))
                 m_DeviceTree.Nodes.Add(NetworkViewTreeNode);
 
             m_DeviceTree.ExpandAll();
 
             m_DeviceTree.TreeViewNodeSorter = new NodeSorter(Properties.Settings.Default.DeviceViewMode == DeviceTreeViewType.NetworkThenDeviceClass);
 
-            ThreadPool.QueueUserWorkItem( _ => 
+            ThreadPool.QueueUserWorkItem(_ =>
             {
                 Thread.Sleep(100);
-                Invoke(new Action( () => { addDevicesearchToolStripMenuItem_Click(this, null); }));
+                Invoke(new Action(() => { addDevicesearchToolStripMenuItem_Click(this, null); }));
             });
-            
+
         }
         private void MainDialog_FormClosing(object sender, FormClosingEventArgs e)
         {
@@ -443,10 +455,10 @@ namespace Yabe
                 Root = m_DeviceTree.Nodes;
 
             // never delete inside the iterator and never in the forward direction
-            int RootCount=Root.Count;
-            for (int i=0;i< RootCount; i++)
+            int RootCount = Root.Count;
+            for (int i = 0; i < RootCount; i++)
             {
-                if ((Root[RootCount-i-1].Nodes.Count != 0))
+                if ((Root[RootCount - i - 1].Nodes.Count != 0))
                     DeleteTreeNodeDevice(device, Root[RootCount - i - 1].Nodes);
                 if ((Root[RootCount - i - 1].Tag is BACnetDevice dev) && (dev == device))
                     Root.Remove(Root[RootCount - i - 1]);
@@ -455,7 +467,7 @@ namespace Yabe
         }
         string CovGraph_PointValueEvent(ZedGraphControl sender, GraphPane pane, CurveItem curve, int iPt)
         {
-            PointPair point= curve[iPt];
+            PointPair point = curve[iPt];
 
             String Name = (String)curve.Tag;
             XDate X = new XDate(point.X);
@@ -573,7 +585,7 @@ namespace Yabe
 
                     if (string.IsNullOrWhiteSpace(name) || name.StartsWith("["))
                         name = objectId.ToString();
-                        
+
                     itm.SubItems[3].Text = name;
 
                 }
@@ -608,7 +620,7 @@ namespace Yabe
                         // auto adjustable digit precision, quite a copyright here :=)
                         double V = Convert.ToDouble(val[0].Value);
                         String ValStr = "0";
-                        if (V!= 0)
+                        if (V != 0)
                         {
                             int resolution = (int)Math.Max(0, Math.Ceiling(4 - Math.Log10(Math.Abs(V))));
                             ValStr = Math.Round(V, resolution).ToString();
@@ -629,7 +641,7 @@ namespace Yabe
                     return ret;
                 }
             }
-            
+
             string sub_key = adr.ToString() + ":" + initiatingDeviceIdentifier.instance + ":" + subscriberProcessIdentifier;
 
             this.BeginInvoke((MethodInvoker)delegate
@@ -691,8 +703,8 @@ namespace Yabe
                                         CovGraph.Invalidate();
                                     }
 
-                                     catch { }
-                                 }
+                                    catch { }
+                                }
                                 break;
                             case BacnetPropertyIds.PROP_STATUS_FLAGS:
                                 if (value.value != null && value.value.Count > 0)
@@ -738,6 +750,45 @@ namespace Yabe
             }
         }
 
+        Semaphore SemBackground = new Semaphore(0, Int32.MaxValue);
+        Queue<BACnetDevice> BackGroundQueries = new Queue<BACnetDevice>();
+        void BACnetDeviceBackGroundWorker()
+        {
+
+            for (; ; )
+            {
+                SemBackground.WaitOne();
+                BACnetDevice dev;
+                lock (BackGroundQueries)
+                    dev = BackGroundQueries.Dequeue();
+
+                // For devices where the dictionary cannot be acquired in one request the operation is not decomposed
+                // If all names cannot be acquired in a single request the operation is not decomposed
+                // If names are already in the ObjectNameDatabase the operation is not done
+                switch (Properties.Settings.Default.BackGroundOperations)
+                {
+                    case BackGroundOperationType.GetObjectsList:
+                        if (!dev.RunOnSlowNetworks)
+                            dev.ReadObjectList(out _, out _, false);
+                        break;
+                    case BackGroundOperationType.GetObjectsName:
+                        if (!dev.RunOnSlowNetworks)
+                        {
+                            dev.ReadObjectList(out _, out _, false);
+                            dev.ReadAllObjectsName();
+                        }
+                        break;
+                    case BackGroundOperationType.GetObjectsListIncludeMstp:
+                        dev.ReadObjectList(out _, out _, false);
+                        break;
+                    case BackGroundOperationType.GetObjectsNameIncludeMstp:
+                        dev.ReadObjectList(out _, out _, false);
+                        dev.ReadAllObjectsName();
+                        break;
+                }
+            }
+
+        }
         void OnIam(BacnetClient sender, BacnetAddress adr, uint device_id, uint max_apdu, BacnetSegmentations segmentation, ushort vendor_id)
         {
             BACnetDevice new_device = new BACnetDevice(sender, adr, device_id, max_apdu, segmentation, vendor_id);
@@ -748,13 +799,20 @@ namespace Yabe
                     m_devices[sender].Devices.Add(new_device);
                 else
                 {
-                    if (m_devices[sender].Devices[idx].deviceId>=0x3FFFFF)
+                    if (m_devices[sender].Devices[idx].deviceId >= 0x3FFFFF)
                         m_devices[sender].Devices[idx].deviceId = device_id;
                     m_devices[sender].Devices[idx].vendor_Id = vendor_id; // Update vendor id (mstp case)
                     m_devices[sender].Devices[idx].MaxAPDULenght = max_apdu;
                     m_devices[sender].Devices[idx].Segmentation = segmentation;
                     return;
                 }
+            }
+
+            if (Properties.Settings.Default.BackGroundOperations!=BackGroundOperationType.None)
+            {
+                lock (BackGroundQueries)
+                    BackGroundQueries.Enqueue(new_device);
+                SemBackground.Release();
             }
 
             //update GUI
@@ -791,7 +849,7 @@ namespace Yabe
                     }
                 }
                 TreeNode newNode;
-                if (new_device.deviceId<0x3FFFFF)
+                if (new_device.deviceId < 0x3FFFFF)
                     newNode = new TreeNode("Device " + new_device.deviceId + " - " + new_device.BacAdr.ToString(true));
                 else
                     newNode = new TreeNode("Device Id? - " + new_device.BacAdr.ToString(true));
@@ -838,7 +896,7 @@ namespace Yabe
                 if (this.IsDisposed) return;
 
                 BacnetDeviceLine device_line = m_devices.First(o => o.Key.Transport == sender).Value;
-                BacnetClient client= m_devices.First(o => o.Key.Transport == sender).Key;
+                BacnetClient client = m_devices.First(o => o.Key.Transport == sender).Key;
 
                 lock (device_line.mstp_sources_seen)
                 {
@@ -941,7 +999,7 @@ namespace Yabe
             CovGraph.Invalidate();
         }
 
-      
+
         public static int GetIconNum(BacnetObjectTypes object_type)
         {
             switch (object_type)
@@ -965,7 +1023,7 @@ namespace Yabe
                 case BacnetObjectTypes.OBJECT_STRUCTURED_VIEW:
                     return 11;
                 case BacnetObjectTypes.OBJECT_TRENDLOG:
-                case BacnetObjectTypes.OBJECT_TREND_LOG_MULTIPLE:  
+                case BacnetObjectTypes.OBJECT_TREND_LOG_MULTIPLE:
                     return 12;
                 case BacnetObjectTypes.OBJECT_NOTIFICATION_CLASS:
                     return 13;
@@ -2604,5 +2662,14 @@ namespace Yabe
         DeviceClass,
         NetworkThenDeviceClass,
         DeviceClassThenNetwork
+    }
+
+    public enum BackGroundOperationType
+    {
+        None,
+        GetObjectsList,
+        GetObjectsName,
+        GetObjectsListIncludeMstp,
+        GetObjectsNameIncludeMstp
     }
 }

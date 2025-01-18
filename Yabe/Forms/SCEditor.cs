@@ -57,7 +57,11 @@ namespace Yabe
                 using (StreamReader sr = new StreamReader(FileName))
                     config = (BACnetSCConfigChannel)Xmlser.Deserialize(sr);
 
-                UUID.Text = config.UUID;
+                if (Guid.TryParse(config.UUID, out _) == true)
+                    UUID.Text = config.UUID;
+                else
+                    UUID.Text = Guid.NewGuid().ToString();
+
                 HubURI.Text = config.primaryHubURI;
                 HubCert.Text = config.ThrustedCertificatesFile;
                 YabeCert.Text = config.OwnCertificateFile;

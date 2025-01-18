@@ -303,6 +303,7 @@ namespace System.IO.BACnet
             }
             else if ((DuplicateVMACCount>0)&&(DuplicateVMACCount<3))
             {
+                Trace.TraceInformation("BACnet/SC Duplicate VMAC : trying with a random one");
                 state = BACnetSCState.AWAITING_WEBSOCKET;
                 ThreadPool.QueueUserWorkItem((__) =>
                 {
@@ -492,10 +493,8 @@ namespace System.IO.BACnet
             if (Guid.TryParse(configuration.UUID, out Guid uuid)==true)
                 bUUID = uuid.ToByteArray();
             else
-            { 
-                bUUID = Encoding.ASCII.GetBytes(configuration.UUID);
-                Array.Resize(ref bUUID, 16);
-            }
+                bUUID = Guid.NewGuid().ToByteArray();
+            
             Array.Copy(bUUID, 0, b, 10, 16);
 
             // Max BVLC size 1600
@@ -646,7 +645,6 @@ namespace System.IO.BACnet
                         // Normaly duplicate VMAC should never occur 1.7^13 values. Redo with another random number
                         if ((ErrorClass == (byte)BacnetErrorClasses.ERROR_CLASS_COMMUNICATION) && (ErrorCode == (byte)BacnetErrorCodes.ERROR_CODE_NODE_DUPLICATE_VMAC))
                         {
-                            Trace.TraceInformation("BACnet/SC Duplicate VMAC : trying with a random one");
                             // Random VMAC creation
                             // ensure xxxx0010, § H.7.X EUI - 48 and Random-48 VMAC Address
                             new Random().NextBytes(myVMAC);
@@ -730,7 +728,7 @@ namespace System.IO.BACnet
         public String primaryHubURI="";
         public String failoverHubURI;
 
-        public String UUID="If Forgot !";
+        public String UUID;
 
         public String OwnCertificateFile;
         public String ThrustedCertificatesFile;

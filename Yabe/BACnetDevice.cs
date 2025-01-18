@@ -30,8 +30,10 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.BACnet;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Xml.Serialization;
 
 namespace Yabe
@@ -78,6 +80,8 @@ namespace Yabe
                                                                     BacnetPropertyIds.PROP_LIST_OF_GROUP_MEMBERS, 
                                                                     BacnetPropertyIds.PROP_SUBORDINATE_LIST,
                                                                     BacnetPropertyIds.PROP_PROPERTY_LIST};
+        object Lock = new object();
+        Mutex OperationInProgress=new Mutex();
         public BACnetDevice(BacnetClient sender, BacnetAddress addr, uint deviceId, uint MaxAPDULenght=0, BacnetSegmentations Segmentation = BacnetSegmentations.SEGMENTATION_UNKNOW, uint vendor_id = System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE)
         {
             channel = sender;
@@ -168,12 +172,47 @@ namespace Yabe
                 return BacAdr.type;
         }
 
+        public int MyProperty { get; private set; }
+        public bool RunOnSlowNetworks 
+        {   get 
+            { // a direct Mstp device, a device on Mstp through an IP/SC router, a device on IP/SC through an Mstp router
+                
+                    if (BacAdr.adr.Length == 1) return true; // Mstp
+                    if ((BacAdr.RoutedSource != null) && (BacAdr.RoutedSource.adr.Length == 1)) return true;
+
+                    return false;
+            }
+        }
+
         public void ClearCache()
         {
             Prop_Cached.Clear();
             Prop_ObjectList = null;
             ListCountExpected = 0;
         }
+
+        public void ReadAllObjectsName()
+        {
+            if ((Prop_ObjectList == null)||(Prop_ObjectList.Count==0)) return;
+
+            if (GetObjectName(Prop_ObjectList.Last())!=null) return; // assume all are already known
+
+            try
+            {
+                List<BacnetReadAccessSpecification> bras = new List<BacnetReadAccessSpecification>();
+                foreach (var objId in Prop_ObjectList)
+                    bras.Add(new BacnetReadAccessSpecification(objId, new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_NAME, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL) }));
+
+                if (ReadPropertyMultipleRequest(bras, out IList<BacnetReadAccessResult> values) == true)
+                {
+                    foreach (var objname in values)
+                        UpdateObjectNameMapping(objname.objectIdentifier, objname.values[0].value[0].ToString());
+                }
+            }
+            catch { }
+
+        }
+
         // Read or give the object List. If rejected read and return the number of elements in the List.
         // Put the List in cache
         public bool ReadObjectList(out List<BacnetObjectId> ObjectList, out uint Count, bool ForceRead = false)
@@ -198,6 +237,10 @@ namespace Yabe
                 }
             }
 
+            // Only a very light mecanism is apply to protect the Prop_ObjectList List, it should be OK
+            // for simple usage in Yabe with a background thread just after IAm to query the Dictionary
+            OperationInProgress.WaitOne();
+
             if (ReadObjectsListOneShot == true) // If a previous test without success was done, no way to try it this way
             {
                 try
@@ -212,6 +255,7 @@ namespace Yabe
 
                         ObjectList = Prop_ObjectList;
                         Count = ListCountExpected;
+                        OperationInProgress.ReleaseMutex();
                         return true;
                     }
                     else
@@ -230,6 +274,7 @@ namespace Yabe
                 {
                     ListCountExpected = (uint)(ulong)value_list[0].Value;
                     Count = ListCountExpected;
+                    OperationInProgress.ReleaseMutex();
                     return true;
                 }
             }
@@ -238,6 +283,7 @@ namespace Yabe
                 ReadObjectsListOneShot = false;    // no way to read OBJECT_LIST. Maybe a temporary problem.
             }
 
+            OperationInProgress.ReleaseMutex();
             return false;
         }
         

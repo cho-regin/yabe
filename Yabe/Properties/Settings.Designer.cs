@@ -719,5 +719,29 @@ namespace Yabe.Properties {
                 this["NotAffectedFolderName"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("None")]
+        public global::Yabe.BackGroundOperationType BackGroundOperations {
+            get {
+                return ((global::Yabe.BackGroundOperationType)(this["BackGroundOperations"]));
+            }
+            set {
+                this["BackGroundOperations"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int BackGroundThreadNumber {
+            get {
+                return ((int)(this["BackGroundThreadNumber"]));
+            }
+            set {
+                this["BackGroundThreadNumber"] = value;
+            }
+        }
     }
 }

@@ -348,6 +348,19 @@ namespace Yabe
             [Description("Displays the properties ID with there names.")]
             [Category(CAT_GENERAL)]
             public bool Show_Property_Id_Numbers { set { instance.Show_Property_Id_Numbers = value; } get { return instance.Show_Property_Id_Numbers; } }
+
+            [DisplayName("Background requests on IAm receptions")]
+            [Description("Background queries of the Object Dictionary with or without the Names (twice bandwidth consuming), also or not on MSTP slow networks")]
+            [Category(CAT_GENERAL)]
+            public BackGroundOperationType BackGroundOperations { set { instance.BackGroundOperations = value; } get { return instance.BackGroundOperations; } }
+            
+            [DisplayName("Background requests : Number of Tasks")]
+            [Description("Number of parallel Background Tasks,max 10")]
+            [Category(CAT_GENERAL)]
+            public int BackGroundThreadNumber { set { instance.BackGroundThreadNumber = value; } get { return instance.BackGroundThreadNumber; } }
+
+
+
             #endregion
             #region Properties.Hidden
             [Browsable(false)]

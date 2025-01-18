@@ -105,8 +105,7 @@
 		  and select "WhoIs".
 
 	2.2 BACNET/IPv6 over UDP
-		- Experimental NOT TESTED with third party device or software, and 
-		  unfortunately Wireshark don't help also.
+		- Experimental NOT TESTED with third party device or software.
 		- Start Yabe.
 		- In the Options/settings menu set IPv6_support to true
 		- Do the same as explain in 2.1, but the Local endpoint combo box shows now
@@ -121,10 +120,10 @@
 
 		- Feedback is very welcome.
 
-	2.3 BACNET/MSTP OVER PIPE
+	2.3 BACNET/MSTP
 		- For general usage refer to section 2.1. 
-		- In the "Search" dialog select "COM1003" in the port combo box and press
-		  "Start". This will add a MSTP pipe created by the DemoServer. 
+		- In the "Search" dialog select a COM port in the port combo box and press
+		  "Start". 
 		  Notice that the "Source Address" defaults to "-1". This is not a valid 
 		  address and you will not be able to communicate with the device through 
 		  this. The program will still be able to listen in on the network though.
@@ -136,10 +135,10 @@
 		  configured to "-1" the program will ask if you will define a new one.
 		  You must do so, in order to continue communication. 
 	  
-	2.4	BACNET/PTP OVER PIPE
+	2.4	BACNET/PTP
 		- For general usage refer to section 2.1. 
-		- In the "Search" dialog select "COM1004" in the port combo box and press
-		  "Start". This will add a PTP pipe created by the DemoServer. 
+		- In the "Search" dialog select a COM port in the port combo box and press
+		  "Start". 
 		  The BACnet/PTP transport is meant for 1-to-1. Eg. RS232 or ... usb? So
 		  far I haven't found any others easy accessible tools that also supports
 		  it. So I haven't been able to test it. It's implemented purely by doc.
@@ -164,18 +163,11 @@
 		  CA as Yabe. 
 		- Non standard uncyphered, unauthenticated ws:// can be use for test.
 		- Today on Windows 10 TLS1.3 is not operational by default. You should
-		  configure the system to accept it using regedit (add  manually the Branch
-		  TLS 1.3\Client and the value Enabled=1, then reboot the PC) :
-		  In 
-		        HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols
-		  Add the key  
-		       TLS 1.3
-		  then under it Add the key
-		       Client
-		  Then add the Dword32 value		
-		       Enabled and change de value to 00000001
-		  Or jump to Yabe source code trunk\Docs, get the .reg file and double click on it.
-		  This will have no effect on any versions of Windows prior to 1903.
+		  configure the system to accept it.
+		  Jump to Yabe source code trunk\Docs, get the "ActivateTLS1.3 On Win10.reg"  
+		  file and double click on it.
+		  This will have no effect on any versions of Windows prior to 1903, and no more
+		  working on version 22H2 !
 
 	2.7 OPTIONS
 	A few selected options.
@@ -285,6 +277,11 @@
 			Folders in Folder, and Devices in Folder.
 			A menu View Folders can be used to delete/rename/insert Folder.
 			To experience this mode just change "Device Mode View" and restart.
+
+		2.7.18 Background Operations
+			On IAm reception Yabe can automatically send queries to get back the
+			object dictionary. Two parameters in the General Settings section can
+			be used to activate it. It's network consuming. Restart required.
 
 	2.8 Bacnet Object name
 			By default Bacnet objects are displayed using the object identifier eg : 

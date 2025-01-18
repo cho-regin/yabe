@@ -5,7 +5,9 @@ Windows Registry Editor Version 5.00
 ; Need administator privilege
 ; Reboot after
 ; Doesn't work on Windows 10 before version 1903 (May 21, 2019). Seems not to work on this version
-: OK on Windows 10 21H2 - 190044
+; OK on Windows 10 21H2 - 190044
+; No more Working on Windows 10 22H2  !!!
+; ... choosing TLS1.3 only rather than TLS1.2 and above is a BACnet Committee mistake
 
 [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.3]
 

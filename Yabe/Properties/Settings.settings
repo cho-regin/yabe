@@ -176,5 +176,11 @@
     <Setting Name="NotAffectedFolderName" Type="System.String" Scope="User">
       <Value Profile="(Default)">Not Affected</Value>
     </Setting>
+    <Setting Name="BackGroundOperations" Type="Yabe.BackGroundOperationType" Scope="User">
+      <Value Profile="(Default)">None</Value>
+    </Setting>
+    <Setting Name="BackGroundThreadNumber" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
