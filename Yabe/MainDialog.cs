@@ -887,9 +887,7 @@ namespace Yabe
                     {
                         s.Text = "Device " + new_device.deviceId + " - " + new_device.BacAdr.ToString(s.Parent.Parent != null);
                         if (deviceName != null)
-                            UpdateTreeNodeDeviceName(entry, s);
-
-                        AddToDeviceClassView(s);
+                            UpdateTreeNodeDeviceName(new_device, s);
 
                         return;
                     }
