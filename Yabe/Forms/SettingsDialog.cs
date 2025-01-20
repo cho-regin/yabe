@@ -25,17 +25,14 @@
 *********************************************************************/
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Design;
 using System.Globalization;
 using System.IO.BACnet;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Windows.Forms;
 using ZedGraph;
 
@@ -122,7 +119,7 @@ namespace Yabe
                 this.instance = instance;
 
                 if (Debugger.IsAttached)
-                { 
+                {
                     // Detect missing descriptions:
                     var thisProp = this.GetType().GetProperties();
                     var expectProp = instance.GetType().GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance);
@@ -142,8 +139,8 @@ namespace Yabe
             [DisplayName("Device Class Structure")]
             [Description("Activates/Describes the Class View in parallel with the Network View. Value is a semicon string with Groups name and device Ids inside like HVAC(3,9);Lighting(9,23);Building(HVAC,Lighting,40,27)")]
             [Category(CAT_GUI)]
-            public string DeviceClassStructure { set { instance.DeviceClassStructure = value; } get { return instance.DeviceClassStructure; }}
-         
+            public string DeviceClassStructure { set { instance.DeviceClassStructure = value; } get { return instance.DeviceClassStructure; } }
+
             [DisplayName("Device Mode View Not Affected name")]
             [Description("Name of the Folder for no affected Devices. Hidden if name is left blank")]
             [Category(CAT_GUI)]
@@ -199,7 +196,7 @@ namespace Yabe
             [Description("Maximum number of elements in Array to automatically expanded it in the Properties Grid. Zero to disable the option")]
             [Category(CAT_GUI)]
             public int GridArrayExpandMaxSize { set { instance.GridArrayExpandMaxSize = value; } get { return instance.GridArrayExpandMaxSize; } }
-            
+
             [DisplayName("Always Expanded Properties")]
             [Description("Always expand the Properties in Grid even with a large array (comma separated names, case sensible, no space)")]
             [Category(CAT_GUI)]
@@ -303,7 +300,7 @@ namespace Yabe
             [Category(CAT_SC)]
             public string BACnetSCConfigFile { set { instance.BACnetSCConfigFile = value; } get { return instance.BACnetSCConfigFile; } }
 
-             [DisplayName("Default retries")]
+            [DisplayName("Default retries")]
             [Description("Number of APDU retries when no response is given to a request (such as read, write, ...)")]
             [Category(CAT_GENERAL)]
             public decimal DefaultRetries { set { instance.DefaultRetries = value; } get { return instance.DefaultRetries; } }
@@ -316,7 +313,7 @@ namespace Yabe
             [Category(CAT_GENERAL)]
             public int DefaultDownloadSpeed { set { instance.DefaultDownloadSpeed = value; } get { return instance.DefaultDownloadSpeed; } }
             [DisplayName("Proposed window size")]
-          //[Description("[Obsolete] Not used, can be remove from code, also ProposedWindowSize in Bacnetclient.cs")]
+            //[Description("[Obsolete] Not used, can be remove from code, also ProposedWindowSize in Bacnetclient.cs")]
             [Category(CAT_GENERAL)]
             public byte Segments_ProposedWindowSize { set { instance.Segments_ProposedWindowSize = value; } get { return instance.Segments_ProposedWindowSize; } }
             [DisplayName("Max. segments")]
@@ -350,10 +347,10 @@ namespace Yabe
             public bool Show_Property_Id_Numbers { set { instance.Show_Property_Id_Numbers = value; } get { return instance.Show_Property_Id_Numbers; } }
 
             [DisplayName("Background requests on IAm receptions")]
-            [Description("Background queries of the Object Dictionary with or without the Names (twice bandwidth consuming), also or not on MSTP slow networks")]
+            [Description("Background queries of the Object Dictionary with or without the Names (twice bandwidth consuming), also or not on MSTP slow networks. GetAbsolutlyAll do the same even with a lot of single requests if required (highly time and bandwidth consuming, should be avoided) : experimental.")]
             [Category(CAT_GENERAL)]
             public BackGroundOperationType BackGroundOperations { set { instance.BackGroundOperations = value; } get { return instance.BackGroundOperations; } }
-            
+
             [DisplayName("Background requests : Number of Tasks")]
             [Description("Number of parallel Background Tasks,max 10")]
             [Category(CAT_GENERAL)]
@@ -393,11 +390,12 @@ namespace Yabe
             // Adjust the grid by writing into a private field, no need to try catch
             try
             {
-		        // Encapsulation principle violation, but why labelRatio or size is not accessible ?
+                // Encapsulation principle violation, but why labelRatio or size is not accessible ?
                 Control view = (Control)m_SettingsGrid.GetType().GetField("gridView", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(m_SettingsGrid);
                 FieldInfo fi = view.GetType().GetField("labelRatio", BindingFlags.Instance | BindingFlags.Public);
-                fi.SetValue(view, 2.5); 
-            } catch {}
+                fi.SetValue(view, 2.5);
+            }
+            catch { }
             // Create settings wrapper
             m_SettingsGrid.SelectedObject = new SettingsDescriptor(instance);
 

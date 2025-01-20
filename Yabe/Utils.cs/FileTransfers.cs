@@ -26,7 +26,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO.BACnet;
 
 namespace Yabe
@@ -274,7 +273,7 @@ namespace Yabe
                     catch { }
                 }
 
-                if (remoteBufSize <0)
+                if (remoteBufSize < 0)
                     remoteBufSize = 480 - 18; // Acceptable on MSTP, but also on IP, SC ...
 
                 int count = Math.Min(localBufSize, remoteBufSize); // MaxAPDULenght can be -1 if not read from the Device object

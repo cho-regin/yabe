@@ -24,21 +24,17 @@
 *
 *********************************************************************/
 
+using SharpPcap.LibPcap;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
-using System.Text;
-using System.Linq;
-using System.Windows.Forms;
-using System.IO.BACnet;
-using SharpPcap.LibPcap;
-using System.IO;
 using System.Diagnostics;
-using System.Security.Cryptography.X509Certificates;
-using System.Xml.Serialization;
+using System.IO;
+using System.IO.BACnet;
+using System.Linq;
 using System.Threading;
+using System.Windows.Forms;
+using System.Xml.Serialization;
 
 namespace Yabe
 {
@@ -52,14 +48,14 @@ namespace Yabe
         {
             InitializeComponent();
 
-            m_SC_Config.Text=Properties.Settings.Default.BACnetSCConfigFile;
+            m_SC_Config.Text = Properties.Settings.Default.BACnetSCConfigFile;
 
             //find all serial ports
             string[] ports = System.IO.Ports.SerialPort.GetPortNames();
             m_SerialPortCombo.Items.AddRange(ports);
             m_SerialPtpPortCombo.Items.AddRange(ports);
 
-            if (Environment.OSVersion.Platform.ToString().Contains("Win32")) 
+            if (Environment.OSVersion.Platform.ToString().Contains("Win32"))
             {
                 //find all pipe transports that's pretending to be com ports  : fail on Linux
                 ports = BacnetPipeTransport.AvailablePorts;
@@ -109,14 +105,14 @@ namespace Yabe
                 m_result = new BacnetClient(new BacnetEthernetProtocolTransport(s[0]), (int)m_TimeoutValue.Value, (int)m_RetriesValue.Value);
                 this.DialogResult = System.Windows.Forms.DialogResult.OK;
             }
-            catch{}
+            catch { }
 
             this.Close();
         }
 
         private void m_AddScButton_Click(object sender, EventArgs e)
         {
-            
+
             Properties.Settings.Default.BACnetSCConfigFile = m_SC_Config.Text;
 
             XmlSerializer ser = new XmlSerializer(typeof(BACnetSCConfigChannel));
@@ -195,7 +191,7 @@ namespace Yabe
             {
                 devices = LibPcapLiveDeviceList.Instance.Where(dev => dev.Interface != null);
             }
-            catch 
+            catch
             {
                 TryInvoke(new Action(() => { m_EthernetInterfaceCombo.Text = "NPcap in WinPcap compatiblity mode not avaialble"; }));
                 return;
@@ -216,7 +212,7 @@ namespace Yabe
                 }
             }
 
-            TryInvoke(new Action(() => { m_EthernetInterfaceCombo.Text = ""; m_AddEthernetButton.Enabled=m_EthernetInterfaceCombo.Enabled = true; }));
+            TryInvoke(new Action(() => { m_EthernetInterfaceCombo.Text = ""; m_AddEthernetButton.Enabled = m_EthernetInterfaceCombo.Enabled = true; }));
 
         }
         public static string[] GetAvailableIps()
@@ -231,8 +227,8 @@ namespace Yabe
                     //if (ipinfo.GatewayAddresses == null || ipinfo.GatewayAddresses.Count == 0 || (ipinfo.GatewayAddresses.Count == 1 && ipinfo.GatewayAddresses[0].Address.ToString() == "0.0.0.0")) continue;
                     foreach (System.Net.NetworkInformation.UnicastIPAddressInformation addr in ipinfo.UnicastAddresses)
                     {
-                        if ( (addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) || 
-                            ((addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)&&Properties.Settings.Default.IPv6_Support))
+                        if ((addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) ||
+                            ((addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6) && Properties.Settings.Default.IPv6_Support))
                         {
                             ips.Add(addr.Address.ToString());
                         }
@@ -254,7 +250,7 @@ namespace Yabe
             dlg.DefaultExt = "Config";
             dlg.Filter = "XML Configuration Files (*.Config)|*.Config|All files (*.*)|*.*";
             if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
-            m_SC_Config.Text=Properties.Settings.Default.BACnetSCConfigFile = dlg.FileName;
+            m_SC_Config.Text = Properties.Settings.Default.BACnetSCConfigFile = dlg.FileName;
             Properties.Settings.Default.Save();
         }
     }

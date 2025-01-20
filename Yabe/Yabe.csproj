@@ -199,6 +199,7 @@
       <DependentUpon>TrendLogDisplay.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\GenericInputBox.cs" />
+    <Compile Include="Utils.cs\Helpers.cs" />
     <Compile Include="Utils.cs\IYabePlugin.cs" />
     <Compile Include="MainDialog.cs">
       <SubType>Form</SubType>
@@ -401,9 +402,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Utils.cs\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

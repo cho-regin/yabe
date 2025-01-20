@@ -85,7 +85,7 @@ namespace Yabe
             if (MenuCommand.Length == 3)
                 Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), null);
             else if (MenuCommand.Length == 4)
-                    Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), MenuCommand[3]);
+                Cmd = new Tuple<int, string>(Array.IndexOf(CommandList, MenuCommand[2].ToLower()), MenuCommand[3]);
 
             return Cmd;
         }
@@ -127,7 +127,7 @@ namespace Yabe
                                 continue;
 
                             String[] MenuCommand;
-                            Tuple<int, string> Cmd = MenuLineToCmd(l, out MenuCommand); 
+                            Tuple<int, string> Cmd = MenuLineToCmd(l, out MenuCommand);
 
                             if (Cmd != null)
                             {
@@ -514,7 +514,7 @@ namespace Yabe
                     {
                         File.WriteAllText(FileName, sb.ToString());
                     }
-                    catch 
+                    catch
                     {
                         Trace.WriteLine("Fail to write the snapshot File");
                     }
@@ -530,7 +530,7 @@ namespace Yabe
             List<String> status = UserCmd_WriteRecipeSnapShotCommon(Parameters, false);
             new WriteRecipeForm(this.Icon, status).ShowDialog();
         }
-        void UserCmd_ExecBatch(String Parameters) 
+        void UserCmd_ExecBatch(String Parameters)
         {
             if (Parameters == null) return;
             if (!File.Exists(Parameters)) return;
@@ -549,7 +549,7 @@ namespace Yabe
                 if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
                     continue;
 
-                String cmdline=";;"+line;   // Add the two missing items similiar to YabeMenuCmd.txt
+                String cmdline = ";;" + line;   // Add the two missing items similiar to YabeMenuCmd.txt
 
                 String[] MenuCommand;
                 Tuple<int, string> Cmd = MenuLineToCmd(cmdline, out MenuCommand);
@@ -562,7 +562,7 @@ namespace Yabe
                 else
                     try
                     {
-                            UserCmdCommands[Cmd.Item1](Cmd.Item2);
+                        UserCmdCommands[Cmd.Item1](Cmd.Item2);
                     }
                     catch
                     {
@@ -586,7 +586,7 @@ namespace Yabe
                 String[] st = s.Split(';');
                 ListViewItem itm = listStatus.Items.Add(st.Last());
 
-              for (int i = 0;i<st.Length-1;i++)
+                for (int i = 0; i < st.Length - 1; i++)
                     itm.SubItems.Add(st[i]);
             }
         }
@@ -599,7 +599,7 @@ namespace Yabe
             listStatus.Dock = DockStyle.Fill;
             listStatus.UseCompatibleStateImageBehavior = false;
             listStatus.View = View.Details;
-            listStatus.Columns.AddRange(new ColumnHeader[] 
+            listStatus.Columns.AddRange(new ColumnHeader[]
             {
                 new ColumnHeader() { Text="Status", Width=-2},
                 new ColumnHeader() { Text="Device", Width = -2},
@@ -608,7 +608,7 @@ namespace Yabe
                 new ColumnHeader() { Text="Object Name", Width = -2},
                 new ColumnHeader() { Text="Property", Width = -2},
                 new ColumnHeader() { Text="Value", Width = -2}
-            }) ;
+            });
 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;

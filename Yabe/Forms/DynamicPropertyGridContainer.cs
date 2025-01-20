@@ -28,13 +28,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO.BACnet;
-using System.Globalization;
-using System.Windows.Forms.Design;
-using System.Windows.Forms;
-using System.Drawing.Design;
 using System.Drawing;
+using System.Drawing.Design;
+using System.Globalization;
+using System.IO.BACnet;
 using System.Net;
+using System.Windows.Forms;
+using System.Windows.Forms.Design;
 
 namespace Utilities
 {
@@ -42,47 +42,47 @@ namespace Utilities
     /// Helper classses for dynamic property grid manipulations.
     /// Note: Following attribute can be helpful also: [System.ComponentModel.TypeConverter(typeof(System.ComponentModel.ExpandableObjectConverter))]
     /// </summary>
-	class DynamicPropertyGridContainer: CollectionBase,ICustomTypeDescriptor
-	{
-		/// <summary>
-		/// Add CustomProperty to Collectionbase List
-		/// </summary>
-		/// <param name="Value"></param>
-		public void Add(CustomProperty Value)
-		{
-			base.List.Add(Value);
-		}
+	class DynamicPropertyGridContainer : CollectionBase, ICustomTypeDescriptor
+    {
+        /// <summary>
+        /// Add CustomProperty to Collectionbase List
+        /// </summary>
+        /// <param name="Value"></param>
+        public void Add(CustomProperty Value)
+        {
+            base.List.Add(Value);
+        }
 
-		/// <summary>
-		/// Remove item from List
-		/// </summary>
-		/// <param name="Name"></param>
-		public void Remove(string Name)
-		{
-			foreach(CustomProperty prop in base.List)
-			{
-				if(prop.Name == Name)
-				{
-					base.List.Remove(prop);
-					return;
-				}
-			}
-		}
+        /// <summary>
+        /// Remove item from List
+        /// </summary>
+        /// <param name="Name"></param>
+        public void Remove(string Name)
+        {
+            foreach (CustomProperty prop in base.List)
+            {
+                if (prop.Name == Name)
+                {
+                    base.List.Remove(prop);
+                    return;
+                }
+            }
+        }
 
-		/// <summary>
-		/// Indexer
-		/// </summary>
-		public CustomProperty this[int index] 
-		{
-			get 
-			{
-				return (CustomProperty)base.List[index];
-			}
-			set
-			{
-				base.List[index] = (CustomProperty)value;
-			}
-		}
+        /// <summary>
+        /// Indexer
+        /// </summary>
+        public CustomProperty this[int index]
+        {
+            get
+            {
+                return (CustomProperty)base.List[index];
+            }
+            set
+            {
+                base.List[index] = (CustomProperty)value;
+            }
+        }
 
         public CustomProperty this[string name]
         {
@@ -96,121 +96,121 @@ namespace Utilities
             }
         }
 
-		#region "TypeDescriptor Implementation"
-		/// <summary>
-		/// Get Class Name
-		/// </summary>
-		/// <returns>String</returns>
-		public String GetClassName()
-		{
-			return TypeDescriptor.GetClassName(this,true);
-		}
+        #region "TypeDescriptor Implementation"
+        /// <summary>
+        /// Get Class Name
+        /// </summary>
+        /// <returns>String</returns>
+        public String GetClassName()
+        {
+            return TypeDescriptor.GetClassName(this, true);
+        }
 
-		/// <summary>
-		/// GetAttributes
-		/// </summary>
-		/// <returns>AttributeCollection</returns>
-		public AttributeCollection GetAttributes()
-		{
-			return TypeDescriptor.GetAttributes(this,true);
-		}
+        /// <summary>
+        /// GetAttributes
+        /// </summary>
+        /// <returns>AttributeCollection</returns>
+        public AttributeCollection GetAttributes()
+        {
+            return TypeDescriptor.GetAttributes(this, true);
+        }
 
-		/// <summary>
-		/// GetComponentName
-		/// </summary>
-		/// <returns>String</returns>
-		public String GetComponentName()
-		{
-			return TypeDescriptor.GetComponentName(this, true);
-		}
+        /// <summary>
+        /// GetComponentName
+        /// </summary>
+        /// <returns>String</returns>
+        public String GetComponentName()
+        {
+            return TypeDescriptor.GetComponentName(this, true);
+        }
 
-		/// <summary>
-		/// GetConverter
-		/// </summary>
-		/// <returns>TypeConverter</returns>
-		public TypeConverter GetConverter()
-		{
-			return TypeDescriptor.GetConverter(this, true);
-		}
+        /// <summary>
+        /// GetConverter
+        /// </summary>
+        /// <returns>TypeConverter</returns>
+        public TypeConverter GetConverter()
+        {
+            return TypeDescriptor.GetConverter(this, true);
+        }
 
-		/// <summary>
-		/// GetDefaultEvent
-		/// </summary>
-		/// <returns>EventDescriptor</returns>
-		public EventDescriptor GetDefaultEvent() 
-		{
-			return TypeDescriptor.GetDefaultEvent(this, true);
-		}
+        /// <summary>
+        /// GetDefaultEvent
+        /// </summary>
+        /// <returns>EventDescriptor</returns>
+        public EventDescriptor GetDefaultEvent()
+        {
+            return TypeDescriptor.GetDefaultEvent(this, true);
+        }
 
-		/// <summary>
-		/// GetDefaultProperty
-		/// </summary>
-		/// <returns>PropertyDescriptor</returns>
-		public PropertyDescriptor GetDefaultProperty() 
-		{
-			return TypeDescriptor.GetDefaultProperty(this, true);
-		}
+        /// <summary>
+        /// GetDefaultProperty
+        /// </summary>
+        /// <returns>PropertyDescriptor</returns>
+        public PropertyDescriptor GetDefaultProperty()
+        {
+            return TypeDescriptor.GetDefaultProperty(this, true);
+        }
 
-		/// <summary>
-		/// GetEditor
-		/// </summary>
-		/// <param name="editorBaseType">editorBaseType</param>
-		/// <returns>object</returns>
-		public object GetEditor(Type editorBaseType) 
-		{
-			return TypeDescriptor.GetEditor(this, editorBaseType, true);
-		}
+        /// <summary>
+        /// GetEditor
+        /// </summary>
+        /// <param name="editorBaseType">editorBaseType</param>
+        /// <returns>object</returns>
+        public object GetEditor(Type editorBaseType)
+        {
+            return TypeDescriptor.GetEditor(this, editorBaseType, true);
+        }
 
-		public EventDescriptorCollection GetEvents(Attribute[] attributes) 
-		{
-			return TypeDescriptor.GetEvents(this, attributes, true);
-		}
+        public EventDescriptorCollection GetEvents(Attribute[] attributes)
+        {
+            return TypeDescriptor.GetEvents(this, attributes, true);
+        }
 
-		public EventDescriptorCollection GetEvents()
-		{
-			return TypeDescriptor.GetEvents(this, true);
-		}
+        public EventDescriptorCollection GetEvents()
+        {
+            return TypeDescriptor.GetEvents(this, true);
+        }
 
-		public PropertyDescriptorCollection GetProperties(Attribute[] attributes)
-		{
-			PropertyDescriptor[] newProps = new PropertyDescriptor[this.Count];
-			for (int i = 0; i < this.Count; i++)
-			{
-				CustomProperty  prop = (CustomProperty) this[i];
-				newProps[i] = new CustomPropertyDescriptor(ref prop, attributes);
-			}
+        public PropertyDescriptorCollection GetProperties(Attribute[] attributes)
+        {
+            PropertyDescriptor[] newProps = new PropertyDescriptor[this.Count];
+            for (int i = 0; i < this.Count; i++)
+            {
+                CustomProperty prop = (CustomProperty)this[i];
+                newProps[i] = new CustomPropertyDescriptor(ref prop, attributes);
+            }
 
-			return new PropertyDescriptorCollection(newProps);
-		}
+            return new PropertyDescriptorCollection(newProps);
+        }
 
-		public PropertyDescriptorCollection GetProperties()
-		{
-			
-			return TypeDescriptor.GetProperties(this, true);
-			
-		}
+        public PropertyDescriptorCollection GetProperties()
+        {
 
-		public object GetPropertyOwner(PropertyDescriptor pd) 
-		{
-			return this;
-		}
-		#endregion
+            return TypeDescriptor.GetProperties(this, true);
+
+        }
+
+        public object GetPropertyOwner(PropertyDescriptor pd)
+        {
+            return this;
+        }
+        #endregion
 
         public override string ToString()
         {
             return "Custom type";
         }
-	}
+    }
 
-	/// <summary>
-	/// Custom property class 
-	/// </summary>
-	public class CustomProperty
-	{
-		private string m_name = string.Empty;
-		private bool m_readonly = false;
+    /// <summary>
+    /// Custom property class 
+    /// </summary>
+    public class CustomProperty
+    {
+        private string m_name = string.Empty;
+        private bool m_readonly = false;
         private object m_old_value = null;
-		private object m_value = null;
+        private object m_value = null;
         private Type m_type;
         private object m_tag;
         private DynamicEnum m_options;
@@ -220,16 +220,16 @@ namespace Utilities
 
         public CustomProperty(string name, object value, Type type, bool read_only, string category = "", BacnetApplicationTags? description = null, DynamicEnum options = null, object tag = null)
         {
-			this.m_name = name;
+            this.m_name = name;
             this.m_old_value = value;
-			this.m_value = value;
+            this.m_value = value;
             this.m_type = type;
-			this.m_readonly = read_only;
+            this.m_readonly = read_only;
             this.m_tag = tag;
             this.m_options = options;
             this.m_category = "BacnetProperty";
             this.m_description = description;
-		}
+        }
 
         public DynamicEnum Options
         {
@@ -256,41 +256,41 @@ namespace Utilities
             get { return m_description; }
         }
 
-		public bool ReadOnly
-		{
-			get
-			{
-				return m_readonly;
-			}
-		}
+        public bool ReadOnly
+        {
+            get
+            {
+                return m_readonly;
+            }
+        }
 
-		public string Name
-		{
-			get
-			{
-				return m_name;
-			}
-		}
+        public string Name
+        {
+            get
+            {
+                return m_name;
+            }
+        }
 
-		public bool Visible
-		{
-			get
-			{
-				return true;
-			}
-		}
+        public bool Visible
+        {
+            get
+            {
+                return true;
+            }
+        }
 
-		public object Value
-		{
-			get
-			{
-				return m_value;
-			}
-			set
-			{
-				m_value = value;
-			}
-		}
+        public object Value
+        {
+            get
+            {
+                return m_value;
+            }
+            set
+            {
+                m_value = value;
+            }
+        }
 
         public object Tag
         {
@@ -301,7 +301,7 @@ namespace Utilities
         {
             m_value = m_old_value;
         }
-	}
+    }
 
     #region " DoubleConvert"
 
@@ -529,7 +529,7 @@ namespace Utilities
         public int this[string name]
         {
             get
-            { 
+            {
                 int value = 0;
 
                 if (name.IndexOf(',') != -1)
@@ -718,7 +718,7 @@ namespace Utilities
 
             return base.ConvertTo(context, culture, value, destinationType);
         }
-         
+
     }
 
     public class BACnetActionCommandConverter : ExpandableObjectConverter
@@ -752,8 +752,8 @@ namespace Utilities
             {
 
                 BACnetActionCommand ac = (BACnetActionCommand)value;
-                
-                return ac.Device_Identifier + ":" + ac.Object_Identifier + ":" + ac.Property_Identifier + ":" + ac.Property_Array_Index + ":" + ac.Property_Value + ":" + ac.Priority + ":" + ac.Post_Delay + ":" + ac.Quit_On_Failure + ":" + ac.Write_Successful; 
+
+                return ac.Device_Identifier + ":" + ac.Object_Identifier + ":" + ac.Property_Identifier + ":" + ac.Property_Array_Index + ":" + ac.Property_Value + ":" + ac.Priority + ":" + ac.Post_Delay + ":" + ac.Quit_On_Failure + ":" + ac.Write_Successful;
             }
             return base.ConvertTo(context, culture, value, destinationType);
         }
@@ -851,7 +851,7 @@ namespace Utilities
 
                 BACnetAccumulatorRecord spr = (BACnetAccumulatorRecord)value;
 
-                return spr.Timestamp+":"+spr.Present_Value+":"+spr.Accumulated_Value+":"+spr.Accumulator_Status;
+                return spr.Timestamp + ":" + spr.Present_Value + ":" + spr.Accumulated_Value + ":" + spr.Accumulator_Status;
             }
             return base.ConvertTo(context, culture, value, destinationType);
         }
@@ -899,7 +899,7 @@ namespace Utilities
 
                 BACnetLightingCommand lc = (BACnetLightingCommand)value;
 
-                return lc.Operation+":"+lc.Target_Level+":"+lc.Ramp_Rate+":"+lc.Step_Increment+":"+lc.Fade_Time+":"+lc.Priority;
+                return lc.Operation + ":" + lc.Target_Level + ":" + lc.Ramp_Rate + ":" + lc.Step_Increment + ":" + lc.Fade_Time + ":" + lc.Priority;
             }
             return base.ConvertTo(context, culture, value, destinationType);
         }
@@ -912,8 +912,8 @@ namespace Utilities
                 try
                 {
                     string[] s = (value as String).Split(':');
-                    return new BACnetLightingCommand((BACnetLightingOperation)Enum.Parse(typeof(BACnetLightingOperation), s[0]), Convert.ToSingle(s[1]), Convert.ToSingle(s[2]),Convert.ToSingle(s[3]),Convert.ToUInt32(s[4]),Convert.ToUInt32(s[5]));
-                    
+                    return new BACnetLightingCommand((BACnetLightingOperation)Enum.Parse(typeof(BACnetLightingOperation), s[0]), Convert.ToSingle(s[1]), Convert.ToSingle(s[2]), Convert.ToSingle(s[3]), Convert.ToUInt32(s[4]), Convert.ToUInt32(s[5]));
+
                 }
                 catch { return null; }
             }
@@ -1008,7 +1008,7 @@ namespace Utilities
 
                 BACnetScale s = (BACnetScale)value;
 
-                return s.Type+":"+s.Value;
+                return s.Type + ":" + s.Value;
             }
             return base.ConvertTo(context, culture, value, destinationType);
         }
@@ -1017,15 +1017,15 @@ namespace Utilities
                               CultureInfo culture, object value)
         {
             if (value is string)
-            {        
-                
+            {
+
                 try
                 {
-                    
+
                     BACnetScale.choicetype ct;
                     string[] s = (value as String).Split(':');
                     Enum.TryParse(s[0], out ct);
-                    
+
                     switch (ct)
                     {
                         case BACnetScale.choicetype.REAL:
@@ -1036,7 +1036,7 @@ namespace Utilities
                             throw new NotSupportedException();
 
                     }
-                    
+
                 }
                 catch { return null; }
             }
@@ -1077,7 +1077,7 @@ namespace Utilities
 
                 BACnetPrescale ps = (BACnetPrescale)value;
 
-                return ps.Multiplier+":"+ps.Modulo_Divide;
+                return ps.Multiplier + ":" + ps.Modulo_Divide;
             }
             return base.ConvertTo(context, culture, value, destinationType);
         }
@@ -1203,9 +1203,9 @@ namespace Utilities
                 try
                 {
                     string[] s = (value as String).Split(':');
-                    
-                    return new BACnetObjectPropertyReference(new BacnetObjectId((BacnetObjectTypes)Enum.Parse(typeof(BacnetObjectTypes), s[0]), Convert.ToUInt16(s[1])),(BacnetPropertyIds)Convert.ToUInt32(s[2]),Convert.ToUInt32(s[3]));
-                    
+
+                    return new BACnetObjectPropertyReference(new BacnetObjectId((BacnetObjectTypes)Enum.Parse(typeof(BacnetObjectTypes), s[0]), Convert.ToUInt16(s[1])), (BacnetPropertyIds)Convert.ToUInt32(s[2]), Convert.ToUInt32(s[3]));
+
 
                 }
                 catch { return null; }
@@ -1261,7 +1261,7 @@ namespace Utilities
                 {
                     string[] s = (value as String).Split(':');
                     BACnetShedLevel.ShedLevelType type = (BACnetShedLevel.ShedLevelType)Enum.Parse(typeof(BACnetShedLevel.ShedLevelType), s[0]);
-                    switch(type)
+                    switch (type)
                     {
                         case BACnetShedLevel.ShedLevelType.PERCENT:
                         case BACnetShedLevel.ShedLevelType.LEVEL:
@@ -1273,7 +1273,7 @@ namespace Utilities
 
                     }
 
-                    
+
                 }
                 catch { return null; }
             }
@@ -1299,7 +1299,7 @@ namespace Utilities
 
             return base.CanConvertFrom(context, sourceType);
         }
-        
+
         // Call to change the display
         public override object ConvertTo(ITypeDescriptorContext context,
                                CultureInfo culture,
@@ -1334,7 +1334,7 @@ namespace Utilities
         }
     }
 
-    public class BacnetDeviceObjectPropertyReferenceConverter: ExpandableObjectConverter
+    public class BacnetDeviceObjectPropertyReferenceConverter : ExpandableObjectConverter
     {
         public override bool CanConvertTo(ITypeDescriptorContext context,
                             System.Type destinationType)
@@ -1364,11 +1364,11 @@ namespace Utilities
             {
                 BacnetDeviceObjectPropertyReference pr = (BacnetDeviceObjectPropertyReference)value;
 
-                return "Reference to " +pr.objectIdentifier.ToString();
+                return "Reference to " + pr.objectIdentifier.ToString();
             }
             else
-                return base.ConvertTo(context, culture, value, destinationType);          
-          }
+                return base.ConvertTo(context, culture, value, destinationType);
+        }
 
         public override object ConvertFrom(ITypeDescriptorContext context,
                               CultureInfo culture, object value)
@@ -1447,36 +1447,36 @@ namespace Utilities
             {
                 try
                 {
-                    return DateTime.Parse("1/1/1 "+(string)value,System.Threading.Thread.CurrentThread.CurrentCulture);
+                    return DateTime.Parse("1/1/1 " + (string)value, System.Threading.Thread.CurrentThread.CurrentCulture);
                 }
                 catch { return null; }
             }
             return base.ConvertFrom(context, culture, value);
         }
 
-         public override bool CanConvertTo(ITypeDescriptorContext context,
-                            System.Type destinationType)
+        public override bool CanConvertTo(ITypeDescriptorContext context,
+                           System.Type destinationType)
         {
             if (destinationType == typeof(DateTime))
                 return true;
             return base.CanConvertTo(context, destinationType);
         }
 
-         public override object ConvertTo(ITypeDescriptorContext context,
-                         CultureInfo culture,
-                         object value,
-                         System.Type destinationType)
-         {
-             if (destinationType == typeof(System.String) &&
-                 value is DateTime)
-             {
-                 DateTime dt = (DateTime)value;
+        public override object ConvertTo(ITypeDescriptorContext context,
+                        CultureInfo culture,
+                        object value,
+                        System.Type destinationType)
+        {
+            if (destinationType == typeof(System.String) &&
+                value is DateTime)
+            {
+                DateTime dt = (DateTime)value;
 
-                 return dt.ToLongTimeString();
-             }
-             else
+                return dt.ToLongTimeString();
+            }
+            else
                 return base.ConvertTo(context, culture, value, destinationType);
-         }
+        }
     }
 
     // http://www.acodemics.co.uk/2014/03/20/c-datetimepicker-in-propertygrid/
@@ -1507,7 +1507,7 @@ namespace Utilities
 
             if (this.editorService != null)
             {
-                DateTime dt= (DateTime)value;
+                DateTime dt = (DateTime)value;
                 // this value is 1/1/1 for the date,  DatetimePicket don't accept it
                 picker.Value = new DateTime(2000, 1, 1, dt.Hour, dt.Minute, dt.Second); // only HH:MM:SS is important
                 this.editorService.DropDownControl(picker);
@@ -1530,9 +1530,9 @@ namespace Utilities
 
         // the corresponding Enum is given in parameters
         // and also how the value is fixed 0,1,2... or 1,2,4,8... in the enumeration
-        public BacnetBitStringToEnumListDisplay(Enum e, bool LinearEnum, bool DisplayAll=false)
+        public BacnetBitStringToEnumListDisplay(Enum e, bool LinearEnum, bool DisplayAll = false)
         {
-            currentPropertyEnum = e; 
+            currentPropertyEnum = e;
             this.LinearEnum = LinearEnum;
 
             if (DisplayAll == true)
@@ -1569,12 +1569,12 @@ namespace Utilities
             {
                 String bbs = value.ToString();
 
-                for (int i=0;i<bbs.Length;i++)
+                for (int i = 0; i < bbs.Length; i++)
                 {
                     try
                     {
                         String Text;
-                        if (LinearEnum==true)
+                        if (LinearEnum == true)
                             Text = Enum.GetName(currentPropertyEnum.GetType(), i); // for 'classic' Enum like 0,1,2,3 ...
                         else
                             Text = Enum.GetName(currentPropertyEnum.GetType(), 1 << i); // for 2^n shift Enum like 1,2,4,8, ...
@@ -1615,12 +1615,12 @@ namespace Utilities
             if ((this.editorService != null) && (value is object[] priorities) && (priorities.Length == 16))
             {
                 EnumList = new ListBox();
-                
-                for (int Idx=0;Idx<16;Idx++)
+
+                for (int Idx = 0; Idx < 16; Idx++)
                 {
                     String s;
                     if (priorities[Idx] != null)
-                        s = BacnetEnumValueDisplay.GetNiceName(((BacnetWritePriority)Idx).ToString()) +"\t"+ priorities[Idx].ToString();
+                        s = BacnetEnumValueDisplay.GetNiceName(((BacnetWritePriority)Idx).ToString()) + "\t" + priorities[Idx].ToString();
                     else
                         s = BacnetEnumValueDisplay.GetNiceName(((BacnetWritePriority)Idx).ToString()) + "\tEmpty";
 
@@ -1628,9 +1628,9 @@ namespace Utilities
                 }
 
                 Graphics g = EnumList.CreateGraphics();
-                int hzSize = (int)g.MeasureString("T", EnumList.Font).Height+1;
+                int hzSize = (int)g.MeasureString("T", EnumList.Font).Height + 1;
 
-                EnumList.Size = new Size(100, 16*hzSize);
+                EnumList.Size = new Size(100, 16 * hzSize);
                 EnumList.CustomTabOffsets.Add(100);
                 EnumList.UseCustomTabOffsets = true;
 
@@ -1661,7 +1661,7 @@ namespace Utilities
             return base.ConvertFrom(context, culture, value);
         }
     }
-    
+
     // In order to give a readable name to classic enums
     public class BacnetEnumValueDisplay : UITypeEditor
     {
@@ -1701,7 +1701,7 @@ namespace Utilities
         }
 
         public override object EditValue(ITypeDescriptorContext context, IServiceProvider provider, object value)
-        {            
+        {
             if (provider != null)
             {
                 this.editorService = provider.GetService(typeof(IWindowsFormsEditorService)) as IWindowsFormsEditorService;
@@ -1715,17 +1715,17 @@ namespace Utilities
                     EnumList = new ListBox();
                     EnumList.Click += new EventHandler(EnumList_Click);
                     // get all the Enum values string
-                    String[] sl=Enum.GetNames(currentPropertyEnum.GetType());
+                    String[] sl = Enum.GetNames(currentPropertyEnum.GetType());
                     for (int i = 0; i < sl.Length; i++)
                     {
                         EnumList.Items.Add(i.ToString() + " : " + GetNiceName(sl[i])); // add to the list
                     }
-                    if (InitialIdx<EnumList.Items.Count)
+                    if (InitialIdx < EnumList.Items.Count)
                         EnumList.SelectedIndex = InitialIdx; // select the current item if any
                 }
                 this.editorService.DropDownControl(EnumList); // shows the list
 
-                if ((EnumList.SelectedIndex!=InitialIdx)&&(InitialIdx<EnumList.Items.Count))
+                if ((EnumList.SelectedIndex != InitialIdx) && (InitialIdx < EnumList.Items.Count))
                     return (uint)EnumList.SelectedIndex; // change the value if required
             }
             return value;
@@ -1741,7 +1741,7 @@ namespace Utilities
 
     public class BacnetEnumValueConverter : TypeConverter
     {
-         Enum currentPropertyEnum;
+        Enum currentPropertyEnum;
 
         // the corresponding Enum is given in parameter
         public BacnetEnumValueConverter(Enum e)
@@ -1785,7 +1785,7 @@ namespace Utilities
                 value is BacnetBitString)
             {
                 String bbs = value.ToString();
-                String Text = "" ;
+                String Text = "";
                 for (int i = 0; i < bbs.Length; i++)
                 {
                     try
@@ -1839,7 +1839,7 @@ namespace Utilities
             {
                 get
                 {
-                    if (m_enum!=null)
+                    if (m_enum != null)
                     {
                         string s = Enum.GetValues(m_enum.GetType()).GetValue(m_idx).ToString();
                         s = s.Replace('_', ' ');
@@ -1850,10 +1850,10 @@ namespace Utilities
                 }
             }
             public override bool CanResetValue(object component) { return m_Property.CanResetValue(component); }
-            public override Type ComponentType { get { return m_Property.ComponentType; }}
+            public override Type ComponentType { get { return m_Property.ComponentType; } }
             public override object GetValue(object component) { return m_Property.GetValue(component); }
             public override bool IsReadOnly { get { return m_Property.IsReadOnly; } }
-            public override Type PropertyType { get { return m_Property.PropertyType; }}
+            public override Type PropertyType { get { return m_Property.PropertyType; } }
             public override void ResetValue(object component) { m_Property.ResetValue(component); }
             public override void SetValue(object component, object value) { m_Property.SetValue(component, value); }
             public override bool ShouldSerializeValue(object component) { return m_Property.ShouldSerializeValue(component); }
@@ -1862,9 +1862,9 @@ namespace Utilities
         Enum _e;
         public BacnetArrayIndexConverter(Enum e)
         {
-            _e=e;
+            _e = e;
         }
- 
+
         public override PropertyDescriptorCollection GetProperties(ITypeDescriptorContext context, object value, Attribute[] attributes)
         {
             try
@@ -1874,9 +1874,9 @@ namespace Utilities
 
                 // PriorityArray is a C# 0 base array for a Bacnet 1 base array
                 // use also for StateText property array in multistate objects : http://www.chipkin.com/bacnet-multi-state-variables-state-zero/
-                int shift=0;
-                if ((_e==null) || (_e.GetType() == typeof(BacnetWritePriority)))
-                        shift = 1;
+                int shift = 0;
+                if ((_e == null) || (_e.GetType() == typeof(BacnetWritePriority)))
+                    shift = 1;
 
                 for (int i = 0; i < s.Count; i++)
                 {
@@ -1890,15 +1890,15 @@ namespace Utilities
                 return base.GetProperties(context, value, attributes);
             }
         }
- 
+
     }
     /// <summary>
 	/// Custom PropertyDescriptor
 	/// </summary>
     /// 
-	class CustomPropertyDescriptor: PropertyDescriptor
-	{
-		CustomProperty m_Property;
+	class CustomPropertyDescriptor : PropertyDescriptor
+    {
+        CustomProperty m_Property;
 
         static CustomPropertyDescriptor()
         {
@@ -1919,83 +1919,83 @@ namespace Utilities
 
         }
 
-        public CustomPropertyDescriptor(ref CustomProperty myProperty, Attribute [] attrs) :base(myProperty.Name, attrs)
-		{
-			m_Property = myProperty;
-		}
+        public CustomPropertyDescriptor(ref CustomProperty myProperty, Attribute[] attrs) : base(myProperty.Name, attrs)
+        {
+            m_Property = myProperty;
+        }
 
         public CustomProperty CustomProperty
         {
             get { return m_Property; }
         }
 
-		#region PropertyDescriptor specific
-		
-		public override bool CanResetValue(object component)
-		{
-			return true;
-		}
+        #region PropertyDescriptor specific
 
-		public override Type ComponentType
-		{
-			get 
-			{
-				return null;
-			}
-		}
+        public override bool CanResetValue(object component)
+        {
+            return true;
+        }
 
-		public override object GetValue(object component)
-		{
-			return m_Property.Value;
-		}
+        public override Type ComponentType
+        {
+            get
+            {
+                return null;
+            }
+        }
 
-		public override string Description
-		{
-			get
-			{
-				return m_Property.Description;
-			}
-		}
-		
-		public override string Category
-		{
-			get
-			{
+        public override object GetValue(object component)
+        {
+            return m_Property.Value;
+        }
+
+        public override string Description
+        {
+            get
+            {
+                return m_Property.Description;
+            }
+        }
+
+        public override string Category
+        {
+            get
+            {
                 return m_Property.Category;
-			}
-		}
+            }
+        }
 
-		public override string DisplayName
-		{
-			get
-			{
-				return m_Property.Name;
-			}
-			
-		}
+        public override string DisplayName
+        {
+            get
+            {
+                return m_Property.Name;
+            }
 
-		public override bool IsReadOnly
-		{
-			get
-			{
-				return m_Property.ReadOnly;
-			}
-		}
+        }
 
-		public override void ResetValue(object component)
-		{
+        public override bool IsReadOnly
+        {
+            get
+            {
+                return m_Property.ReadOnly;
+            }
+        }
+
+        public override void ResetValue(object component)
+        {
             m_Property.Reset();
-		}
+        }
 
-		public override bool ShouldSerializeValue(object component)
-		{
-			return false;
-		}
+        public override bool ShouldSerializeValue(object component)
+        {
+            return false;
+        }
 
-		public override void SetValue(object component, object value)
-		{
-			m_Property.Value = value;
-		}
+        public override void SetValue(object component, object value)
+        {
+            m_Property.Value = value;
+        }
 
         public override Type PropertyType
         {
@@ -2009,13 +2009,13 @@ namespace Utilities
                 if (m_Property.Options != null) return new DynamicEnumConverter(m_Property.Options);
                 else if (m_Property.Type == typeof(float)) return new CustomSingleConverter();
                 else if (m_Property.bacnetApplicationTags == BacnetApplicationTags.BACNET_APPLICATION_TAG_TIME) return new BacnetTimeConverter();
-                
+
                 // A lot of classic Bacnet Enum
                 BacnetPropertyReference bpr = (BacnetPropertyReference)m_Property.Tag;
                 switch ((BacnetPropertyIds)bpr.propertyIdentifier)
                 {
                     case BacnetPropertyIds.PROP_PROTOCOL_OBJECT_TYPES_SUPPORTED:
-                        return new BacnetBitStringValueConverter(new BacnetObjectTypes(),true);
+                        return new BacnetBitStringValueConverter(new BacnetObjectTypes(), true);
                     case BacnetPropertyIds.PROP_PROTOCOL_SERVICES_SUPPORTED:
                         return new BacnetBitStringValueConverter(new BacnetServicesSupported(), true);
                     case BacnetPropertyIds.PROP_OBJECT_TYPE:
@@ -2045,16 +2045,16 @@ namespace Utilities
                     case BacnetPropertyIds.PROP_LAST_RESTART_REASON:
                         return new BacnetEnumValueConverter(new BacnetRestartReason());
                     case BacnetPropertyIds.PROP_PRIORITY_FOR_WRITING:
-                        return new BacnetEnumValueConverter(new BacnetWritePriority()); 
+                        return new BacnetEnumValueConverter(new BacnetWritePriority());
                     case BacnetPropertyIds.PROP_PRIORITY_ARRAY:
                         return new BacnetArrayIndexConverter(new BacnetWritePriority());
-                    case BacnetPropertyIds.PROP_PRIORITY :
+                    case BacnetPropertyIds.PROP_PRIORITY:
                         return new BacnetArrayIndexConverter(new BacnetArrayIndexConverter.BacnetEventStates());
-                    case BacnetPropertyIds.PROP_EVENT_TIME_STAMPS :
+                    case BacnetPropertyIds.PROP_EVENT_TIME_STAMPS:
                         return new BacnetArrayIndexConverter(new BacnetArrayIndexConverter.BacnetEventStates());
-                    case BacnetPropertyIds.PROP_STATE_TEXT :
-                        return new BacnetArrayIndexConverter(null); 
-                    case BacnetPropertyIds.PROP_PROGRAM_CHANGE :
+                    case BacnetPropertyIds.PROP_STATE_TEXT:
+                        return new BacnetArrayIndexConverter(null);
+                    case BacnetPropertyIds.PROP_PROGRAM_CHANGE:
                         return new BacnetEnumValueConverter(new BacnetProgramChange());
                     case BacnetPropertyIds.PROP_PROGRAM_STATE:
                         return new BacnetEnumValueConverter(new BacnetProgramState());
@@ -2137,8 +2137,8 @@ namespace Utilities
         {
             // All Bacnet Time as this
             if (m_Property.bacnetApplicationTags == BacnetApplicationTags.BACNET_APPLICATION_TAG_TIME) return new BacnetTimePickerEditor();
-            
-            BacnetPropertyReference bpr=(BacnetPropertyReference)m_Property.Tag;
+
+            BacnetPropertyReference bpr = (BacnetPropertyReference)m_Property.Tag;
 
             // A lot of classic Bacnet Enum & BitString
             switch ((BacnetPropertyIds)bpr.propertyIdentifier)
@@ -2238,7 +2238,7 @@ namespace Utilities
                 case BacnetPropertyIds.PROP_ACCESS_ALARM_EVENTS:
                 case BacnetPropertyIds.PROP_ACCESS_TRANSACTION_EVENTS:
                     return new BacnetEnumValueDisplay(new BACnetAccessEvents());
-                default :
+                default:
                     return base.GetEditor(editorBaseType);
             }
         }
@@ -2251,7 +2251,7 @@ namespace Utilities
             }
         }
 
-		#endregion
-			
-	}
+        #endregion
+
+    }
 }

@@ -25,9 +25,9 @@
 *********************************************************************/
 using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
-using System.IO.BACnet;
 using System.Diagnostics;
+using System.IO.BACnet;
+using System.Windows.Forms;
 
 namespace Yabe
 {
@@ -36,7 +36,7 @@ namespace Yabe
         BACnetDevice device;
 
 
-        IList<BacnetGetEventInformationData> Alarms=new List<BacnetGetEventInformationData>();
+        IList<BacnetGetEventInformationData> Alarms = new List<BacnetGetEventInformationData>();
 
         public AlarmSummary(ImageList img_List, BACnetDevice device)
         {
@@ -80,10 +80,10 @@ namespace Yabe
             }
             else
                 LblInfo.Text = "Service not available on this device";
-            
+
             Application.UseWaitCursor = false;
             Cursor.Current = Cursors.Default; // sometimes required, else not back since a click !
-            
+
         }
         private static string GetEventStateNiceName(String name)
         {
@@ -105,7 +105,7 @@ namespace Yabe
             int icon;
 
             TAlarmList.Nodes.Clear();
-                    
+
             TAlarmList.BeginUpdate();
 
             // Only one network read request to get the object name
@@ -115,7 +115,7 @@ namespace Yabe
             // fill the Treenode
             foreach (BacnetGetEventInformationData alarm in Alarms)
             {
-                if ((alarm.acknowledgedTransitions.ToString() != "111")||(alarm.eventState!=BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_NORMAL))
+                if ((alarm.acknowledgedTransitions.ToString() != "111") || (alarm.eventState != BacnetEventNotificationData.BacnetEventStates.EVENT_STATE_NORMAL))
                 {
                     TreeNode currentTn;
 
@@ -260,14 +260,14 @@ namespace Yabe
                 BacnetGetEventInformationData alarm = (BacnetGetEventInformationData)t.Tag; // the alam content
                 AcqAlarm(alarm);
             }
-      
+
             FillTreeNode();
         }
 
         // Used if the Read without retries has fail
         private void TAlarmList_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            TreeNode tn=e.Node;
+            TreeNode tn = e.Node;
             while (tn.Parent != null) tn = tn.Parent;
 
             if (tn.ToolTipText == "")
@@ -276,7 +276,7 @@ namespace Yabe
                 IList<BacnetValue> name;
 
                 device.channel.ReadPropertyRequest(device.BacAdr, alarm.objectIdentifier, BacnetPropertyIds.PROP_OBJECT_NAME, out name);
-                
+
                 tn.ToolTipText = tn.Text;
 
                 if (Properties.Settings.Default.DisplayIdWithName)

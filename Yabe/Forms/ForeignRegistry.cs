@@ -1,13 +1,10 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Drawing;
-using System.Text;
-using System.Windows.Forms;
 using System.IO.BACnet;
-using System.Threading;
-using System.Net;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
+using System.Threading;
+using System.Windows.Forms;
 
 namespace Yabe
 {
@@ -26,7 +23,7 @@ namespace Yabe
         {
             int Port;
             Int32.TryParse(BBMD_Port.Text, out Port);
-            return Port==0 ? 47808 : Port;
+            return Port == 0 ? 47808 : Port;
 
         }
 

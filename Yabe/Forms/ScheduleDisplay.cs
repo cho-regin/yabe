@@ -25,22 +25,17 @@
 *********************************************************************/
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 using System.IO.BACnet;
 using System.IO.BACnet.Serialize;
 using System.IO.BACnet.Storage;
-using System.Diagnostics;
+using System.Windows.Forms;
 
 namespace Yabe
 {
     public partial class ScheduleDisplay : Form
-    { 
-         BacnetObjectId schedule_id;
+    {
+        BacnetObjectId schedule_id;
         BACnetDevice device;
         // Default value type here if no values are already present
         // Could be choosen somewhere by the user
@@ -52,7 +47,7 @@ namespace Yabe
         {
             InitializeComponent();
 
-            this.device= device;
+            this.device = device;
             this.schedule_id = object_id;
 
             // Get the Present_Value data Type, used for new value in the schedule
@@ -75,7 +70,7 @@ namespace Yabe
             ReadEffectiveWeeklySchedule();
             ReadObjectsPropertiesReferences();
 
-            ToolTip t1=new ToolTip();
+            ToolTip t1 = new ToolTip();
             t1.AutomaticDelay = 0;
             t1.SetToolTip(TxtStartDate, "A wrong value set this to Always");
             ToolTip t2 = new ToolTip();
@@ -97,7 +92,7 @@ namespace Yabe
             {
                 if (device.ReadPropertyRequest(schedule_id, BacnetPropertyIds.PROP_EFFECTIVE_PERIOD, out value))
                 {
-                    DateTime dt=(DateTime)value[0].Value;
+                    DateTime dt = (DateTime)value[0].Value;
                     if (dt.Ticks != 0)  // it's the way always date (encoded FF-FF-FF-FF) is put into a DateTime struct
                         TxtStartDate.Text = dt.ToString("d");
                     else
@@ -126,7 +121,7 @@ namespace Yabe
             if (TxtStartDate.Text != "Always")
                 dt = Convert.ToDateTime(TxtStartDate.Text);
             else
-                dt=new DateTime(0);
+                dt = new DateTime(0);
             ASN1.encode_application_date(b, dt);
 
             if (TxtEndDate.Text != "Always")
@@ -155,7 +150,7 @@ namespace Yabe
             if (IdxRemove != -1)
                 listReferences.Items.RemoveAt(IdxRemove); // remove an old entry
 
-            ListViewItem lvi=new ListViewItem();
+            ListViewItem lvi = new ListViewItem();
             // add a new one
             lvi.Text = newText;
             lvi.Tag = bopr;
@@ -184,16 +179,16 @@ namespace Yabe
             {
 
             }
-             listReferences.EndUpdate();
+            listReferences.EndUpdate();
         }
 
         private void WriteObjectsPropertiesReferences()
         {
-            List<BacnetValue> values=new List<BacnetValue>();
+            List<BacnetValue> values = new List<BacnetValue>();
 
             if (listReferences.Items.Count != 0)
             {
-                values=new List<BacnetValue>();
+                values = new List<BacnetValue>();
 
                 foreach (ListViewItem lvi in listReferences.Items)
                 {
@@ -203,7 +198,7 @@ namespace Yabe
             }
 
             device.WritePropertyRequest(schedule_id, BacnetPropertyIds.PROP_LIST_OF_OBJECT_PROPERTY_REFERENCES, values);
-            
+
         }
 
         // no test here if buffer is to small
@@ -212,8 +207,8 @@ namespace Yabe
             // Write Default Schedule First
             try
             {
-                BacnetValue[] bv=new BacnetValue[1];
-                bv[0]= Property.DeserializeValue(TxtScheduleDefault.Text,ScheduleType);
+                BacnetValue[] bv = new BacnetValue[1];
+                bv[0] = Property.DeserializeValue(TxtScheduleDefault.Text, ScheduleType);
                 device.WritePropertyRequest(schedule_id, BacnetPropertyIds.PROP_SCHEDULE_DEFAULT, bv);
             }
             catch { }
@@ -260,7 +255,7 @@ namespace Yabe
 
         }
 
-       private void ReadEffectiveWeeklySchedule()
+        private void ReadEffectiveWeeklySchedule()
         {
             Schedule.BeginUpdate();
             Schedule.Nodes.Clear();
@@ -293,8 +288,8 @@ namespace Yabe
                     {
                         TreeNode tday = null;
 
-                        tday = new TreeNode("[" + (i-1).ToString() + "] : " + System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.DayNames[i % 7],0,0);
- 
+                        tday = new TreeNode("[" + (i - 1).ToString() + "] : " + System.Globalization.CultureInfo.InvariantCulture.DateTimeFormat.DayNames[i % 7], 0, 0);
+
                         Schedule.Nodes.Add(tday);
 
                         // Tag 0
@@ -307,7 +302,7 @@ namespace Yabe
                             // Time
                             offset += ASN1.decode_tag_number_and_value(InOutBuffer, offset, out tag_number, out len_value_type);
                             offset += ASN1.bacapp_decode_data(InOutBuffer, offset, InOutBuffer.Length, (BacnetApplicationTags)tag_number, len_value_type, out value);
-                            DateTime dt = (DateTime)value.Value;                            
+                            DateTime dt = (DateTime)value.Value;
 
                             // Value
                             offset += ASN1.decode_tag_number_and_value(InOutBuffer, offset, out tag_number, out len_value_type);
@@ -385,17 +380,17 @@ namespace Yabe
 
         private void Schedule_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
         {
-            if (e.Label != null) 
+            if (e.Label != null)
             {
-                if ((e.Label.Length > 0)&&(Valid_Entry(e.Label)))
-                {                    
+                if ((e.Label.Length > 0) && (Valid_Entry(e.Label)))
+                {
                     e.Node.EndEdit(false);
                 }
                 else
                 {
                     e.CancelEdit = true;
                     e.Node.BeginEdit();
-                    MessageBox.Show("Wrong Format : hh:mm:ss = Val or null","Error",MessageBoxButtons.OK,MessageBoxIcon.Error);
+                    MessageBox.Show("Wrong Format : hh:mm:ss = Val or null", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             else
@@ -429,7 +424,7 @@ namespace Yabe
                     EditPropertyObjectReference form = new EditPropertyObjectReference((BacnetDeviceObjectPropertyReference)listReferences.SelectedItems[0].Tag);
                     form.ShowDialog();
                     listReferences.SelectedItems[0].Tag = form.ObjRef;
-                    int idx=listReferences.SelectedItems[0].Index;
+                    int idx = listReferences.SelectedItems[0].Index;
 
                     if (form.RefModified == true)
                         AddPropertyRefentry(form.ObjRef, idx);
@@ -473,7 +468,7 @@ namespace Yabe
                 catch { }
             }
 
-            TreeNode T=null;
+            TreeNode T = null;
             foreach (TreeNode t in selectedTreeNodes)
             {
                 foreach (String s in Content)
@@ -491,7 +486,7 @@ namespace Yabe
                 mySelectedScheduleNode = T;
                 modifyToolStripMenuItem_Click(null, null);
             }
-               
+
         }
 
         // Add a new entry at the right place
@@ -499,7 +494,7 @@ namespace Yabe
         {
             if (this.ActiveControl == Schedule)   // In the Schedule List
             {
-                AddScheduleNode(new String[] {"00:00:00 = 0"});             
+                AddScheduleNode(new String[] { "00:00:00 = 0" });
             }
             else
             {
@@ -523,10 +518,10 @@ namespace Yabe
                 StrScheduleCopy = new List<String>();
 
                 foreach (TreeNode t in Schedule.SelectedNodes)
-                if  (t.Parent != null)
-                    StrScheduleCopy.Add(t.Text);
+                    if (t.Parent != null)
+                        StrScheduleCopy.Add(t.Text);
             }
-            else if ((listReferences.SelectedItems.Count!=0))
+            else if ((listReferences.SelectedItems.Count != 0))
                 PropertyReferenceCopy = listReferences.SelectedItems[0];
 
         }
@@ -539,10 +534,10 @@ namespace Yabe
             }
             else
             {
-                if (PropertyReferenceCopy!=null)
+                if (PropertyReferenceCopy != null)
                 {
-                    AddPropertyRefentry((BacnetDeviceObjectPropertyReference)PropertyReferenceCopy.Tag,-1);
-                 }
+                    AddPropertyRefentry((BacnetDeviceObjectPropertyReference)PropertyReferenceCopy.Tag, -1);
+                }
             }
         }
 
@@ -563,11 +558,11 @@ namespace Yabe
             try
             {
                 DateTime dt = Convert.ToDateTime(datestr);
-                cal.SetDate(dt);   
+                cal.SetDate(dt);
             }
             catch { }
 
-            DialogResult d=FormDatePicker.ShowDialog();
+            DialogResult d = FormDatePicker.ShowDialog();
 
             if (d != DialogResult.Abort)
                 datestr = cal.SelectionRange.Start.ToString("d");
@@ -586,14 +581,14 @@ namespace Yabe
         {
             String s = TxtStartDate.Text;
             DateTimePicker(ref s);
-            TxtStartDate.Text = s;       
+            TxtStartDate.Text = s;
         }
 
         private void EndDatePicker_Click(object sender, EventArgs e)
         {
             String s = TxtEndDate.Text;
             DateTimePicker(ref s);
-            TxtEndDate.Text = s;  
+            TxtEndDate.Text = s;
         }
 
         // only a valid date or no value : Always
@@ -675,7 +670,7 @@ namespace Yabe
 
         private void EditPropertyObjectReference_Load(object sender, System.EventArgs e)
         {
-            this.SetDesktopLocation(Cursor.Position.X-this.Width/2, Cursor.Position.Y-this.Height/2);
+            this.SetDesktopLocation(Cursor.Position.X - this.Width / 2, Cursor.Position.Y - this.Height / 2);
         }
 
         private void OK_Click(object sender, EventArgs e)
@@ -739,7 +734,7 @@ namespace Yabe
             this.SuspendLayout();
             this.Text = "Object Property Reference";
             this.Load += new System.EventHandler(this.EditPropertyObjectReference_Load);
- 
+
             // label1
             // 
             this.label1.AutoSize = true;

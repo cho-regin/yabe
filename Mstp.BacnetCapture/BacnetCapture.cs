@@ -24,21 +24,13 @@
 *
 *********************************************************************/
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
-using System.IO.Ports;
-using System.Threading;
-using Wireshark;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO.BACnet;
+using System.IO.Ports;
 using System.Runtime.InteropServices;
-using static System.Windows.Forms.AxHost;
-using System.Text.RegularExpressions;
+using System.Windows.Forms;
+using Wireshark;
 
 // Thank's to http://icons8.com/ for shark icon
 
@@ -57,7 +49,7 @@ namespace Mstp.BacnetCapture
         List<BacnetNode> NoeudsMstp = new List<BacnetNode>();
         String Master = "Node ";
 
-        bool[] FiltreMessages=new bool[8];
+        bool[] FiltreMessages = new bool[8];
 
         public BacnetCapture(BacnetMstpProtocolTransport MstpTransport)
         {
@@ -93,8 +85,8 @@ namespace Mstp.BacnetCapture
             }
             else // launch from Yabe
             {
-                label2.Visible=label3.Visible=false;
-                comboPort.Visible=comboSpeed.Visible=false;
+                label2.Visible = label3.Visible = false;
+                comboPort.Visible = comboSpeed.Visible = false;
                 label6.Visible = true;
                 buttonGo.Visible = false;
             }
@@ -256,7 +248,7 @@ namespace Mstp.BacnetCapture
 
             treeView.EndUpdate();
         }
-       
+
         // Frame filter for Wireshark
         private void checkedFiltresValue_Changed(object sender, EventArgs e)
         {
@@ -269,9 +261,9 @@ namespace Mstp.BacnetCapture
 
         private void Form1_Resize(object sender, EventArgs e)
         {
-            treeView.Height = this.Height-235;
+            treeView.Height = this.Height - 235;
             checksbox.Height = this.Height - 235;
-            this.Width=420;
+            this.Width = 420;
         }
 
         private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
@@ -314,7 +306,7 @@ namespace Mstp.BacnetCapture
             int i = Convert.ToInt32(tx.Tag);
             int j = Convert.ToInt32(ty.Tag);
 
-            return i.CompareTo(j); 
+            return i.CompareTo(j);
         }
     }
 
@@ -325,7 +317,7 @@ namespace Mstp.BacnetCapture
     {
         protected override void OnHandleCreated(EventArgs e)
         {
-            
+
             SendMessage(this.Handle, TVM_SETEXTENDEDSTYLE, (IntPtr)TVS_EX_DOUBLEBUFFER, (IntPtr)TVS_EX_DOUBLEBUFFER);
             base.OnHandleCreated(e);
 

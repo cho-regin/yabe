@@ -25,12 +25,10 @@
 *********************************************************************/
 
 using System;
-using System.Collections.Generic;
-using System.Windows.Forms;
-using System.Reflection;
 using System.IO;
 using System.Linq;
-using System.Diagnostics;
+using System.Reflection;
+using System.Windows.Forms;
 
 namespace Yabe
 {
@@ -48,7 +46,7 @@ namespace Yabe
                 // Don't care with Exception in thread without try catch.
                 // Normally here not exist ... but who knows ?
             };
-            
+
 
             // Load Embbeded dll
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>

@@ -25,18 +25,13 @@
 *********************************************************************/
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
-using System.IO.BACnet;
-using System.IO.BACnet.Serialize;
-using System.Threading;
-using ZedGraph;
-using System.IO;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.IO.BACnet;
+using System.Threading;
+using System.Windows.Forms;
+using ZedGraph;
 
 namespace Yabe
 {
@@ -155,7 +150,7 @@ namespace Yabe
             else
                 m_progresslabel.Visible = false;
 
-            m_list.Visible=true;
+            m_list.Visible = true;
         }
 
         // Get the numbers of records in the Log
@@ -217,7 +212,7 @@ namespace Yabe
         // modification : it will lost some values and duplicate some others.
         //
         private void DownloadFullTrendLog()
-        {   
+        {
             uint ItemCount;
             int Idx;
 
@@ -247,7 +242,7 @@ namespace Yabe
                         //decode
                         BacnetLogRecord[] records;
                         int l;
-                        if ((l = System.IO.BACnet.Serialize.Services.DecodeLogRecord(TrendBuffer, len, TrendBuffer.Length-len, CurvesNumber, out records)) < 0)
+                        if ((l = System.IO.BACnet.Serialize.Services.DecodeLogRecord(TrendBuffer, len, TrendBuffer.Length - len, CurvesNumber, out records)) < 0)
                         {
                             Trace.TraceError("Couldn't decode log data");
                             BeginInvoke(new Action<bool>(UpdateEnd), false);
@@ -258,7 +253,7 @@ namespace Yabe
                         //update interface
                         for (int i = 0; i < records.Length; i++, Idx++)
                         {
-                            if(records[i].type == BacnetTrendLogValueType.TL_TYPE_UNSIGN || records[i].type == BacnetTrendLogValueType.TL_TYPE_SIGN || records[i].type == BacnetTrendLogValueType.TL_TYPE_REAL  || records[i].type == BacnetTrendLogValueType.TL_TYPE_ENUM)
+                            if (records[i].type == BacnetTrendLogValueType.TL_TYPE_UNSIGN || records[i].type == BacnetTrendLogValueType.TL_TYPE_SIGN || records[i].type == BacnetTrendLogValueType.TL_TYPE_REAL || records[i].type == BacnetTrendLogValueType.TL_TYPE_ENUM)
                                 Pointslists[i].Add(new XDate(records[i].timestamp), (double)Convert.ChangeType(records[i].Value, typeof(double)));
                             else
                                 Pointslists[i].Add(new XDate(records[i].timestamp), double.NaN);
@@ -270,11 +265,11 @@ namespace Yabe
                     // Update progress bar
                     BeginInvoke(new Action<int>(UpdateProgress), (int)ItemCount);
 
-                } while (((Idx + 1) < Logsize)&&(StopDownload==false));
+                } while (((Idx + 1) < Logsize) && (StopDownload == false));
 
                 BeginInvoke(new Action<bool>(UpdateEnd), true);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Trace.TraceError("Error during log data: " + ex.Message);
                 try
@@ -303,7 +298,7 @@ namespace Yabe
                 int resolution = (int)Math.Max(0, Math.Ceiling(4 - Math.Log10(Math.Abs(pt.Y))));
                 ValStr = Math.Round(pt.Y, resolution).ToString();
             }
-            return "Date : "+dt.ToString() + "\nValue : " + ValStr; 
+            return "Date : " + dt.ToString() + "\nValue : " + ValStr;
         }
 
         #region ZedGraphCSVExport

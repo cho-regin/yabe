@@ -287,7 +287,7 @@ namespace Yabe
                         }
 
                     }
-                    catch {}
+                    catch { }
 
                     // Write state texts:
                     int? stateTextIdx = null;

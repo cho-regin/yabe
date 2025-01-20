@@ -48,7 +48,7 @@ namespace System.Windows.Forms
     [System.ComponentModel.DesignerCategory("")] // Avoid failure opening with the GUI Designer
     public partial class GenericInputBox<T> : Form where T : Control, new()
     {
-        public GenericInputBox(String BoxTitle, String Lbl, PostInitializeComponent<T> FillInput = null, double sizeFactor=1, bool BtCancelVisible=true, String ToolTipText=null)
+        public GenericInputBox(String BoxTitle, String Lbl, PostInitializeComponent<T> FillInput = null, double sizeFactor = 1, bool BtCancelVisible = true, String ToolTipText = null)
         {
             this.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             InitializeComponent(sizeFactor, BtCancelVisible);
@@ -62,13 +62,13 @@ namespace System.Windows.Forms
             }
 
             this.Text = BoxTitle;
-            if (FillInput!=null)
+            if (FillInput != null)
                 FillInput(genericInput); // 'Callback' for optional genericInput content initialization
         }
 
         private void bt_Click(object sender, EventArgs e)
         {
-            if (sender==btOK)
+            if (sender == btOK)
                 this.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.Close();
         }
@@ -98,7 +98,7 @@ namespace System.Windows.Forms
             // genericInput
             // 
             this.genericInput.Location = new System.Drawing.Point(25, 45);
-            this.genericInput.Size = new System.Drawing.Size((int)(155*sizeFactor), 20);
+            this.genericInput.Size = new System.Drawing.Size((int)(155 * sizeFactor), 20);
             this.genericInput.TabIndex = 1;
             // 
             // btOK
@@ -131,7 +131,7 @@ namespace System.Windows.Forms
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size((int)(203 + (155 * (sizeFactor-1))), 133);
+            this.ClientSize = new System.Drawing.Size((int)(203 + (155 * (sizeFactor - 1))), 133);
             this.Controls.Add(this.btOK);
             if (BtCancelVisible) this.Controls.Add(this.btCancel);
             this.Controls.Add(this.genericInput);

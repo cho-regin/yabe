@@ -24,13 +24,10 @@
 *
 *********************************************************************/
 
-using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Linq;
-using System.IO.BACnet.Serialize;
 using System.Diagnostics;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace System.IO.BACnet
@@ -188,7 +185,7 @@ namespace System.IO.BACnet
                     local_buffer = conn.EndReceive(asyncResult, ref ep);
                     rx = local_buffer.Length;
                 }
-                catch(ObjectDisposedException)
+                catch (ObjectDisposedException)
                 {
                     // I believe this is the official way to handle an aborted socket - OnReceive is called and
                     // we are forced to capture and swallow an exception... there is no way (without reflection)
@@ -462,10 +459,10 @@ namespace System.IO.BACnet
         {
             try
             {
-                if(m_exclusive_conn!=null)
-                    m_exclusive_conn.Close(); 
-                
-                if(m_shared_conn!=null)
+                if (m_exclusive_conn != null)
+                    m_exclusive_conn.Close();
+
+                if (m_shared_conn != null)
                     m_shared_conn.Close();
 
                 m_exclusive_conn = null;

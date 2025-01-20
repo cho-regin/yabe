@@ -23,12 +23,7 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *
 *********************************************************************/
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Diagnostics;
-using System.Windows.Forms;
 
 namespace Mstp.BacnetCapture
 {
@@ -39,8 +34,8 @@ namespace Mstp.BacnetCapture
         public int TotalFrames;
 
         static Stopwatch St = new Stopwatch();
-        
-        long mTTR=-1;
+
+        long mTTR = -1;
 
         long LastTick;
 
@@ -60,9 +55,9 @@ namespace Mstp.BacnetCapture
                 FrameTypeStatistic[type_frame]++;
             else
                 if (type_frame < 128)
-                    FrameTypeStatistic[8]++;
-                else
-                    FrameTypeStatistic[9]++;
+                FrameTypeStatistic[8]++;
+            else
+                FrameTypeStatistic[9]++;
 
             TotalFrames++;
 
@@ -70,10 +65,10 @@ namespace Mstp.BacnetCapture
                 TokenRotationTimeUpdate();
 
         }
-        
+
         public int MeanTimeTokenRotation
         {
-            get { return (int)((1000*mTTR)/Stopwatch.Frequency); }
+            get { return (int)((1000 * mTTR) / Stopwatch.Frequency); }
         }
 
         private void TokenRotationTimeUpdate()

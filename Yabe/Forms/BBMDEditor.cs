@@ -25,15 +25,10 @@
 *********************************************************************/
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
-using System.Net;
 using System.IO.BACnet;
+using System.Net;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace Yabe
 {
@@ -53,7 +48,7 @@ namespace Yabe
             BBMDTable.ColumnHeadersDefaultCellStyle = FDRTable.ColumnHeadersDefaultCellStyle = dgv;
 
             transport = (BacnetIpUdpProtocolTransport)comm.Transport;
-            BBMDep = new IPEndPoint(System.Net.IPAddress.Parse(adr.ToString().Split(':')[0]),Convert.ToInt32(adr.ToString().Split(':')[1]));
+            BBMDep = new IPEndPoint(System.Net.IPAddress.Parse(adr.ToString().Split(':')[0]), Convert.ToInt32(adr.ToString().Split(':')[1]));
 
             transport.Bvlc.MessageReceived += new BVLC.BVLCMessageReceiveHandler(Bvlc_MessageReceived);
         }
@@ -104,13 +99,13 @@ namespace Yabe
             {
                 lbBBMDlInfo.Visible = true;
                 WriteInOperation = false;
-                lbBBMDlInfo.Text="Write Broadcast Table Rejected";
+                lbBBMDlInfo.Text = "Write Broadcast Table Rejected";
             }
             if ((function == BacnetBvlcFunctions.BVLC_RESULT) && (result == BacnetBvlcResults.BVLC_RESULT_READ_FOREIGN_DEVICE_TABLE_NAK))
             {
                 lbFDRInfo.Visible = true;
                 lbFDRInfo.Text = "Read FDR Table Rejected";
-            }            
+            }
         }
 
         private void BBMDEditor_Load(object sender, EventArgs e)

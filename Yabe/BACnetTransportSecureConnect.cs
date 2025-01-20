@@ -28,15 +28,13 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net.Security;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using WebSocketSharp;
+using System.Text;
 using System.Threading;
 using System.Xml.Serialization;
-using System.Net.Security;
-using System.Text;
-using System.Security.Authentication;
-using System.Linq;
-using System.Diagnostics.SymbolStore;
+using WebSocketSharp;
 
 // based on Addendum 135-2016 bj
 // and with the help of sample applications from https://sourceforge.net/projects/bacnet-sc-reference-stack/
@@ -54,7 +52,7 @@ namespace System.IO.BACnet
 
         // A very good and simple lib for secure and unsecure websocket communication
         // https://github.com/sta/websocket-sharp
-        private WebSocketSharp.WebSocket Websocket; 
+        private WebSocketSharp.WebSocket Websocket;
 
         private BACnetSCConfigChannel configuration;
 
@@ -118,7 +116,7 @@ namespace System.IO.BACnet
                 if (configuration.OwnCertificate == null)
                     Trace.TraceWarning("BACnet/SC : Warning App without certificate ");
 
-                if ((configuration.OwnCertificate!=null)&&(!configuration.OwnCertificate.HasPrivateKey))
+                if ((configuration.OwnCertificate != null) && (!configuration.OwnCertificate.HasPrivateKey))
                     Trace.TraceWarning("BACnet/SC : Warning the App own certificate is without a private key");
 
                 if ((configuration.ValidateHubCertificate) && (configuration.ThrustedCertificates == null))
@@ -219,11 +217,11 @@ namespace System.IO.BACnet
 
             if (configuration.UseTLS)
             {
-                if (configuration.OnlyAllowsTLS13==true)
+                if (configuration.OnlyAllowsTLS13 == true)
                     Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13;
                 else
                     Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.None; // The client send all available options, the server should normaly propose only Tls1.3
-               
+
                 Websocket.SslConfiguration.ServerCertificateValidationCallback = RemoteCertificateValidationCallback;
                 Websocket.SslConfiguration.ClientCertificateSelectionCallback = LocalCertificateSelectionCallback;
             }
@@ -245,12 +243,12 @@ namespace System.IO.BACnet
         // if it's the hub certificate or one of it's signing CA in the chain
         private bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            if (configuration.ValidateHubCertificate==false)
+            if (configuration.ValidateHubCertificate == false)
                 return true;    // No verification requested : always OK
 
             // The certificate system accepted with sslPolicyErrors == SslPolicyErrors.None is not OK for BACNet/SC
 
-            if ((configuration.ThrustedCertificates!=null)&&(configuration.ThrustedCertificates.Contains(certificate)))
+            if ((configuration.ThrustedCertificates != null) && (configuration.ThrustedCertificates.Contains(certificate)))
                 return true;
 
             // Try if the cert share the same PKI as Yabe or a given additional thrusted CA certificate
@@ -265,7 +263,7 @@ namespace System.IO.BACnet
 
             Trace.TraceInformation("BACnet/SC : Remote certificate rejected");
 
-            return false; 
+            return false;
 
         }
         private void Websocket_OnOpen(object sender, EventArgs e)
@@ -291,17 +289,17 @@ namespace System.IO.BACnet
             Trace.TraceInformation("BACnet/SC Close");
             OnChannelDisconnected?.Invoke(this, e);
 
-            if (configuration.AutoReconnectDelay>-1)
+            if (configuration.AutoReconnectDelay > -1)
             {
                 state = BACnetSCState.AWAITING_WEBSOCKET;
-                ThreadPool.QueueUserWorkItem( (__)=>
+                ThreadPool.QueueUserWorkItem((__) =>
                 {
                     Thread.Sleep(configuration.AutoReconnectDelay * 1000);
                     Websocket.ConnectAsync();
 
                 });
             }
-            else if ((DuplicateVMACCount>0)&&(DuplicateVMACCount<3))
+            else if ((DuplicateVMACCount > 0) && (DuplicateVMACCount < 3))
             {
                 Trace.TraceInformation("BACnet/SC Duplicate VMAC : trying with a random one");
                 state = BACnetSCState.AWAITING_WEBSOCKET;
@@ -314,10 +312,10 @@ namespace System.IO.BACnet
             else
                 state = BACnetSCState.IDLE;
         }
-        private void Websocket_OnLog(LogData log, String Logmessage) 
+        private void Websocket_OnLog(LogData log, String Logmessage)
         {
             // First line is enough
-            if (DuplicateVMACCount==0)
+            if (DuplicateVMACCount == 0)
                 Trace.TraceError("BACnet/SC Websocket : " + log.Message.Split(new[] { '\r', '\n' })[0]);
         }
 
@@ -328,7 +326,7 @@ namespace System.IO.BACnet
                 state = BACnetSCState.DISCONNECTING;
 
                 BVLC_SC_SendSimpleBVLCMsg(BacnetBvlcSCMessage.BVLC_DISCONNECT_REQUEST, 0, 0);
-                ThreadPool.QueueUserWorkItem( (_) =>
+                ThreadPool.QueueUserWorkItem((_) =>
                 {
                     try
                     {
@@ -340,7 +338,7 @@ namespace System.IO.BACnet
                     }
                     catch { }
 
-                    state= BACnetSCState.IDLE;
+                    state = BACnetSCState.IDLE;
 
                 }
                 );
@@ -490,11 +488,11 @@ namespace System.IO.BACnet
             Array.Copy(myVMAC, 0, b, 4, 6);
             // UUID
             byte[] bUUID;
-            if (Guid.TryParse(configuration.UUID, out Guid uuid)==true)
+            if (Guid.TryParse(configuration.UUID, out Guid uuid) == true)
                 bUUID = uuid.ToByteArray();
             else
                 bUUID = Guid.NewGuid().ToByteArray();
-            
+
             Array.Copy(bUUID, 0, b, 10, 16);
 
             // Max BVLC size 1600
@@ -510,7 +508,7 @@ namespace System.IO.BACnet
 
         private void BVLC_SC_SendBvlcError(byte[] DestVmac, byte MsgId1, byte MsgId2, BacnetErrorClasses classe, BacnetErrorCodes code)
         {
-            byte[] b=new byte[10 + (configuration.DirectConnect==true?0:6)];
+            byte[] b = new byte[10 + (configuration.DirectConnect == true ? 0 : 6)];
 
             b[0] = (byte)BacnetBvlcSCMessage.BVLC_RESULT;
             b[1] = (byte)(configuration.DirectConnect == true ? 0 : 4);// Destination Vmac 4 only or not 0
@@ -518,7 +516,7 @@ namespace System.IO.BACnet
             b[3] = MsgId2;
 
             int offset = 0;
-            if (configuration.DirectConnect==false)
+            if (configuration.DirectConnect == false)
             {
                 // Destination Virtual Address
                 Array.Copy(DestVmac, 0, b, 4, 6);
@@ -550,13 +548,13 @@ namespace System.IO.BACnet
 
         private int BVLC_SC_Encode(byte[] buffer, int offset, BacnetBvlcSCMessage function, ref int msg_length, BacnetAddress address)
         {
-    
+
             // offset should be zero
 
             if (!configuration.DirectConnect)
             {
                 buffer[0] = (byte)function;
-                buffer[1] = 4 ;             // Destination Vmac only, no source VMAC on a hub channel, without optional fields
+                buffer[1] = 4;             // Destination Vmac only, no source VMAC on a hub channel, without optional fields
                 buffer[2] = 0xBA;           // Message Id
                 buffer[3] = 0xC0;
                 // Destination Virtual Address
@@ -662,7 +660,7 @@ namespace System.IO.BACnet
                     return 0;       // Only for BVLC 
                 case BacnetBvlcSCMessage.BVLC_DISCONNECT_REQUEST:
                     BVLC_SC_SendSimpleBVLCMsg(BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK, buffer[2], buffer[3]);
-                    state=BACnetSCState.IDLE;
+                    state = BACnetSCState.IDLE;
                     return 0;       // Only for BVLC 
                 case BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK:
                     // Don't set BACnetSCState.IDLE ... wait for close
@@ -725,7 +723,7 @@ namespace System.IO.BACnet
 
     public class BACnetSCConfigChannel
     {
-        public String primaryHubURI="";
+        public String primaryHubURI = "";
         public String failoverHubURI;
 
         public String UUID;
@@ -733,23 +731,24 @@ namespace System.IO.BACnet
         public String OwnCertificateFile;
         public String ThrustedCertificatesFile;
 
-        public bool ValidateHubCertificate=false;
-        public bool DirectConnect=false;
+        public bool ValidateHubCertificate = false;
+        public bool DirectConnect = false;
 
         public bool OnlyAllowsTLS13 = false;
         public bool UseTLS { get { return primaryHubURI.Contains("wss://"); } }
 
-        private int _AutoReconnectDelay=-1;
+        private int _AutoReconnectDelay = -1;
 
         public byte[] VMAC;
 
         public int AutoReconnectDelay // YY.6.1 BACnet/SC Reconnect Timeout
         {
             get { return _AutoReconnectDelay; }
-            set {
-                _AutoReconnectDelay = value; 
+            set
+            {
+                _AutoReconnectDelay = value;
                 if (_AutoReconnectDelay >= 0)
-                    _AutoReconnectDelay= Math.Min(30,Math.Max(2, _AutoReconnectDelay));
+                    _AutoReconnectDelay = Math.Min(30, Math.Max(2, _AutoReconnectDelay));
             }
         }
 

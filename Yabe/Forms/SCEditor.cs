@@ -25,7 +25,6 @@
 *
 *********************************************************************/
 using System;
-using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.IO.BACnet;
@@ -68,8 +67,8 @@ namespace Yabe
                 chk_VerifyHubCert.Checked = config.ValidateHubCertificate;
                 chk_DirectConnect.Checked = config.DirectConnect;
 
-                if ((config.VMAC!= null)&&(config.VMAC.Length==6))
-                    VMAC.Text= String.Join("", config.VMAC.Select(by => by.ToString("X2")));
+                if ((config.VMAC != null) && (config.VMAC.Length == 6))
+                    VMAC.Text = String.Join("", config.VMAC.Select(by => by.ToString("X2")));
 
                 YabeCertPassword.Text = YabeCertificateFilePassword;
 
@@ -178,7 +177,7 @@ namespace Yabe
 
                 Websocket.ConnectAsync();
             }
-            catch{}
+            catch { }
 
         }
         public bool GetServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)

@@ -25,14 +25,9 @@
 *********************************************************************/
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 using System.IO.BACnet;
 using System.IO.BACnet.Serialize;
+using System.Windows.Forms;
 
 namespace Yabe
 {
@@ -42,15 +37,15 @@ namespace Yabe
         BACnetDevice device;
 
         public NotificationEditor(BACnetDevice device, BacnetObjectId object_id)
-        {            
-            this.device= device;
-            this.object_id=object_id;
+        {
+            this.device = device;
+            this.object_id = object_id;
 
             InitializeComponent();
 
             LoadProperties();
 
-            labelRecipient.Text = "Recipient List : " + object_id.ToString().Substring(7) ;
+            labelRecipient.Text = "Recipient List : " + object_id.ToString().Substring(7);
         }
 
         private void LoadProperties()
@@ -80,7 +75,7 @@ namespace Yabe
                     for (int i = 0; i < aProp.value.Count / 7; i++)
                     {
                         // convert the List<BacnetValue> into a DeviceReportingRecipient
-                        DeviceReportingRecipient recipient=new DeviceReportingRecipient(aProp.value[i * 7], aProp.value[i * 7 + 1], aProp.value[i * 7 + 2], aProp.value[i * 7 + 3], aProp.value[i * 7 + 4], aProp.value[i * 7 + 5], aProp.value[i * 7 + 6]);
+                        DeviceReportingRecipient recipient = new DeviceReportingRecipient(aProp.value[i * 7], aProp.value[i * 7 + 1], aProp.value[i * 7 + 2], aProp.value[i * 7 + 3], aProp.value[i * 7 + 4], aProp.value[i * 7 + 5], aProp.value[i * 7 + 6]);
 
                         TabPage NewTab = new System.Windows.Forms.TabPage();
                         NewTab.Text = NewTab.Name = i.ToString();
@@ -120,12 +115,12 @@ namespace Yabe
                 {
                     if (t.Name != "Not Set") // Entry is OK ?
                     {
-                        RecipientUserCtrl r=(RecipientUserCtrl)t.Controls[0];
+                        RecipientUserCtrl r = (RecipientUserCtrl)t.Controls[0];
                         DeviceReportingRecipient newrp;
-                        if (r.adr!=null) // recipient is an IP address
-                            newrp=new DeviceReportingRecipient(r.WeekOfDay,r.fromTime.Value,r.toTime.Value,r.adr,Convert.ToUInt16(r.ProcessId.Text),r.AckRequired.Checked,r.EventType);
+                        if (r.adr != null) // recipient is an IP address
+                            newrp = new DeviceReportingRecipient(r.WeekOfDay, r.fromTime.Value, r.toTime.Value, r.adr, Convert.ToUInt16(r.ProcessId.Text), r.AckRequired.Checked, r.EventType);
                         else // recipient is a deviceId
-                            newrp = new DeviceReportingRecipient(r.WeekOfDay, r.fromTime.Value, r.toTime.Value,new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE,r.deviceid), Convert.ToUInt16(r.ProcessId.Text), r.AckRequired.Checked, r.EventType);
+                            newrp = new DeviceReportingRecipient(r.WeekOfDay, r.fromTime.Value, r.toTime.Value, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, r.deviceid), Convert.ToUInt16(r.ProcessId.Text), r.AckRequired.Checked, r.EventType);
 
                         PropVal.Add(new BacnetValue(newrp));
                     }
@@ -141,7 +136,7 @@ namespace Yabe
             if (AddrOk == false)
                 Sender.myTab.Text = Sender.myTab.Name = "Not Set";
             else
-                Sender.myTab.Text = Sender.myTab.Name = ""; 
+                Sender.myTab.Text = Sender.myTab.Name = "";
 
             // Re-numbering of each TabPage
             int i = 1;
@@ -161,7 +156,7 @@ namespace Yabe
             }
             catch { }
 
-            int i=1;
+            int i = 1;
             labelEmpty.Visible = true;
             foreach (TabPage t in RecipientsTab.Controls) // Re-numbering of each TabPage
             {
@@ -193,7 +188,7 @@ namespace Yabe
         private void btReadWrite_Click(object sender, EventArgs e)
         {
             WriteProperties();
-            int idx=RecipientsTab.SelectedIndex;
+            int idx = RecipientsTab.SelectedIndex;
             LoadProperties();
             try { RecipientsTab.SelectedIndex = idx; } catch { }
         }
@@ -216,7 +211,7 @@ namespace Yabe
 
             if (recipient == null)
             {
-                for (byte i = 0; i < 7;i++ ) WeekOfDay.SetBit(i, true);
+                for (byte i = 0; i < 7; i++) WeekOfDay.SetBit(i, true);
                 for (byte i = 0; i < 3; i++) EventType.SetBit(i, true);
                 return;
             }

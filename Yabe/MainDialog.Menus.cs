@@ -914,7 +914,7 @@ namespace Yabe
                     return;
             }
         }
-     
+
         // Read the Adress Space, and change all object Id by name
         // Popup ToolTipText Get Properties Name
         private void readPropertiesNameToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1140,17 +1140,7 @@ namespace Yabe
 
                     // If the Device name not set, try to update it
                     if (node.ToolTipText == "")   // already update with the device name
-                    {
-                        BacnetObjectId bobj_id = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id);
-                        String Identifier = device.ReadObjectName(bobj_id);
-                        if (!string.IsNullOrWhiteSpace(Identifier))
-                        {
-                            node.ToolTipText = node.Text.Replace("Id?", device_id.ToString());
-                            node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
-                            UpdateTreeNodeDeviceName(device, node);
-                        }
-                    }
-
+                        UpdateTreeNodeDeviceName(device, node);
                 }
 
                 if (CountStructuredObjects != 0)
@@ -1186,22 +1176,10 @@ namespace Yabe
                     foreach (BacnetObjectId bobj_id in objectList)
                     {
                         // If the Device name not set, try to update it
-                        if (bobj_id.type == BacnetObjectTypes.OBJECT_DEVICE)
-                        {
-                            // If the Device name not set, try to update it
-                            if (node.ToolTipText == "")   // already update with the device name
-                            {
-                                String Identifier = device.ReadObjectName(bobj_id);
+                        if ((bobj_id.type == BacnetObjectTypes.OBJECT_DEVICE)&& (node.ToolTipText == ""))
+                            UpdateTreeNodeDeviceName(device, node);
 
-                                if (!string.IsNullOrWhiteSpace(Identifier))
-                                {
-                                    node.ToolTipText = node.Text.Replace("Id?", bobj_id.instance.ToString());
-                                    node.Text = Identifier + " [" + bobj_id.Instance.ToString() + "] ";
-                                    UpdateTreeNodeDeviceName(device, node);
-                                }
-                            }
-                        }
-                        Count+=AddObjectEntry(device, null, bobj_id, m_AddressSpaceTree.Nodes);
+                        Count += AddObjectEntry(device, null, bobj_id, m_AddressSpaceTree.Nodes);
                     }
                     AddSpaceLabel.Text = AddrSpaceTxt + " : " + Count.ToString() + " Items";
                 }
@@ -1517,7 +1495,7 @@ namespace Yabe
                             }
                             catch (Exception ex)
                             {
-                                Trace.WriteLine ("Couldn't delete subscription: " + ex.Message);
+                                Trace.WriteLine("Couldn't delete subscription: " + ex.Message);
                             }
                         }
 
@@ -1644,10 +1622,10 @@ namespace Yabe
 
                 if (!(itm.Tag is Subscription subscription))
                     return;
-                
+
                 if (selectedSubscriptions[0].SubItems[6].Text != "Not started")
                 {
-                    if (subscription.IsActive==false)
+                    if (subscription.IsActive == false)
                     {
                         DialogResult res = MessageBox.Show("Try to renew the subscription ?", "Polling fail / Subscription no longer active", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                         if (res == DialogResult.Yes)
@@ -1670,7 +1648,7 @@ namespace Yabe
                             }
                         }
                     }
-                    else 
+                    else
                         UpdateGrid(subscription);
                 }
             }
@@ -1726,7 +1704,7 @@ namespace Yabe
             }
         }
 
- 
+
         private void TbxHighlightTreeView_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode != Keys.Return) return;

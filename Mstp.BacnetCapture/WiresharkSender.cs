@@ -24,10 +24,8 @@
 *
 *********************************************************************/
 using System;
-using System.Runtime.InteropServices;
-using System.IO;
-using System.Diagnostics;
 using System.IO.Pipes;
+using System.Runtime.InteropServices;
 using System.Threading;
 //
 // object creation could be done with 
@@ -44,13 +42,13 @@ using System.Threading;
 namespace Wireshark
 {
     // Pcap Global Header
-    [StructLayout(LayoutKind.Sequential, Pack=1)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     struct pcap_hdr_g
     {
         UInt32 magic_number;   /* magic number */
         UInt16 version_major;  /* major version number */
         UInt16 version_minor;  /* minor version number */
-        Int32  thiszone;       /* GMT to local correction */
+        Int32 thiszone;       /* GMT to local correction */
         UInt32 sigfigs;        /* accuracy of timestamps */
         UInt32 snaplen;        /* max length of captured packets, in octets */
         UInt32 network;        /* data link type */
@@ -65,7 +63,7 @@ namespace Wireshark
             this.snaplen = snaplen;
             this.network = network;
         }
-     
+
         // struct Marshaling
         // Maybe a 'manual' byte by byte serialization could be required on some systems
         // work well on Win32, Win64 .NET 3.0 to 4.5
@@ -78,11 +76,11 @@ namespace Wireshark
             Marshal.StructureToPtr(this, buffer, false);
             handle.Free();
             return rawdatas;
-        } 
+        }
     }
 
     // Pcap Packet Header
-    [StructLayout(LayoutKind.Sequential, Pack=1)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     struct pcap_hdr_p
     {
         UInt32 ts_sec;         /* timestamp seconds */
@@ -92,7 +90,7 @@ namespace Wireshark
 
         public pcap_hdr_p(UInt32 lenght, UInt32 datetime, UInt32 microsecond)
         {
-            incl_len=orig_len = lenght;
+            incl_len = orig_len = lenght;
             ts_sec = datetime;
             ts_usec = microsecond;
         }
@@ -108,7 +106,7 @@ namespace Wireshark
             Marshal.StructureToPtr(this, buffer, false);
             handle.Free();
             return rawdatas;
-        }             
+        }
     }
 
     public class WiresharkSender
@@ -181,7 +179,7 @@ namespace Wireshark
             DateTime d2 = new DateTime((date.Ticks / (long)10000000) * (long)10000000);
 
             date_sec = DateTimeToUnixTimestamp(date);
-            date_usec =( UInt32)((date.Ticks - d2.Ticks) / 10);         
+            date_usec = (UInt32)((date.Ticks - d2.Ticks) / 10);
 
             return SendToWireshark(buffer, offset, lenght, date_sec, date_usec);
         }
@@ -193,7 +191,7 @@ namespace Wireshark
 
             if (buffer == null) return false;
             if (buffer.Length < (offset + lenght)) return false;
-            
+
             pcap_hdr_p pHdr = new pcap_hdr_p((UInt32)lenght, date_sec, date_usec);
             byte[] b = pHdr.ToByteArray();
 

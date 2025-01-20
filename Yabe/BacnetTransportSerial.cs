@@ -24,15 +24,12 @@
 *
 *********************************************************************/
 
-using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Linq;
-using System.IO.BACnet.Serialize;
 using System.Diagnostics;
+using System.IO.BACnet.Serialize;
 
 namespace System.IO.BACnet
-{  
+{
     public interface IBacnetSerialTransport : IDisposable
     {
         void Open();
@@ -1077,7 +1074,7 @@ namespace System.IO.BACnet
 
                 try
                 {
-                    GetMessageStatus status = GetNextMessage(T_NO_TOKEN, out  frame_type, out  destination_address, out  source_address, out  msg_length);
+                    GetMessageStatus status = GetNextMessage(T_NO_TOKEN, out frame_type, out destination_address, out source_address, out msg_length);
 
                     if (status == GetMessageStatus.ConnectionClose)
                     {
@@ -1193,7 +1190,7 @@ namespace System.IO.BACnet
                 tx = MSTP.Encode(frame.data, 0, frame.frame_type, frame.destination_address, (byte)m_TS, frame.data_length);
                 m_port.Write(frame.data, 0, tx);
 
-                transmitedBuf = frame.data;              
+                transmitedBuf = frame.data;
             }
             frame.send_mutex.Set();
 
@@ -1548,9 +1545,9 @@ namespace System.IO.BACnet
                                 case BacnetMstpFrameTypes.FRAME_TYPE_TEST_REQUEST:
                                     //respond to test
                                     byte[] RepBuf = null;
-                                    if (msg_length>0)
+                                    if (msg_length > 0)
                                     {
-                                        RepBuf=new byte[msg_length];
+                                        RepBuf = new byte[msg_length];
                                         Array.Copy(m_local_buffer, MSTP.MSTP_HEADER_LENGTH, RepBuf, 0, msg_length);
                                     }
                                     if (destination_address == 0xFF)
