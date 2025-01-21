@@ -806,7 +806,7 @@ namespace Yabe
         }
 
         /// <summary>
-        /// Provides the name if it is in the cache, uses ReadObjectName if value is mandatory
+        /// Provides the name if it is in the cache
         /// </summary>
         public String GetObjectName(BacnetObjectId object_id)
         {

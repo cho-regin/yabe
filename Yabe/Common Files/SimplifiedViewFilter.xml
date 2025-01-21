@@ -29,6 +29,7 @@ DEVICE can be removed/modified as all other objects.
   <BacnetObjectDescription>
     <typeId>OBJECT_DEVICE</typeId>
     <propsId>
+      <BacnetPropertyIds>PROP_OBJECT_IDENTIFIER</BacnetPropertyIds>
       <BacnetPropertyIds>PROP_OBJECT_NAME</BacnetPropertyIds>
       <BacnetPropertyIds>PROP_DESCRIPTION</BacnetPropertyIds>
       <BacnetPropertyIds>PROP_ACTIVE_COV_SUBSCRIPTIONS</BacnetPropertyIds>

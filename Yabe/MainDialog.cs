@@ -392,11 +392,7 @@ namespace Yabe
 
             m_DeviceTree.TreeViewNodeSorter = new NodeSorter(Properties.Settings.Default.DeviceViewMode == DeviceTreeViewType.NetworkThenDeviceClass);
 
-            ThreadPool.QueueUserWorkItem(_ =>
-            {
-                Thread.Sleep(100);
-                Invoke(new Action(() => { addDevicesearchToolStripMenuItem_Click(this, null); }));
-            });
+            BeginInvoke(new Action(() => { addDevicesearchToolStripMenuItem_Click(this, null); }));
 
         }
         private void MainDialog_FormClosing(object sender, FormClosingEventArgs e)
@@ -435,7 +431,7 @@ namespace Yabe
         {
             if (Root == null)   // Frst step, change the ToolTip and the Text
             {
-                String Identifier = device.deviceName;
+                String Identifier = device.ReadObjectName(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId));
                 // / can be done (mstp case where slave id is replace by the device id without name
                 // but normaly the Node is only at one place
                 if ((string.IsNullOrWhiteSpace(Identifier))||(original.ToolTipText == ""))
