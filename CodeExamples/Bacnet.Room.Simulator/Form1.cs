@@ -25,17 +25,13 @@
 *********************************************************************/
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using DemoServer;
 using System.IO.BACnet;
-using System.IO.BACnet.Storage;
-using System.Diagnostics;
 using System.Linq;
 using System.Net.NetworkInformation;
-using System.Threading;
+using Bacnet.Room.Simulator.Properties;
 
 namespace Bacnet.Room.Simulator
 {
@@ -66,6 +62,7 @@ namespace Bacnet.Room.Simulator
         BacnetObjectId Bac_CmdClim = new BacnetObjectId(BacnetObjectTypes.OBJECT_BINARY_VALUE, 1);
 
         RoomModel Room=new RoomModel(21);
+        bool TempFarenheit;
 
         public BacForm()
         {
@@ -80,6 +77,9 @@ namespace Bacnet.Room.Simulator
             BacnetActivity.m_local_ip_endpoint = networkInterfaces.SelectedItem.ToString();
 
             bacnetid.Text = "Bacnet device Id :  " + BacnetActivity.deviceId.ToString();
+
+            TempFarenheit = (((Application.CurrentCulture.ToString() == "en-US") && (Settings.Default.ChangeTemperatureDefaultUnit == false))) ||
+                            ((Application.CurrentCulture.ToString() != "en-US") && (Settings.Default.ChangeTemperatureDefaultUnit == true));
 
             AdaptationFarenheit();
 
@@ -117,8 +117,7 @@ namespace Bacnet.Room.Simulator
             BacnetObjectId b;
             BacnetValue bv;
 
-            if (Application.CurrentCulture.ToString() != "en-US")
-                return;
+            if (TempFarenheit==false) return;
 
             for (int i = 0; i < 4; i++)
             {
@@ -147,7 +146,7 @@ namespace Bacnet.Room.Simulator
         private string TempDegre2Text(double C)
         {
 
-            if (Application.CurrentCulture.ToString() == "en-US")
+            if (TempFarenheit)
                 return Truncate(C).ToString()+"°F";
             else
                 return Truncate(C).ToString()+"°C";
@@ -156,7 +155,7 @@ namespace Bacnet.Room.Simulator
         private float TempDegre2Value(double C)
         {
 
-            if (Application.CurrentCulture.ToString() == "en-US")
+            if (TempFarenheit)
                 return Truncate(C * 1.8 + 32);
             else
                 return Truncate(C);
@@ -164,7 +163,7 @@ namespace Bacnet.Room.Simulator
 
         private double Temp2Degree(double C)
         {
-            if (Application.CurrentCulture.ToString() == "en-US")
+            if (TempFarenheit)
                 return (C - 32) / 1.8;
             else
                 return C;
