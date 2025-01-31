@@ -759,7 +759,7 @@ namespace Yabe
         }
 
         Semaphore SemBackground = new Semaphore(0, Int32.MaxValue);
-        Queue<Tuple<BACnetDevice, TreeNode>> BackGroundQueries = new Queue<Tuple<BACnetDevice, TreeNode>>();
+        Queue<Tuple<BACnetDevice, TreeNode, int>> BackGroundQueries = new Queue<Tuple<BACnetDevice, TreeNode, int>>();
         void BACnetDeviceBackGroundWorker()
         {
 
@@ -767,16 +767,19 @@ namespace Yabe
             {
                 SemBackground.WaitOne();
 
-                Tuple<BACnetDevice, TreeNode> JobParam;
+                Tuple<BACnetDevice, TreeNode, int> JobParam;
                 lock (BackGroundQueries)
                     JobParam = BackGroundQueries.Dequeue();
 
                 BACnetDevice device=JobParam.Item1;
                 TreeNode OrignalTreeNode=JobParam.Item2;
 
-                // For devices where the dictionary cannot be acquired in one request the operation is not decomposed
-                // If all names cannot be acquired in a single request the operation is not decomposed
-                // If names are already in the ObjectNameDatabase the operation is not done
+                // In all mode rather than BackGroundOperationType.GetAbsolutelyAll
+                // for devices where the dictionary cannot be acquired in one request the operation is not decomposed
+                // if all names cannot be acquired in a single request the operation is not decomposed
+                // if names are already in the ObjectNameDatabase the operation is not done
+                // In BackGroundOperationType.GetAbsolutelyAll mode
+                // all is decomposed step by step but by queuing each step
                 switch (Properties.Settings.Default.BackGroundOperations)
                 {
                     case BackGroundOperationType.GetObjectsList:
@@ -807,28 +810,56 @@ namespace Yabe
                         device.ReadObjectList(out List<BacnetObjectId> list, out uint Count, false);
                         if ((list == null) && (Count > 0))
                         {
-                            for (uint i = 1; i <= Count; i++)
-                                device.ReadObjectListItem(out _, i);
-
-                            device.ReadObjectList(out list, out Count, false);
-                            if (list == null)
-                                return;
-
-                            device.ReadAllHierachicalSubLists();
-                            device.ReadAllObjectsName();
-
-                            if (device.GetObjectName(list.Last())==null) // last object name in cache or not
+                            // First loop, push the continuation at the end of the queue
+                            // the thread(s) can continue the job with others devices where it's more fast to
+                            // get the dictionnary
+                            if (JobParam.Item3 == 0)
                             {
-                                for (uint i =0; i < Count; i++)
-                                    device.ReadObjectName(list[(int)i]);
+                                lock (BackGroundQueries)
+                                    BackGroundQueries.Enqueue(new Tuple<BACnetDevice, TreeNode, int>(JobParam.Item1, JobParam.Item2, 1));
+                                SemBackground.Release();
+                                continue;
+
+                            }
+                            {
+                                for (uint i = 1; i <= Count; i++)
+                                    device.ReadObjectListItem(out _, i);
+
+                                device.ReadObjectList(out list, out Count, false);
+                                if (list == null)
+                                    break;
+
+                                device.ReadAllHierachicalSubLists();
+                                device.ReadAllObjectsName();
+
+                                if (device.GetObjectName(list.Last()) == null) // last object name in cache or not
+                                {
+                                    // Second loop, push once again the continuation at the end of the queue 
+                                    lock (BackGroundQueries)
+                                        BackGroundQueries.Enqueue(new Tuple<BACnetDevice, TreeNode, int>(JobParam.Item1, JobParam.Item2, 2));
+                                    SemBackground.Release();
+                                    continue;
+                                }
                             }
                         }
                         else
                         {
                             device.ReadAllHierachicalSubLists();
                             device.ReadAllObjectsName();
-                        }
+                            if (device.GetObjectName(list.Last()) == null) // last object name in cache or not
+                            {
+                                if (JobParam.Item3 != 2)
+                                {
+                                    lock (BackGroundQueries)
+                                        BackGroundQueries.Enqueue(new Tuple<BACnetDevice, TreeNode, int>(JobParam.Item1, JobParam.Item2, 2));
+                                    SemBackground.Release();
+                                    continue;
+                                }
 
+                                for (uint i = 0; i < Count; i++)
+                                    device.ReadObjectName(list[(int)i]);
+                            }
+                        }
                         break;
 
                 }
@@ -933,7 +964,7 @@ namespace Yabe
                 {
                     if (deviceName != null) newNode = null; // Node not required to be updated
                     lock (BackGroundQueries)
-                        BackGroundQueries.Enqueue(new Tuple<BACnetDevice, TreeNode>(new_device, newNode));
+                        BackGroundQueries.Enqueue(new Tuple<BACnetDevice, TreeNode, int>(new_device, newNode, 0));
                     SemBackground.Release();
                 }
 

@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Yabe"
-#define MyAppVersion "2.0.0"
+#define MyAppVersion "2.1.0"
 #define MyAppPublisher "Yabe Authors"
 #define MyAppURL "http://sourceforge.net/projects/yetanotherbacnetexplorer"
 #define MyAppExeName "Yabe.exe"
@@ -77,6 +77,7 @@ Source: "..\..\DemoServer\bin\Debug\DemoServer.exe"; DestDir: "{app}\AddOn"; Fla
 Source: "..\..\DemoServer\bin\Debug\DeviceStorage.Xml"; DestDir: "{app}\AddOn"; Flags: ignoreversion
                            
 Source: "..\..\CodeExamples\Bacnet.Room.Simulator\bin\Debug\Bacnet.Room.Simulator.exe"; DestDir: "{app}\AddOn"; Flags: ignoreversion
+Source: "..\..\CodeExamples\Bacnet.Room.Simulator\bin\Debug\Bacnet.Room.Simulator.exe.config"; DestDir: "{app}\AddOn"; Flags: ignoreversion
 Source: "..\..\CodeExamples\Bacnet.Room.Simulator\Readme.txt"; DestDir: "{app}\AddOn"; Flags: ignoreversion
 
 Source: "..\..\CodeExamples\Wheather2_to_Bacnet\bin\Debug\Wheather2_to_Bacnet.exe"; DestDir: "{app}\AddOn"; Flags: ignoreversion
@@ -85,9 +86,9 @@ Source: "..\..\CodeExamples\Wheather2_to_Bacnet\Wheather2config.reg"; DestDir: "
 
 Source: "..\..\Mstp.BacnetCapture\bin\Debug\Mstp.BacnetCapture.exe"; DestDir: "{app}\AddOn"; Flags: ignoreversion
 
-Source: "..\..\Yabe\Yabe.p12"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\TestHub.crt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\BACnetSCConfig.config"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\Common Files\Yabe.p12"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\Common Files\TestHub.crt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\Common Files\BACnetSCConfig.config"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\Yabe"; Filename: "{app}\Yabe.Exe"
