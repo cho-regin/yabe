@@ -298,7 +298,6 @@ namespace Yabe
                 {
                     ListCountExpected = (uint)(ulong)value_list[0].Value;
                     Count = ListCountExpected;
-                    OperationInProgress.ReleaseMutex();
                     return true;
                 }
             }
@@ -306,8 +305,11 @@ namespace Yabe
             {
                 ReadObjectsListOneShot = false;    // no way to read OBJECT_LIST. Maybe a temporary problem.
             }
-
-            OperationInProgress.ReleaseMutex();
+            finally 
+            {
+                OperationInProgress.ReleaseMutex();
+            }
+           
             return false;
         }
 
@@ -351,8 +353,8 @@ namespace Yabe
                 }
             }
             catch { }
+            finally { OperationInProgress.ReleaseMutex(); }
 
-            OperationInProgress.ReleaseMutex();
             return false;
         }
 

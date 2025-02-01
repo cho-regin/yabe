@@ -1292,7 +1292,6 @@ namespace Yabe
 
                 for (uint i = 1; i <= count; i++)
                 {
-
                     BacnetObjectId objId;
 
                     if (!device.ReadObjectListItem(out objId, i, ForceRead))
