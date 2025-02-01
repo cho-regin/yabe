@@ -33,7 +33,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml.Serialization;
-using static System.IO.BACnet.BACnetCOVNotificationMultiple;
 
 namespace Yabe
 {
@@ -77,8 +76,10 @@ namespace Yabe
                                                                     BacnetPropertyIds.PROP_LIST_OF_GROUP_MEMBERS,
                                                                     BacnetPropertyIds.PROP_SUBORDINATE_LIST,
                                                                     BacnetPropertyIds.PROP_PROPERTY_LIST};
-        object Lock = new object();
-        Mutex OperationInProgress = new Mutex();
+
+        // Only a very light mecanism is apply to protect globaly the Prop_ObjectList List, it should be OK
+        // for simple usage in Yabe with a background thread just after IAm to query the Dictionary
+        Mutex OperationInProgress = new Mutex();  
         public BACnetDevice(BacnetClient sender, BacnetAddress addr, uint deviceId, uint MaxAPDULenght = 0, BacnetSegmentations Segmentation = BacnetSegmentations.SEGMENTATION_UNKNOW, uint vendor_id = System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE)
         {
             channel = sender;
@@ -184,9 +185,11 @@ namespace Yabe
 
         public void ClearCache()
         {
-            Prop_Cached.Clear();
+            lock (Prop_Cached)
+                Prop_Cached.Clear();
             Prop_ObjectList = null;
             ListCountExpected = 0;
+            
         }
 
         public bool ReadAllObjectsName(bool ForceRead = false)
@@ -198,8 +201,12 @@ namespace Yabe
             try
             {
                 List<BacnetReadAccessSpecification> bras = new List<BacnetReadAccessSpecification>();
-                foreach (var objId in Prop_ObjectList)
-                    bras.Add(new BacnetReadAccessSpecification(objId, new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_NAME, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL) }));
+                OperationInProgress.WaitOne();
+                {
+                    foreach (var objId in Prop_ObjectList)
+                        bras.Add(new BacnetReadAccessSpecification(objId, new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_NAME, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL) }));
+                }
+                OperationInProgress.ReleaseMutex();
 
                 if (ReadPropertyMultipleRequest(bras, out IList<BacnetReadAccessResult> values) == true)
                 {
@@ -218,13 +225,18 @@ namespace Yabe
         {
             if ((Prop_ObjectList == null) || (Prop_ObjectList.Count == 0)) return false;
 
-            foreach (var objId in Prop_ObjectList)
+            OperationInProgress.WaitOne();
             {
-                if (objId.type == BacnetObjectTypes.OBJECT_STRUCTURED_VIEW)
-                    ReadPropertyRequest(objId, BacnetPropertyIds.PROP_SUBORDINATE_LIST, out _, ForceRead);
-                if (objId.type == BacnetObjectTypes.OBJECT_GROUP)
-                    ReadPropertyRequest(objId, BacnetPropertyIds.PROP_LIST_OF_GROUP_MEMBERS, out _, ForceRead);
+                foreach (var objId in Prop_ObjectList)
+                {
+                    if (objId.type == BacnetObjectTypes.OBJECT_STRUCTURED_VIEW)
+                        ReadPropertyRequest(objId, BacnetPropertyIds.PROP_SUBORDINATE_LIST, out _, ForceRead);
+                    if (objId.type == BacnetObjectTypes.OBJECT_GROUP)
+                        ReadPropertyRequest(objId, BacnetPropertyIds.PROP_LIST_OF_GROUP_MEMBERS, out _, ForceRead);
+                }
             }
+            OperationInProgress.ReleaseMutex();
+
             return true;
         }
         // Read or give the object List. If rejected read and return the number of elements in the List.
@@ -251,8 +263,6 @@ namespace Yabe
                 }
             }
 
-            // Only a very light mecanism is apply to protect the Prop_ObjectList List, it should be OK
-            // for simple usage in Yabe with a background thread just after IAm to query the Dictionary
             OperationInProgress.WaitOne();
 
             if (ReadObjectsListOneShot == true) // If a previous test without success was done, no way to try it this way
@@ -307,12 +317,15 @@ namespace Yabe
         {
             ObjId = new BacnetObjectId();
 
+            OperationInProgress.WaitOne();
+
             // Already in the cache ?
             if (ForceRead == false)
             {
                 if ((Prop_ObjectList != null) && (Prop_ObjectList.Count >= Count))
                 {
                     ObjId = (BacnetObjectId)Prop_ObjectList[(int)(Count - 1)];
+                    OperationInProgress.ReleaseMutex();
                     return true;
                 }
             }
@@ -320,7 +333,10 @@ namespace Yabe
             if (Prop_ObjectList == null) Prop_ObjectList = new List<BacnetObjectId>();
 
             if (Prop_ObjectList.Count != Count - 1)
+            {
+                OperationInProgress.ReleaseMutex();
                 return false;   // Wrong sequence, should be 1..n in order, today not required / not accepted
+            }
 
             try
             {
@@ -336,6 +352,7 @@ namespace Yabe
             }
             catch { }
 
+            OperationInProgress.ReleaseMutex();
             return false;
         }
 
@@ -369,11 +386,14 @@ namespace Yabe
             int FoundInCache = 0;
             try
             {
-                ObjCache = Prop_Cached.First(o => (o.objectIdentifier.Equals(object_id)));
-                FoundInCache++;
-                Property = ObjCache.values.First(o => (o.property.propertyIdentifier == (uint)property_id) && (o.property.propertyArrayIndex == array_index));
-                PropertyValue = Property.value;
-                FoundInCache++;
+                lock (Prop_Cached)
+                {
+                    ObjCache = Prop_Cached.First(o => (o.objectIdentifier.Equals(object_id)));
+                    FoundInCache++;
+                    Property = ObjCache.values.First(o => (o.property.propertyIdentifier == (uint)property_id) && (o.property.propertyArrayIndex == array_index));
+                    PropertyValue = Property.value;
+                    FoundInCache++;
+                }
 
             }
             catch { }
@@ -406,15 +426,18 @@ namespace Yabe
 
                 if (Array.FindIndex(CachedProperties, o => o == property_id) != -1)
                 {
-                    if (FoundInCache == 1)
-                        ObjCache.values.Add(new_entry); // If the founded Object already in cache just add the new property
-                    else
+                    lock (Prop_Cached)
                     {
-                        ObjCache.values = new List<BacnetPropertyValue>
+                        if (FoundInCache == 1)
+                            ObjCache.values.Add(new_entry); // If the founded Object already in cache just add the new property
+                        else
+                        {
+                            ObjCache.values = new List<BacnetPropertyValue>
                         {
                             new_entry
                         };
-                        Prop_Cached.Add(ObjCache);
+                            Prop_Cached.Add(ObjCache);
+                        }
                     }
                 }
             }
@@ -505,7 +528,7 @@ namespace Yabe
             }
 
             if (objectsDescriptionDefault == null)  // first call, Read Objects description from internal & optional external xml file
-                LoadObjectsDescription();
+                LoadObjectsDescription();           // Normaly already done
 
             int old_retries = channel.Retries;
 
