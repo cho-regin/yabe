@@ -779,6 +779,18 @@ namespace Yabe
                 BACnetDevice device=JobParam.Item1;
                 TreeNode OrignalTreeNode=JobParam.Item2;
 
+                // First get the device name
+                String deviceName= device.ReadObjectName(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId));
+                // Update all nodes in the TreeView
+                if ((OrignalTreeNode != null) && (!string.IsNullOrWhiteSpace(deviceName)))
+                {
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        if (OrignalTreeNode.ToolTipText == "")
+                            UpdateTreeNodeDeviceName(device, OrignalTreeNode);
+
+                    });
+                }
                 // In all mode rather than BackGroundOperationType.GetAbsolutelyAll
                 // for devices where the dictionary cannot be acquired in one request the operation is not decomposed
                 // if all names cannot be acquired in a single request the operation is not decomposed
@@ -865,22 +877,9 @@ namespace Yabe
                             }
                         }
                         break;
-
                 }
 
-                String deviceName = device.deviceName;
-                // Update all nodes in the TreeView
-                if ((OrignalTreeNode!=null)&&(!string.IsNullOrWhiteSpace(deviceName)))
-                {
-                    this.Invoke((MethodInvoker)delegate
-                    {
-                        if (OrignalTreeNode.ToolTipText=="")
-                            UpdateTreeNodeDeviceName(device, OrignalTreeNode);
-
-                    });
-                }
-
-                if ((LastJob) && (BackGroundQueries.Count == 0)) Trace.WriteLine("End of a Background queries group");
+                if ((LastJob) && (BackGroundQueries.Count == 0)) Trace.WriteLine("End of a Background queries batch");
             }
 
         }
