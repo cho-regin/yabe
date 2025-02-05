@@ -760,8 +760,9 @@ namespace Yabe
         }
 
         Semaphore SemBackground = new Semaphore(0, Int32.MaxValue);
-        // Queue with the device, the node in the NetworkTreeNode and a counter to requeue some partial jobs 
+        // Queues with the device, the node in the NetworkTreeNode and a counter to requeue some partial jobs at low priority 
         ConcurrentQueue<Tuple<BACnetDevice, TreeNode, int>> BackGroundQueries = new ConcurrentQueue<Tuple<BACnetDevice, TreeNode, int>>();
+        ConcurrentQueue<Tuple<BACnetDevice, TreeNode, int>> BackGroundQueriesLowPriority = new ConcurrentQueue<Tuple<BACnetDevice, TreeNode, int>>();
         void BACnetDeviceBackGroundWorker()
         {
 
@@ -770,11 +771,13 @@ namespace Yabe
             for (; ; )
             {
                 SemBackground.WaitOne();
+                Tuple<BACnetDevice, TreeNode, int> JobParam;
 
-                if (BackGroundQueries.TryDequeue(out Tuple<BACnetDevice, TreeNode, int> JobParam) == false)
-                    continue; // Should never happen
+                if (BackGroundQueries.TryDequeue(out JobParam) == false)
+                    if (BackGroundQueriesLowPriority.TryDequeue(out JobParam) == false)
+                        continue; // Should never happen
 
-                LastJob = (BackGroundQueries.Count == 0); // The last job is not always the job that finishes last
+                LastJob = ((BackGroundQueries.Count == 0)&&(BackGroundQueriesLowPriority.Count==0)); // The last job is not always the job that finishes last
 
                 BACnetDevice device=JobParam.Item1;
                 TreeNode OrignalTreeNode=JobParam.Item2;
@@ -832,7 +835,7 @@ namespace Yabe
                             // get the dictionnary
                             if (JobParam.Item3 == 0)
                             {
-                                BackGroundQueries.Enqueue(new Tuple<BACnetDevice, TreeNode, int>(JobParam.Item1, JobParam.Item2, 1));
+                                BackGroundQueriesLowPriority.Enqueue(new Tuple<BACnetDevice, TreeNode, int>(JobParam.Item1, JobParam.Item2, 1));
                                 LastJob = false;
                                 SemBackground.Release();
                                 continue;
@@ -851,7 +854,7 @@ namespace Yabe
                             if (device.GetObjectName(list.Last()) == null) // last object name in cache or not
                             {
                                 // Second loop, push once again the continuation at the end of the queue 
-                                BackGroundQueries.Enqueue(new Tuple<BACnetDevice, TreeNode, int>(JobParam.Item1, JobParam.Item2, 2));
+                                BackGroundQueriesLowPriority.Enqueue(new Tuple<BACnetDevice, TreeNode, int>(JobParam.Item1, JobParam.Item2, 2));
                                 LastJob = false;
                                 SemBackground.Release();
                                 continue;
@@ -866,7 +869,7 @@ namespace Yabe
                             {
                                 if (JobParam.Item3 != 2)
                                 {
-                                    BackGroundQueries.Enqueue(new Tuple<BACnetDevice, TreeNode, int>(JobParam.Item1, JobParam.Item2, 2));
+                                    BackGroundQueriesLowPriority.Enqueue(new Tuple<BACnetDevice, TreeNode, int>(JobParam.Item1, JobParam.Item2, 2));
                                     LastJob = false;
                                     SemBackground.Release();
                                     continue;
@@ -879,7 +882,7 @@ namespace Yabe
                         break;
                 }
 
-                if ((LastJob) && (BackGroundQueries.Count == 0)) Trace.WriteLine("End of a Background queries batch");
+                if ((LastJob) && (BackGroundQueries.Count == 0) && (BackGroundQueriesLowPriority.Count == 0)) Trace.WriteLine("End of a Background queries batch");
             }
 
         }
