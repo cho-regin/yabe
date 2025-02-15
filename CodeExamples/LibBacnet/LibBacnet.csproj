@@ -46,6 +46,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="websocket-sharp">
+      <HintPath>..\..\Yabe\Resources\EmbeddedDll\websocket-sharp.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\DemoServer\DeviceStorage.cs">
@@ -65,6 +68,9 @@
     </Compile>
     <Compile Include="..\..\Yabe\BACnetTransportEthernet.cs">
       <Link>BACnetTransport.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Yabe\BACnetTransportSecureConnect.cs">
+      <Link>BACnetTransportSecureConnect.cs</Link>
     </Compile>
     <Compile Include="..\..\Yabe\BacnetTransportSerial.cs">
       <Link>BacnetTransportSerial.cs</Link>

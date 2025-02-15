@@ -782,17 +782,20 @@ namespace Yabe
                 BACnetDevice device=JobParam.Item1;
                 TreeNode OrignalTreeNode=JobParam.Item2;
 
-                // First get the device name
-                String deviceName= device.ReadObjectName(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId));
-                // Update all nodes in the TreeView
-                if ((OrignalTreeNode != null) && (!string.IsNullOrWhiteSpace(deviceName)))
+                if (JobParam.Item3 == 0)
                 {
-                    this.Invoke((MethodInvoker)delegate
+                    // First get the device name
+                    String deviceName = device.ReadObjectName(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId));
+                    // Update all nodes in the TreeView
+                    if ((OrignalTreeNode != null) && (!string.IsNullOrWhiteSpace(deviceName)))
                     {
-                        if (OrignalTreeNode.ToolTipText == "")
-                            UpdateTreeNodeDeviceName(device, OrignalTreeNode);
+                        this.Invoke((MethodInvoker)delegate
+                        {
+                            if (OrignalTreeNode.ToolTipText == "")
+                                UpdateTreeNodeDeviceName(device, OrignalTreeNode);
 
-                    });
+                        });
+                    }
                 }
                 // In all mode rather than BackGroundOperationType.GetAbsolutelyAll
                 // for devices where the dictionary cannot be acquired in one request the operation is not decomposed
