@@ -61,6 +61,7 @@ namespace System.IO.BACnet
         public byte ProposedWindowSize { get { return m_proposed_window_size; } set { m_proposed_window_size = value; } }
         public bool ForceWindowSize { get { return m_force_window_size; } set { m_force_window_size = value; } }
         public bool DefaultSegmentationHandling { get { return m_default_segmentation_handling; } set { m_default_segmentation_handling = value; } }
+        public void ResetPendingSegmentation() { m_last_sequence_number = 0; }
 
         // These members allows to access undecoded buffer by the application
         // layer, when the basic undecoding process is not really able to do the job
@@ -2428,7 +2429,7 @@ namespace System.IO.BACnet
 
             //set segments limits
             buffer.max_offset = buffer.offset + GetMaxApdu();
-            int apdu_header = APDU.EncodeComplexAck(buffer, BacnetPduTypes.PDU_TYPE_COMPLEX_ACK | (is_segmented ? BacnetPduTypes.SEGMENTED_MESSAGE | BacnetPduTypes.SERVER : 0) | (more_follows ? BacnetPduTypes.MORE_FOLLOWS : 0), service, invoke_id, segmentation != null ? segmentation.sequence_number : (byte)0, segmentation != null ? segmentation.window_size : (byte)0);
+            int apdu_header = APDU.EncodeComplexAck(buffer, BacnetPduTypes.PDU_TYPE_COMPLEX_ACK | (is_segmented ? BacnetPduTypes.SEGMENTED_MESSAGE : 0) | (more_follows ? BacnetPduTypes.MORE_FOLLOWS : 0), service, invoke_id, segmentation != null ? segmentation.sequence_number : (byte)0, segmentation != null ? segmentation.window_size : (byte)0);
             buffer.min_limit = (GetMaxApdu() - apdu_header) * (segmentation != null ? segmentation.sequence_number : 0);
 
             return buffer;
@@ -2801,6 +2802,7 @@ namespace System.IO.BACnet
             AsyncWaitHandle = new System.Threading.ManualResetEvent(false);
             m_completionSrc = new TaskCompletionSource<bool>();
             m_comm = comm;
+            m_comm.ResetPendingSegmentation();
             m_wait_invoke_id = invoke_id;
             m_comm.OnComplexAck += new BacnetClient.ComplexAckHandler(m_comm_OnComplexAck);
             m_comm.OnError += new BacnetClient.ErrorHandler(m_comm_OnError);
