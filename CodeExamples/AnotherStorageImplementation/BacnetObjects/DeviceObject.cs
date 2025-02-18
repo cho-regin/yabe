@@ -210,11 +210,19 @@ namespace BaCSharp
         {
             IList<BacnetPropertyValue> value;
 
+            List<uint> Done= new List<uint>();
+
             // This will force the access to all Bacnet properties on all objects
             // ... to get the properties list & transforming some Cli code to native code
             // So this speed up the first network access
             foreach (BaCSharpObject bacobj in ObjectsList)
-                bacobj.ReadPropertyAll(null, null, out value);
+            {
+                if (!(Done.Exists(o => o==bacobj.m_PROP_OBJECT_TYPE)))
+                {
+                    Done.Add(bacobj.m_PROP_OBJECT_TYPE);
+                    bacobj.ReadPropertyAll(null, null, out value);
+                }
+            }
 
             this.ReadPropertyAll(null, null, out value);
         }
