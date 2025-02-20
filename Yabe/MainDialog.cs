@@ -2269,12 +2269,21 @@ namespace Yabe
                 this.Cursor = Cursors.WaitCursor;
                 try
                 {
-                    IList<BacnetReadAccessResult> result = null;
-                    if (device.ReadPropertyMultipleRequest(bras, out result) == true)
+                    int NbNameInRequest = (int)((device.MaxAPDULenght) / 9) - 1;
+                    int i = 0;
+                    do // we cut the request (no segmentation)
                     {
-                        SetObjectName(tnc, result, device);
-                        IsOK = true;
-                    }
+                        IList<BacnetReadAccessResult> result = null;
+                        List<BacnetReadAccessSpecification> Sublist = bras.GetRange(NbNameInRequest * i, Math.Min(bras.Count-NbNameInRequest*i,NbNameInRequest));
+                        if (device.ReadPropertyMultipleRequest(Sublist, out result) == true)
+                        {
+                            SetObjectName(tnc, result, device);
+                            IsOK = true;
+                        }
+                        else
+                            break;
+                        i++;
+                    } while (bras.Count > NbNameInRequest * i);
                 }
                 catch { }
             }

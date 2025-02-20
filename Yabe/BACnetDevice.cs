@@ -208,16 +208,24 @@ namespace Yabe
                 }
                 OperationInProgress.ReleaseMutex();
 
-                if (ReadPropertyMultipleRequest(bras, out IList<BacnetReadAccessResult> values) == true)
+                int NbNameInRequest = (int)((MaxAPDULenght) / 9) -1 ;
+                int i = 0;
+                do // we cut the request (no segmentation)
                 {
-                    foreach (var objname in values)
-                        UpdateObjectNameMapping(objname.objectIdentifier, objname.values[0].value[0].ToString());
-                    return true;
-                }
+                    List<BacnetReadAccessSpecification> Sublist = bras.GetRange(NbNameInRequest * i, Math.Min(bras.Count - NbNameInRequest * i, NbNameInRequest));
+                    if (ReadPropertyMultipleRequest(Sublist, out IList<BacnetReadAccessResult> values) == true)
+                    {
+                        foreach (var objname in values)
+                            UpdateObjectNameMapping(objname.objectIdentifier, objname.values[0].value[0].ToString());
+                    }
+                    else
+                        break;
+                    i++;
+                } while (bras.Count > NbNameInRequest * i);
             }
-            catch {  }
+            catch { return false; }
 
-            return false;
+            return true;
 
         }
         // used to get Structured view & group lists in the background

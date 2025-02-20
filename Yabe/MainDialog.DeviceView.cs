@@ -204,6 +204,8 @@ namespace Yabe
             Point DropXY = ((TreeView)sender).PointToClient(new Point(e.X, e.Y));
             TreeNode DestinationNode = ((TreeView)sender).GetNodeAt(DropXY);
 
+            if ((DestinationNode==null)||(SourceNode==null)) return;
+
             // Nothing inside a Device, but assume the target is the parent Folder
             if (DestinationNode.Tag is BACnetDevice)
                 DestinationNode = DestinationNode.Parent;
