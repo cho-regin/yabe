@@ -196,34 +196,44 @@ namespace Yabe
         {
             if ((Prop_ObjectList == null) || (Prop_ObjectList.Count == 0)) return false;
 
-            if ((ForceRead == false) && (GetObjectName(Prop_ObjectList.Last()) != null)) return true; // assume all are already known
+            List<BacnetReadAccessSpecification> MissingNames = new List<BacnetReadAccessSpecification>();
+            OperationInProgress.WaitOne();
+            {
+                foreach (var objId in Prop_ObjectList)
+                    if (GetObjectName(objId)==null)
+                        MissingNames.Add(new BacnetReadAccessSpecification(objId, new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_NAME, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL) }));
+            }
+            OperationInProgress.ReleaseMutex();
+
+            if ((ForceRead == false) && (MissingNames.Count==0)) return true; // all are already known
+
+            int currentimeOut = channel.Timeout;
+            channel.Timeout = 3 * channel.Timeout; // Could be adjust with the quantity of objects
 
             try
             {
-                List<BacnetReadAccessSpecification> bras = new List<BacnetReadAccessSpecification>();
-                OperationInProgress.WaitOne();
-                {
-                    foreach (var objId in Prop_ObjectList)
-                        bras.Add(new BacnetReadAccessSpecification(objId, new BacnetPropertyReference[] { new BacnetPropertyReference((uint)BacnetPropertyIds.PROP_OBJECT_NAME, System.IO.BACnet.Serialize.ASN1.BACNET_ARRAY_ALL) }));
-                }
-                OperationInProgress.ReleaseMutex();
 
-                int NbNameInRequest = (int)((MaxAPDULenght) / 9) -1 ;
+                int NbNameInRequest = (int)((Math.Min(MaxAPDULenght, channel.GetMaxApdu())) / 9) - 1;
                 int i = 0;
-                do // we cut the request (no segmentation)
+                do // we cut the request by hand (no segmentation)
                 {
-                    List<BacnetReadAccessSpecification> Sublist = bras.GetRange(NbNameInRequest * i, Math.Min(bras.Count - NbNameInRequest * i, NbNameInRequest));
+                    List<BacnetReadAccessSpecification> Sublist = MissingNames.GetRange(NbNameInRequest * i, Math.Min(MissingNames.Count - NbNameInRequest * i, NbNameInRequest));
                     if (ReadPropertyMultipleRequest(Sublist, out IList<BacnetReadAccessResult> values) == true)
                     {
                         foreach (var objname in values)
                             UpdateObjectNameMapping(objname.objectIdentifier, objname.values[0].value[0].ToString());
                     }
                     else
-                        break;
+                        return false;
                     i++;
-                } while (bras.Count > NbNameInRequest * i);
+                } while (MissingNames.Count > NbNameInRequest * i);
             }
             catch { return false; }
+
+            finally
+            {
+                channel.Timeout = currentimeOut;
+            }
 
             return true;
 

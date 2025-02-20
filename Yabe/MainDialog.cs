@@ -2230,29 +2230,8 @@ namespace Yabe
                     GetRequiredObjectName(tn.Nodes, bras);
             }
         }
-        // In the Objects TreeNode, set all elements with the ReadPropertyMultiple response
-        private void SetObjectName(TreeNodeCollection tnc, IList<BacnetReadAccessResult> result, BACnetDevice device)
-        {
-            foreach (TreeNode tn in tnc)
-            {
-                BacnetObjectId b = (BacnetObjectId)tn.Tag;
-
-                try
-                {
-                    if (tn.ToolTipText == "")
-                    {
-                        BacnetReadAccessResult r = result.Single(o => o.objectIdentifier.Equals(b));
-                        device.UpdateObjectNameMapping((BacnetObjectId)tn.Tag, r.values[0].value[0].ToString());
-                    }
-                }
-                catch { }
-
-                if (tn.Nodes != null)
-                    SetObjectName(tn.Nodes, result, device);
-            }
-
-        }
-        // Try a ReadPropertyMultiple for all PROP_OBJECT_NAME not already known
+        
+       
         private void ChangeObjectIdByName(TreeNodeCollection tnc, BACnetDevice device)
         {
             int _retries = device.channel.Retries;
@@ -2260,32 +2239,14 @@ namespace Yabe
             bool IsOK = false;
 
             List<BacnetReadAccessSpecification> bras = new List<BacnetReadAccessSpecification>();
-            GetRequiredObjectName(tnc, bras);
+            GetRequiredObjectName(tnc, bras); // just to know if some names are missing
 
             if (bras.Count == 0)
                 IsOK = true;
             else
             {
                 this.Cursor = Cursors.WaitCursor;
-                try
-                {
-                    int NbNameInRequest = (int)((device.MaxAPDULenght) / 9) - 1;
-                    int i = 0;
-                    do // we cut the request (no segmentation)
-                    {
-                        IList<BacnetReadAccessResult> result = null;
-                        List<BacnetReadAccessSpecification> Sublist = bras.GetRange(NbNameInRequest * i, Math.Min(bras.Count-NbNameInRequest*i,NbNameInRequest));
-                        if (device.ReadPropertyMultipleRequest(Sublist, out result) == true)
-                        {
-                            SetObjectName(tnc, result, device);
-                            IsOK = true;
-                        }
-                        else
-                            break;
-                        i++;
-                    } while (bras.Count > NbNameInRequest * i);
-                }
-                catch { }
+                IsOK = device.ReadAllObjectsName();
             }
 
             device.channel.Retries = _retries;

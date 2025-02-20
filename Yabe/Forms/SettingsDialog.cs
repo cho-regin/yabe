@@ -352,7 +352,7 @@ namespace Yabe
             public BackGroundOperationType BackGroundOperations { set { instance.BackGroundOperations = value; } get { return instance.BackGroundOperations; } }
 
             [DisplayName("Background requests : Number of Tasks")]
-            [Description("Number of parallel Background Tasks,max 10")]
+            [Description("Number of parallel Background Tasks,max 10. Do not use more than 1 thread on direct network other than BACnet/IP.")]
             [Category(CAT_GENERAL)]
             public int BackGroundThreadNumber { set { instance.BackGroundThreadNumber = value; } get { return instance.BackGroundThreadNumber; } }
 

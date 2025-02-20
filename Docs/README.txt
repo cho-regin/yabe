@@ -282,6 +282,7 @@
 			On IAm reception Yabe can automatically send queries to get back the
 			object dictionary. Two parameters in the General Settings section can
 			be used to activate it. It's network consuming. Restart required.
+			Do not use more than 1 thread on direct network other than BACnet/IP.
 
 	2.8 Bacnet Object name
 			By default Bacnet objects are displayed using the object identifier eg : 

@@ -1680,7 +1680,7 @@ namespace System.IO.BACnet
             {
                 for (int r = 0; r < m_retries; r++)
                 {
-                    if (result.WaitForDone(m_timeout))
+                    if (result.WaitForDone(m_timeout)) 
                     {
                         Exception ex;
                         EndReadPropertyMultipleRequest(result, out values, out ex);
