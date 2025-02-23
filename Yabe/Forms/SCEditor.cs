@@ -70,6 +70,8 @@ namespace Yabe
                 if ((config.VMAC != null) && (config.VMAC.Length == 6))
                     VMAC.Text = String.Join("", config.VMAC.Select(by => by.ToString("X2")));
 
+                CapturePort.Value = config.WiresharkCapturePort;
+
                 YabeCertPassword.Text = YabeCertificateFilePassword;
 
             }
@@ -104,6 +106,8 @@ namespace Yabe
             }
             else
                 config.VMAC = null;
+
+            config.WiresharkCapturePort = (int)CapturePort.Value;
 
             try
             {

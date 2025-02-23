@@ -80,7 +80,7 @@ namespace Yabe
         // Only a very light mecanism is apply to protect globaly the Prop_ObjectList List, it should be OK
         // for simple usage in Yabe with a background thread just after IAm to query the Dictionary
         Mutex OperationInProgress = new Mutex();  
-        public BACnetDevice(BacnetClient sender, BacnetAddress addr, uint deviceId, uint MaxAPDULenght = 0, BacnetSegmentations Segmentation = BacnetSegmentations.SEGMENTATION_UNKNOW, uint vendor_id = System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE)
+        public BACnetDevice(BacnetClient sender, BacnetAddress addr, uint deviceId, uint MaxAPDULenght = 480, BacnetSegmentations Segmentation = BacnetSegmentations.SEGMENTATION_UNKNOW, uint vendor_id = System.IO.BACnet.Serialize.ASN1.BACNET_MAX_INSTANCE)
         {
             channel = sender;
             BacAdr = addr;
@@ -588,7 +588,7 @@ namespace Yabe
                     {
                         BacnetPropertyIds bpi = (BacnetPropertyIds)Convert.ToInt32(enumeratedValue.Value);
                         // read all specified properties given by the PROP_PROPERTY_LIST, except the 3 previous one
-                        if (ReadProperty(object_id, bpi, ref values) == false) return false;
+                        ReadProperty(object_id, bpi, ref values);
                         DoEvents?.Invoke(this, ("ReadSingle", Count++, PropListContennt.Count)); //System.Windows.Forms.Application.DoEvents();
                     }
 

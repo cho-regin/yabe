@@ -28,6 +28,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
@@ -35,6 +36,7 @@ using System.Text;
 using System.Threading;
 using System.Xml.Serialization;
 using WebSocketSharp;
+using WebSocketSharp.Server;
 
 // based on Addendum 135-2016 bj
 // and with the help of sample applications from https://sourceforge.net/projects/bacnet-sc-reference-stack/
@@ -52,7 +54,10 @@ namespace System.IO.BACnet
 
         // A very good and simple lib for secure and unsecure websocket communication
         // https://github.com/sta/websocket-sharp
-        private WebSocketSharp.WebSocket Websocket;
+        private WebSocket Websocket;
+        // To send uncyphered traffic for Wiresahrk capture on the loopback interface
+        WebSocket WebsocketLoopBackWiresharkClient;
+        WebSocketServer WebsocketLoopBackWiresharkServer;
 
         private BACnetSCConfigChannel configuration;
 
@@ -231,8 +236,37 @@ namespace System.IO.BACnet
             Websocket.OnClose += Websocket_OnClose;
             Websocket.Log.Output = new Action<LogData, String>(Websocket_OnLog); // needed to get detailed information about error
             state = BACnetSCState.AWAITING_WEBSOCKET;
-
+            if (configuration.WiresharkCapturePort!=-1)
+                ActivateSnifferForWireshark(configuration.WiresharkCapturePort);
             Websocket.ConnectAsync();
+        }
+
+        class WiresharkListenerLoopBack : WebSocketBehavior
+        {
+            // do nothing, just here to allows a unciphered capture in loopback mode
+            public WiresharkListenerLoopBack()
+            {
+                this.Protocol = "hub.bsc.bacnet.org";
+            }
+        }
+        public void ActivateSnifferForWireshark(int LoopbackWiresharkPort)
+        {
+            // Open a ws channel in loopback then connect to it.
+            // It's used to re-send each receive frame in a uncyphered channel for debug purpose
+            // when a device don't allows ws communication. Wireshark (npcap in fact) can capture loopback.
+
+            try
+            {
+                WebsocketLoopBackWiresharkServer = new WebSocketServer(IPAddress.Loopback, LoopbackWiresharkPort);
+                WebsocketLoopBackWiresharkServer.AddWebSocketService<WiresharkListenerLoopBack>("/");
+                WebsocketLoopBackWiresharkServer.Log.Output = (_, __) => { };
+                WebsocketLoopBackWiresharkServer.Start();
+
+                WebsocketLoopBackWiresharkClient = new WebSocket("ws://127.0.0.1:" + LoopbackWiresharkPort.ToString(), new string[] { "hub.bsc.bacnet.org" });
+                WebsocketLoopBackWiresharkClient.ConnectAsync();
+            }
+            catch { }
+
         }
         private X509Certificate LocalCertificateSelectionCallback(object sender, string targetHost, X509CertificateCollection localCertificates, X509Certificate remoteCertificate, string[] acceptableIssuers)
         {
@@ -274,6 +308,7 @@ namespace System.IO.BACnet
         }
         private void Websocket_OnMessage(object sender, MessageEventArgs e)
         {
+            try { WebsocketLoopBackWiresharkClient?.SendAsync(e.RawData, null); } catch { WebsocketLoopBackWiresharkClient = null; }
             OnReceiveData(e.RawData);
         }
         private void Websocket_OnError(object sender, WebSocketSharp.ErrorEventArgs e)
@@ -335,6 +370,8 @@ namespace System.IO.BACnet
                         Thread.Sleep(2000);
                         if (state == BACnetSCState.DISCONNECTING)
                             Websocket.Close();  // Not closed by the peer device, do it
+
+                        WebsocketLoopBackWiresharkServer?.Stop(); WebsocketLoopBackWiresharkClient?.Close(); 
                     }
                     catch { }
 
@@ -412,6 +449,7 @@ namespace System.IO.BACnet
         }
         private int Send(byte[] buffer)
         {
+            try { WebsocketLoopBackWiresharkClient?.SendAsync(buffer, null); } catch { WebsocketLoopBackWiresharkClient = null; }
             try
             {
                 Websocket.SendAsync(buffer, null);
@@ -760,5 +798,6 @@ namespace System.IO.BACnet
         [XmlIgnore]
         public X509Certificate2Collection ThrustedCertificates;
 
+        public int WiresharkCapturePort = -1; // To resend cyphered stream to an uncyphered port
     }
 }

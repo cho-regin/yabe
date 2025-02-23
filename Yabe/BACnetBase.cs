@@ -5374,7 +5374,7 @@ namespace System.IO.BACnet
 
             }
 
-            if (len < len_value)
+            if (len+offset+1 < len_value)
             {
 
                 len += ASN1.decode_tag_number_and_value(buffer, offset + len, out tag, out len_value_type);
@@ -5474,7 +5474,7 @@ namespace System.IO.BACnet
             }
 
 
-            if (len < len_value)
+            if (len + offset + 1 < len_value)
             {
                 ASN1.decode_tag_number_and_value(buffer, offset + len, out tag, out len_value_type);
                 if (tag == 3)//optional

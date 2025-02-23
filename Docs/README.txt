@@ -162,6 +162,8 @@
 		  certificates in a unique .pem file. It's not required if it share the same direct 
 		  CA as Yabe. 
 		- Non standard uncyphered, unauthenticated ws:// can be use for test.
+		- Cyphered communication can be forwarded on loopback port for Wireshark traffic
+		  analysis. In order to detect BACnet/SC protocol Wireshark should listen first.
 		- Today on Windows 10 TLS1.3 is not operational by default. You should
 		  configure the system to accept it.
 		  Jump to Yabe source code trunk\Docs, get the "ActivateTLS1.3 On Win10.reg"  

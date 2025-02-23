@@ -50,7 +50,10 @@
             this.bpGetX509 = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
             this.VMAC = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.CapturePort = new System.Windows.Forms.NumericUpDown();
             this.groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.CapturePort)).BeginInit();
             this.SuspendLayout();
             // 
             // chk_VerifyHubCert
@@ -97,7 +100,7 @@
             // 
             // btSave
             // 
-            this.btSave.Location = new System.Drawing.Point(118, 421);
+            this.btSave.Location = new System.Drawing.Point(111, 456);
             this.btSave.Name = "btSave";
             this.btSave.Size = new System.Drawing.Size(77, 22);
             this.btSave.TabIndex = 13;
@@ -255,11 +258,44 @@
             this.VMAC.Size = new System.Drawing.Size(133, 20);
             this.VMAC.TabIndex = 29;
             // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(14, 426);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(197, 13);
+            this.label5.TabIndex = 30;
+            this.label5.Text = "Unciphered port (for Wireshark capture )";
+            // 
+            // CapturePort
+            // 
+            this.CapturePort.Location = new System.Drawing.Point(234, 424);
+            this.CapturePort.Maximum = new decimal(new int[] {
+            65535,
+            0,
+            0,
+            0});
+            this.CapturePort.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            -2147483648});
+            this.CapturePort.Name = "CapturePort";
+            this.CapturePort.Size = new System.Drawing.Size(75, 20);
+            this.CapturePort.TabIndex = 31;
+            this.CapturePort.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            -2147483648});
+            // 
             // SCEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(333, 459);
+            this.ClientSize = new System.Drawing.Size(333, 490);
+            this.Controls.Add(this.CapturePort);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.VMAC);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.bpGetX509);
@@ -279,6 +315,7 @@
             this.Text = "BACnet/SC Channel Configuration";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.CapturePort)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -307,5 +344,7 @@
         private System.Windows.Forms.TextBox YabeCertPassword;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox VMAC;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.NumericUpDown CapturePort;
     }
 }
