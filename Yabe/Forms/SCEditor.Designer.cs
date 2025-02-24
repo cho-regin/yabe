@@ -263,9 +263,9 @@
             this.label5.AutoSize = true;
             this.label5.Location = new System.Drawing.Point(14, 426);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(197, 13);
+            this.label5.Size = new System.Drawing.Size(194, 13);
             this.label5.TabIndex = 30;
-            this.label5.Text = "Unciphered port (for Wireshark capture )";
+            this.label5.Text = "Unciphered port (for Wireshark capture)";
             // 
             // CapturePort
             // 

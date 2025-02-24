@@ -164,6 +164,7 @@
 		- Non standard uncyphered, unauthenticated ws:// can be use for test.
 		- Cyphered communication can be forwarded on loopback port for Wireshark traffic
 		  analysis. In order to detect BACnet/SC protocol Wireshark should listen first.
+		  Value -1 to disable the service.
 		- Today on Windows 10 TLS1.3 is not operational by default. You should
 		  configure the system to accept it.
 		  Jump to Yabe source code trunk\Docs, get the "ActivateTLS1.3 On Win10.reg"  
