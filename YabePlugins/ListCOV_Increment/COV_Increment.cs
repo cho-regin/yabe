@@ -43,7 +43,7 @@ namespace ListCOV_Increment
         public BacnetObjectTypes[] Filter; // Filtering list
 
         YabeMainDialog yabeFrm;
-        BacnetClient client; BacnetAddress adr; BacnetObjectId objId;
+        BACnetDevice device; BacnetObjectId objId;
 
         public COV_Increment(YabeMainDialog yabeFrm)
         {
@@ -74,8 +74,8 @@ namespace ListCOV_Increment
 
             try
             {
-                yabeFrm.GetObjectLink(out client, out adr, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
-                Devicename.Text = adr.ToString();
+                yabeFrm.GetObjectLink(out device, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
+                Devicename.Text = device.BacAdr.ToString();
 
                 CheckAllObjects(yabeFrm.m_AddressSpaceTree.Nodes);
                 EmptyList.Visible = IsEmpty;
@@ -103,17 +103,14 @@ namespace ListCOV_Increment
                 if (Filter.Contains(object_id.type)) // Only for some objects
                 {
 
-                    String Identifier = null;
-
-                    lock (yabeFrm.DevicesObjectsName) // translate to it's name if already known
-                        yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), object_id), out Identifier);
+                    String Identifier = device.GetObjectName(object_id);
 
                     try
                     {
 
                         IList<BacnetValue> value;
                         // read COV_Increment property on all objects (maybe a test could be done to avoid call without interest)   
-                        bool ret = client.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_COV_INCREMENT, out value);
+                        bool ret = device.channel.ReadPropertyRequest(device.BacAdr, object_id, BacnetPropertyIds.PROP_COV_INCREMENT, out value);
                         string Increment = value[0].Value.ToString();
 
                         if (ret)
@@ -123,7 +120,7 @@ namespace ListCOV_Increment
                             try
                             {
                                 // read Units property on all objects (maybe a test could be done to avoid call without interest)   
-                                ret = client.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_UNITS, out value);
+                                ret = device.channel.ReadPropertyRequest(device.BacAdr, object_id, BacnetPropertyIds.PROP_UNITS, out value);
                                 Units = ((BacnetUnitsId)((uint)value[0].Value)).ToString();
                                 if (Units.StartsWith("UNITS_"))
                                     Units = Units.Substring(6);
@@ -144,7 +141,7 @@ namespace ListCOV_Increment
                                 N = treeView1.Nodes.Add(Identifier + " (" + System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower()) + ")");
                             else
                                 N = treeView1.Nodes.Add(name);
-                            ret = client.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_DESCRIPTION, out value); // with Description
+                            ret = device.channel.ReadPropertyRequest(device.BacAdr, object_id, BacnetPropertyIds.PROP_DESCRIPTION, out value); // with Description
                             if (ret)
                                 N.Nodes.Add(value[0].Value.ToString());
                             N.Nodes.Add(("Value = ") + Increment + " " + Units);

@@ -28,14 +28,9 @@
 *
 *********************************************************************/
 
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Linq;
-using System.IO.BACnet.Serialize;
-using System.Diagnostics;
 using SharpPcap;
 using SharpPcap.LibPcap;
+using System.Linq;
 
 namespace System.IO.BACnet
 {

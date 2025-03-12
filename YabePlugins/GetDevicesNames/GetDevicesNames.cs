@@ -71,7 +71,7 @@ namespace GetDevicesNames // namespace should have the same name as the dll file
             {
                 Trace.WriteLine("call to the GetDevicesNames plugin");
 
-                foreach (TreeNode tn in yabeFrm.m_DeviceTree.Nodes[0].Nodes)
+                foreach (TreeNode tn in yabeFrm.NetworkViewTreeNode.Nodes)
                     FullFillDeviceTreeWithNames((BacnetClient)tn.Tag, tn.Nodes);
 
             }
@@ -86,23 +86,17 @@ namespace GetDevicesNames // namespace should have the same name as the dll file
                 {
                     try
                     {
-                        KeyValuePair<BacnetAddress, uint>? entry = tn.Tag as KeyValuePair<BacnetAddress, uint>?;
-                        BacnetAddress adr = entry.Value.Key;
-                        uint device_id = entry.Value.Value;
+                        BACnetDevice device = tn.Tag as BACnetDevice;
+                        uint device_id = device.deviceId;
 
-                        IList<BacnetValue> values;
-                        BacnetObjectId bobj_id = new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id);
-                        if (client.ReadPropertyRequest(adr, new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id), BacnetPropertyIds.PROP_OBJECT_NAME, out values))
+                        String Name= device.ReadObjectName(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device_id));
+                        if ((Name!=null)&&(Name!=""))
                         {
                             tn.ToolTipText = tn.Text;   // IP or MSTP node id -> in the Tooltip
-                            tn.Text = values[0].ToString() + " [" + device_id.ToString() + "] ";  // change @ by the Name  
+                            tn.Text = Name + " [" + device_id.ToString() + "] ";  // change @ by the Name  
+                        }
 
-                            lock (yabeFrm.DevicesObjectsName)
-                            {
-                                Tuple<String, BacnetObjectId> t = new Tuple<String, BacnetObjectId>(adr.FullHashString(), bobj_id);
-                                yabeFrm.DevicesObjectsName.Remove(t);
-                                yabeFrm.DevicesObjectsName.Add(t, values[0].ToString());
-                            }
+                        yabeFrm.UpdateTreeNodeDeviceName(device, tn);
                     }
                     catch { }
 

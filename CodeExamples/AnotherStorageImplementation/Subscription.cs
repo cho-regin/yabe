@@ -33,7 +33,7 @@ using BaCSharp;
 
 namespace AnotherStorageImplementation
 {
-    class Subscription
+    public class Subscription
     {
         public BacnetClient reciever;
         public BacnetAddress reciever_address;
@@ -71,7 +71,7 @@ namespace AnotherStorageImplementation
                 
         }
     }
-    static class SubscriptionManager
+    public static class SubscriptionManager
     {
         private static Dictionary<BacnetObjectId, List<Subscription>> m_subscriptions = new Dictionary<BacnetObjectId, List<Subscription>>();
 

@@ -24,12 +24,8 @@
 *
 *********************************************************************/
 
-using System;
 using System.Collections.Generic;
-using System.Text;
-using System.IO.BACnet;
 using System.Reflection;
-using System.Linq;
 
 namespace System.IO.BACnet.Storage
 {
@@ -178,7 +174,7 @@ namespace System.IO.BACnet.Storage
             int count = 0;
             foreach (BacnetPropertyReference entry in properties)
             {
-                
+
                 BacnetPropertyValue new_entry = new BacnetPropertyValue();
                 new_entry.property = entry;
 
@@ -191,7 +187,7 @@ namespace System.IO.BACnet.Storage
                 values_ret[count] = new_entry;
 
                 count++;
-            }    
+            }
 
             values = values_ret;
         }
@@ -340,7 +336,7 @@ namespace System.IO.BACnet.Storage
                 // The 135-2016 text:
                 // 19.2.2 Application Priority Assignments
                 // All commandable objects within a device shall be configurable to accept writes to all priorities except priority 6
-                if (priority == 6) { return  DeviceStorage.ErrorCodes.WriteAccessDenied; }
+                if (priority == 6) { return DeviceStorage.ErrorCodes.WriteAccessDenied; }
 
                 //
                 //http://www.chipkin.com/changing-the-bacnet-present-value-or-why-the-present-value-doesn%E2%80%99t-change/
@@ -619,7 +615,7 @@ namespace System.IO.BACnet.Storage
             {
                 //count
                 int count = 0;
-                foreach(BacnetValue v in value)
+                foreach (BacnetValue v in value)
                     count++;
 
                 string[] str_values = new string[count];

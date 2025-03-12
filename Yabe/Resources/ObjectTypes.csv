@@ -1,0 +1,64 @@
+Value;Shortcut;Name;EdeText;Implemented since
+0;AI;Analog input;analog-input;
+1;AO;Analog output;analog-output;
+2;AV;Analog value;analog-value;
+3;BI;Binary input;binary-input;
+4;BO;Binary output;binary-output;
+5;BV;Binary value;binary-value;
+6;CAL;Calendar;calendar;
+7;CMD;Command;command;
+8;DEV;Device;device;
+9;EE;Event enrollment;event-enrollment;
+10;FILE;File;file;
+11;GRP;Group;group;
+12;LOOP;Loop;loop;
+13;MI;Multi state input;multi-state-input;
+14;MO;Multi state output;multi-state-output;
+15;NC;Notification class;notification-class;
+16;PRG;Program;program;
+17;SCHED;Schedule;schedule;
+18;AVG;Averaging;averaging;
+19;MV;Multi state value;multi-state-value;
+20;TLOG;Trendlog;trend-log;
+21;;Life safety point;life-safety-point;
+22;;Life safety zone;life-safety-zone;
+23;ACC;Accumulator;accumulator;
+24;PC;Pulse converter;pulse-converter;
+25;ELOG;Event log;event-log;
+26;;Global group;global-group;
+27;TLM;Trend log multiple;trend-log-multiple;
+28;;Load control;load-control;
+29;;Structured view;structured-view;
+30;;Access door;access-door;
+31;;Timer;timer;Addendum 135-2012ay
+32;;Access credential;access-credential;Addendum 2008-j
+33;;Access point;access-point;
+34;;Access rights;access-rights;
+35;;Access user;access-user;
+36;;Access zone;access-zone;
+37;;Credential data input;credential-data-input;authentication-factor-input
+38;;Network security;<removed>;Addendum 2008-g
+39;;Bitstring value;bitstring-value;Addendum 2008-w
+40;;Characterstring value;characterstring-value;Addendum 2008-w
+41;;Date pattern value;datepattern-value;Addendum 2008-w
+42;;Date value;date-value;Addendum 2008-w
+43;;Datetime pattern value;datetimepattern-value;Addendum 2008-w
+44;;Datetime value;datetime-value;Addendum 2008-w
+45;;Integer value;integer-value;Addendum 2008-w
+46;;Large analog value;large-analog-value;Addendum 2008-w
+47;;Octetstring value;octetstring-value;Addendum 2008-w
+48;;Positive integer value;positive-integer-value;Addendum 2008-w
+49;;Time pattern value;timepattern-value;Addendum 2008-w
+50;;Time value;time-value;Addendum 2008-w
+51;;Notification forwarder;notification-forwarder;Addendum 2010-af
+52;;Alert enrollment;alert-enrollment;Addendum 2010-af
+53;;Channel;channel;Addendum 2010-aa
+54;;Lighting output;lighting-output;Addendum 2010-i
+55;;Binary lighting output;binary-lighting-output;Addendum 135-2012az
+56;;Network port;network-port;
+57;;Elevator group;elevator-group;
+58;;Escalator;escalator;
+59;;Lift;lift;
+60;;Staging;staging;Addendum 135-2016bd
+61;;Audit log;audit-log;
+62;;Audit reporter;audit-reporter;

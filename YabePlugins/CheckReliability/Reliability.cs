@@ -41,7 +41,7 @@ namespace CheckReliability
     public partial class Reliability : Form
     {
         YabeMainDialog yabeFrm;
-        BacnetClient client; BacnetAddress adr; BacnetObjectId objId;
+        BACnetDevice device; BacnetObjectId objId;
 
         public Reliability(YabeMainDialog yabeFrm)
         {
@@ -72,8 +72,8 @@ namespace CheckReliability
 
             try
             {
-                yabeFrm.GetObjectLink(out client, out adr, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
-                Devicename.Text = adr.ToString();
+                yabeFrm.GetObjectLink(out device, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE) ;
+                Devicename.Text = device.BacAdr.ToString();
 
                 CheckAllObjects(yabeFrm.m_AddressSpaceTree.Nodes);
                 EmptyList.Visible = IsEmpty;
@@ -98,17 +98,14 @@ namespace CheckReliability
 
                 BacnetObjectId object_id = (BacnetObjectId)tn.Tag;
 
-                String Identifier = null;
-
-                lock (yabeFrm.DevicesObjectsName) // translate to it's name if already known
-                    yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), object_id), out Identifier);
+                String Identifier = device.GetObjectName(object_id) ;
 
                 try
                 {
 
                     IList<BacnetValue> value;
                     // read RELIABILITY property on all objects (maybe a test could be done to avoid call without interest)   
-                    bool ret = client.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_RELIABILITY, out value);
+                    bool ret = device.channel.ReadPropertyRequest(device.BacAdr, object_id, BacnetPropertyIds.PROP_RELIABILITY, out value);
 
                     // another solution with ReadPropertyMultipleRequest, but not supported by simple devices
                     // ... can also read these two properties on all objects in one time (with segmentation on huge devices)
@@ -134,7 +131,7 @@ namespace CheckReliability
                                 name=name.Substring(7);
 
                             TreeNode N;
-                            if (Identifier!=null)
+                            if (Identifier != null) 
                                  N = treeView1.Nodes.Add(Identifier+" (" + System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo.ToTitleCase(name.ToLower())+")");
                             else
                                 N = treeView1.Nodes.Add(name);

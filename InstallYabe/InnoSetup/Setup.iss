@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Yabe"
-#define MyAppVersion "1.3.1"
+#define MyAppVersion "2.1.0"
 #define MyAppPublisher "Yabe Authors"
 #define MyAppURL "http://sourceforge.net/projects/yetanotherbacnetexplorer"
 #define MyAppExeName "Yabe.exe"
@@ -52,10 +52,14 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "..\..\Yabe\bin\Debug\Yabe.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\CheckReliability.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\CheckStatusFlags.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\ListOutOfService.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\GlobalCommander.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\CheckReliability.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\CheckStatusFlags.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\ListAnalog_Values.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\ListCOV_Increment.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\ListOutOfService.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\GlobalCommander.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\FindPriorities.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\Plugins\FindPrioritiesGlobal.dll"; DestDir: "{app}\Plugins"; Flags: ignoreversion
 Source: "..\..\Yabe\bin\Debug\README.Txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Docs\history.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\Docs\MIT_license.txt"; DestDir: "{app}"; Flags: ignoreversion
@@ -63,13 +67,17 @@ Source: "..\..\Docs\ZedGraph Calendar SharpPcap License-LGPL.txt"; DestDir: "{ap
 Source: "..\..\Docs\Treeview_license.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 Source: "..\..\Yabe\bin\Debug\ReadSinglePropDescr.Xml"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\AdvertiseSample.cov"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\bin\Debug\Proprietary-properties.csv"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\SimplifiedViewFilter.Xml"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\YabeMenuCmd.Txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\RecipeSample.csv"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\AdvertiseSample.cov"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\bin\Debug\VendorPropertyMapping.csv"; DestDir: "{app}"; Flags: ignoreversion
 
 Source: "..\..\DemoServer\bin\Debug\DemoServer.exe"; DestDir: "{app}\AddOn"; Flags: ignoreversion
 Source: "..\..\DemoServer\bin\Debug\DeviceStorage.Xml"; DestDir: "{app}\AddOn"; Flags: ignoreversion
                            
 Source: "..\..\CodeExamples\Bacnet.Room.Simulator\bin\Debug\Bacnet.Room.Simulator.exe"; DestDir: "{app}\AddOn"; Flags: ignoreversion
+Source: "..\..\CodeExamples\Bacnet.Room.Simulator\bin\Debug\Bacnet.Room.Simulator.exe.config"; DestDir: "{app}\AddOn"; Flags: ignoreversion
 Source: "..\..\CodeExamples\Bacnet.Room.Simulator\Readme.txt"; DestDir: "{app}\AddOn"; Flags: ignoreversion
 
 Source: "..\..\CodeExamples\Wheather2_to_Bacnet\bin\Debug\Wheather2_to_Bacnet.exe"; DestDir: "{app}\AddOn"; Flags: ignoreversion
@@ -78,9 +86,9 @@ Source: "..\..\CodeExamples\Wheather2_to_Bacnet\Wheather2config.reg"; DestDir: "
 
 Source: "..\..\Mstp.BacnetCapture\bin\Debug\Mstp.BacnetCapture.exe"; DestDir: "{app}\AddOn"; Flags: ignoreversion
 
-Source: "..\..\Yabe\Yabe.p12"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\TestHub.crt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\Yabe\BACnetSCConfig.config"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\Common Files\Yabe.p12"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\Common Files\TestHub.crt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\Yabe\Common Files\BACnetSCConfig.config"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\Yabe"; Filename: "{app}\Yabe.Exe"
@@ -106,22 +114,4 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, "&", "&&")}}"; Flags: nowait postinstall skipifsilent
 
-[Code]
-
-function InitializeSetup(): Boolean;
-begin
-  Result := true;
-  if not RegKeyExists(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\NET Framework Setup\NDP\v4') then
-  begin
-    MsgBox('Microsoft .NET 4.0 required', mbInformation, MB_OK);
-  end
-  else
-  begin
-    if FileExists('C:\Program Files (x86)\YabeAuthors\Yabe\Yabe.exe') then
-    begin
-      MsgBox('Very old Yabe version detected : it should be manually uninstalled from the control panel', mbInformation, MB_OK);
-      Result := false;
-    end
-  end
-end;
 

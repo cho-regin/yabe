@@ -24,5 +24,11 @@ GlobalCommander
 	By Lance Tollenaar : Allows to send the same value into several properties of multiple objects
 	in multiple devices.
 
+ListOutofService
+	By Frank Schubert : Similar to CheckReliability, iterates over all objects and displays those with OutofService = true.
+
+FindPriorities
+	By Frank Schubert : Iterates over all objects and displays those which have at least one item set in the priority array property.
+
 A usefull plugin by yourself, not too much dedicated to your application (or customizable), send it,
 I'will add it.

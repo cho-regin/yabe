@@ -58,7 +58,7 @@
 		The projected is created by Morten Kvistgaard, anno 2014. 
 		F. Chaxel has contributed a lot of the later additions (eg Foreign Device
 		Registration, BBMD services, TrendLog & Schedule display, Calendar editor,
-		Alarms summary, Bacnet on Ethernet, Bacnet IPv6, Bacnet Secure Connect).
+		Alarms summary, BACnet on Ethernet, BACnet IPv6, BACnet Secure Connect).
 		A few patches and input has been given by the community.
 		Graphics are the usual FamFamFam: http://www.famfamfam.com/
 		Serializing (most/some) is ported from project by Steve Karg:
@@ -105,8 +105,7 @@
 		  and select "WhoIs".
 
 	2.2 BACNET/IPv6 over UDP
-		- Experimental NOT TESTED with third party device or software, and 
-		  unfortunately Wireshark don't help also.
+		- Experimental NOT TESTED with third party device or software.
 		- Start Yabe.
 		- In the Options/settings menu set IPv6_support to true
 		- Do the same as explain in 2.1, but the Local endpoint combo box shows now
@@ -121,10 +120,10 @@
 
 		- Feedback is very welcome.
 
-	2.3 BACNET/MSTP OVER PIPE
+	2.3 BACNET/MSTP
 		- For general usage refer to section 2.1. 
-		- In the "Search" dialog select "COM1003" in the port combo box and press
-		  "Start". This will add a MSTP pipe created by the DemoServer. 
+		- In the "Search" dialog select a COM port in the port combo box and press
+		  "Start". 
 		  Notice that the "Source Address" defaults to "-1". This is not a valid 
 		  address and you will not be able to communicate with the device through 
 		  this. The program will still be able to listen in on the network though.
@@ -136,10 +135,10 @@
 		  configured to "-1" the program will ask if you will define a new one.
 		  You must do so, in order to continue communication. 
 	  
-	2.4	BACNET/PTP OVER PIPE
+	2.4	BACNET/PTP
 		- For general usage refer to section 2.1. 
-		- In the "Search" dialog select "COM1004" in the port combo box and press
-		  "Start". This will add a PTP pipe created by the DemoServer. 
+		- In the "Search" dialog select a COM port in the port combo box and press
+		  "Start". 
 		  The BACnet/PTP transport is meant for 1-to-1. Eg. RS232 or ... usb? So
 		  far I haven't found any others easy accessible tools that also supports
 		  it. So I haven't been able to test it. It's implemented purely by doc.
@@ -159,20 +158,19 @@
 		  (Yabe client certificate with private key, remote device or Hub certificate).
 		  The optional certificat password is not saved in the file. The value has to
 		  be given each time.
+		  The remote devices certificates or CAs file could be a concatenation of several 
+		  certificates in a unique .pem file. It's not required if it share the same direct 
+		  CA as Yabe. 
 		- Non standard uncyphered, unauthenticated ws:// can be use for test.
+		- Cyphered communication can be forwarded on loopback port for Wireshark traffic
+		  analysis. In order to detect BACnet/SC protocol Wireshark should listen first.
+		  Value -1 to disable the service.
 		- Today on Windows 10 TLS1.3 is not operational by default. You should
-		  configure the system to accept it using regedit (add  manually the Branch
-		  TLS 1.3\Client and the value Enabled=1, then reboot the PC) :
-		  In 
-		        HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols
-		  Add the key  
-		       TLS 1.3
-		  then under it Add the key
-		       Client
-		  Then add the Dword32 value		
-		       Enabled and change de value to 00000001
-		  Or jump to Yabe source code trunk\Docs, get the .reg file and double click on it.
-		  This will have no effect on any versions of Windows prior to 1903.
+		  configure the system to accept it.
+		  Jump to Yabe source code trunk\Docs, get the "ActivateTLS1.3 On Win10.reg"  
+		  file and double click on it.
+		  This will have no effect on any versions of Windows prior to 1903, and no more
+		  working on version 22H2 !
 
 	2.7 OPTIONS
 	A few selected options.
@@ -243,8 +241,51 @@
 			Leaves properties Id (such as ANALOG_INPUT:0) along with the properties 
  			name or hides this Id.
 
-		2.7.14 Plugins
-			List of plugins to be loaded (see �2.9).
+		2.7.14 Address space view & Properties
+			The Addendum 135d defines a 'Structured View' entry in the address space. 
+			This enables a hierarchical address space (selection 'Structured'). 
+			Though if you like the flat model better, set this to 'List'. 
+			The option both combines both display modes. 
+			FieldTechnician view is a flat view with filter described in the file 
+			SimplifiedViewFilter.xml.
+			This Simplified view can be activated/desactivated with the shortcut 
+			<Ctrl><Alt> + S
+
+		2.7.15 Expand properties
+			Array and structure can be atomaticaly expanded using two parameters
+			"Auto Expand Grid Array Max Size" & "Always Expanded Properties".
+			The first one opens all Array with a size inferior to the value.
+			The second always opens Array and structure given in the comma 
+			separated String, even with a hugh size.
+			0 and an empty String are accepted.
+
+		2.7.16 Plugins
+			List of plugins to be loaded (see  2.9).
+
+		2.7.17 Network View & Device Class View
+			Devices are by default displayed according to the network structure.
+			A "User" configurable view can also be added with hierachical Folders.
+			This is done using three parameters in the settings GUI section.
+			"Device Mode View" can change the mode. "Not Affected" is the 
+			intial name of the folder where unknown devices are placed. If the name
+			is changed to blank, it will be hidden (for a well-known network).
+			"Device Class Structure" describe the hierarchy to use such as :
+			HVAC(3,9);Lighting(9,23);Building(HVAC,Lighting,40,27)
+			HVAC, Lighting, ... are folders. When device 9 is discovered, it is
+			added to two locations while device 3 is only placed in the HVAC folder.
+			The two folders are in a main folder named Building where devices
+			40 and 27 are also placed. Finally all others devices (eg 500) are
+			placed in the special folder 'Not Affected'.
+			Re-organisation can be done with Drag/Drop operations by moving
+			Folders in Folder, and Devices in Folder.
+			A menu View Folders can be used to delete/rename/insert Folder.
+			To experience this mode just change "Device Mode View" and restart.
+
+		2.7.18 Background Operations
+			On IAm reception Yabe can automatically send queries to get back the
+			object dictionary. Two parameters in the General Settings section can
+			be used to activate it. It's network consuming. Restart required.
+			Do not use more than 1 thread on direct network other than BACnet/IP.
 
 	2.8 Bacnet Object name
 			By default Bacnet objects are displayed using the object identifier eg : 
@@ -334,14 +375,16 @@
 		- CAS BACnet Explorer
 	'Segmentation' has been verified with Wireshark, and Wago 750/830
 	BACNET/PTP has not been tested with any 3rd parties.
+		- please HELP !
     	BACnet/MSTP has been tested with an Ftdi Usb/Rs485 adaptor and
 	    	- Trane Uc800 (vendor Id 2)
 		- Metz Connect I/O modules (BTR Netcom vendor Id 421)
 		- Schneider Electric SE8350 (vendor Id 10)
 		- Contemporary Control MSTP/IP Router (vendor Id 245)
+		- and much more
 	BACnet/Ethernet has been tested with
 		- Delta Controls devices (vendor Id 8)
-	BACnet/IP has been tested with a very long list of devices 
+	BACnet/IP has been tested with certainly all devices on the market
 	BBMD services has been tested with peers :
 		- Wago 750/830 (vendor Id 222)
 		- Newron DoGate (vendor Id 451)
@@ -349,10 +392,11 @@
 	BACnet/SC has been tested with
 		- BACnet Reference Stack tools
  		- ScadaEngine BACnet Simulator
+ 		- MBS Hub/Router device in the field of BACnet/SC plugfest plateform.
 
 5.  SUPPORT
-	There's no support for the project at this time. That's reserved for our 
-	customers. If you write to me, I'm unlikely to answer. 
+	There's no support for the project at this time. 
+	If you write to me, I'm unlikely to answer. 
 
 6.  REPORT ERRORS
 	Yeh, there be errors alright. There always are. Many won't be interesting
@@ -366,9 +410,21 @@
 
 7.  CONTRIBUTE
 	Really? You think it's missing something? It's not really meant as a huge 
-	glorified project you know, but if you really must, try contacting us
-	at fchaxel@free.fr or mk@pch-engineering.dk.
+	glorified project you know, but if you really must, try contacting 
+	fchaxel@free.fr.
 	
 8.  MISC
 	Project web page is located at: 
 	https://sourceforge.net/projects/yetanotherbacnetexplorer/
+
+9.  CONTRIBUTORS, in order of apearance
+	Morten Kvistgaard	2014-2016	PCH Engineering/Danemark
+	Frédéric Chaxel		2015-2024	University of Lorraine/France
+	Adam Guzik		2015		Quark Communications, Inc/USA
+	Christopher Günther	2015, 2019
+	Thamer Al-Salek		2016
+	Alexander Jaszkowski	2016-2024	Sauter/Germany
+	Lance Tollenaar		2022-2024	New Zealand
+	Frank Schubert		2022-2024	Beckhoff Automation/Germany 
+	Marco Diekmann		2024		Beckhoff Automation/Germany
+	Daniel Evers		2024		Bosch/Germany

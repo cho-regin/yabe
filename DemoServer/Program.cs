@@ -75,7 +75,7 @@ namespace DemoServer
 
                 //create pipe (MSTP) service point
                 BacnetPipeTransport pipe_transport = new BacnetPipeTransport("COM1003", true);
-                BacnetMstpProtocolTransport mstp_transport = new BacnetMstpProtocolTransport(pipe_transport, 0, 127, 1);
+                BacnetMstpProtocolTransport mstp_transport = new BacnetMstpProtocolTransport(pipe_transport, 0, 10, 1);
                 mstp_transport.StateLogging = false;        //if you enable this, it will display a lot of information about the StateMachine
                 m_mstp_server = new BacnetClient(mstp_transport);
                 m_mstp_server.OnWhoIs += new BacnetClient.WhoIsHandler(OnWhoIs);
@@ -372,7 +372,7 @@ namespace DemoServer
                     foreach (Subscription sub in entry.Value)
                     {
                         //encode
-                        System.IO.BACnet.Serialize.EncodeBuffer buffer = new System.IO.BACnet.Serialize.EncodeBuffer();
+                        //System.IO.BACnet.Serialize.EncodeBuffer buffer = new System.IO.BACnet.Serialize.EncodeBuffer();
                         BacnetCOVSubscription cov = new BacnetCOVSubscription();
                         cov.Recipient = sub.reciever_address;
                         cov.subscriptionProcessIdentifier = sub.subscriberProcessIdentifier;
@@ -381,13 +381,13 @@ namespace DemoServer
                         cov.IssueConfirmedNotifications = sub.issueConfirmedNotifications;
                         cov.TimeRemaining = (uint)sub.lifetime - (uint)(DateTime.Now - sub.start).TotalMinutes;
                         cov.COVIncrement = sub.covIncrement;
-                        System.IO.BACnet.Serialize.ASN1.encode_cov_subscription(buffer, cov);
+                        //System.IO.BACnet.Serialize.ASN1.encode_cov_subscription(buffer, cov);
 
                         //add
-                        BacnetValue v = new BacnetValue();
-                        v.Tag = BacnetApplicationTags.BACNET_APPLICATION_TAG_COV_SUBSCRIPTION;
-                        v.Value = buffer.ToArray();
-                        list.Add(v);
+                        //BacnetValue v = new BacnetValue();
+                        //v.Tag = BacnetApplicationTags.BACNET_APPLICATION_TAG_COV_SUBSCRIPTION;
+                        //v.Value = buffer.ToArray();
+                        list.Add(new BacnetValue(cov));
                     }
                 }
                 value = list;
@@ -761,13 +761,15 @@ namespace DemoServer
             }
         }
 
-        private static void OnWritePropertyMultipleRequest(BacnetClient sender, BacnetAddress adr, byte invoke_id, BacnetObjectId object_id, ICollection<BacnetPropertyValue> values, BacnetMaxSegments max_segments)
+        private static void OnWritePropertyMultipleRequest(BacnetClient sender, BacnetAddress adr, byte invoke_id, IList<BacnetWriteAccessSpecification> properties, BacnetMaxSegments max_segments)
         {
             lock (m_lockObject)
             {
                 try
                 {
-                    m_storage.WritePropertyMultiple(object_id, values);
+                    foreach (var prop in properties)
+                        m_storage.WritePropertyMultiple(prop.object_id, prop.values_refs);
+
                     sender.SimpleAckResponse(adr, BacnetConfirmedServices.SERVICE_CONFIRMED_WRITE_PROP_MULTIPLE, invoke_id);
                 }
                 catch (Exception)

@@ -28,14 +28,16 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Net;
+using System.Net.Security;
+using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
-using WebSocketSharp;
+using System.Text;
 using System.Threading;
 using System.Xml.Serialization;
-using System.Net.Security;
-using System.Text;
-using System.Security.Authentication;
-using System.Linq;
+using WebSocketSharp;
+using WebSocketSharp.Server;
 
 // based on Addendum 135-2016 bj
 // and with the help of sample applications from https://sourceforge.net/projects/bacnet-sc-reference-stack/
@@ -53,12 +55,16 @@ namespace System.IO.BACnet
 
         // A very good and simple lib for secure and unsecure websocket communication
         // https://github.com/sta/websocket-sharp
-        private WebSocketSharp.WebSocket Websocket;
+        private WebSocket Websocket;
+        // To send uncyphered traffic for Wiresahrk capture on the loopback interface
+        WebSocket WebsocketLoopBackWiresharkClient;
+        WebSocketServer WebsocketLoopBackWiresharkServer;
 
         private BACnetSCConfigChannel configuration;
 
-        private byte[] myVMAC = new byte[6];          // my random VMAC
+        private byte[] myVMAC = new byte[6];        // my fixed or random VMAC, can be re-issued (random) if the HUB request it
         private byte[] RemoteVMAC = new byte[6];    // HUB or Direct connected device VMAC
+        private int DuplicateVMACCount = 0;
 
         // Several frames type
         // resize will be done after, if needed
@@ -83,13 +89,26 @@ namespace System.IO.BACnet
 
         private bool ConfigOK = false;
 
+        private X509Chain CertValidationChain = new X509Chain();
         public BACnetTransportSecureConnect(BACnetSCConfigChannel config)
         {
+
             configuration = config;
+
+            if ((configuration.VMAC == null) || (configuration.VMAC.Length != 6))
+            {
+                // Random VMAC creation
+                // ensure xxxx0010, § H.7.X EUI - 48 and Random-48 VMAC Address
+                new Random().NextBytes(myVMAC);
+                myVMAC[0] = (byte)((myVMAC[0] & 0xF0) | 0x02); // xxxx0010
+            }
+            else
+                Array.Copy(configuration.VMAC, myVMAC, 6);
 
             if (configuration.UseTLS)
             {
-                if ((configuration.OwnCertificateFile != null)&&(configuration.OwnCertificate==null))
+                if ((configuration.OwnCertificateFile != null) && (configuration.OwnCertificate == null))
+                {
                     try
                     {
                         // could be not given or with error if the remote device do not verify it (wrong idea)
@@ -99,24 +118,84 @@ namespace System.IO.BACnet
                     {
                         Trace.TraceError("Error with App own certificate file : " + e.Message);
                     }
-
+                }
                 if (configuration.OwnCertificate == null)
                     Trace.TraceWarning("BACnet/SC : Warning App without certificate ");
 
-                if ((configuration.OwnCertificate!=null)&&(!configuration.OwnCertificate.HasPrivateKey))
+                if ((configuration.OwnCertificate != null) && (!configuration.OwnCertificate.HasPrivateKey))
                     Trace.TraceWarning("BACnet/SC : Warning the App own certificate is without a private key");
 
-                if ((configuration.ValidateHubCertificate)&&(configuration.HubCertificate == null))
+                if ((configuration.ValidateHubCertificate) && (configuration.ThrustedCertificates == null))
+                {
                     try
                     {
-                        // could be not given if the root CA is in the default computer store
-                        configuration.HubCertificate = new X509Certificate2(configuration.HubCertificateFile);
+                        // could be not given if the direct CA share the same CA as our
+                        if (configuration.ThrustedCertificatesFile != null)
+                        {
+                            configuration.ThrustedCertificates = new X509Certificate2Collection();
+
+                            // Not working to extract multi certs file from a pem concatenation, only working with pfx ... arggggg
+                            // So got it (single pem, der, pfx but normaly not) and after trys to read the possible multi-pem
+                            configuration.ThrustedCertificates.Import(configuration.ThrustedCertificatesFile);
+
+                            // so manually parsing the possible multi certificates pem ! rfc7468
+                            // jump in catch if not
+                            StringBuilder sb = new StringBuilder();
+                            using (StreamReader sr = new StreamReader(configuration.ThrustedCertificatesFile))
+                            {
+                                String l;
+                                bool begin = false;
+                                do
+                                {
+                                    l = sr.ReadLine();
+                                    if ((l != null) && (l.Contains("-----BEGIN CERTIFICATE-----")))
+                                        begin = true;
+                                    else
+                                        if ((l != null) && (l.Contains("-----END CERTIFICATE-----")))
+                                    {
+                                        try
+                                        {
+                                            X509Certificate2 cert = new X509Certificate2(Convert.FromBase64String(sb.ToString()));
+                                            if (!configuration.ThrustedCertificates.Contains(cert))
+                                                configuration.ThrustedCertificates.Add(cert);
+                                        }
+                                        catch { }
+                                        sb.Clear();
+                                        begin = false;
+                                    }
+                                    else if ((!String.IsNullOrWhiteSpace(l)) && ((l.Length % 4) == 0) && (begin == true))
+                                        sb.Append(l);
+                                } while (l != null);
+                            }
+                        }
                     }
-                    catch
-                    {
-                        // Error may or not occur later during connection
-                        return;
-                    }
+                    catch { }
+                }
+                if (configuration.ValidateHubCertificate)
+                {
+                    // The validation chain : using both the system store and the extra store we will add now
+                    // System store validation will be ignored later
+                    CertValidationChain = new X509Chain();
+                    CertValidationChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                    CertValidationChain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+
+                    // Import the CA if any from the .pfx and Yabe own certificate
+                    // so we will accept all remote devices with the same CA
+                    // and also certificate signed by Yabe if it's a CA also.
+                    // So load again the pfx file in another way
+                    X509Certificate2Collection CertValidationCollection = new X509Certificate2Collection();
+                    CertValidationCollection.Import(configuration.OwnCertificateFile, configuration.OwnCertificateFilePassword, X509KeyStorageFlags.DefaultKeySet);
+
+                    foreach (X509Certificate2 cert in CertValidationCollection)   // collection.Find nor working !
+                        if (cert.Subject == configuration.OwnCertificate.Issuer)
+                            CertValidationChain.ChainPolicy.ExtraStore.Add(cert);
+
+                    CertValidationChain.ChainPolicy.ExtraStore.Add(configuration.OwnCertificate);
+
+                    if (configuration.ThrustedCertificates != null) // the additional CA and some final certificates
+                        CertValidationChain.ChainPolicy.ExtraStore.AddRange(configuration.ThrustedCertificates);
+
+                }
             }
 
             ConfigOK = true;
@@ -144,7 +223,11 @@ namespace System.IO.BACnet
 
             if (configuration.UseTLS)
             {
-                Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13;
+                if (configuration.OnlyAllowsTLS13 == true)
+                    Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls13;
+                else
+                    Websocket.SslConfiguration.EnabledSslProtocols = SslProtocols.None; // The client send all available options, the server should normaly propose only Tls1.3
+
                 Websocket.SslConfiguration.ServerCertificateValidationCallback = RemoteCertificateValidationCallback;
                 Websocket.SslConfiguration.ClientCertificateSelectionCallback = LocalCertificateSelectionCallback;
             }
@@ -154,36 +237,66 @@ namespace System.IO.BACnet
             Websocket.OnClose += Websocket_OnClose;
             Websocket.Log.Output = new Action<LogData, String>(Websocket_OnLog); // needed to get detailed information about error
             state = BACnetSCState.AWAITING_WEBSOCKET;
-
+            if (configuration.WiresharkCapturePort!=-1)
+                ActivateSnifferForWireshark(configuration.WiresharkCapturePort);
             Websocket.ConnectAsync();
+        }
+
+        class WiresharkListenerLoopBack : WebSocketBehavior
+        {
+            // do nothing, just here to allows a unciphered capture in loopback mode
+            public WiresharkListenerLoopBack()
+            {
+                this.Protocol = "hub.bsc.bacnet.org";
+            }
+        }
+        public void ActivateSnifferForWireshark(int LoopbackWiresharkPort)
+        {
+            // Open a ws channel in loopback then connect to it.
+            // It's used to re-send each receive frame in a uncyphered channel for debug purpose
+            // when a device don't allows ws communication. Wireshark (npcap in fact) can capture loopback.
+
+            try
+            {
+                WebsocketLoopBackWiresharkServer = new WebSocketServer(IPAddress.Loopback, LoopbackWiresharkPort);
+                WebsocketLoopBackWiresharkServer.AddWebSocketService<WiresharkListenerLoopBack>("/");
+                WebsocketLoopBackWiresharkServer.Log.Output = (_, __) => { };
+                WebsocketLoopBackWiresharkServer.Start();
+
+                WebsocketLoopBackWiresharkClient = new WebSocket("ws://127.0.0.1:" + LoopbackWiresharkPort.ToString(), new string[] { "hub.bsc.bacnet.org" });
+                WebsocketLoopBackWiresharkClient.ConnectAsync();
+            }
+            catch { }
+
         }
         private X509Certificate LocalCertificateSelectionCallback(object sender, string targetHost, X509CertificateCollection localCertificates, X509Certificate remoteCertificate, string[] acceptableIssuers)
         {
             return configuration.OwnCertificate;
         }
-        // Here we accept all certificates known by the computer : SslPolicyErrors.None
-        // also the one given as a configuration parameter in config.HubCertificateFile
-        // if it's the hub certificate or one of it's signing CA in the chain (if the chain is given)
-        // REQUEST : help from a PKI-TLS-X509 specialist to validate this workflow
+        // Here we do NOT accept certificates known by the computer : SslPolicyErrors.None
+        // Only the one given as a configuration parameter in config.HubCertificateFile
+        // if it's the hub certificate or one of it's signing CA in the chain
         private bool RemoteCertificateValidationCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
-            if (configuration.ValidateHubCertificate==false)
+            if (configuration.ValidateHubCertificate == false)
                 return true;    // No verification requested : always OK
 
-            // The certificate or the root CA certificate is in the default computer store and all the X509Chain is given
-            if (sslPolicyErrors == System.Net.Security.SslPolicyErrors.None)
+            // The certificate system accepted with sslPolicyErrors == SslPolicyErrors.None is not OK for BACNet/SC
+
+            if ((configuration.ThrustedCertificates != null) && (configuration.ThrustedCertificates.Contains(certificate)))
                 return true;
 
-            // We have a certificate in the chain (even self signed) : CA Root, CA Intermediate
-            foreach (X509ChainElement chainElement in chain.ChainElements)
-                if (chainElement.Certificate.Equals(configuration.HubCertificate))
-                    return true;
+            // Try if the cert share the same PKI as Yabe or a given additional thrusted CA certificate
+            if (CertValidationChain != null)
+            {
+                if (CertValidationChain.Build(certificate as X509Certificate2) == true)
+                    if (CertValidationChain.ChainElements.Count > 1)    // The certificate is link to at least another one in the store
+                        // Reject certificats with CA in the system store, only the Extra store of the application is allowed
+                        if (CertValidationChain.ChainPolicy.ExtraStore.Contains(CertValidationChain.ChainElements[CertValidationChain.ChainElements.Count - 1].Certificate))
+                            return true;
+            }
 
-            // We have the final certificate (even self signed) ... normaly this certificate is in the previous X509Chain
-            if (certificate.Equals(configuration.HubCertificate))
-                return true;
-
-            Trace.TraceError("BACnet/SC : Remote certificate rejected");
+            Trace.TraceInformation("BACnet/SC : Remote certificate rejected");
 
             return false;
 
@@ -196,23 +309,50 @@ namespace System.IO.BACnet
         }
         private void Websocket_OnMessage(object sender, MessageEventArgs e)
         {
+            try { WebsocketLoopBackWiresharkClient?.SendAsync(e.RawData, null); } catch { WebsocketLoopBackWiresharkClient = null; }
             OnReceiveData(e.RawData);
         }
         private void Websocket_OnError(object sender, WebSocketSharp.ErrorEventArgs e)
         {
-            Trace.TraceError("BACnet/SC Error : ", e.Message);
-            state = BACnetSCState.IDLE;
+            if (DuplicateVMACCount == 0)    // Don't consider a WebSocket error when closing during DuplicateVMACCount 
+            {
+                Trace.TraceError("BACnet/SC Error");
+                state = BACnetSCState.IDLE;
+            }
         }
         private void Websocket_OnClose(object sender, CloseEventArgs e)
         {
-            Trace.TraceInformation("BACnet/SC Close : "+ e.Reason);
-            state = BACnetSCState.IDLE;
+            Trace.TraceInformation("BACnet/SC Close");
             OnChannelDisconnected?.Invoke(this, e);
+
+            if (configuration.AutoReconnectDelay > -1)
+            {
+                state = BACnetSCState.AWAITING_WEBSOCKET;
+                ThreadPool.QueueUserWorkItem((__) =>
+                {
+                    Thread.Sleep(configuration.AutoReconnectDelay * 1000);
+                    Websocket.ConnectAsync();
+
+                });
+            }
+            else if ((DuplicateVMACCount > 0) && (DuplicateVMACCount < 3))
+            {
+                Trace.TraceInformation("BACnet/SC Duplicate VMAC : trying with a random one");
+                state = BACnetSCState.AWAITING_WEBSOCKET;
+                ThreadPool.QueueUserWorkItem((__) =>
+                {
+                    Websocket.ConnectAsync();
+
+                });
+            }
+            else
+                state = BACnetSCState.IDLE;
         }
         private void Websocket_OnLog(LogData log, String Logmessage)
         {
             // First line is enough
-            Trace.TraceError("BACnet/SC Websocket : " + log.Message.Split(new[] { '\r', '\n' })[0]);
+            if (DuplicateVMACCount == 0)
+                Trace.TraceError("BACnet/SC Websocket : " + log.Message.Split(new[] { '\r', '\n' })[0]);
         }
 
         private void Close()
@@ -222,7 +362,7 @@ namespace System.IO.BACnet
                 state = BACnetSCState.DISCONNECTING;
 
                 BVLC_SC_SendSimpleBVLCMsg(BacnetBvlcSCMessage.BVLC_DISCONNECT_REQUEST, 0, 0);
-                ThreadPool.QueueUserWorkItem( (_) =>
+                ThreadPool.QueueUserWorkItem((_) =>
                 {
                     try
                     {
@@ -231,10 +371,12 @@ namespace System.IO.BACnet
                         Thread.Sleep(2000);
                         if (state == BACnetSCState.DISCONNECTING)
                             Websocket.Close();  // Not closed by the peer device, do it
+
+                        WebsocketLoopBackWiresharkServer?.Stop(); WebsocketLoopBackWiresharkClient?.Close(); 
                     }
                     catch { }
 
-                    state= BACnetSCState.IDLE;
+                    state = BACnetSCState.IDLE;
 
                 }
                 );
@@ -308,6 +450,7 @@ namespace System.IO.BACnet
         }
         private int Send(byte[] buffer)
         {
+            try { WebsocketLoopBackWiresharkClient?.SendAsync(buffer, null); } catch { WebsocketLoopBackWiresharkClient = null; }
             try
             {
                 Websocket.SendAsync(buffer, null);
@@ -335,7 +478,8 @@ namespace System.IO.BACnet
             else
             {
                 // NPDU sent before a full SC connection (Iam, WhoIs certainly), push the Frame on a tempo buffer
-                // Upper layers (using ethernet, udp or serial) were not by designed for a delay between open and send
+                // Upper layers (using ethernet, udp or serial) were not designed for a delay between open and send
+                // ... all using at least one level of queue
                 byte[] cpy = new byte[full_length];
                 Array.Copy(buffer, cpy, full_length);
                 lock (AwaitingFrames)
@@ -372,10 +516,6 @@ namespace System.IO.BACnet
 
         private void BVLC_SC_SendConnectRequest()
         {
-            // Random VMAC creation
-            // ensure xxxx0010, § H.7.X EUI - 48 and Random-48 VMAC Address
-            new Random().NextBytes(myVMAC);
-            myVMAC[0] = (byte)((myVMAC[0] & 0xF0) | 0x02); // xxxx0010
 
             byte[] b = new byte[4 + 6 + 16 + 2 + 2];
             b[0] = (byte)BacnetBvlcSCMessage.BVLC_CONNECT_REQUEST;
@@ -387,13 +527,11 @@ namespace System.IO.BACnet
             Array.Copy(myVMAC, 0, b, 4, 6);
             // UUID
             byte[] bUUID;
-            if (Guid.TryParse(configuration.UUID, out Guid uuid)==true)
+            if (Guid.TryParse(configuration.UUID, out Guid uuid) == true)
                 bUUID = uuid.ToByteArray();
             else
-            {
-                bUUID = Encoding.ASCII.GetBytes(configuration.UUID);
-                Array.Resize(ref bUUID, 16);
-            }
+                bUUID = Guid.NewGuid().ToByteArray();
+
             Array.Copy(bUUID, 0, b, 10, 16);
 
             // Max BVLC size 1600
@@ -409,7 +547,7 @@ namespace System.IO.BACnet
 
         private void BVLC_SC_SendBvlcError(byte[] DestVmac, byte MsgId1, byte MsgId2, BacnetErrorClasses classe, BacnetErrorCodes code)
         {
-            byte[] b=new byte[10 + (configuration.DirectConnect==true?0:6)];
+            byte[] b = new byte[10 + (configuration.DirectConnect == true ? 0 : 6)];
 
             b[0] = (byte)BacnetBvlcSCMessage.BVLC_RESULT;
             b[1] = (byte)(configuration.DirectConnect == true ? 0 : 4);// Destination Vmac 4 only or not 0
@@ -417,7 +555,7 @@ namespace System.IO.BACnet
             b[3] = MsgId2;
 
             int offset = 0;
-            if (configuration.DirectConnect==false)
+            if (configuration.DirectConnect == false)
             {
                 // Destination Virtual Address
                 Array.Copy(DestVmac, 0, b, 4, 6);
@@ -455,7 +593,7 @@ namespace System.IO.BACnet
             if (!configuration.DirectConnect)
             {
                 buffer[0] = (byte)function;
-                buffer[1] = 4 ;             // Destination Vmac only, no source VMAC on a hub channel, without optional fields
+                buffer[1] = 4;             // Destination Vmac only, no source VMAC on a hub channel, without optional fields
                 buffer[2] = 0xBA;           // Message Id
                 buffer[3] = 0xC0;
                 // Destination Virtual Address
@@ -537,14 +675,21 @@ namespace System.IO.BACnet
             switch (function)
             {
                 case BacnetBvlcSCMessage.BVLC_RESULT:
-                    if ((buffer[offset] == (byte)BacnetBvlcSCMessage.BVLC_CONNECT_REQUEST)&&(buffer[offset+1]==0X01)&&(buffer[offset + 2]==0))
+                    if ((buffer[offset] == (byte)BacnetBvlcSCMessage.BVLC_CONNECT_REQUEST) && (buffer[offset + 1] == 0X01) && (buffer[offset + 2] == 0))
                     {
                         UInt16 ErrorClass = (UInt16)((buffer[offset + 3] << 8) | (buffer[offset + 4]));
                         UInt16 ErrorCode = (UInt16)((buffer[offset + 5] << 8) | (buffer[offset + 6]));
                         // Normaly duplicate VMAC should never occur 1.7^13 values. Redo with another random number
-                        // ... a good way to spend time to think, code and discuss for nothing
-                        if ((ErrorClass == (byte)BacnetErrorClasses.ERROR_CLASS_COMMUNICATION)&&(ErrorCode == (byte)BacnetErrorCodes.ERROR_CODE_NODE_DUPLICATE_VMAC))
-                            BVLC_SC_SendConnectRequest();
+                        if ((ErrorClass == (byte)BacnetErrorClasses.ERROR_CLASS_COMMUNICATION) && (ErrorCode == (byte)BacnetErrorCodes.ERROR_CODE_NODE_DUPLICATE_VMAC))
+                        {
+                            // Random VMAC creation
+                            // ensure xxxx0010, § H.7.X EUI - 48 and Random-48 VMAC Address
+                            new Random().NextBytes(myVMAC);
+                            myVMAC[0] = (byte)((myVMAC[0] & 0xF0) | 0x02); // xxxx0010
+                            DuplicateVMACCount++;
+                            // Normaly the Hub is closing the connexion
+                            Websocket.Close();
+                        }
                     }
                     return 0;
                 case BacnetBvlcSCMessage.BVLC_ENCASULATED_NPDU:
@@ -554,7 +699,7 @@ namespace System.IO.BACnet
                     return 0;       // Only for BVLC
                 case BacnetBvlcSCMessage.BVLC_DISCONNECT_REQUEST:
                     BVLC_SC_SendSimpleBVLCMsg(BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK, buffer[2], buffer[3]);
-                    state=BACnetSCState.IDLE;
+                    state = BACnetSCState.IDLE;
                     return 0;       // Only for BVLC
                 case BacnetBvlcSCMessage.BVLC_DISCONNECT_ACK:
                     // Don't set BACnetSCState.IDLE ... wait for close
@@ -592,6 +737,7 @@ namespace System.IO.BACnet
             try
             {
                 ConfigOK = false;
+                configuration.AutoReconnectDelay = -1;
                 Close();
             }
             catch { }
@@ -622,17 +768,34 @@ namespace System.IO.BACnet
 
     public class BACnetSCConfigChannel
     {
-        public String primaryHubURI="";
+        public String primaryHubURI = "";
         public String failoverHubURI;
 
-        public String UUID="If Forgot !";
+        public String UUID;
 
         public String OwnCertificateFile;
-        public String HubCertificateFile;
+        public String ThrustedCertificatesFile;
 
-        public bool ValidateHubCertificate=false;
-        public bool DirectConnect=false;
+        public bool ValidateHubCertificate = false;
+        public bool DirectConnect = false;
+
+        public bool OnlyAllowsTLS13 = false;
         public bool UseTLS { get { return primaryHubURI.Contains("wss://"); } }
+
+        private int _AutoReconnectDelay = -1;
+
+        public byte[] VMAC;
+
+        public int AutoReconnectDelay // YY.6.1 BACnet/SC Reconnect Timeout
+        {
+            get { return _AutoReconnectDelay; }
+            set
+            {
+                _AutoReconnectDelay = value;
+                if (_AutoReconnectDelay >= 0)
+                    _AutoReconnectDelay = Math.Min(30, Math.Max(2, _AutoReconnectDelay));
+            }
+        }
 
         [XmlIgnore]
         public String OwnCertificateFilePassword;
@@ -640,7 +803,8 @@ namespace System.IO.BACnet
         [XmlIgnore]
         public X509Certificate2 OwnCertificate; // with private key
         [XmlIgnore]
-        public X509Certificate2 HubCertificate;
+        public X509Certificate2Collection ThrustedCertificates;
 
+        public int WiresharkCapturePort = -1; // To resend cyphered stream to an uncyphered port
     }
 }

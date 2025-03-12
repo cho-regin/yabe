@@ -40,22 +40,6 @@ namespace GlobalCommander
             this.cmdCommand = new System.Windows.Forms.Button();
             this.lblCmdVal = new System.Windows.Forms.Label();
             this.txtCmdVal = new System.Windows.Forms.TextBox();
-            this.o1 = new System.Windows.Forms.RadioButton();
-            this.o2 = new System.Windows.Forms.RadioButton();
-            this.o3 = new System.Windows.Forms.RadioButton();
-            this.o4 = new System.Windows.Forms.RadioButton();
-            this.o5 = new System.Windows.Forms.RadioButton();
-            this.o6 = new System.Windows.Forms.RadioButton();
-            this.o7 = new System.Windows.Forms.RadioButton();
-            this.o10 = new System.Windows.Forms.RadioButton();
-            this.o8 = new System.Windows.Forms.RadioButton();
-            this.o11 = new System.Windows.Forms.RadioButton();
-            this.o9 = new System.Windows.Forms.RadioButton();
-            this.o12 = new System.Windows.Forms.RadioButton();
-            this.o14 = new System.Windows.Forms.RadioButton();
-            this.o15 = new System.Windows.Forms.RadioButton();
-            this.o13 = new System.Windows.Forms.RadioButton();
-            this.o16 = new System.Windows.Forms.RadioButton();
             this.progBar = new System.Windows.Forms.ProgressBar();
             this.cmdViewProps = new System.Windows.Forms.Button();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
@@ -78,6 +62,21 @@ namespace GlobalCommander
             this.chkDot = new System.Windows.Forms.CheckBox();
             this.chkApostrophe = new System.Windows.Forms.CheckBox();
             this.delimToolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.btnSyncTime = new System.Windows.Forms.Button();
+            this.oComProp = new System.Windows.Forms.RadioButton();
+            this.oAnyProp = new System.Windows.Forms.RadioButton();
+            this.cboPriority = new System.Windows.Forms.ComboBox();
+            this.lblPrio = new System.Windows.Forms.Label();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.lblGlobal1 = new System.Windows.Forms.Label();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.grpDevices = new System.Windows.Forms.GroupBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtWhoIsHigh = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.txtWhoIsLow = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -99,6 +98,11 @@ namespace GlobalCommander
             this.splitContainer5.Panel2.SuspendLayout();
             this.splitContainer5.SuspendLayout();
             this.grpPointNames.SuspendLayout();
+            this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
+            this.groupBox3.SuspendLayout();
+            this.groupBox4.SuspendLayout();
+            this.grpDevices.SuspendLayout();
             this.SuspendLayout();
             // 
             // DeviceList
@@ -108,7 +112,7 @@ namespace GlobalCommander
             this.DeviceList.Location = new System.Drawing.Point(0, 0);
             this.DeviceList.Name = "DeviceList";
             this.DeviceList.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.DeviceList.Size = new System.Drawing.Size(285, 560);
+            this.DeviceList.Size = new System.Drawing.Size(312, 592);
             this.DeviceList.TabIndex = 0;
             this.DeviceList.SelectedIndexChanged += new System.EventHandler(this.DeviceList_SelectedIndexChanged);
             // 
@@ -119,7 +123,7 @@ namespace GlobalCommander
             this.PointList.Location = new System.Drawing.Point(0, 0);
             this.PointList.Name = "PointList";
             this.PointList.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this.PointList.Size = new System.Drawing.Size(391, 560);
+            this.PointList.Size = new System.Drawing.Size(375, 592);
             this.PointList.TabIndex = 1;
             this.PointList.SelectedIndexChanged += new System.EventHandler(this.PointList_SelectedIndexChanged);
             // 
@@ -130,8 +134,9 @@ namespace GlobalCommander
             this.PropertyList.Location = new System.Drawing.Point(0, 0);
             this.PropertyList.MinimumSize = new System.Drawing.Size(100, 4);
             this.PropertyList.Name = "PropertyList";
-            this.PropertyList.Size = new System.Drawing.Size(329, 560);
+            this.PropertyList.Size = new System.Drawing.Size(356, 592);
             this.PropertyList.TabIndex = 2;
+            this.PropertyList.DoubleClick += new System.EventHandler(this.PropertyList_DoubleClick);
             // 
             // cmdPopulateDevices
             // 
@@ -140,6 +145,7 @@ namespace GlobalCommander
             this.cmdPopulateDevices.Size = new System.Drawing.Size(140, 36);
             this.cmdPopulateDevices.TabIndex = 3;
             this.cmdPopulateDevices.Text = "Populate Devices";
+            this.delimToolTip.SetToolTip(this.cmdPopulateDevices, resources.GetString("cmdPopulateDevices.ToolTip"));
             this.cmdPopulateDevices.UseVisualStyleBackColor = true;
             this.cmdPopulateDevices.Click += new System.EventHandler(this.cmdPopulateDevices_Click);
             // 
@@ -150,6 +156,8 @@ namespace GlobalCommander
             this.cmdPopulatePoints.Size = new System.Drawing.Size(140, 36);
             this.cmdPopulatePoints.TabIndex = 5;
             this.cmdPopulatePoints.Text = "Populate Points";
+            this.delimToolTip.SetToolTip(this.cmdPopulatePoints, "Populate the objects from the selected devices.\r\nThe behaviour of this button is " +
+        "dependant on\r\nthe \"Populate Points Method\" setting to the right.");
             this.cmdPopulatePoints.UseVisualStyleBackColor = true;
             this.cmdPopulatePoints.Click += new System.EventHandler(this.cmdPopulatePoints_Click);
             // 
@@ -160,233 +168,59 @@ namespace GlobalCommander
             this.cmdPopulateProperties.Size = new System.Drawing.Size(140, 36);
             this.cmdPopulateProperties.TabIndex = 7;
             this.cmdPopulateProperties.Text = "Populate Properties";
+            this.delimToolTip.SetToolTip(this.cmdPopulateProperties, "Populate the relevant properties from the selected\r\nobjects. The behaviour of thi" +
+        "s button is dependant\r\non the \"Populate Properties Method\" setting to the\r\nright" +
+        ".\r\n");
             this.cmdPopulateProperties.UseVisualStyleBackColor = true;
             this.cmdPopulateProperties.Click += new System.EventHandler(this.cmdPopulateProperties_Click);
             // 
             // cmdCommand
             // 
-            this.cmdCommand.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.cmdCommand.Location = new System.Drawing.Point(1032, 420);
+            this.cmdCommand.Location = new System.Drawing.Point(6, 79);
             this.cmdCommand.Name = "cmdCommand";
             this.cmdCommand.Size = new System.Drawing.Size(214, 36);
-            this.cmdCommand.TabIndex = 8;
+            this.cmdCommand.TabIndex = 26;
             this.cmdCommand.Text = "Globally Command";
+            this.delimToolTip.SetToolTip(this.cmdCommand, "Command/relinquish the selected property\r\non all selected objects/devices to the " +
+        "specified\r\nvalue.");
             this.cmdCommand.UseVisualStyleBackColor = true;
             this.cmdCommand.Click += new System.EventHandler(this.cmdCommand_Click);
             // 
             // lblCmdVal
             // 
-            this.lblCmdVal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.lblCmdVal.AutoSize = true;
-            this.lblCmdVal.Location = new System.Drawing.Point(1032, 394);
+            this.lblCmdVal.Location = new System.Drawing.Point(6, 23);
             this.lblCmdVal.Name = "lblCmdVal";
             this.lblCmdVal.Size = new System.Drawing.Size(87, 13);
-            this.lblCmdVal.TabIndex = 7;
+            this.lblCmdVal.TabIndex = 21;
             this.lblCmdVal.Text = "Command Value:";
             // 
             // txtCmdVal
             // 
-            this.txtCmdVal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtCmdVal.Location = new System.Drawing.Point(1125, 391);
+            this.txtCmdVal.Location = new System.Drawing.Point(99, 20);
             this.txtCmdVal.Name = "txtCmdVal";
             this.txtCmdVal.Size = new System.Drawing.Size(120, 20);
-            this.txtCmdVal.TabIndex = 28;
-            // 
-            // o1
-            // 
-            this.o1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o1.AutoSize = true;
-            this.o1.Location = new System.Drawing.Point(1124, 16);
-            this.o1.Name = "o1";
-            this.o1.Size = new System.Drawing.Size(65, 17);
-            this.o1.TabIndex = 110;
-            this.o1.Text = "Priority 1";
-            this.o1.UseVisualStyleBackColor = true;
-            // 
-            // o2
-            // 
-            this.o2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o2.AutoSize = true;
-            this.o2.Location = new System.Drawing.Point(1124, 39);
-            this.o2.Name = "o2";
-            this.o2.Size = new System.Drawing.Size(65, 17);
-            this.o2.TabIndex = 111;
-            this.o2.Text = "Priority 2";
-            this.o2.UseVisualStyleBackColor = true;
-            // 
-            // o3
-            // 
-            this.o3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o3.AutoSize = true;
-            this.o3.Location = new System.Drawing.Point(1124, 62);
-            this.o3.Name = "o3";
-            this.o3.Size = new System.Drawing.Size(65, 17);
-            this.o3.TabIndex = 112;
-            this.o3.Text = "Priority 3";
-            this.o3.UseVisualStyleBackColor = true;
-            // 
-            // o4
-            // 
-            this.o4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o4.AutoSize = true;
-            this.o4.Location = new System.Drawing.Point(1124, 85);
-            this.o4.Name = "o4";
-            this.o4.Size = new System.Drawing.Size(65, 17);
-            this.o4.TabIndex = 113;
-            this.o4.Text = "Priority 4";
-            this.o4.UseVisualStyleBackColor = true;
-            // 
-            // o5
-            // 
-            this.o5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o5.AutoSize = true;
-            this.o5.Location = new System.Drawing.Point(1124, 108);
-            this.o5.Name = "o5";
-            this.o5.Size = new System.Drawing.Size(65, 17);
-            this.o5.TabIndex = 114;
-            this.o5.Text = "Priority 5";
-            this.o5.UseVisualStyleBackColor = true;
-            // 
-            // o6
-            // 
-            this.o6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o6.AutoSize = true;
-            this.o6.Location = new System.Drawing.Point(1124, 131);
-            this.o6.Name = "o6";
-            this.o6.Size = new System.Drawing.Size(65, 17);
-            this.o6.TabIndex = 115;
-            this.o6.Text = "Priority 6";
-            this.o6.UseVisualStyleBackColor = true;
-            // 
-            // o7
-            // 
-            this.o7.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o7.AutoSize = true;
-            this.o7.Location = new System.Drawing.Point(1124, 154);
-            this.o7.Name = "o7";
-            this.o7.Size = new System.Drawing.Size(65, 17);
-            this.o7.TabIndex = 116;
-            this.o7.Text = "Priority 7";
-            this.o7.UseVisualStyleBackColor = true;
-            // 
-            // o10
-            // 
-            this.o10.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o10.AutoSize = true;
-            this.o10.Location = new System.Drawing.Point(1124, 223);
-            this.o10.Name = "o10";
-            this.o10.Size = new System.Drawing.Size(71, 17);
-            this.o10.TabIndex = 119;
-            this.o10.Text = "Priority 10";
-            this.o10.UseVisualStyleBackColor = true;
-            // 
-            // o8
-            // 
-            this.o8.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o8.AutoSize = true;
-            this.o8.Checked = true;
-            this.o8.Location = new System.Drawing.Point(1124, 177);
-            this.o8.Name = "o8";
-            this.o8.Size = new System.Drawing.Size(65, 17);
-            this.o8.TabIndex = 117;
-            this.o8.TabStop = true;
-            this.o8.Text = "Priority 8";
-            this.o8.UseVisualStyleBackColor = true;
-            // 
-            // o11
-            // 
-            this.o11.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o11.AutoSize = true;
-            this.o11.Location = new System.Drawing.Point(1124, 246);
-            this.o11.Name = "o11";
-            this.o11.Size = new System.Drawing.Size(71, 17);
-            this.o11.TabIndex = 121;
-            this.o11.Text = "Priority 11";
-            this.o11.UseVisualStyleBackColor = true;
-            // 
-            // o9
-            // 
-            this.o9.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o9.AutoSize = true;
-            this.o9.Location = new System.Drawing.Point(1124, 200);
-            this.o9.Name = "o9";
-            this.o9.Size = new System.Drawing.Size(65, 17);
-            this.o9.TabIndex = 118;
-            this.o9.Text = "Priority 9";
-            this.o9.UseVisualStyleBackColor = true;
-            // 
-            // o12
-            // 
-            this.o12.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o12.AutoSize = true;
-            this.o12.Location = new System.Drawing.Point(1124, 269);
-            this.o12.Name = "o12";
-            this.o12.Size = new System.Drawing.Size(71, 17);
-            this.o12.TabIndex = 123;
-            this.o12.Text = "Priority 12";
-            this.o12.UseVisualStyleBackColor = true;
-            // 
-            // o14
-            // 
-            this.o14.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o14.AutoSize = true;
-            this.o14.Location = new System.Drawing.Point(1124, 315);
-            this.o14.Name = "o14";
-            this.o14.Size = new System.Drawing.Size(71, 17);
-            this.o14.TabIndex = 124;
-            this.o14.Text = "Priority 14";
-            this.o14.UseVisualStyleBackColor = true;
-            // 
-            // o15
-            // 
-            this.o15.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o15.AutoSize = true;
-            this.o15.Location = new System.Drawing.Point(1124, 338);
-            this.o15.Name = "o15";
-            this.o15.Size = new System.Drawing.Size(71, 17);
-            this.o15.TabIndex = 125;
-            this.o15.Text = "Priority 15";
-            this.o15.UseVisualStyleBackColor = true;
-            // 
-            // o13
-            // 
-            this.o13.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o13.AutoSize = true;
-            this.o13.Location = new System.Drawing.Point(1124, 292);
-            this.o13.Name = "o13";
-            this.o13.Size = new System.Drawing.Size(71, 17);
-            this.o13.TabIndex = 126;
-            this.o13.Text = "Priority 13";
-            this.o13.UseVisualStyleBackColor = true;
-            // 
-            // o16
-            // 
-            this.o16.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.o16.AutoSize = true;
-            this.o16.Location = new System.Drawing.Point(1124, 361);
-            this.o16.Name = "o16";
-            this.o16.Size = new System.Drawing.Size(71, 17);
-            this.o16.TabIndex = 127;
-            this.o16.Text = "Priority 16";
-            this.o16.UseVisualStyleBackColor = true;
+            this.txtCmdVal.TabIndex = 22;
             // 
             // progBar
             // 
             this.progBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.progBar.Location = new System.Drawing.Point(12, 636);
+            this.progBar.Location = new System.Drawing.Point(12, 669);
             this.progBar.Name = "progBar";
-            this.progBar.Size = new System.Drawing.Size(1228, 16);
+            this.progBar.Size = new System.Drawing.Size(1276, 16);
             this.progBar.TabIndex = 10;
             // 
             // cmdViewProps
             // 
-            this.cmdViewProps.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.cmdViewProps.Location = new System.Drawing.Point(1032, 465);
+            this.cmdViewProps.Location = new System.Drawing.Point(6, 19);
             this.cmdViewProps.Name = "cmdViewProps";
-            this.cmdViewProps.Size = new System.Drawing.Size(213, 36);
-            this.cmdViewProps.TabIndex = 9;
+            this.cmdViewProps.Size = new System.Drawing.Size(214, 36);
+            this.cmdViewProps.TabIndex = 31;
             this.cmdViewProps.Text = "View Properties in Scope";
+            this.delimToolTip.SetToolTip(this.cmdViewProps, "View all the curent value of the selected property\r\non all selected objects/devic" +
+        "es that would be globally\r\ncommanded. The values can also be commanded\r\none-by-o" +
+        "ne from here.");
             this.cmdViewProps.UseVisualStyleBackColor = true;
             this.cmdViewProps.Click += new System.EventHandler(this.cmdViewProps_Click);
             // 
@@ -407,9 +241,9 @@ namespace GlobalCommander
             // 
             this.splitContainer1.Panel2.Controls.Add(this.splitContainer5);
             this.splitContainer1.Panel2MinSize = 100;
-            this.splitContainer1.Size = new System.Drawing.Size(1013, 604);
-            this.splitContainer1.SplitterDistance = 680;
-            this.splitContainer1.TabIndex = 28;
+            this.splitContainer1.Size = new System.Drawing.Size(1051, 637);
+            this.splitContainer1.SplitterDistance = 691;
+            this.splitContainer1.TabIndex = 101;
             // 
             // splitContainer2
             // 
@@ -424,9 +258,9 @@ namespace GlobalCommander
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.splitContainer4);
-            this.splitContainer2.Size = new System.Drawing.Size(680, 604);
-            this.splitContainer2.SplitterDistance = 285;
-            this.splitContainer2.TabIndex = 0;
+            this.splitContainer2.Size = new System.Drawing.Size(691, 637);
+            this.splitContainer2.SplitterDistance = 312;
+            this.splitContainer2.TabIndex = 100;
             // 
             // splitContainer3
             // 
@@ -446,8 +280,8 @@ namespace GlobalCommander
             // 
             this.splitContainer3.Panel2.Controls.Add(this.txtDeviceFilter);
             this.splitContainer3.Panel2.Controls.Add(this.cmdPopulateDevices);
-            this.splitContainer3.Size = new System.Drawing.Size(285, 604);
-            this.splitContainer3.SplitterDistance = 560;
+            this.splitContainer3.Size = new System.Drawing.Size(312, 637);
+            this.splitContainer3.SplitterDistance = 592;
             this.splitContainer3.TabIndex = 1;
             // 
             // txtDeviceFilter
@@ -457,7 +291,7 @@ namespace GlobalCommander
             this.txtDeviceFilter.Location = new System.Drawing.Point(152, 11);
             this.txtDeviceFilter.MinimumSize = new System.Drawing.Size(50, 4);
             this.txtDeviceFilter.Name = "txtDeviceFilter";
-            this.txtDeviceFilter.Size = new System.Drawing.Size(105, 20);
+            this.txtDeviceFilter.Size = new System.Drawing.Size(160, 20);
             this.txtDeviceFilter.TabIndex = 4;
             this.txtDeviceFilter.TextChanged += new System.EventHandler(this.txtDeviceFilter_TextChanged);
             // 
@@ -479,8 +313,8 @@ namespace GlobalCommander
             // 
             this.splitContainer4.Panel2.Controls.Add(this.txtPointFilter);
             this.splitContainer4.Panel2.Controls.Add(this.cmdPopulatePoints);
-            this.splitContainer4.Size = new System.Drawing.Size(391, 604);
-            this.splitContainer4.SplitterDistance = 560;
+            this.splitContainer4.Size = new System.Drawing.Size(375, 637);
+            this.splitContainer4.SplitterDistance = 592;
             this.splitContainer4.TabIndex = 2;
             // 
             // txtPointFilter
@@ -490,7 +324,7 @@ namespace GlobalCommander
             this.txtPointFilter.Location = new System.Drawing.Point(146, 11);
             this.txtPointFilter.MinimumSize = new System.Drawing.Size(100, 4);
             this.txtPointFilter.Name = "txtPointFilter";
-            this.txtPointFilter.Size = new System.Drawing.Size(200, 20);
+            this.txtPointFilter.Size = new System.Drawing.Size(219, 20);
             this.txtPointFilter.TabIndex = 6;
             this.txtPointFilter.TextChanged += new System.EventHandler(this.txtPointFilter_TextChanged);
             // 
@@ -511,15 +345,15 @@ namespace GlobalCommander
             // splitContainer5.Panel2
             // 
             this.splitContainer5.Panel2.Controls.Add(this.cmdPopulateProperties);
-            this.splitContainer5.Size = new System.Drawing.Size(329, 604);
-            this.splitContainer5.SplitterDistance = 560;
+            this.splitContainer5.Size = new System.Drawing.Size(356, 637);
+            this.splitContainer5.SplitterDistance = 592;
             this.splitContainer5.TabIndex = 3;
             // 
             // PatienceLabel
             // 
             this.PatienceLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.PatienceLabel.AutoSize = true;
-            this.PatienceLabel.Location = new System.Drawing.Point(59, 620);
+            this.PatienceLabel.Location = new System.Drawing.Point(59, 653);
             this.PatienceLabel.Name = "PatienceLabel";
             this.PatienceLabel.Size = new System.Drawing.Size(852, 13);
             this.PatienceLabel.TabIndex = 29;
@@ -540,7 +374,7 @@ namespace GlobalCommander
             this.radComObj.Location = new System.Drawing.Point(6, 19);
             this.radComObj.Name = "radComObj";
             this.radComObj.Size = new System.Drawing.Size(198, 17);
-            this.radComObj.TabIndex = 128;
+            this.radComObj.TabIndex = 51;
             this.radComObj.Text = "Common Objects (Selected Devices)";
             this.delimToolTip.SetToolTip(this.radComObj, resources.GetString("radComObj.ToolTip"));
             this.radComObj.UseVisualStyleBackColor = true;
@@ -553,7 +387,7 @@ namespace GlobalCommander
             this.radJoinObj.Location = new System.Drawing.Point(6, 42);
             this.radJoinObj.Name = "radJoinObj";
             this.radJoinObj.Size = new System.Drawing.Size(136, 17);
-            this.radJoinObj.TabIndex = 129;
+            this.radJoinObj.TabIndex = 52;
             this.radJoinObj.TabStop = true;
             this.radJoinObj.Text = "Join All Objects into List";
             this.delimToolTip.SetToolTip(this.radJoinObj, "In \"Join All Objects\" mode, all the objects of all the selected controllers are a" +
@@ -567,8 +401,9 @@ namespace GlobalCommander
             this.lblPtDelimLabel.Location = new System.Drawing.Point(3, 69);
             this.lblPtDelimLabel.Name = "lblPtDelimLabel";
             this.lblPtDelimLabel.Size = new System.Drawing.Size(59, 13);
-            this.lblPtDelimLabel.TabIndex = 131;
+            this.lblPtDelimLabel.TabIndex = 53;
             this.lblPtDelimLabel.Text = "Delimeters:";
+            this.lblPtDelimLabel.Visible = false;
             // 
             // grpPointNames
             // 
@@ -582,10 +417,10 @@ namespace GlobalCommander
             this.grpPointNames.Controls.Add(this.radComObj);
             this.grpPointNames.Controls.Add(this.lblPtDelimLabel);
             this.grpPointNames.Controls.Add(this.radJoinObj);
-            this.grpPointNames.Location = new System.Drawing.Point(1034, 511);
+            this.grpPointNames.Location = new System.Drawing.Point(1069, 392);
             this.grpPointNames.Name = "grpPointNames";
-            this.grpPointNames.Size = new System.Drawing.Size(212, 119);
-            this.grpPointNames.TabIndex = 132;
+            this.grpPointNames.Size = new System.Drawing.Size(226, 119);
+            this.grpPointNames.TabIndex = 50;
             this.grpPointNames.TabStop = false;
             this.grpPointNames.Text = "\"Populate Points\" Method";
             // 
@@ -596,7 +431,7 @@ namespace GlobalCommander
             this.chkHyphen.Location = new System.Drawing.Point(99, 89);
             this.chkHyphen.Name = "chkHyphen";
             this.chkHyphen.Size = new System.Drawing.Size(33, 24);
-            this.chkHyphen.TabIndex = 132;
+            this.chkHyphen.TabIndex = 59;
             this.chkHyphen.Text = "-";
             this.delimToolTip.SetToolTip(this.chkHyphen, resources.GetString("chkHyphen.ToolTip"));
             this.chkHyphen.UseVisualStyleBackColor = true;
@@ -610,7 +445,7 @@ namespace GlobalCommander
             this.chkUnderscore.Location = new System.Drawing.Point(68, 92);
             this.chkUnderscore.Name = "chkUnderscore";
             this.chkUnderscore.Size = new System.Drawing.Size(33, 19);
-            this.chkUnderscore.TabIndex = 132;
+            this.chkUnderscore.TabIndex = 58;
             this.chkUnderscore.Text = "_";
             this.delimToolTip.SetToolTip(this.chkUnderscore, resources.GetString("chkUnderscore.ToolTip"));
             this.chkUnderscore.UseVisualStyleBackColor = true;
@@ -624,7 +459,7 @@ namespace GlobalCommander
             this.chkComma.Location = new System.Drawing.Point(172, 63);
             this.chkComma.Name = "chkComma";
             this.chkComma.Size = new System.Drawing.Size(32, 24);
-            this.chkComma.TabIndex = 132;
+            this.chkComma.TabIndex = 57;
             this.chkComma.Text = ",";
             this.delimToolTip.SetToolTip(this.chkComma, resources.GetString("chkComma.ToolTip"));
             this.chkComma.UseVisualStyleBackColor = true;
@@ -640,7 +475,7 @@ namespace GlobalCommander
             this.chkColon.Location = new System.Drawing.Point(137, 63);
             this.chkColon.Name = "chkColon";
             this.chkColon.Size = new System.Drawing.Size(32, 24);
-            this.chkColon.TabIndex = 132;
+            this.chkColon.TabIndex = 56;
             this.chkColon.Text = ":";
             this.delimToolTip.SetToolTip(this.chkColon, resources.GetString("chkColon.ToolTip"));
             this.chkColon.UseVisualStyleBackColor = true;
@@ -656,7 +491,7 @@ namespace GlobalCommander
             this.chkDot.Location = new System.Drawing.Point(99, 63);
             this.chkDot.Name = "chkDot";
             this.chkDot.Size = new System.Drawing.Size(32, 24);
-            this.chkDot.TabIndex = 132;
+            this.chkDot.TabIndex = 55;
             this.chkDot.Text = ".";
             this.delimToolTip.SetToolTip(this.chkDot, resources.GetString("chkDot.ToolTip"));
             this.chkDot.UseVisualStyleBackColor = true;
@@ -672,7 +507,7 @@ namespace GlobalCommander
             this.chkApostrophe.Location = new System.Drawing.Point(68, 63);
             this.chkApostrophe.Name = "chkApostrophe";
             this.chkApostrophe.Size = new System.Drawing.Size(31, 24);
-            this.chkApostrophe.TabIndex = 132;
+            this.chkApostrophe.TabIndex = 54;
             this.chkApostrophe.Text = "\'";
             this.delimToolTip.SetToolTip(this.chkApostrophe, resources.GetString("chkApostrophe.ToolTip"));
             this.chkApostrophe.UseVisualStyleBackColor = true;
@@ -687,35 +522,203 @@ namespace GlobalCommander
             this.delimToolTip.ToolTipIcon = System.Windows.Forms.ToolTipIcon.Info;
             this.delimToolTip.ToolTipTitle = "Info";
             // 
+            // btnSyncTime
+            // 
+            this.btnSyncTime.Location = new System.Drawing.Point(6, 19);
+            this.btnSyncTime.Name = "btnSyncTime";
+            this.btnSyncTime.Size = new System.Drawing.Size(214, 36);
+            this.btnSyncTime.TabIndex = 9;
+            this.btnSyncTime.Text = "Sync Time";
+            this.delimToolTip.SetToolTip(this.btnSyncTime, "Synchronize the time of the selected devices\r\nwith the PC\'s time. This will be ei" +
+        "ther local\r\ntime or UTC time, depending on the setting\r\n\"TimeSynchronize_UTC\".");
+            this.btnSyncTime.UseVisualStyleBackColor = true;
+            this.btnSyncTime.Click += new System.EventHandler(this.btnSyncTime_Click);
+            // 
+            // oComProp
+            // 
+            this.oComProp.AutoSize = true;
+            this.oComProp.Checked = true;
+            this.oComProp.Location = new System.Drawing.Point(6, 20);
+            this.oComProp.Name = "oComProp";
+            this.oComProp.Size = new System.Drawing.Size(150, 30);
+            this.oComProp.TabIndex = 61;
+            this.oComProp.TabStop = true;
+            this.oComProp.Text = "Properties Common to ALL\r\nSelected Points";
+            this.delimToolTip.SetToolTip(this.oComProp, resources.GetString("oComProp.ToolTip"));
+            this.oComProp.UseVisualStyleBackColor = true;
+            this.oComProp.CheckedChanged += new System.EventHandler(this.oComProp_CheckedChanged);
+            // 
+            // oAnyProp
+            // 
+            this.oAnyProp.AutoSize = true;
+            this.oAnyProp.Location = new System.Drawing.Point(6, 59);
+            this.oAnyProp.Name = "oAnyProp";
+            this.oAnyProp.Size = new System.Drawing.Size(154, 30);
+            this.oAnyProp.TabIndex = 62;
+            this.oAnyProp.Text = "Properties that Exist in ANY\r\nSelected Point";
+            this.delimToolTip.SetToolTip(this.oAnyProp, resources.GetString("oAnyProp.ToolTip"));
+            this.oAnyProp.UseVisualStyleBackColor = true;
+            this.oAnyProp.CheckedChanged += new System.EventHandler(this.oAnyProp_CheckedChanged);
+            // 
+            // cboPriority
+            // 
+            this.cboPriority.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboPriority.FormattingEnabled = true;
+            this.cboPriority.Items.AddRange(new object[] {
+            "1 (Manual Life Safety)",
+            "2 (Auto Life Safety)",
+            "3",
+            "4",
+            "5 (Critical Equipment Protection)",
+            "6 (Minimum On/Off Time)",
+            "7",
+            "8 (Manual Operator)",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16"});
+            this.cboPriority.Location = new System.Drawing.Point(52, 49);
+            this.cboPriority.Name = "cboPriority";
+            this.cboPriority.Size = new System.Drawing.Size(167, 21);
+            this.cboPriority.TabIndex = 24;
+            // 
+            // lblPrio
+            // 
+            this.lblPrio.AutoSize = true;
+            this.lblPrio.Location = new System.Drawing.Point(6, 52);
+            this.lblPrio.Name = "lblPrio";
+            this.lblPrio.Size = new System.Drawing.Size(41, 13);
+            this.lblPrio.TabIndex = 23;
+            this.lblPrio.Text = "Priority:";
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Controls.Add(this.oComProp);
+            this.groupBox1.Controls.Add(this.oAnyProp);
+            this.groupBox1.Location = new System.Drawing.Point(1069, 517);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(226, 98);
+            this.groupBox1.TabIndex = 60;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "\"Populate Properties\" Method";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox2.Controls.Add(this.btnSyncTime);
+            this.groupBox2.Location = new System.Drawing.Point(1069, 12);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(226, 69);
+            this.groupBox2.TabIndex = 8;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Device Commands";
+            // 
+            // lblGlobal1
+            // 
+            this.lblGlobal1.AutoSize = true;
+            this.lblGlobal1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblGlobal1.ForeColor = System.Drawing.Color.Maroon;
+            this.lblGlobal1.Location = new System.Drawing.Point(6, 79);
+            this.lblGlobal1.Name = "lblGlobal1";
+            this.lblGlobal1.Size = new System.Drawing.Size(214, 39);
+            this.lblGlobal1.TabIndex = 25;
+            this.lblGlobal1.Text = "The \"Populate Properties\" method\r\nneeds to be set to \"Common to ALL\"\r\nin order to" +
+    " globally command.";
+            this.lblGlobal1.Visible = false;
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox3.Controls.Add(this.lblGlobal1);
+            this.groupBox3.Controls.Add(this.cmdCommand);
+            this.groupBox3.Controls.Add(this.lblCmdVal);
+            this.groupBox3.Controls.Add(this.lblPrio);
+            this.groupBox3.Controls.Add(this.txtCmdVal);
+            this.groupBox3.Controls.Add(this.cboPriority);
+            this.groupBox3.Location = new System.Drawing.Point(1069, 95);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(226, 130);
+            this.groupBox3.TabIndex = 20;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Global Commanding";
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox4.Controls.Add(this.cmdViewProps);
+            this.groupBox4.Location = new System.Drawing.Point(1069, 231);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(226, 69);
+            this.groupBox4.TabIndex = 30;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Viewing";
+            // 
+            // grpDevices
+            // 
+            this.grpDevices.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.grpDevices.Controls.Add(this.label2);
+            this.grpDevices.Controls.Add(this.txtWhoIsHigh);
+            this.grpDevices.Controls.Add(this.label1);
+            this.grpDevices.Controls.Add(this.txtWhoIsLow);
+            this.grpDevices.Location = new System.Drawing.Point(1069, 306);
+            this.grpDevices.Name = "grpDevices";
+            this.grpDevices.Size = new System.Drawing.Size(226, 80);
+            this.grpDevices.TabIndex = 40;
+            this.grpDevices.TabStop = false;
+            this.grpDevices.Text = "\"Populate Devices\" Settings";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(6, 49);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(100, 13);
+            this.label2.TabIndex = 43;
+            this.label2.Text = "\"WhoIs\" Limit High:";
+            // 
+            // txtWhoIsHigh
+            // 
+            this.txtWhoIsHigh.Location = new System.Drawing.Point(137, 46);
+            this.txtWhoIsHigh.Name = "txtWhoIsHigh";
+            this.txtWhoIsHigh.Size = new System.Drawing.Size(82, 20);
+            this.txtWhoIsHigh.TabIndex = 44;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(6, 25);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(98, 13);
+            this.label1.TabIndex = 41;
+            this.label1.Text = "\"WhoIs\" Limit Low:";
+            // 
+            // txtWhoIsLow
+            // 
+            this.txtWhoIsLow.Location = new System.Drawing.Point(137, 22);
+            this.txtWhoIsLow.Name = "txtWhoIsLow";
+            this.txtWhoIsLow.Size = new System.Drawing.Size(82, 20);
+            this.txtWhoIsLow.TabIndex = 42;
+            // 
             // GlobalCommander
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1253, 659);
+            this.ClientSize = new System.Drawing.Size(1301, 692);
+            this.Controls.Add(this.groupBox4);
+            this.Controls.Add(this.grpDevices);
+            this.Controls.Add(this.groupBox3);
+            this.Controls.Add(this.groupBox1);
+            this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.grpPointNames);
             this.Controls.Add(this.PatienceLabel);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.progBar);
-            this.Controls.Add(this.o16);
-            this.Controls.Add(this.o12);
-            this.Controls.Add(this.o6);
-            this.Controls.Add(this.o13);
-            this.Controls.Add(this.o9);
-            this.Controls.Add(this.o15);
-            this.Controls.Add(this.o3);
-            this.Controls.Add(this.o11);
-            this.Controls.Add(this.o5);
-            this.Controls.Add(this.o8);
-            this.Controls.Add(this.o14);
-            this.Controls.Add(this.o2);
-            this.Controls.Add(this.o10);
-            this.Controls.Add(this.o4);
-            this.Controls.Add(this.o7);
-            this.Controls.Add(this.o1);
-            this.Controls.Add(this.txtCmdVal);
-            this.Controls.Add(this.lblCmdVal);
-            this.Controls.Add(this.cmdViewProps);
-            this.Controls.Add(this.cmdCommand);
+            this.MinimumSize = new System.Drawing.Size(1000, 694);
             this.Name = "GlobalCommander";
             this.Text = "Yabe Global Commander";
             this.Load += new System.EventHandler(this.GlobalCommander_Load);
@@ -744,6 +747,14 @@ namespace GlobalCommander
             this.splitContainer5.ResumeLayout(false);
             this.grpPointNames.ResumeLayout(false);
             this.grpPointNames.PerformLayout();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox3.PerformLayout();
+            this.groupBox4.ResumeLayout(false);
+            this.grpDevices.ResumeLayout(false);
+            this.grpDevices.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -760,22 +771,6 @@ namespace GlobalCommander
         private System.Windows.Forms.Button cmdCommand;
         private System.Windows.Forms.Label lblCmdVal;
         private System.Windows.Forms.TextBox txtCmdVal;
-        private System.Windows.Forms.RadioButton o1;
-        private System.Windows.Forms.RadioButton o2;
-        private System.Windows.Forms.RadioButton o3;
-        private System.Windows.Forms.RadioButton o4;
-        private System.Windows.Forms.RadioButton o5;
-        private System.Windows.Forms.RadioButton o6;
-        private System.Windows.Forms.RadioButton o7;
-        private System.Windows.Forms.RadioButton o10;
-        private System.Windows.Forms.RadioButton o8;
-        private System.Windows.Forms.RadioButton o11;
-        private System.Windows.Forms.RadioButton o9;
-        private System.Windows.Forms.RadioButton o12;
-        private System.Windows.Forms.RadioButton o14;
-        private System.Windows.Forms.RadioButton o15;
-        private System.Windows.Forms.RadioButton o13;
-        private System.Windows.Forms.RadioButton o16;
         private System.Windows.Forms.ProgressBar progBar;
         private System.Windows.Forms.Button cmdViewProps;
         private System.Windows.Forms.SplitContainer splitContainer1;
@@ -798,5 +793,20 @@ namespace GlobalCommander
         private System.Windows.Forms.CheckBox chkDot;
         private System.Windows.Forms.CheckBox chkApostrophe;
         private System.Windows.Forms.ToolTip delimToolTip;
+        private System.Windows.Forms.Button btnSyncTime;
+        private System.Windows.Forms.ComboBox cboPriority;
+        private System.Windows.Forms.Label lblPrio;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.RadioButton oComProp;
+        private System.Windows.Forms.RadioButton oAnyProp;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Label lblGlobal1;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.GroupBox grpDevices;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox txtWhoIsHigh;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox txtWhoIsLow;
     }
 }

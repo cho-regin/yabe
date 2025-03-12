@@ -233,6 +233,16 @@ namespace Yabe.Properties {
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap folder {
+            get {
+                object obj = ResourceManager.GetObject("folder", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap information {
             get {
                 object obj = ResourceManager.GetObject("information", resourceCulture);
@@ -271,6 +281,30 @@ namespace Yabe.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Value;Shortcut;Name;EdeText;Implemented since
+        ///0;AI;Analog input;analog-input;
+        ///1;AO;Analog output;analog-output;
+        ///2;AV;Analog value;analog-value;
+        ///3;BI;Binary input;binary-input;
+        ///4;BO;Binary output;binary-output;
+        ///5;BV;Binary value;binary-value;
+        ///6;CAL;Calendar;calendar;
+        ///7;CMD;Command;command;
+        ///8;DEV;Device;device;
+        ///9;EE;Event enrollment;event-enrollment;
+        ///10;FILE;File;file;
+        ///11;GRP;Group;group;
+        ///12;LOOP;Loop;loop;
+        ///13;MI;Multi state input;multi-state-input;
+        ///14;MO;Multi state output;multi-state-output;        /// [le reste de la chaîne a été tronqué]&quot;;.
+        /// </summary>
+        internal static string ObjectTypes {
+            get {
+                return ResourceManager.GetString("ObjectTypes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap pencil_add {
@@ -303,6 +337,16 @@ namespace Yabe.Properties {
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap reload {
+            get {
+                object obj = ResourceManager.GetObject("reload", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap text_smallcaps {
             get {
                 object obj = ResourceManager.GetObject("text_smallcaps", resourceCulture);
@@ -321,11 +365,51 @@ namespace Yabe.Properties {
         }
         
         /// <summary>
+        ///   Recherche une chaîne localisée semblable à Value;Shortcut;Kategory;Implemented since;Comment;EdeText
+        ///0;m²;Area;From beginning?;;square-meters
+        ///1;;Area;From beginning?;;square-feet
+        ///2;mA;Electrical;From beginning?;;milliamperes
+        ///3;A;Electrical;From beginning?;;amperes
+        ///4;O;Electrical;From beginning?;;ohms
+        ///5;V;Electrical;From beginning?;;volts
+        ///6;kV;Electrical;From beginning?;;kilovolts
+        ///7;MV;Electrical;From beginning?;;megavolts
+        ///8;VA;Electrical;From beginning?;;volt-amperes
+        ///9;kVA;Electrical;From beginning?;;kilovolt-amperes
+        ///10;MVA;Electrical;Fro [le reste de la chaîne a été tronqué]&quot;;.
+        /// </summary>
+        internal static string Units {
+            get {
+                return ResourceManager.GetString("Units", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap user_gray {
+            get {
+                object obj = ResourceManager.GetObject("user-gray", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap world {
             get {
                 object obj = ResourceManager.GetObject("world", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap wsicon16 {
+            get {
+                object obj = ResourceManager.GetObject("wsicon16", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -64,8 +64,8 @@ namespace AnotherStorageImplementation
             bacnet_client.OnDeleteObjectRequest += new BacnetClient.DeleteObjectRequestHandler(handler_OnDeleteObjectRequest);
             device.m_PROP_PROTOCOL_SERVICES_SUPPORTED.SetBit((byte)BacnetServicesSupported.SERVICE_SUPPORTED_DELETE_OBJECT, true);
 
-            BaCSharpObject.OnExternalCOVNotify += new BaCSharpObject.WriteNotificationCallbackHandler(handler_OnCOVManagementNotify);
-
+            BaCSharpObject.OnExternalCOVNotify += new BaCSharpObject.NotificationCallbackHandler(handler_OnCOVManagementNotify);
+            
             bacnet_client.Start();    // go
             // Send Iam
             bacnet_client.Iam(deviceId, BacnetSegmentations.SEGMENTATION_BOTH, 61440);

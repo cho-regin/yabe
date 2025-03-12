@@ -1,0 +1,270 @@
+Value;Shortcut;Kategory;Implemented since;Comment;EdeText
+0;m²;Area;From beginning?;;square-meters
+1;;Area;From beginning?;;square-feet
+2;mA;Electrical;From beginning?;;milliamperes
+3;A;Electrical;From beginning?;;amperes
+4;O;Electrical;From beginning?;;ohms
+5;V;Electrical;From beginning?;;volts
+6;kV;Electrical;From beginning?;;kilovolts
+7;MV;Electrical;From beginning?;;megavolts
+8;VA;Electrical;From beginning?;;volt-amperes
+9;kVA;Electrical;From beginning?;;kilovolt-amperes
+10;MVA;Electrical;From beginning?;;megavolt-amperes
+11;var;Electrical;From beginning?;;volt-amperes-reactive
+12;kvar;Electrical;From beginning?;;kilovolt-amperes-reactive
+13;Mvar;Electrical;From beginning?;;megavolt-amperes-reactive
+14;;Electrical;From beginning?;;degrees-phase
+15;cos;Electrical;From beginning?;;power-factor
+16;J;Energy;From beginning?;;joules
+17;kJ;Energy;From beginning?;;kilojoules
+18;Wh;Energy;From beginning?;;watt-hours
+19;kWh;Energy;From beginning?;;kilowatt-hours
+20;btus;Energy;From beginning?;;btus
+21;;Energy;From beginning?;;therms
+22;;Energy;From beginning?;;ton-hours
+23;J/kg;Enthalpy;From beginning?;;joules-per-kilogram-dry-air
+24;;Enthalpy;From beginning?;;btus-per-pound-dry-air
+25;1/h;Frequency;From beginning?;;cycles-per-hour
+26;1/min;Frequency;From beginning?;;cycles-per-minute
+27;Hz;Frequency;From beginning?;;hertz
+28;g/kg tr. Luft;Humidity;From beginning?;;grams-of-water-per-kilogram-dry-air
+29;% r. F.;Humidity;From beginning?;;percent-relative-humidity
+30;mm;Length;From beginning?;;millimeters
+31;m;Length;From beginning?;;meters
+32;;Length;From beginning?;;inches
+33;;Length;From beginning?;;feet
+34;;Light;From beginning?;;watts-per-square-foot
+35;W/m²;Light;From beginning?;;watts-per-square-meter
+36;lm;Light;From beginning?;;lumens
+37;lx;Light;From beginning?;;luxes
+38;;Light;From beginning?;;foot-candles
+39;kg;Mass;From beginning?;;kilograms
+40;;Mass;From beginning?;;pounds-mass
+41;t;Mass;From beginning?;;tons
+42;kg/s;Mass Flow;From beginning?;;kilograms-per-second
+43;kg/min;Mass Flow;From beginning?;;kilograms-per-minute
+44;kg/h;Mass Flow;From beginning?;;kilograms-per-hour
+45;;Mass Flow;From beginning?;;pounds-mass-per-minute
+46;;Mass Flow;From beginning?;;pounds-mass-per-hour
+47;W;Power;From beginning?;;watts
+48;kW;Power;From beginning?;;kilowatts
+49;MW;Power;From beginning?;;megawatts
+50;;Power;From beginning?;;btus-per-hour
+51;PS;Power;From beginning?;;horsepower
+52;;Power;From beginning?;;tons-refrigeration
+53;Pa;Pressure;From beginning?;;pascals
+54;kPa;Pressure;From beginning?;;kilopascals
+55;bar;Pressure;From beginning?;;bars
+56;;Pressure;From beginning?;;pounds-force-per-square-inch
+57;;Pressure;From beginning?;;centimeters-of-water
+58;;Pressure;From beginning?;;inches-of-water
+59;mm;Pressure;From beginning?;;millimeters-of-mercury
+60;;Pressure;From beginning?;;centimeters-of-mercury
+61;;Pressure;From beginning?;;inches-of-mercury
+62;°C;Temperature;From beginning?;;degrees-celsius
+63;K;Temperature;From beginning?;;degrees-kelvin
+64;;Temperature;From beginning?;;degrees-fahrenheit
+65;K d/c;Temperature;From beginning?;;degree-days-celsius
+66;;Temperature;From beginning?;;degree-days-fahrenheit
+67;a;Time;From beginning?;;years
+68;Monat;Time;From beginning?;;months
+69;Woche;Time;From beginning?;;weeks
+70;d;Time;From beginning?;;days
+71;h;Time;From beginning?;;hours
+72;min;Time;From beginning?;;minutes
+73;s;Time;From beginning?;;seconds
+74;m/s;Velocity;From beginning?;;meters-per-second
+75;km/h;Velocity;From beginning?;;kilometers-per-hour
+76;;Velocity;From beginning?;;feet-per-second
+77;;Velocity;From beginning?;;feet-per-minute
+78;;Velocity;From beginning?;;miles-per-hour
+79;;Volume;From beginning?;;cubic-feet
+80;m³;Volume;From beginning?;;cubic-meters
+81;;Volume;From beginning?;;imperial-gallons
+82;l;Volume;From beginning?;;liters
+83;;Volume;From beginning?;;us-gallons
+84;cf/min;Volumetric Flow;From beginning?;;cubic-feet-per-minute
+85;m³/s;Unknown;five units in Addendum 135-2012bg;;cubic-meters-per-second
+86;;Unknown;five units in Addendum 135-2012bg;;imperial-gallons-per-minute
+87;l/s;Unknown;five units in Addendum 135-2012bg;;liters-per-second
+88;l/min;Unknown;five units in Addendum 135-2012bg;;liters-per-minute
+89;;Unknown;five units in Addendum 135-2012bg;;us-gallons-per-minute
+90;°;Other;From beginning?;;degrees-angular
+91;°C/h;Other;From beginning?;;degrees-celsius-per-hour
+92;°C/min;Other;From beginning?;;degrees-celsius-per-minute
+93;;Other;From beginning?;;degrees-fahrenheit-per-hour
+94;;Other;From beginning?;;degrees-fahrenheit-per-minute
+95;;Other;From beginning?;;no-units
+96;ppm;Other;From beginning?;;parts-per-million
+97;ppb;Other;From beginning?;;parts-per-billion
+98;%;Other;From beginning?;;percent
+99;%/s;Other;From beginning?;;percent-per-second
+100;1/m;Other;From beginning?;;per-minute
+101;1/s;Other;From beginning?;;per-second
+102;;Other;From beginning?;;psi-per-degree-fahrenheit
+103;rad;Other;From beginning?;;radians
+104;1/min;Other;From beginning?;;revolutions-per-minute
+105;€;Currency;From beginning?;;currency1
+106;DM;Currency;From beginning?;;currency2
+107;;Currency;From beginning?;;currency3
+108;;Currency;From beginning?;;currency4
+109;;Currency;From beginning?;;currency5
+110;;Currency;From beginning?;;currency6
+111;;Currency;From beginning?;;currency7
+112;;Currency;From beginning?;;currency8
+113;;Currency;From beginning?;;currency9
+114;;Currency;From beginning?;;currency10
+115;;Area;From beginning?;;square-inches
+116;cm²;Area;From beginning?;;square-centimeters
+117;;Enthalpy;From beginning?;;btus-per-pound
+118;cm;Length;From beginning?;;centimeters
+119;;Mass Flow;From beginning?;;pounds-mass-per-second
+120;;Temperature;From beginning?;;delta-degrees-fahrenheit
+121;delta K;Temperature;From beginning?;;delta-degrees-kelvin
+122;kOhm;Electrical;From beginning?;;kilohms
+123;MOhm;Electrical;From beginning?;;megohms
+124;mV;Electrical;From beginning?;;millivolts
+125;kJ/kg;Energy;From beginning?;;kilojoules-per-kilogram
+126;MJ;Energy;From beginning?;;megajoules
+127;J/K;Entropy;From beginning?;;joules-per-degree-kelvin
+128;J/(kg K);Entropy;From beginning?;;joules-per-kilogram-degree-kelvin
+129;kHz;Frequency;From beginning?;;kilohertz
+130;MHz;Frequency;From beginning?;;megahertz
+131;1/h;Frequency;From beginning?;;per-hour
+132;mW;Power;From beginning?;;milliwatts
+133;hPa;Pressure;From beginning?;;hectopascals
+134;mbar;Pressure;From beginning?;;millibars
+135;m³/h;Unknown;five units in Addendum 135-2012bg;;cubic-meters-per-hour
+136;l/h;Unknown;five units in Addendum 135-2012bg;;liters-per-hour
+137;kWh/m²;Other;From beginning?;;kilowatt-hours-per-square-meter
+138;;Other;From beginning?;;kilowatt-hours-per-square-foot
+139;MJ/m²;Other;From beginning?;;megajoules-per-square-meter
+140;;Other;From beginning?;;megajoules-per-square-foot
+141;W/(m² K);Other;From beginning?;;watts-per-square-meter-degree-kelvin
+142;cf/sec;Volumetric Flow;From beginning?;;cubic-feet-per-second
+143;;Other;From beginning?;;percent-obscuration-per-foot
+144;%/m;Other;From beginning?;;percent-obscuration-per-meter
+145;mOhm;Electrical;From beginning?;;milliohms
+146;MWh;Energy;From beginning?;;megawatt-hours
+147;;Energy;From beginning?;;kilo-btus
+148;;Energy;From beginning?;;mega-btus
+149;kJ/kg tr. Luft;Enthalpy;From beginning?;;kilojoules-per-kilogram-dry-air
+150;MJ/kg tr. Luft;Enthalpy;From beginning?;;megajoules-per-kilogram-dry-air
+151;kJ/K;Entropy;From beginning?;;kilojoules-per-degree-kelvin
+152;MJ/K;Entropy;From beginning?;;megajoules-per-degree-kelvin
+153;N;Force;From beginning?;;newton
+154;g/s;Mass Flow;From beginning?;;grams-per-second
+155;g/min;Mass Flow;From beginning?;;grams-per-minute
+156;t/h;Mass Flow;From beginning?;;tons-per-hour
+157;;Power;From beginning?;;kilo-btus-per-hour
+158;10-² s;Time;From beginning?;;hundredths-seconds
+159;ms;Time;From beginning?;;milliseconds
+160;Nm;Torque;From beginning?;;newton-meters
+161;mm/s;Velocity;From beginning?;;millimeters-per-second
+162;mm/min;Velocity;From beginning?;;millimeters-per-minute
+163;m/min;Velocity;From beginning?;;meters-per-minute
+164;m/h;Velocity;From beginning?;;meters-per-hour
+165;m³/min;Unknown;five units in Addendum 135-2012bg;;cubic-meters-per-minute
+166;m/s²;Unknown;Unknown;;meters-per-second-per-second
+167;A/m;Electrical;From beginning?;;amperes-per-meter
+168;A/m²;Electrical;From beginning?;;amperes-per-square-meter
+169;Am²;Electrical;From beginning?;;ampere-square-meters
+170;F;Electrical;From beginning?;;farads
+171;H;Electrical;From beginning?;;henrys
+172;Ohmm;Electrical;From beginning?;;ohm-meters
+173;S;Electrical;From beginning?;1 mho equals 1 siemens;siemens
+174;S/m;Electrical;From beginning?;;siemens-per-meter
+175;T;Electrical;From beginning?;;teslas
+176;V/K;Electrical;From beginning?;;volts-per-degree-kelvin
+177;V/m;Electrical;From beginning?;;volts-per-meter
+178;Wb;Electrical;From beginning?;;webers
+179;cd;Light;From beginning?;;candelas
+180;cd/m²;Light;From beginning?;;candelas-per-square-meter
+181;K/h;Temperature;From beginning?;;degrees-kelvin-per-hour
+182;K/min;Temperature;From beginning?;;degrees-kelvin-per-minute
+183;Js;Other;From beginning?;;joule-seconds
+184;rad/s;Other;From beginning?;;radians-per-second
+185;m²/N;Other;From beginning?;;square-meters-per-newton
+186;kg/m³;Other;From beginning?;;kilograms-per-cubic-meter
+187;Ns;Other;From beginning?;;newton-seconds
+188;N/m;Other;From beginning?;;newtons-per-meter
+189;W/m K;Other;From beginning?;;watts-per-meter-per-degree-kelvin
+190;µS;Electrical;From beginning?;;micro-siemens
+191;cf/h;Unknown;One unit in Addendum 135-2012bg;;cubic-feet-per-hour
+192;G/h;Unknown;five units in Addendum 135-2012bg;;us-gallons-per-hour
+193;km;Length;From beginning?;;kilometers
+194;µm;Length;From beginning?;;micrometers
+195;g;Mass;From beginning?;;grams
+196;mg;Mass;From beginning?;;milligrams
+197;ml;Volume;From beginning?;;milliliters
+198;ml/s;Unknown;five units in Addendum 135-2012bg;;milliliters-per-second
+199;dB;Electrical;From beginning?;;decibels
+200;dBV;Electrical;From beginning?;;decibels-millivolt
+201;dBmV;Electrical;From beginning?;;decibels-volt
+202;mS;Electrical;From beginning?;;millisiemens
+203;Whr;Energy;From beginning?;;watt-hours-reactive
+204;kWhr;Energy;From beginning?;;kilowatt-hours-reactive
+205;MWhr;Energy;From beginning?;;megawatt-hours-reactive
+206;mmWS;Pressure;From beginning?;;millimeters-of-water
+207;‰;Other;From beginning?;;per-mille
+208;g/g;Other;From beginning?;;grams-per-gram
+209;kg/kg;Other;From beginning?;;kilograms-per-kilogram
+210;g/kg;Other;From beginning?;;grams-per-kilogram
+211;mg/g;Other;From beginning?;;milligrams-per-gram
+212;mg/kg;Other;From beginning?;;milligrams-per-kilogram
+213;g/ml;Other;From beginning?;;grams-per-milliliter
+214;g/l;Other;From beginning?;;grams-per-liter
+215;mg/l;Other;From beginning?;;milligrams-per-liter
+216;µg/l;Other;From beginning?;;micrograms-per-liter
+217;g/m3;Other;From beginning?;;grams-per-cubic-meter
+218;mg/m3;Other;From beginning?;;milligrams-per-cubic-meter
+219;µg/m3;Other;From beginning?;;micrograms-per-cubic-meter
+220;ng/m3;Other;From beginning?;;nanograms-per-cubic-meter
+221;g/cm3;Other;From beginning?;;grams-per-cubic-centimeter
+222;Bq;Other;From beginning?;;becquerels
+223;kBq;Other;From beginning?;;kilobecquerels
+224;MBq;Other;From beginning?;;megabecquerels
+225;Gy;Other;From beginning?;;gray
+226;mGy;Other;From beginning?;;milligray
+227;µGy;Other;From beginning?;;microgray
+228;Sv;Other;From beginning?;;sieverts
+229;mSv;Other;From beginning?;;millisieverts
+230;µSv;Other;From beginning?;;microsieverts
+231;µSv/h;Other;From beginning?;;microsieverts-per-hour
+232;dB(a);Unknown;two units in Addendum 135-2012bg;;decibels-a
+233;NTU;Unknown;two units in Addendum 135-2012bg;;nephelometric-turbidity-unit
+234;;Unknown;two units in Addendum 135-2012bg;;pH
+235;g/m2;Unknown;two units in Addendum 135-2012bg;;grams-per-square-meter
+236;min/K;Unknown;Since Addendum 135-2012ar;;minutes-per-degree-kelvin
+237;;Unknown;Since Addendum 135-2012ar;;ohm-meter-squared-per-meter
+238;;Unknown;Since Addendum 135-2012ar;;ampere-seconds
+239;;Unknown;Since Addendum 135-2012ar;;volt-ampere-hours
+240;;Unknown;Since Addendum 135-2012ar;;kilovolt-ampere-hours
+241;;Unknown;Since Addendum 135-2012ar;;megavolt-ampere-hours
+242;;Unknown;Since Addendum 135-2012ar;;volt-ampere-hours-reactive
+243;;Unknown;Since Addendum 135-2012ar;;kilovolt-ampere-hours-reactive
+244;;Unknown;Since Addendum 135-2012ar;;megavolt-ampere-hours-reactive
+245;;Unknown;Since Addendum 135-2012ar;;volt-square-hours
+246;;Unknown;Since Addendum 135-2012ar;;ampere-square-hours
+247;;Unknown;Since Addendum 135-2012ar;;joule-per-hours
+248;;Unknown;Since Addendum 135-2012ar;;cubic-feet-per-day
+249;;Unknown;Since Addendum 135-2012ar;;cubic-meters-per-day
+250;;Unknown;Since Addendum 135-2012ar;;watt-hours-per-cubic-meter
+251;;Unknown;Since Addendum 135-2012ar;;joules-per-cubic-meter
+252;;Unknown;Since Addendum 135-2012ar;;mole-percent
+253;;Unknown;Since Addendum 135-2012ar;;pascal-seconds
+254;;Unknown;One unit in Addendum 135-2012bg;;million-standard-cubic-feet-per-minute
+47808;;Unknown;five units in Addendum 135-2012bg;;standard-cubic-feet-per-day
+47809;;Unknown;five units in Addendum 135-2012bg;;million-standard-cubic-feet-per-day
+47810;;Unknown;five units in Addendum 135-2012bg;;thousand-cubic-feet-per-day
+47811;;Unknown;five units in Addendum 135-2012bg;;thousand-standard-cubic-feet-per-day
+47812;;Unknown;five units in Addendum 135-2012bg;;pounds-mass-per-day
+47814;;Unknown;two units in Addendum 135-2012bg;;millirems
+47815;;Unknown;two units in Addendum 135-2012bg;;millirems-per-hour
+47816;;;Since Addendum 135-2020ar;;degrees-lovibond
+47817;;;Since Addendum 135-2020ar;;alcohol-by-volume
+47818;;;Since Addendum 135-2020ar;;international-bittering-units
+47819;;;Since Addendum 135-2020ar;;european-bitterness-units
+47820;;;Since Addendum 135-2020ar;;degrees-plato
+47821;;;Since Addendum 135-2020ar;;specific-gravity
+47822;;;Since Addendum 135-2020ar;;european-brewing-convention

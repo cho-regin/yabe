@@ -45,7 +45,7 @@ namespace LISTAnalog_Values
     {
         public BacnetObjectTypes[] Filter; // Filtering list
         YabeMainDialog yabeFrm;
-        BacnetClient client; BacnetAddress adr; BacnetObjectId objId;
+        BACnetDevice device; BacnetObjectId objId;
         public AnalogValues(YabeMainDialog yabeFrm)
         {
             this.yabeFrm = yabeFrm;
@@ -70,8 +70,8 @@ namespace LISTAnalog_Values
             Trace.Listeners.Remove(Trace.Listeners[1].Name);
             try
             {
-                yabeFrm.GetObjectLink(out client, out adr, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
-                Devicename.Text = adr.ToString();
+                yabeFrm.GetObjectLink(out device, out objId, BacnetObjectTypes.MAX_BACNET_OBJECT_TYPE);
+                Devicename.Text = device.BacAdr.ToString();
                 CheckAllObjects(yabeFrm.m_AddressSpaceTree.Nodes);
                 //    EmptyList.Visible = IsEmpty;
             }
@@ -88,18 +88,16 @@ namespace LISTAnalog_Values
                 BacnetObjectId object_id = (BacnetObjectId)tn.Tag;
                 if (Filter.Contains(object_id.type)) // Only for some objects
                 {
-                    String Identifier = null;
-                    lock (yabeFrm.DevicesObjectsName) // translate to it's name if already known
-                        yabeFrm.DevicesObjectsName.TryGetValue(new Tuple<String, BacnetObjectId>(adr.FullHashString(), object_id), out Identifier);
+                    String Identifier = device.GetObjectName(object_id);
                     try
                     {
                         IList<BacnetValue> value;
-                        bool ret = client.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, out value); // with PRESENT_VALUE
+                        bool ret = device.channel.ReadPropertyRequest(device.BacAdr, object_id, BacnetPropertyIds.PROP_PRESENT_VALUE, out value); // with PRESENT_VALUE
                         string Present_Value = value[0].Value.ToString();
                         float PresentValue = float.Parse(Present_Value);
-                        ret = client.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_DESCRIPTION, out value); // with Description
+                        ret = device.channel.ReadPropertyRequest(device.BacAdr, object_id, BacnetPropertyIds.PROP_DESCRIPTION, out value); // with Description
                         string Description = value[0].Value.ToString();
-                        ret = client.ReadPropertyRequest(adr, object_id, BacnetPropertyIds.PROP_RELINQUISH_DEFAULT, out value); // with Relinquish_Default
+                        ret = device.channel.ReadPropertyRequest(device.BacAdr, object_id, BacnetPropertyIds.PROP_RELINQUISH_DEFAULT, out value); // with Relinquish_Default
                         string Relinquish_Default = value[0].Value.ToString();
                         float RelinquishDefault = float.Parse(Relinquish_Default);
 

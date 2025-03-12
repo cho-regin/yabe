@@ -27,10 +27,10 @@
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="DefaultRetries" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">2</Value>
+      <Value Profile="(Default)">1</Value>
     </Setting>
     <Setting Name="DefaultTimeout" Type="System.Decimal" Scope="User">
-      <Value Profile="(Default)">2000</Value>
+      <Value Profile="(Default)">500</Value>
     </Setting>
     <Setting Name="DefaultUdpPort" Type="System.Decimal" Scope="User">
       <Value Profile="(Default)">47808</Value>
@@ -98,14 +98,14 @@
     <Setting Name="IPv6_Support" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="ShowDescriptionWhenUsefull" Type="System.Boolean" Scope="User">
+    <Setting Name="ShowDescriptionWhenUseful" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="DisplayIdWithName" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="Plugins" Type="System.String" Scope="User">
-      <Value Profile="(Default)">CheckReliability, CheckStatusFlags, ListOutOfService, GlobalCommander</Value>
+      <Value Profile="(Default)">CheckReliability, CheckStatusFlags, ListOutOfService, FindPrioritiesGlobal, GlobalCommander</Value>
     </Setting>
     <Setting Name="GraphDotStyle" Type="ZedGraph.SymbolType" Scope="User">
       <Value Profile="(Default)">Square</Value>
@@ -143,14 +143,44 @@
     <Setting Name="BACnetSCConfigFile" Type="System.String" Scope="User">
       <Value Profile="(Default)">BACnetSCConfig.config</Value>
     </Setting>
-    <Setting Name="Proprietary_Properties_Files" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Proprietary-properties.csv</Value>
-    </Setting>
     <Setting Name="Show_Property_Id_Numbers" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="ShowHighLightFilter" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="EDE_SingleFile" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="EDE_CommonFiles" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="EDE_Separator" Type="System.Char" Scope="User">
+      <Value Profile="(Default)">;</Value>
+    </Setting>
+    <Setting Name="UseObjectsCache" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="GridArrayExpandMaxSize" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">10</Value>
+    </Setting>
+    <Setting Name="GridAlwaysExpandProperties" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Priority Array</Value>
+    </Setting>
+    <Setting Name="DeviceClassStructure" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="DeviceViewMode" Type="Yabe.DeviceTreeViewType" Scope="User">
+      <Value Profile="(Default)">Network</Value>
+    </Setting>
+    <Setting Name="NotAffectedFolderName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Not Affected</Value>
+    </Setting>
+    <Setting Name="BackGroundOperations" Type="Yabe.BackGroundOperationType" Scope="User">
+      <Value Profile="(Default)">None</Value>
+    </Setting>
+    <Setting Name="BackGroundThreadNumber" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1</Value>
     </Setting>
   </Settings>
 </SettingsFile>

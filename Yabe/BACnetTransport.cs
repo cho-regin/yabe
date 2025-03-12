@@ -25,9 +25,9 @@
 *********************************************************************/
 
 using System.Collections.Generic;
-using System.Text;
 using System.Diagnostics;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace System.IO.BACnet
@@ -164,11 +164,6 @@ namespace System.IO.BACnet
             bvlc = new BVLC(this);
         }
 
-        private void Close()
-        {
-            m_exclusive_conn.Close();
-        }
-
         public void Start()
         {
             Open();
@@ -194,6 +189,15 @@ namespace System.IO.BACnet
                 {
                     local_buffer = conn.EndReceive(asyncResult, ref ep);
                     rx = local_buffer.Length;
+                }
+                catch (ObjectDisposedException)
+                {
+                    // I believe this is the official way to handle an aborted socket - OnReceive is called and
+                    // we are forced to capture and swallow an exception... there is no way (without reflection)
+                    // to check the m_CleanedUp property.
+                    Trace.TraceWarning("Transport disposed (at EndReceive): " + m_local_endpoint.ToString());
+                    return;
+
                 }
                 catch (Exception) // ICMP port unreachable
                 {
@@ -257,24 +261,24 @@ namespace System.IO.BACnet
                             if ((MessageRecieved != null) && (rx > HEADER_LENGTH)) MessageRecieved(this, local_buffer, HEADER_LENGTH, rx - HEADER_LENGTH, remote_address);
                     }
                 }
+                catch (ObjectDisposedException)
+                {
+                    // I'm not sure how we get here, maybe due to threads racing each other. Potentially could still be a normal termination condition.
+                    Trace.TraceWarning("Transport disposed (at BeginReceive): " + m_local_endpoint.ToString());
+                }
                 catch (Exception ex)
                 {
-                    Trace.TraceError("Exception in udp recieve: " + ex.Message);
+                    Trace.TraceError("Unhandled exception in Udp OnRecieveData - receive loop cannot continue: " + ex.Message);
                 }
-                finally
-                {
-                    //restart data receive
-                    //conn.BeginReceive(OnReceiveData, conn);
-                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // I'm not sure how we get here, maybe due to threads racing each other. Potentially could still be a normal termination condition.
+                Trace.TraceWarning("Transport disposed (at BeginReceive retry): " + m_local_endpoint.ToString());
             }
             catch (Exception ex)
             {
-                //restart data receive
-                if (conn.Client != null)
-                {
-                    Trace.TraceError("Exception in Ip OnRecieveData: " + ex.Message);
-                    conn.BeginReceive(OnReceiveData, conn);
-                }
+                Trace.TraceError("Unhandled " + ex.GetType().Name + " in Udp OnRecieveData - receive loop cannot continue: " + ex.Message);
             }
         }
 
@@ -460,9 +464,13 @@ namespace System.IO.BACnet
         {
             try
             {
-                m_exclusive_conn.Close(); 
+                if (m_exclusive_conn != null)
+                    m_exclusive_conn.Close();
+
+                if (m_shared_conn != null)
+                    m_shared_conn.Close();
+
                 m_exclusive_conn = null;
-                m_shared_conn.Close(); 
                 m_shared_conn = null;
             }
             catch { }

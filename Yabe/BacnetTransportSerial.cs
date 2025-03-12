@@ -24,15 +24,12 @@
 *
 *********************************************************************/
 
-using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Linq;
-using System.IO.BACnet.Serialize;
 using System.Diagnostics;
+using System.IO.BACnet.Serialize;
 
 namespace System.IO.BACnet
-{  
+{
     public interface IBacnetSerialTransport : IDisposable
     {
         void Open();
@@ -1086,7 +1083,7 @@ namespace System.IO.BACnet
 
                 try
                 {
-                    GetMessageStatus status = GetNextMessage(T_NO_TOKEN, out  frame_type, out  destination_address, out  source_address, out  msg_length);
+                    GetMessageStatus status = GetNextMessage(T_NO_TOKEN, out frame_type, out destination_address, out source_address, out msg_length);
 
                     if (status == GetMessageStatus.ConnectionClose)
                     {
@@ -1095,23 +1092,7 @@ namespace System.IO.BACnet
                     }
                     else if (status == GetMessageStatus.Good)
                     {
-                        // frame event client ?
-                        if (RawMessageRecieved != null)
-                        {
-
-                            int length = msg_length + MSTP.MSTP_HEADER_LENGTH + (msg_length > 0 ? 2 : 0);
-
-                            // Array copy
-                            // after that it could be put asynchronously another time in the Main message loop
-                            // without any problem
-                            byte[] packet = new byte[length];
-                            Array.Copy(m_local_buffer, 0, packet, 0, length);
-
-                            // No need to use the thread pool, if the pipe is too slow
-                            // frames task list will grow infinitly
-                            RawMessageRecieved(packet, 0, length);
-                        }
-
+                        // Message Sent in GetNextMessage 
                         RemoveCurrentMessage(msg_length);
                     }
                 }
@@ -1192,6 +1173,11 @@ namespace System.IO.BACnet
                 m_send_queue.AddLast(new MessageFrame(frame_type, destination_address, null, 0));
         }
 
+        private void QueueFrame(MessageFrame frame)
+        {
+            lock (m_send_queue)
+                m_send_queue.AddLast(frame);
+        }
         private void SendFrame(BacnetMstpFrameTypes frame_type, byte destination_address)
         {
             SendFrame(new MessageFrame(frame_type, destination_address, null, 0));
@@ -1200,22 +1186,39 @@ namespace System.IO.BACnet
         private void SendFrame(MessageFrame frame)
         {
             if (m_TS == -1 || m_port == null) return;
-            int tx;
+            int tx; byte[] transmitedBuf;
             if (frame.data == null || frame.data.Length == 0)
             {
                 byte[] tmp_transmit_buffer = new byte[MSTP.MSTP_HEADER_LENGTH];
                 tx = MSTP.Encode(tmp_transmit_buffer, 0, frame.frame_type, frame.destination_address, (byte)m_TS, 0);
                 m_port.Write(tmp_transmit_buffer, 0, tx);
+                transmitedBuf = tmp_transmit_buffer;
             }
             else
             {
                 tx = MSTP.Encode(frame.data, 0, frame.frame_type, frame.destination_address, (byte)m_TS, frame.data_length);
                 m_port.Write(frame.data, 0, tx);
+
+                transmitedBuf = frame.data;
             }
             frame.send_mutex.Set();
 
             //debug
             if (StateLogging) Trace.WriteLine("         " + frame.frame_type + " " + frame.destination_address.ToString("X2") + " ");
+
+            // raw frame event client (sniffer) ?
+            if (RawMessageRecieved != null)
+            {
+                // Array copy
+                // after that it could be put asynchronously another time in the Main message loop
+                // without any problem
+                byte[] packet = new byte[tx];
+                Array.Copy(transmitedBuf, 0, packet, 0, tx);
+
+                // No need to use the thread pool, if the pipe is too slow
+                // frames task list will grow infinitly
+                RawMessageRecieved?.Invoke(packet, 0, tx);
+            }
         }
 
         private void RemoveCurrentMessage(int msg_length)
@@ -1549,13 +1552,17 @@ namespace System.IO.BACnet
                                     }
                                     break;
                                 case BacnetMstpFrameTypes.FRAME_TYPE_TEST_REQUEST:
-                                    if (destination_address == 0xFF)
-                                        QueueFrame(BacnetMstpFrameTypes.FRAME_TYPE_TEST_RESPONSE, source_address);
-                                    else
+                                    //respond to test
+                                    byte[] RepBuf = null;
+                                    if (msg_length > 0)
                                     {
-                                        //respond to test
-                                        SendFrame(BacnetMstpFrameTypes.FRAME_TYPE_TEST_RESPONSE, source_address);
+                                        RepBuf = new byte[msg_length];
+                                        Array.Copy(m_local_buffer, MSTP.MSTP_HEADER_LENGTH, RepBuf, 0, msg_length);
                                     }
+                                    if (destination_address == 0xFF)
+                                        QueueFrame(new MessageFrame(BacnetMstpFrameTypes.FRAME_TYPE_TEST_RESPONSE, source_address, RepBuf, msg_length));
+                                    else
+                                        SendFrame(new MessageFrame(BacnetMstpFrameTypes.FRAME_TYPE_TEST_RESPONSE, source_address, RepBuf, msg_length));
                                     break;
                                 case BacnetMstpFrameTypes.FRAME_TYPE_BACNET_DATA_NOT_EXPECTING_REPLY:
                                 case BacnetMstpFrameTypes.FRAME_TYPE_BACNET_DATA_EXPECTING_REPLY:
@@ -1876,13 +1883,34 @@ namespace System.IO.BACnet
 
             if (StateLogging) Trace.WriteLine("" + frame_type + " " + destination_address.ToString("X2") + " ");
 
+            // raw frame event client (sniffer) ?
+            if (RawMessageRecieved != null)
+            {
+
+                int length = msg_length + MSTP.MSTP_HEADER_LENGTH + (msg_length > 0 ? 2 : 0);
+
+                // Array copy
+                // after that it could be put asynchronously another time in the Main message loop
+                // without any problem
+                byte[] packet = new byte[length];
+                Array.Copy(m_local_buffer, 0, packet, 0, length);
+
+                // No need to use the thread pool, if the pipe is too slow
+                // frames task list will grow infinitly
+                RawMessageRecieved?.Invoke(packet, 0, length);
+            }
+
             //done
             return GetMessageStatus.Good;
         }
 
         public int Send(byte[] buffer, int offset, int data_length, BacnetAddress address, bool wait_for_transmission, int timeout)
         {
-            if (m_TS == -1) throw new Exception("Source address must be set up before sending messages");
+            if (m_TS == -1)
+            {
+                Trace.WriteLine(" Mstp source address must be set up before sending messages");
+                return 0; //throw new Exception("Source address must be set up before sending messages");
+            }
 
             //add to queue
             BacnetNpduControls function = NPDU.DecodeFunction(buffer, offset);

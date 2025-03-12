@@ -26,11 +26,10 @@
 *********************************************************************/
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO.BACnet;
 using System.Threading;
 using System.Diagnostics;
+using Yabe;
 
 namespace BasicReadWrite
 {
@@ -42,7 +41,7 @@ namespace BasicReadWrite
         static BacnetClient bacnet_client;
 
         // All the present Bacnet Device List
-        static List<BacNode> DevicesList = new List<BacNode>();
+        static List<BACnetDevice> DevicesList = new List<BACnetDevice>();
 
         /*****************************************************************************************************/
         static void Main(string[] args)
@@ -53,9 +52,6 @@ namespace BasicReadWrite
             {
                 StartActivity();
                 Console.WriteLine("Started");
-
-                Thread.Sleep(1000); // Wait a fiew time for WhoIs responses (managed in handler_OnIam)
-
                 ReadWriteExample();
             }
             catch { }
@@ -83,12 +79,11 @@ namespace BasicReadWrite
             bacnet_client.Start();    // go
 
             // Send WhoIs in order to get back all the Iam responses :  
-            bacnet_client.OnIam += new BacnetClient.IamHandler(handler_OnIam);            
-            
-            bacnet_client.WhoIs();
+            bacnet_client.OnIam += new BacnetClient.IamHandler(handler_OnIam);
 
-            /* Optional Remote Registration as A Foreign Device on a BBMD at @192.168.1.1 on the default 0xBAC0 port
-                           
+            bacnet_client.OnWhoIs += (_,__,___,____)=> { };
+
+            /* Optional Remote Registration as A Foreign Device on a BBMD at @192.168.1.1 on the default 0xBAC0 port              
             bacnet_client.RegisterAsForeignDevice("192.168.1.1", 60);
             Thread.Sleep(20);
             bacnet_client.RemoteWhoIs("192.168.1.1");
@@ -99,19 +94,38 @@ namespace BasicReadWrite
         static void ReadWriteExample()
         {
 
-            BacnetValue Value;
-            bool ret;
             // Read Present_Value property on the object ANALOG_INPUT:0 provided by the device 12345
-            // Scalar value only
-            ret = ReadScalarValue(12345, new BacnetObjectId(BacnetObjectTypes.OBJECT_ANALOG_INPUT, 0), BacnetPropertyIds.PROP_PRESENT_VALUE, out Value);
+            // Write Present_Value property on the object ANALOG_OUTPUT:3 provided by the device 400001
+
+            bacnet_client.WhoIs(12345);
+            bacnet_client.WhoIs(400001);
+            // bacnet_client.WhoIs(); // can be done with more network pollution
+
+            Thread.Sleep(1000); // Wait a few time for WhoIs responses (managed in handler_OnIam)
+
+            BACnetDevice device1234 = GetBACnetDeviceFromId(12345);
+            BACnetDevice device400001 = GetBACnetDeviceFromId(400001);
+
+            if ((device1234==null)||(device400001==null)) // No Iam reception from one both
+            {
+                Console.WriteLine("device 12345 or device 400001 not present");
+                return;
+            }
+
+            IList<BacnetValue> Value;
+
+            bool ret = device1234.ReadPropertyRequest(new BacnetObjectId(BacnetObjectTypes.OBJECT_ANALOG_INPUT, 0), BacnetPropertyIds.PROP_PRESENT_VALUE, out Value);
 
             if (ret == true)
             {
-                Console.WriteLine("Read value : " + Value.Value.ToString());
+                // Value is an array because properties could be arrays, but here only the [0] is for us
+                Console.WriteLine("Read value : " + Value[0].Value.ToString());
 
-                // Write Present_Value property on the object ANALOG_OUTPUT:0 provided by the device 4000
-                BacnetValue newValue = new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_REAL, Convert.ToSingle(Value.Value));   // expect it's a float
-                ret = WriteScalarValue(4000, new BacnetObjectId(BacnetObjectTypes.OBJECT_ANALOG_OUTPUT, 0), BacnetPropertyIds.PROP_PRESENT_VALUE, newValue);
+                // BACNET_APPLICATION_TAG_xxx can be identified with Yabe : displayed in the property grid
+                BacnetValue newValue = new BacnetValue(BacnetApplicationTags.BACNET_APPLICATION_TAG_REAL, Convert.ToSingle(Value[0].Value));   // expect it's a float
+                BacnetValue[] NoScalarValue = { newValue };
+
+                ret = device400001.WritePropertyRequest(new BacnetObjectId(BacnetObjectTypes.OBJECT_ANALOG_OUTPUT, 3), BacnetPropertyIds.PROP_PRESENT_VALUE, NoScalarValue);
 
                 Console.WriteLine("Write feedback : " + ret.ToString());
             }
@@ -125,86 +139,22 @@ namespace BasicReadWrite
             lock (DevicesList)
             {
                 // Device already registred ?
-                foreach (BacNode bn in DevicesList)
-                    if (bn.getAdd(device_id) != null) return;   // Yes
+                foreach (BACnetDevice bn in DevicesList)
+                    if (bn.deviceId==device_id)  return;   // Yes
 
                 // Not already in the list
-                DevicesList.Add(new BacNode(adr, device_id));   // add it
+                DevicesList.Add(new BACnetDevice(sender,adr, device_id));   // add it
             }
         }
-
         /*****************************************************************************************************/
-        static bool ReadScalarValue(int device_id, BacnetObjectId BacnetObjet, BacnetPropertyIds Propriete, out BacnetValue Value)
+        static BACnetDevice GetBACnetDeviceFromId(uint device_id) 
         {
-            BacnetAddress adr;
-            IList<BacnetValue> NoScalarValue;
-
-            Value = new BacnetValue(null);
-
-            // Looking for the device
-            adr=DeviceAddr((uint)device_id);
-            if (adr == null) return false;  // not found
-
-            // Property Read
-            if (bacnet_client.ReadPropertyRequest(adr, BacnetObjet, Propriete, out NoScalarValue)==false)
-                return false;
-
-            Value = NoScalarValue[0];
-            return true;
-        }
-
-        /*****************************************************************************************************/
-        static bool WriteScalarValue(int device_id, BacnetObjectId BacnetObjet, BacnetPropertyIds Propriete, BacnetValue Value)
-        {
-            BacnetAddress adr;
-
-            // Looking for the device
-            adr = DeviceAddr((uint)device_id);
-            if (adr == null) return false;  // not found
-
-            // Property Write
-            BacnetValue[] NoScalarValue = { Value };
-            if (bacnet_client.WritePropertyRequest(adr, BacnetObjet, Propriete, NoScalarValue) == false)
-                return false;
-
-            return true;
-        }
-
-        /*****************************************************************************************************/
-        static BacnetAddress DeviceAddr(uint device_id)
-        {
-            BacnetAddress ret;
-
             lock (DevicesList)
             {
-                foreach (BacNode bn in DevicesList)
-                {
-                    ret = bn.getAdd(device_id);
-                    if (ret != null) return ret;
-                }
-                // not in the list
-                return null;
+                foreach (BACnetDevice bn in DevicesList)
+                    if (bn.deviceId == device_id) return bn; ;   // Yes  
             }
-        }
-    }
-
-    class BacNode
-    {
-        BacnetAddress adr;
-        uint device_id;
-
-        public BacNode(BacnetAddress adr, uint device_id)
-        {
-            this.adr = adr;
-            this.device_id = device_id;
-        }
-
-        public BacnetAddress getAdd(uint device_id)
-        {
-            if (this.device_id == device_id)
-                return adr;
-            else
-                return null;
+            return null;
         }
     }
 }

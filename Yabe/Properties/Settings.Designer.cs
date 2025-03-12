@@ -121,7 +121,7 @@ namespace Yabe.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
         public decimal DefaultRetries {
             get {
                 return ((decimal)(this["DefaultRetries"]));
@@ -133,7 +133,7 @@ namespace Yabe.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2000")]
+        [global::System.Configuration.DefaultSettingValueAttribute("500")]
         public decimal DefaultTimeout {
             get {
                 return ((decimal)(this["DefaultTimeout"]));
@@ -410,12 +410,12 @@ namespace Yabe.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool ShowDescriptionWhenUsefull {
+        public bool ShowDescriptionWhenUseful {
             get {
-                return ((bool)(this["ShowDescriptionWhenUsefull"]));
+                return ((bool)(this["ShowDescriptionWhenUseful"]));
             }
             set {
-                this["ShowDescriptionWhenUsefull"] = value;
+                this["ShowDescriptionWhenUseful"] = value;
             }
         }
         
@@ -433,7 +433,8 @@ namespace Yabe.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("CheckReliability, CheckStatusFlags, ListOutOfService, GlobalCommander")]
+        [global::System.Configuration.DefaultSettingValueAttribute("CheckReliability, CheckStatusFlags, ListOutOfService, FindPrioritiesGlobal, Globa" +
+            "lCommander")]
         public string Plugins {
             get {
                 return ((string)(this["Plugins"]));
@@ -589,18 +590,6 @@ namespace Yabe.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Proprietary-properties.csv")]
-        public string Proprietary_Properties_Files {
-            get {
-                return ((string)(this["Proprietary_Properties_Files"]));
-            }
-            set {
-                this["Proprietary_Properties_Files"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool Show_Property_Id_Numbers {
             get {
@@ -620,6 +609,138 @@ namespace Yabe.Properties {
             }
             set {
                 this["ShowHighLightFilter"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool EDE_SingleFile {
+            get {
+                return ((bool)(this["EDE_SingleFile"]));
+            }
+            set {
+                this["EDE_SingleFile"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EDE_CommonFiles {
+            get {
+                return ((bool)(this["EDE_CommonFiles"]));
+            }
+            set {
+                this["EDE_CommonFiles"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute(";")]
+        public char EDE_Separator {
+            get {
+                return ((char)(this["EDE_Separator"]));
+            }
+            set {
+                this["EDE_Separator"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool UseObjectsCache {
+            get {
+                return ((bool)(this["UseObjectsCache"]));
+            }
+            set {
+                this["UseObjectsCache"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int GridArrayExpandMaxSize {
+            get {
+                return ((int)(this["GridArrayExpandMaxSize"]));
+            }
+            set {
+                this["GridArrayExpandMaxSize"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Priority Array")]
+        public string GridAlwaysExpandProperties {
+            get {
+                return ((string)(this["GridAlwaysExpandProperties"]));
+            }
+            set {
+                this["GridAlwaysExpandProperties"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string DeviceClassStructure {
+            get {
+                return ((string)(this["DeviceClassStructure"]));
+            }
+            set {
+                this["DeviceClassStructure"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Network")]
+        public global::Yabe.DeviceTreeViewType DeviceViewMode {
+            get {
+                return ((global::Yabe.DeviceTreeViewType)(this["DeviceViewMode"]));
+            }
+            set {
+                this["DeviceViewMode"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Not Affected")]
+        public string NotAffectedFolderName {
+            get {
+                return ((string)(this["NotAffectedFolderName"]));
+            }
+            set {
+                this["NotAffectedFolderName"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("None")]
+        public global::Yabe.BackGroundOperationType BackGroundOperations {
+            get {
+                return ((global::Yabe.BackGroundOperationType)(this["BackGroundOperations"]));
+            }
+            set {
+                this["BackGroundOperations"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int BackGroundThreadNumber {
+            get {
+                return ((int)(this["BackGroundThreadNumber"]));
+            }
+            set {
+                this["BackGroundThreadNumber"] = value;
             }
         }
     }

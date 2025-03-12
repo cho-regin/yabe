@@ -62,7 +62,7 @@ namespace MultipleDevices
             bacnet_client.OnDeleteObjectRequest += new BacnetClient.DeleteObjectRequestHandler(handler_OnDeleteObjectRequest);
             device.m_PROP_PROTOCOL_SERVICES_SUPPORTED.SetBit((byte)BacnetServicesSupported.SERVICE_SUPPORTED_DELETE_OBJECT, true);
 
-            BaCSharpObject.OnExternalCOVNotify += new BaCSharpObject.WriteNotificationCallbackHandler(handler_OnCOVManagementNotify);
+            BaCSharpObject.OnExternalCOVNotify += new BaCSharpObject.NotificationCallbackHandler(handler_OnCOVManagementNotify);
 
             try
             {
