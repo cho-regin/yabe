@@ -124,7 +124,7 @@ namespace Yabe
             try
             {
                 if (sender == viewYabeCert)
-                    X509Certificate2UI.DisplayCertificate(new X509Certificate2(YabeCert.Text));
+                    X509Certificate2UI.DisplayCertificate(new X509Certificate2(YabeCert.Text, YabeCertPassword.Text));
                 else
                     X509Certificate2UI.DisplayCertificate(new X509Certificate2(HubCert.Text));
             }
@@ -143,7 +143,7 @@ namespace Yabe
             if (sender == SelYabeCert)
             {
                 dlg.DefaultExt = "p12";
-                dlg.Filter = "PKCS#12 (*.p12)|*.p12|PEM + key (*.pem)|*.pem|All files (*.*)|*.*";
+                dlg.Filter = "PKCS#12 (*.p12)|*.p12|All files (*.*)|*.*";
                 if (dlg.ShowDialog(this) != System.Windows.Forms.DialogResult.OK) return;
                 YabeCert.Text = dlg.FileName;
             }
