@@ -88,7 +88,17 @@ namespace Yabe
         {
             String adr = Properties.Settings.Default.DefaultUdpIp;
             if (adr.Contains(':'))
-                m_result = new BacnetClient(new BacnetIpV6UdpProtocolTransport((int)m_PortValue.Value, Properties.Settings.Default.YabeDeviceId, Properties.Settings.Default.Udp_ExclusiveUseOfSocket, Properties.Settings.Default.Udp_DontFragment, Properties.Settings.Default.Udp_MaxPayload, adr), (int)m_TimeoutValue.Value, (int)m_RetriesValue.Value);
+                m_result = new BacnetClient(
+                    new BacnetIpV6UdpProtocolTransport(
+                        (int)m_PortValue.Value,
+                        Properties.Settings.Default.YabeDeviceId,
+                        Properties.Settings.Default.Udp_ExclusiveUseOfSocket,
+                        Properties.Settings.Default.Udp_DontFragment,
+                        Properties.Settings.Default.Udp_MaxPayload,
+                        adr,
+                        Properties.Settings.Default.IPv6_MulticastAddress),
+                    (int)m_TimeoutValue.Value,
+                    (int)m_RetriesValue.Value);
             else
                 m_result = new BacnetClient(new BacnetIpUdpProtocolTransport((int)m_PortValue.Value, Properties.Settings.Default.Udp_ExclusiveUseOfSocket, Properties.Settings.Default.Udp_DontFragment, Properties.Settings.Default.Udp_MaxPayload, adr), (int)m_TimeoutValue.Value, (int)m_RetriesValue.Value);
 
