@@ -107,7 +107,7 @@ namespace System.IO.BACnet
             return "Udp:" + m_port;
         }
 
-        // When opened with a specified endpoint on linux/mono local broadcast are not received
+        // When opened with a specified endpoint on linux/mono directed broadcast are not received
         // the broadcast address must be explicitely open : not required a not working on Windows
         private void EpBroadcastLinux()
         {
@@ -196,7 +196,7 @@ namespace System.IO.BACnet
                 m_exclusive_conn.BeginReceive(OnReceiveData, m_exclusive_conn);
 
             if (m_broadcastMono_conn != null)
-                m_broadcastMono_conn.BeginReceive(OnReceiveData, m_exclusive_conn);
+                m_broadcastMono_conn.BeginReceive(OnReceiveData, m_broadcastMono_conn);
         }
 
         private void OnReceiveData(IAsyncResult asyncResult)
