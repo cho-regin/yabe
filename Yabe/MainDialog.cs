@@ -182,27 +182,29 @@ namespace Yabe
             //load splitter setup & SubsciptionView columns order&size
             try
             {
-                if (Properties.Settings.Default.GUI_FormSize != new Size(0, 0))
+                if (Properties.Settings.Default.GUI_FormSize != new Size(-1, -1))
+                {
                     this.Size = Properties.Settings.Default.GUI_FormSize;
-                FormWindowState state = (FormWindowState)Enum.Parse(typeof(FormWindowState), Properties.Settings.Default.GUI_FormState);
-                if (state != FormWindowState.Minimized)
-                    this.WindowState = state;
-                if (Properties.Settings.Default.GUI_SplitterButtom != -1)
-                    m_SplitContainerButtom.SplitterDistance = Properties.Settings.Default.GUI_SplitterButtom;
-                if (Properties.Settings.Default.GUI_SplitterMiddle != -1)
-                    m_SplitContainerLeft.SplitterDistance = Properties.Settings.Default.GUI_SplitterMiddle;
-                if (Properties.Settings.Default.GUI_SplitterLeft != -1)
-                    splitContainer4.SplitterDistance = Properties.Settings.Default.GUI_SplitterLeft;
-                if (Properties.Settings.Default.GUI_SplitterRight != -1)
-                    m_SplitContainerRight.SplitterDistance = Properties.Settings.Default.GUI_SplitterRight;
+                    FormWindowState state = (FormWindowState)Enum.Parse(typeof(FormWindowState), Properties.Settings.Default.GUI_FormState);
+                    if (state != FormWindowState.Minimized)
+                        this.WindowState = state;
+                    if (Properties.Settings.Default.GUI_SplitterButtom != -1)
+                        m_SplitContainerButtom.SplitterDistance = Properties.Settings.Default.GUI_SplitterButtom;
+                    if (Properties.Settings.Default.GUI_SplitterMiddle != -1)
+                        m_SplitContainerLeft.SplitterDistance = Properties.Settings.Default.GUI_SplitterMiddle;
+                    if (Properties.Settings.Default.GUI_SplitterLeft != -1)
+                        splitContainer4.SplitterDistance = Properties.Settings.Default.GUI_SplitterLeft;
+                    if (Properties.Settings.Default.GUI_SplitterRight != -1)
+                        m_SplitContainerRight.SplitterDistance = Properties.Settings.Default.GUI_SplitterRight;
 
-                if (Properties.Settings.Default.Vertical_Object_Splitter_Orientation)
-                {
-                    splitContainer4.Orientation = Orientation.Vertical;
-                }
-                else
-                {
-                    splitContainer4.Orientation = Orientation.Horizontal;
+                    if (Properties.Settings.Default.Vertical_Object_Splitter_Orientation)
+                    {
+                        splitContainer4.Orientation = Orientation.Vertical;
+                    }
+                    else
+                    {
+                        splitContainer4.Orientation = Orientation.Horizontal;
+                    }
                 }
 
                 // m_SubscriptionView Columns order & size

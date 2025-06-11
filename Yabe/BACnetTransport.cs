@@ -108,7 +108,7 @@ namespace System.IO.BACnet
         }
 
         // When opened with a specified endpoint on linux/mono directed broadcast are not received
-        // the broadcast address must be explicitely open : not required a not working on Windows
+        // the broadcast address must be explicitely open : not required and not working on Windows
         private void EpBroadcastLinux()
         {
             if ((Environment.OSVersion.Platform == PlatformID.Unix)&&(!string.IsNullOrEmpty(m_local_endpoint)))
