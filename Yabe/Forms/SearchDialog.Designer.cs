@@ -50,6 +50,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.m_SerialPortCombo = new System.Windows.Forms.ComboBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.chkSendWhois = new System.Windows.Forms.CheckBox();
             this.WhoLimitHigh = new System.Windows.Forms.TextBox();
             this.label15 = new System.Windows.Forms.Label();
             this.WhoLimitLow = new System.Windows.Forms.TextBox();
@@ -74,7 +75,6 @@
             this.m_EditSC = new System.Windows.Forms.Button();
             this.m_SelectSC = new System.Windows.Forms.Button();
             this.m_AddScButton = new System.Windows.Forms.Button();
-            this.chkSendWhois = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.m_PortValue)).BeginInit();
             this.groupBox2.SuspendLayout();
@@ -351,6 +351,18 @@
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "General";
             // 
+            // chkSendWhois
+            // 
+            this.chkSendWhois.AutoSize = true;
+            this.chkSendWhois.Checked = true;
+            this.chkSendWhois.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.chkSendWhois.Location = new System.Drawing.Point(520, 21);
+            this.chkSendWhois.Name = "chkSendWhois";
+            this.chkSendWhois.Size = new System.Drawing.Size(85, 17);
+            this.chkSendWhois.TabIndex = 10;
+            this.chkSendWhois.Text = "Send WhoIs";
+            this.chkSendWhois.UseVisualStyleBackColor = true;
+            // 
             // WhoLimitHigh
             // 
             this.WhoLimitHigh.Location = new System.Drawing.Point(444, 19);
@@ -611,18 +623,6 @@
             this.m_AddScButton.UseVisualStyleBackColor = true;
             this.m_AddScButton.Click += new System.EventHandler(this.m_AddScButton_Click);
             // 
-            // chkSendWhois
-            // 
-            this.chkSendWhois.AutoSize = true;
-            this.chkSendWhois.Checked = true;
-            this.chkSendWhois.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkSendWhois.Location = new System.Drawing.Point(520, 21);
-            this.chkSendWhois.Name = "chkSendWhois";
-            this.chkSendWhois.Size = new System.Drawing.Size(85, 17);
-            this.chkSendWhois.TabIndex = 10;
-            this.chkSendWhois.Text = "Send WhoIs";
-            this.chkSendWhois.UseVisualStyleBackColor = true;
-            // 
             // SearchDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -634,6 +634,7 @@
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;

@@ -123,6 +123,7 @@ namespace System.IO.BACnet
                 {
                     System.Net.EndPoint ep = new System.Net.IPEndPoint(Net.IPAddress.Parse(adr.adr[0] + "." + adr.adr[1] + "." + adr.adr[2] + "." + adr.adr[3]), m_port);
                     m_broadcastMono_conn.Client.Bind(ep);
+                    Trace.WriteLine("Linux explicit listen to broadcast endpoint " + ep.ToString());
                 }
                 catch { m_broadcastMono_conn = null; }
 

@@ -428,4 +428,5 @@
 	Frank Schubert		2022-2024	Beckhoff Automation/Germany 
 	Marco Diekmann		2024		Beckhoff Automation/Germany
 	Daniel Evers		2024		Bosch/Germany
-	Björn Busch		2025		
+	Björn Busch		2025
+	Piscada AS (Norway)	2025		https://www.piscada.com 			
