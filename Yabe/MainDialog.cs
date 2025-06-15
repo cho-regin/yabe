@@ -273,40 +273,35 @@ namespace Yabe
             InitUserCmd();
 
             // Plugins, Vendor Properties, Name mapping file loaded within the ThreadPool
+            // do not work in the ThreadPool.QueueUserWorkItem on Linux/mono !!! don't know why.
+            string[] listPlugins = Properties.Settings.Default.Plugins.Split(new char[] { ',', ';' });
+            foreach (string pluginname in listPlugins)
+            {
+                try
+                {
+                    string name = pluginname.Replace(" ", String.Empty);
+                    Assembly myDll = Assembly.LoadFrom(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/Plugins/" + name + ".dll");
+                    Trace.WriteLine(String.Format("Loaded plugin \"{0}\".", pluginname));
+                    Type[] types = myDll.GetExportedTypes();
+                    IYabePlugin plugin = (IYabePlugin)myDll.CreateInstance(name + ".Plugin", true);
+                    Invoke(new Action(() => { plugin.Init(this); }));
+                }
+                catch (Exception ex)
+                {
+                    if (Debugger.IsAttached) // Not loaded plugins can be detected without this message
+                        Trace.WriteLine(String.Format("Error loading plugin \"{0}\". {1}", pluginname, ex.Message));
+                }
+            }
 
             ThreadPool.QueueUserWorkItem(o => // speed up start, no need immediatly, Trace listen thread safe.
             {
-                if (Environment.OSVersion.Platform.ToString().Contains("Win"))
-                {
-                    string[] listPlugins = Properties.Settings.Default.Plugins.Split(new char[] { ',', ';' });
-                    foreach (string pluginname in listPlugins)
-                    {
-                        try
-                        {
-                            // string path = Path.GetDirectoryName(Application.ExecutablePath);
-                            string name = pluginname.Replace(" ", String.Empty);
-                            // Assembly myDll = Assembly.LoadFrom(path + "\\" + name + ".dll");
-                            Assembly myDll = Assembly.LoadFrom("Plugins\\" + name + ".dll");
-                            Trace.WriteLine(String.Format("Loaded plugin \"{0}\".", pluginname));
-                            Type[] types = myDll.GetExportedTypes();
-                            IYabePlugin plugin = (IYabePlugin)myDll.CreateInstance(name + ".Plugin", true);
-                            Invoke(new Action(() => { plugin.Init(this); }));
-                        }
-                        catch (Exception ex)
-                        {
-                            if (Debugger.IsAttached) // Not loaded plugins can be detected without this message
-                                Trace.WriteLine(String.Format("Error loading plugin \"{0}\". {1}", pluginname, ex.Message));
-                        }
-                    }
-                }
-
-                if (File.Exists("SimplifiedViewFilter.xml"))
+                if (File.Exists(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/SimplifiedViewFilter.xml"))
                 {
                     try
                     {
                         StreamReader sr;
                         XmlSerializer xs = new XmlSerializer(typeof(List<BacnetObjectDescription>));
-                        sr = new StreamReader("SimplifiedViewFilter.xml");
+                        sr = new StreamReader(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/SimplifiedViewFilter.xml");
                         SimplifiedViewFilter = (List<BacnetObjectDescription>)xs.Deserialize(sr);
                     }
                     catch (Exception ex)
