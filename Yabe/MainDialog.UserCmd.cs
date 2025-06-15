@@ -93,7 +93,9 @@ namespace Yabe
         {
             int MenuVersion;
 
-            if (File.Exists("YabeMenuCmd.txt"))
+            string filepath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/YabeMenuCmd.txt";
+
+            if (File.Exists(filepath))
             {
                 // Init the Array of link to Methods associated to each commands
                 UserCmdCommands = new Action<String>[] { UserCmd_None, UserCmd_Launch, UserCmd_Iam, UserCmd_WhoIs,
@@ -110,7 +112,7 @@ namespace Yabe
                 int LineCount = 0;
                 try
                 {
-                    using (StreamReader sr = new StreamReader("YabeMenuCmd.txt"))
+                    using (StreamReader sr = new StreamReader(filepath))
                     {
 
                         ToolStripMenuItem YabeUserMenu = yabeFrm.userCommandToolStripMenuItem;
@@ -202,7 +204,7 @@ namespace Yabe
             if (P.Length < 2) return;
 
             try
-            {
+            {    
                 ProcessStartInfo ps = new ProcessStartInfo(P[1]);
 
                 ps.WorkingDirectory = P[0];
@@ -214,7 +216,12 @@ namespace Yabe
                 else
                     Process.Start(ps);
             }
-            catch { }
+            catch 
+            { 
+                MessageBox.Show("Cannot launch " + P[1] + 
+                    "\r\nCheck the program name",
+                    "Launch Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
             return;
         }

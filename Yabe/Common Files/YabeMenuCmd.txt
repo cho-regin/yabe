@@ -50,7 +50,7 @@ SubClose;;None
 # The Value could sometimes be a String with the symbols used as separators ,; Mandatory Escape them \; and \,
 Set the Device Class Structure described in Readme.txt 2.7.17;;Settings;Device Class Structure=HVAC(3\,9)\;Lighting(9\,23)\;Building(HVAC\,Lighting\,40\,27),restart
 
-# To be remove by you
+# To be remove by you. 
 Sep;;None
 Edit YabeMenuCmd.txt to modify/remove this menu content;7Y;Launch;.,notepad,YabeMenuCmd.txt
 
