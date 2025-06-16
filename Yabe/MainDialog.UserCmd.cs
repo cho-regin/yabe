@@ -93,7 +93,7 @@ namespace Yabe
         {
             int MenuVersion;
 
-            string filepath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/YabeMenuCmd.txt";
+            string filepath = ChangeDirectoryLocalPath("./YabeMenuCmd.txt");
 
             if (File.Exists(filepath))
             {
@@ -179,6 +179,18 @@ namespace Yabe
 
         }
 
+
+        string ChangeDirectoryLocalPath (string OriginalPath)
+        {
+            String LocalPath;
+            if (Environment.OSVersion.Platform == PlatformID.Unix)
+                LocalPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/";
+            else
+                LocalPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\";
+
+            OriginalPath = OriginalPath.Replace("./", LocalPath);
+            return OriginalPath.Replace(".\\", LocalPath);
+        }
         void UserMenuItem_Click(object sender, EventArgs e) // This indirect step could be avoided, but it's not necessary
         {
             try
@@ -205,20 +217,16 @@ namespace Yabe
 
             try
             {    
-                ProcessStartInfo ps = new ProcessStartInfo(P[1]);
+                ProcessStartInfo ps = new ProcessStartInfo(ChangeDirectoryLocalPath(P[1]));
 
-                ps.WorkingDirectory = P[0];
+                ps.WorkingDirectory = ChangeDirectoryLocalPath(P[0]);
                 if (P.Length > 2)
-                    ps.Arguments = P[2];
-
-                if (P.Length == 2)
-                    Process.Start(ps);
-                else
-                    Process.Start(ps);
+                    ps.Arguments = ChangeDirectoryLocalPath(P[2]);
+                Process.Start(ps);
             }
-            catch 
+            catch
             { 
-                MessageBox.Show("Cannot launch " + P[1] + 
+                MessageBox.Show("Cannot launch " + ChangeDirectoryLocalPath(P[1]) + 
                     "\r\nCheck the program name",
                     "Launch Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -389,10 +397,10 @@ namespace Yabe
 
             foreach (String ParamStr in Param)
             {
-                if (File.Exists(ParamStr))
+                if (File.Exists(ChangeDirectoryLocalPath(ParamStr)))
                     try
                     {
-                        DataObject dataObject = new DataObject(DataFormats.FileDrop, new string[] { ParamStr });
+                        DataObject dataObject = new DataObject(DataFormats.FileDrop, new string[] { ChangeDirectoryLocalPath(ParamStr) });
                         m_SubscriptionView_DragDrop(null, new DragEventArgs(dataObject, 0, 0, 0, DragDropEffects.All, DragDropEffects.All));
                     }
                     catch { }
@@ -416,6 +424,7 @@ namespace Yabe
 
             List<String> Status = new List<string>();
 
+            Parameters= ChangeDirectoryLocalPath(Parameters); // Change the path to the local path if needed
             if (File.Exists(Parameters))
             {
                 String ReadWriteStatus = null;
@@ -515,7 +524,7 @@ namespace Yabe
                     foreach (String s in status)
                         sb.AppendLine(s);
 
-                    String FileName = Param[1].Replace("%d", DateTime.Now.ToString().Replace('/', '_').Replace(':', '_'));
+                    String FileName = ChangeDirectoryLocalPath(Param[1]).Replace("%d", DateTime.Now.ToString().Replace('/', '_').Replace(':', '_'));
 
                     try
                     {
@@ -540,10 +549,10 @@ namespace Yabe
         void UserCmd_ExecBatch(String Parameters)
         {
             if (Parameters == null) return;
-            if (!File.Exists(Parameters)) return;
+            if (!File.Exists(ChangeDirectoryLocalPath(Parameters))) return;
 
             // The file is the same as YabeMenuCmd.txt without the 2 first columns
-            String[] lines = File.ReadAllLines(Parameters);
+            String[] lines = File.ReadAllLines(ChangeDirectoryLocalPath(Parameters));
 
             int LineCount = 0;
             String LineError = "";

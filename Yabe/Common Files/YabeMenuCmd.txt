@@ -5,12 +5,16 @@
 # Ctrl Alt N, Ctrl Alt S and Ctrl Alt 0..9 are already in usage, you cannot use them.
 # Remove/delete/modify this file. 
 # Line starting with # are comments.
+# ./ refers to the current Yabe directory in path, application link or application parameters
 # File read only at start time if present (original Name only).
 
 # Start somes samples. Parameters: Directory,App,optional command line Arguments
-Start Bacnet.Room.Simulator;1R;Launch;AddOn,Bacnet.Room.Simulator.exe
-Start Wheather2_to_Bacnet;2W;Launch;AddOn,Wheather2_to_Bacnet.exe
-Start DemoServer (Mstp simulation on COM1003);;Launch;AddOn,DemoServer.exe
+Start Bacnet.Room.Simulator;1R;Launch;./AddOn,Bacnet.Room.Simulator.exe
+# to be replaced on Linux by
+# Start Bacnet.Room.Simulator;1R;Launch;./AddOn,mono,./AddOn/Bacnet.Room.Simulator.exe
+
+Start Wheather2_to_Bacnet;2W;Launch;./AddOn,Wheather2_to_Bacnet.exe
+Start DemoServer (Mstp simulation on COM1003);;Launch;./AddOn,DemoServer.exe
 
 # Insert a Menu separator (Label mandatory Sep, Command None)
 Sep;;None
@@ -41,8 +45,8 @@ Shutdown all lights on floor level 1;;Write_Recipe;RecipeSample.csv
 # Take a snapshot of several values into several devices. First param is the same file as Write_Recipe, second is the result file. 
 # If no result file is provided a display form is displayed, or add a third dummy parameter to save & display.
 # The result file can contains the wildcard %d automaticaly replaced by the current date/time
-Take a snapshot of floor level 1;;SnapShot;RecipeSample.csv,C:\Users\Fred\Desktop\Yabe\SnapShotReport%d.csv,showalso
-Edit RecipeSample.csv to change the Recipe/Snapshot file;;Launch;.,notepad,RecipeSample.csv
+Take a snapshot of floor level 1;;SnapShot;./RecipeSample.csv,./SnapShotReport%d.csv,showalso
+Edit RecipeSample.csv to change the Recipe/Snapshot file;;Launch;.,notepad,./RecipeSample.csv
 
 SubClose;;None
 
@@ -52,10 +56,10 @@ Set the Device Class Structure described in Readme.txt 2.7.17;;Settings;Device C
 
 # To be remove by you. 
 Sep;;None
-Edit YabeMenuCmd.txt to modify/remove this menu content;7Y;Launch;.,notepad,YabeMenuCmd.txt
+Edit YabeMenuCmd.txt to modify/remove this menu content;7Y;Launch;.,notepad,./YabeMenuCmd.txt
 
 # Subscription similar to the drop action of a file in the Subscription view. Param is a list of files with , as separator
-# Subscribe to some very important objects;2S;Subscribe_Files;C:\Users\Fred\Desktop\Yabe\File1.cov,C:\Users\Fred\Desktop\Yabe\File2.cov
+# Subscribe to some very important objects;2S;Subscribe_Files;./File1.cov,./File2.cov
 
 # Batch command to be done with a file of a sequence of these previous commands. Param is the file name of a file with quit the same
 # structure as this one, apat the missing two first items : menu name & key shortcut
