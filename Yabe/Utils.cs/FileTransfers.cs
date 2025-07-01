@@ -256,7 +256,7 @@ namespace Yabe
             try
             {
                 int localBufSize = comm.GetFileBufferMaxSize();
-                int remoteBufSize = (int)device.MaxAPDULenght - 18;
+                int remoteBufSize = (int)device.MaxAPDULenght - 20;
 
                 if (remoteBufSize < 0) // Unknown value
                 {
@@ -274,7 +274,7 @@ namespace Yabe
                 }
 
                 if (remoteBufSize < 0)
-                    remoteBufSize = 480 - 18; // Acceptable on MSTP, but also on IP, SC ...
+                    remoteBufSize = 480 - 20; // Acceptable on MSTP, but also on IP, SC ...
 
                 int count = Math.Min(localBufSize, remoteBufSize); // MaxAPDULenght can be -1 if not read from the Device object
                 int position = 0;
