@@ -256,7 +256,7 @@ namespace Yabe
             try
             {
                 int localBufSize = comm.GetFileBufferMaxSize();
-                int remoteBufSize = (int)device.MaxAPDULenght - 20; // 20 bytes allows 4 bytes encoding of file position
+                int remoteBufSize = (int)device.MaxAPDULenght - 20; // 20 bytes allows 4 bytes (31 bits) encoding of file position
 
                 if (remoteBufSize < 0) // Unknown value
                 {
@@ -286,8 +286,6 @@ namespace Yabe
                     count = fs.Read(buffer, 0, count);
                     if (count < 0)
                         throw new System.IO.IOException("Couldn't read file");
-                    else if (count == 0)
-                        continue;
 
                     //write to device
                     if (!comm.WriteFileRequest(adr, object_id, ref position, count, buffer))
