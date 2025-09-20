@@ -1405,7 +1405,18 @@ namespace System.IO.BACnet
             {
                 try
                 {
-                    if (destination_address == (byte)m_TS && (frame_type == BacnetMstpFrameTypes.FRAME_TYPE_TEST_RESPONSE || frame_type == BacnetMstpFrameTypes.FRAME_TYPE_BACNET_DATA_NOT_EXPECTING_REPLY))
+                    if ((frame_type == BacnetMstpFrameTypes.FRAME_TYPE_TOKEN) ||
+                        (frame_type == BacnetMstpFrameTypes.FRAME_TYPE_TEST_REQUEST) ||
+                        (frame_type == BacnetMstpFrameTypes.FRAME_TYPE_REPLY_TO_POLL_FOR_MASTER))
+                    {
+                        /* ReceivedUnexpectedFrame */
+                        return StateChanges.ReceivedUnexpectedFrame;
+                    } else if (frame_type == BacnetMstpFrameTypes.FRAME_TYPE_REPLY_POSTPONED)
+                    {
+                        /* ReceivedPostpone */
+                        return StateChanges.ReceivedPostpone;
+                    }
+                    else if (destination_address == (byte)m_TS)
                     {
                         //signal upper layer
                         if (MessageRecieved != null && frame_type != BacnetMstpFrameTypes.FRAME_TYPE_TEST_RESPONSE)
@@ -1423,11 +1434,6 @@ namespace System.IO.BACnet
 
                         /* ReceivedReply */
                         return StateChanges.ReceivedReply;
-                    }
-                    else if (frame_type == BacnetMstpFrameTypes.FRAME_TYPE_REPLY_POSTPONED)
-                    {
-                        /* ReceivedPostpone */
-                        return StateChanges.ReceivedPostpone;
                     }
                     else
                     {
