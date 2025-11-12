@@ -419,7 +419,7 @@
 
 9.  CONTRIBUTORS, in order of apearance
 	Morten Kvistgaard	2014-2016	PCH Engineering/Danemark
-	Frédéric Chaxel		2015-2024	University of Lorraine/France
+	Frédéric Chaxel		2015-2025	University of Lorraine/France
 	Adam Guzik		2015		Quark Communications, Inc/USA
 	Christopher Günther	2015, 2019
 	Thamer Al-Salek		2016
@@ -428,3 +428,5 @@
 	Frank Schubert		2022-2024	Beckhoff Automation/Germany 
 	Marco Diekmann		2024		Beckhoff Automation/Germany
 	Daniel Evers		2024		Bosch/Germany
+	Björn Busch		2025
+	Piscada AS (Norway)	2025		https://www.piscada.com 			

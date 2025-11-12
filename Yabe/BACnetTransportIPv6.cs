@@ -24,6 +24,7 @@
 *
 *********************************************************************/
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -32,6 +33,20 @@ using System.Text.RegularExpressions;
 
 namespace System.IO.BACnet
 {
+    internal enum IPv6MulticastAddress
+    {
+        [Description("FF02::BAC0 (Link-Local)")]
+        FF02_BAC0,
+        [Description("FF04::BAC0 (Admin-Local)")]
+        FF04_BAC0,
+        [Description("FF05::BAC0 (Site-Local)")]
+        FF05_BAC0,
+        [Description("FF08::BAC0 (Organization-Local)")]
+        FF08_BAC0,
+        [Description("FF0E::BAC0 (Global)")]
+        FF0E_BAC0
+    }
+
     public class BacnetIpV6UdpProtocolTransport : IBacnetTransport, IDisposable
     {
         private System.Net.Sockets.UdpClient m_shared_conn;
@@ -48,6 +63,7 @@ namespace System.IO.BACnet
         private string m_local_endpoint;
 
         private int m_VMac;
+        private int m_mulitcast_address;
 
         public BacnetAddressTypes Type { get { return BacnetAddressTypes.IPV6; } }
         public event MessageRecievedHandler MessageRecieved;
@@ -65,7 +81,8 @@ namespace System.IO.BACnet
         {
             return "";
         }
-        public BacnetIpV6UdpProtocolTransport(int port, int VMac = -1, bool use_exclusive_port = false, bool dont_fragment = false, int max_payload = 1472, string local_endpoint_ip = "")
+		
+        public BacnetIpV6UdpProtocolTransport(int port, int VMac = -1, bool use_exclusive_port = false, bool dont_fragment = false, int max_payload = 1472, string local_endpoint_ip = "", int mulitcast_address = 4)
         {
             m_port = port;
             m_max_payload = max_payload;
@@ -73,6 +90,7 @@ namespace System.IO.BACnet
             m_dont_fragment = dont_fragment;
             m_local_endpoint = local_endpoint_ip;
             m_VMac = VMac;
+            m_mulitcast_address = mulitcast_address;
         }
 
         public override bool Equals(object obj)
@@ -363,12 +381,25 @@ namespace System.IO.BACnet
             ep = new System.Net.IPEndPoint(new IPAddress(Ipv6), (int)port);
         }
 
+        private static string GetMulticastAddressString(IPv6MulticastAddress address)
+        {
+            switch (address)
+            {
+                case IPv6MulticastAddress.FF02_BAC0: return "[FF02::BAC0]";
+                case IPv6MulticastAddress.FF04_BAC0: return "[FF04::BAC0]";
+                case IPv6MulticastAddress.FF05_BAC0: return "[FF05::BAC0]";
+                case IPv6MulticastAddress.FF08_BAC0: return "[FF08::BAC0]";
+                case IPv6MulticastAddress.FF0E_BAC0: return "[FF0E::BAC0]";
+                default: return "FF0E::BAC0";
+            }
+        }
+
         public BacnetAddress GetBroadcastAddress()
         {
-            BacnetAddress ret;
-            // could be FF08, FF05, FF04, FF02
-            System.Net.IPEndPoint ep = new Net.IPEndPoint(IPAddress.Parse("[FF0E::BAC0]"), m_port);
-            Convert(ep, out ret);
+            string addressString = GetMulticastAddressString((IPv6MulticastAddress)this.m_mulitcast_address);
+
+            System.Net.IPEndPoint ep = new Net.IPEndPoint(IPAddress.Parse(addressString), m_port);
+            Convert(ep, out BacnetAddress ret);
             ret.net = 0xFFFF;
 
             return ret;

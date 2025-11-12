@@ -58,6 +58,8 @@ namespace System.IO.BACnet
     {
         private System.Net.Sockets.UdpClient m_shared_conn;
         private System.Net.Sockets.UdpClient m_exclusive_conn;
+        private System.Net.Sockets.UdpClient m_broadcastMono_conn;
+
         private int m_port;
 
         private BVLC bvlc;
@@ -110,6 +112,29 @@ namespace System.IO.BACnet
         {
             return m_local_endpoint + ":" + m_port;
         }
+		
+        // When opened with a specified endpoint on linux/mono directed broadcast are not received
+        // the broadcast address must be explicitely open : not required and not working on Windows
+        private void EpBroadcastLinux()
+        {
+            if ((Environment.OSVersion.Platform == PlatformID.Unix)&&(!string.IsNullOrEmpty(m_local_endpoint)))
+            {
+
+                BacnetAddress adr = GetBroadcastAddress();
+
+                m_broadcastMono_conn = new Net.Sockets.UdpClient();
+                m_broadcastMono_conn.ExclusiveAddressUse = false;
+
+                try
+                {
+                    System.Net.EndPoint ep = new System.Net.IPEndPoint(Net.IPAddress.Parse(adr.adr[0] + "." + adr.adr[1] + "." + adr.adr[2] + "." + adr.adr[3]), m_port);
+                    m_broadcastMono_conn.Client.Bind(ep);
+                    Trace.WriteLine("Linux explicit listen to broadcast endpoint " + ep.ToString());
+                }
+                catch { m_broadcastMono_conn = null; }
+
+            }
+        }
         private void Open()
         {
 
@@ -130,10 +155,11 @@ namespace System.IO.BACnet
                 }
 
                 /* This is our own exclusive port. We'll receive everything sent to this. */
-                /* So this is how we'll present our selves to the world */
+                /* So this is how
+                    System.Net.EndPoi we'll present our selves to the world */
                 if (m_exclusive_conn == null)
                 {
-                    System.Net.EndPoint ep = new Net.IPEndPoint(System.Net.IPAddress.Any, 0);
+                    Net.EndPoint ep = new Net.IPEndPoint(System.Net.IPAddress.Any, 0);
                     if (!string.IsNullOrEmpty(m_local_endpoint)) ep = new Net.IPEndPoint(Net.IPAddress.Parse(m_local_endpoint), 0);
 
                     // Opens the socket, udp will choose the Port number
@@ -161,6 +187,8 @@ namespace System.IO.BACnet
                 m_exclusive_conn.DontFragment = m_dont_fragment; m_exclusive_conn.EnableBroadcast = true;
             }
 
+            EpBroadcastLinux();
+
             bvlc = new BVLC(this);
         }
 
@@ -174,6 +202,8 @@ namespace System.IO.BACnet
             if (m_exclusive_conn != null)
                 m_exclusive_conn.BeginReceive(OnReceiveData, m_exclusive_conn);
 
+            if (m_broadcastMono_conn != null)
+                m_broadcastMono_conn.BeginReceive(OnReceiveData, m_broadcastMono_conn);
         }
 
         private void OnReceiveData(IAsyncResult asyncResult)
@@ -470,8 +500,12 @@ namespace System.IO.BACnet
                 if (m_shared_conn != null)
                     m_shared_conn.Close();
 
+                if (m_broadcastMono_conn != null)
+                    m_broadcastMono_conn.Close();
+
                 m_exclusive_conn = null;
                 m_shared_conn = null;
+                m_broadcastMono_conn = null;
             }
             catch { }
         }

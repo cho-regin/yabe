@@ -1435,9 +1435,7 @@
             // m_DataGrid
             // 
             this.m_DataGrid.CommandsBackColor = System.Drawing.SystemColors.ControlDark;
-            this.m_DataGrid.CommandsBorderColor = System.Drawing.SystemColors.Control;
             this.m_DataGrid.ContextMenuStrip = this.m_ProperiesMenuStrip;
-            this.m_DataGrid.DisabledItemForeColor = System.Drawing.SystemColors.ControlText;
             this.m_DataGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             this.m_DataGrid.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.m_DataGrid.LineColor = System.Drawing.SystemColors.ControlDark;

@@ -11271,10 +11271,7 @@ namespace System.IO.BACnet.Serialize
             int day = buffer[offset + 2];
             int wday = buffer[offset + 3];
 
-            if ((month == 0xFF && day == 0xFF && wday == 0xFF && (year - 1900) == 0xFF) || day > 31 || month > 12)
-                bdate = new DateTime(1, 1, 1);
-            else
-                try { bdate = new DateTime(year, month, day); } catch { bdate = new DateTime(1, 1, 1); }
+            try { bdate = new DateTime(year, month, day); } catch { bdate = new DateTime(1, 1, 1); }
 
             return 4;
         }

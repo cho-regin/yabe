@@ -1100,8 +1100,8 @@ namespace System.IO.BACnet
         public int GetFileBufferMaxSize()
         {
             //6 should be the max_apdu_header_length for Confirmed (with segmentation)
-            //12 should be the max_atomic_write_file
-            return GetMaxApdu() - 18;
+            //14 should be the max_atomic_write_file (for huge file size with 4 bytes position encoding)
+            return GetMaxApdu() - 20;
         }
 
         public bool WriteFileRequest(BacnetAddress adr, BacnetObjectId object_id, ref int position, int count, byte[] file_buffer, byte invoke_id = 0)

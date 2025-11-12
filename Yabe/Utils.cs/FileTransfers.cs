@@ -256,7 +256,7 @@ namespace Yabe
             try
             {
                 int localBufSize = comm.GetFileBufferMaxSize();
-                int remoteBufSize = (int)device.MaxAPDULenght - 18;
+                int remoteBufSize = (int)device.MaxAPDULenght - 20; // 20 bytes allows 4 bytes (31 bits) encoding of file position
 
                 if (remoteBufSize < 0) // Unknown value
                 {
@@ -267,14 +267,14 @@ namespace Yabe
                         if (device.ReadPropertyRequest(new BacnetObjectId(BacnetObjectTypes.OBJECT_DEVICE, device.deviceId), BacnetPropertyIds.PROP_MAX_APDU_LENGTH_ACCEPTED, out val) == true)
                         {
                             device.MaxAPDULenght = Convert.ToUInt32(val[0].Value);
-                            remoteBufSize = (int)device.MaxAPDULenght - 18;
+                            remoteBufSize = (int)device.MaxAPDULenght - 20;
                         }
                     }
                     catch { }
                 }
 
                 if (remoteBufSize < 0)
-                    remoteBufSize = 480 - 18; // Acceptable on MSTP, but also on IP, SC ...
+                    remoteBufSize = 480 - 20; // Acceptable on MSTP, but also on IP, SC ...
 
                 int count = Math.Min(localBufSize, remoteBufSize); // MaxAPDULenght can be -1 if not read from the Device object
                 int position = 0;
@@ -286,8 +286,6 @@ namespace Yabe
                     count = fs.Read(buffer, 0, count);
                     if (count < 0)
                         throw new System.IO.IOException("Couldn't read file");
-                    else if (count == 0)
-                        continue;
 
                     //write to device
                     if (!comm.WriteFileRequest(adr, object_id, ref position, count, buffer))

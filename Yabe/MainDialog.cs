@@ -182,27 +182,29 @@ namespace Yabe
             //load splitter setup & SubsciptionView columns order&size
             try
             {
-                if (Properties.Settings.Default.GUI_FormSize != new Size(0, 0))
+                if (Properties.Settings.Default.GUI_FormSize != new Size(-1, -1))
+                {
                     this.Size = Properties.Settings.Default.GUI_FormSize;
-                FormWindowState state = (FormWindowState)Enum.Parse(typeof(FormWindowState), Properties.Settings.Default.GUI_FormState);
-                if (state != FormWindowState.Minimized)
-                    this.WindowState = state;
-                if (Properties.Settings.Default.GUI_SplitterButtom != -1)
-                    m_SplitContainerButtom.SplitterDistance = Properties.Settings.Default.GUI_SplitterButtom;
-                if (Properties.Settings.Default.GUI_SplitterMiddle != -1)
-                    m_SplitContainerLeft.SplitterDistance = Properties.Settings.Default.GUI_SplitterMiddle;
-                if (Properties.Settings.Default.GUI_SplitterLeft != -1)
-                    splitContainer4.SplitterDistance = Properties.Settings.Default.GUI_SplitterLeft;
-                if (Properties.Settings.Default.GUI_SplitterRight != -1)
-                    m_SplitContainerRight.SplitterDistance = Properties.Settings.Default.GUI_SplitterRight;
+                    FormWindowState state = (FormWindowState)Enum.Parse(typeof(FormWindowState), Properties.Settings.Default.GUI_FormState);
+                    if (state != FormWindowState.Minimized)
+                        this.WindowState = state;
+                    if (Properties.Settings.Default.GUI_SplitterButtom != -1)
+                        m_SplitContainerButtom.SplitterDistance = Properties.Settings.Default.GUI_SplitterButtom;
+                    if (Properties.Settings.Default.GUI_SplitterMiddle != -1)
+                        m_SplitContainerLeft.SplitterDistance = Properties.Settings.Default.GUI_SplitterMiddle;
+                    if (Properties.Settings.Default.GUI_SplitterLeft != -1)
+                        splitContainer4.SplitterDistance = Properties.Settings.Default.GUI_SplitterLeft;
+                    if (Properties.Settings.Default.GUI_SplitterRight != -1)
+                        m_SplitContainerRight.SplitterDistance = Properties.Settings.Default.GUI_SplitterRight;
 
-                if (Properties.Settings.Default.Vertical_Object_Splitter_Orientation)
-                {
-                    splitContainer4.Orientation = Orientation.Vertical;
-                }
-                else
-                {
-                    splitContainer4.Orientation = Orientation.Horizontal;
+                    if (Properties.Settings.Default.Vertical_Object_Splitter_Orientation)
+                    {
+                        splitContainer4.Orientation = Orientation.Vertical;
+                    }
+                    else
+                    {
+                        splitContainer4.Orientation = Orientation.Horizontal;
+                    }
                 }
 
                 // m_SubscriptionView Columns order & size
@@ -271,40 +273,35 @@ namespace Yabe
             InitUserCmd();
 
             // Plugins, Vendor Properties, Name mapping file loaded within the ThreadPool
+            // do not work in the ThreadPool.QueueUserWorkItem on Linux/mono !!! don't know why.
+            string[] listPlugins = Properties.Settings.Default.Plugins.Split(new char[] { ',', ';' });
+            foreach (string pluginname in listPlugins)
+            {
+                try
+                {
+                    string name = pluginname.Replace(" ", String.Empty);
+                    Assembly myDll = Assembly.LoadFrom(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/Plugins/" + name + ".dll");
+                    Trace.WriteLine(String.Format("Loaded plugin \"{0}\".", pluginname));
+                    Type[] types = myDll.GetExportedTypes();
+                    IYabePlugin plugin = (IYabePlugin)myDll.CreateInstance(name + ".Plugin", true);
+                    Invoke(new Action(() => { plugin.Init(this); }));
+                }
+                catch (Exception ex)
+                {
+                    if (Debugger.IsAttached) // Not loaded plugins can be detected without this message
+                        Trace.WriteLine(String.Format("Error loading plugin \"{0}\". {1}", pluginname, ex.Message));
+                }
+            }
 
             ThreadPool.QueueUserWorkItem(o => // speed up start, no need immediatly, Trace listen thread safe.
             {
-                if (Environment.OSVersion.Platform.ToString().Contains("Win"))
-                {
-                    string[] listPlugins = Properties.Settings.Default.Plugins.Split(new char[] { ',', ';' });
-                    foreach (string pluginname in listPlugins)
-                    {
-                        try
-                        {
-                            // string path = Path.GetDirectoryName(Application.ExecutablePath);
-                            string name = pluginname.Replace(" ", String.Empty);
-                            // Assembly myDll = Assembly.LoadFrom(path + "\\" + name + ".dll");
-                            Assembly myDll = Assembly.LoadFrom("Plugins\\" + name + ".dll");
-                            Trace.WriteLine(String.Format("Loaded plugin \"{0}\".", pluginname));
-                            Type[] types = myDll.GetExportedTypes();
-                            IYabePlugin plugin = (IYabePlugin)myDll.CreateInstance(name + ".Plugin", true);
-                            Invoke(new Action(() => { plugin.Init(this); }));
-                        }
-                        catch (Exception ex)
-                        {
-                            if (Debugger.IsAttached) // Not loaded plugins can be detected without this message
-                                Trace.WriteLine(String.Format("Error loading plugin \"{0}\". {1}", pluginname, ex.Message));
-                        }
-                    }
-                }
-
-                if (File.Exists("SimplifiedViewFilter.xml"))
+                if (File.Exists(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/SimplifiedViewFilter.xml"))
                 {
                     try
                     {
                         StreamReader sr;
                         XmlSerializer xs = new XmlSerializer(typeof(List<BacnetObjectDescription>));
-                        sr = new StreamReader("SimplifiedViewFilter.xml");
+                        sr = new StreamReader(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/SimplifiedViewFilter.xml");
                         SimplifiedViewFilter = (List<BacnetObjectDescription>)xs.Deserialize(sr);
                     }
                     catch (Exception ex)

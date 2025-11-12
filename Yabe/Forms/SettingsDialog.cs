@@ -264,6 +264,11 @@ namespace Yabe
             [Description("Enables or disables IPv6 communication.")]
             [Category(CAT_IP)]
             public bool IPv6_Support { set { instance.IPv6_Support = value; } get { return instance.IPv6_Support; } }
+            [DisplayName("IPv6 Multicast address")]
+            [Description("Select the appropriate multicast address.")]
+            [Category(CAT_IP)]
+            [TypeConverter(typeof(EnumConverter))]
+            public IPv6MulticastAddress IPv6_MulticastAddress { set { instance.IPv6_MulticastAddress = (int)value; } get { return (IPv6MulticastAddress)instance.IPv6_MulticastAddress; } }
             [DisplayName("Default BBMD")]
             [Description("IP address and port of the BBMD to connect to as a foreign device.")]
             [Category(CAT_IP)]

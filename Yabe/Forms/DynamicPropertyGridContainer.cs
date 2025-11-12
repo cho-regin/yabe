@@ -1326,7 +1326,7 @@ namespace Utilities
                 try
                 {
                     string[] s = (value as String).Split(':');
-                    return new BacnetObjectId((BacnetObjectTypes)Enum.Parse(typeof(BacnetObjectTypes), s[0]), Convert.ToUInt16(s[1]));
+                    return new BacnetObjectId((BacnetObjectTypes)Enum.Parse(typeof(BacnetObjectTypes), s[0]), Convert.ToUInt32(s[1]));
                 }
                 catch { return null; }
             }
