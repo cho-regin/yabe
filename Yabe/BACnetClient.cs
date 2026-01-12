@@ -1,6 +1,6 @@
 ﻿/**************************************************************************
 *                           MIT License
-* 
+*
 * Copyright (C) 2014 Morten Kvistgaard <mk@pch-engineering.dk>
 *
 * Permission is hereby granted, free of charge, to any person obtaining
@@ -266,7 +266,7 @@ namespace System.IO.BACnet
                     else
                     {
                         ErrorResponse(adr, service, invoke_id, BacnetErrorClasses.ERROR_CLASS_SERVICES, BacnetErrorCodes.ERROR_CODE_ABORT_OTHER);
-                        //SendConfirmedServiceReject(adr, invoke_id, BacnetRejectReasons.REJECT_REASON_OTHER); 
+                        //SendConfirmedServiceReject(adr, invoke_id, BacnetRejectReasons.REJECT_REASON_OTHER);
                         Trace.TraceWarning("Couldn't decode DecodeWriteProperty");
                     }
                 }
@@ -858,7 +858,7 @@ namespace System.IO.BACnet
             try
             {
                 //finish recieve
-                if (m_client == null) return;   //we're disposed 
+                if (m_client == null) return;   //we're disposed
 
                 //parse
                 if (msg_length > 0)
@@ -959,7 +959,7 @@ namespace System.IO.BACnet
             EncodeBuffer b = GetEncodeBuffer(m_client.HeaderLength);
             BacnetAddress receiver;
 
-            // _receiver could be an unicast @ : for direct acces 
+            // _receiver could be an unicast @ : for direct acces
             // usefull on BIP for a known IP:Port, unknown device Id
             if (_receiver != null)
                 receiver = _receiver;
@@ -1433,7 +1433,7 @@ namespace System.IO.BACnet
             if (invoke_id == 0) invoke_id = (byte)Interlocked.Increment(ref m_invoke_id);
 
             EncodeBuffer b = GetEncodeBuffer(m_client.HeaderLength);
-            //BacnetNpduControls.PriorityNormalMessage 
+            //BacnetNpduControls.PriorityNormalMessage
             NPDU.Encode(b, BacnetNpduControls.PriorityNormalMessage | BacnetNpduControls.ExpectingReply, adr.RoutedSource);
 
             APDU.EncodeConfirmedServiceRequest(b, BacnetPduTypes.PDU_TYPE_CONFIRMED_SERVICE_REQUEST, BacnetConfirmedServices.SERVICE_SUBSCRIBE_COV_PROPERTY_MULTIPLE, m_max_segments, m_client.MaxAdpuLength, invoke_id);
@@ -1598,7 +1598,7 @@ namespace System.IO.BACnet
             if (invoke_id == 0) invoke_id = (byte)Interlocked.Increment(ref m_invoke_id);
 
             EncodeBuffer b = GetEncodeBuffer(m_client.HeaderLength);
-            //BacnetNpduControls.PriorityNormalMessage 
+            //BacnetNpduControls.PriorityNormalMessage
             NPDU.Encode(b, BacnetNpduControls.PriorityNormalMessage | BacnetNpduControls.ExpectingReply, adr.RoutedSource);
 
             APDU.EncodeConfirmedServiceRequest(b, BacnetPduTypes.PDU_TYPE_CONFIRMED_SERVICE_REQUEST, BacnetConfirmedServices.SERVICE_CONFIRMED_WRITE_PROP_MULTIPLE, m_max_segments, m_client.MaxAdpuLength, invoke_id);
@@ -1656,7 +1656,7 @@ namespace System.IO.BACnet
             if (invoke_id == 0) invoke_id = (byte)Interlocked.Increment(ref m_invoke_id);
 
             EncodeBuffer b = GetEncodeBuffer(m_client.HeaderLength);
-            //BacnetNpduControls.PriorityNormalMessage 
+            //BacnetNpduControls.PriorityNormalMessage
             NPDU.Encode(b, BacnetNpduControls.PriorityNormalMessage | BacnetNpduControls.ExpectingReply, adr.RoutedSource);
 
             APDU.EncodeConfirmedServiceRequest(b, BacnetPduTypes.PDU_TYPE_CONFIRMED_SERVICE_REQUEST, BacnetConfirmedServices.SERVICE_CONFIRMED_WRITE_PROP_MULTIPLE, m_max_segments, m_client.MaxAdpuLength, invoke_id);
@@ -1714,7 +1714,7 @@ namespace System.IO.BACnet
             {
                 for (int r = 0; r < m_retries; r++)
                 {
-                    if (result.WaitForDone(m_timeout)) 
+                    if (result.WaitForDone(m_timeout))
                     {
                         Exception ex;
                         EndReadPropertyMultipleRequest(result, out values, out ex);
@@ -2232,7 +2232,7 @@ namespace System.IO.BACnet
             if (invoke_id == 0) invoke_id = (byte)Interlocked.Increment(ref m_invoke_id);
 
             EncodeBuffer b = GetEncodeBuffer(m_client.HeaderLength);
-            NPDU.Encode(b, BacnetNpduControls.PriorityNormalMessage, adr.RoutedSource);
+            NPDU.Encode(b, BacnetNpduControls.PriorityNormalMessage | BacnetNpduControls.ExpectingReply, adr.RoutedSource);
             APDU.EncodeConfirmedServiceRequest(b, BacnetPduTypes.PDU_TYPE_CONFIRMED_SERVICE_REQUEST, BacnetConfirmedServices.SERVICE_CONFIRMED_ACKNOWLEDGE_ALARM, m_max_segments, m_client.MaxAdpuLength, invoke_id);
             Services.EncodeAlarmAcknowledge(b, 57, objid, (uint)eventState, AckText, evTimeStamp, ackTimeStamp);
             //send
@@ -2788,7 +2788,7 @@ namespace System.IO.BACnet
             return (false);
         }
         #endregion
-		
+
         public string GetStringMac()
         {
             return m_client.GetMacString();
