@@ -580,6 +580,8 @@ namespace Yabe
                 {
                     itm.SubItems.Add(""); // Description [7]
                 }
+
+                itm.SubItems.Add(EventData.messageText);
             }
             else
             {
@@ -600,6 +602,8 @@ namespace Yabe
                 itm.SubItems[4].Text = EventTypeNiceName(EventData.fromState) + " to " + EventTypeNiceName(EventData.toState);
                 itm.SubItems[5].Text = EventData.timeStamp.Time.ToString(Properties.Settings.Default.COVTimeFormater);   //time
                 itm.SubItems[6].Text = EventData.notifyType.ToString();   //status
+                itm.SubItems[8].Text = EventData.messageText;
+
             }
 
             AddLogAlarmEvent(itm);

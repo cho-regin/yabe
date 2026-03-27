@@ -20,7 +20,7 @@ namespace Yabe
     // Main user interactions are in this file
     // Menu click, Item selection, Drag/Drop
     // Not for files Export (EXE, XML), nor DeviceClassView
-    class DummyYabeMenu { } // A dummy class required to avoid opening an empty Form with the designer  
+    class DummyYabeMenu { } // A dummy class required to avoid opening an empty Form with the designer
     public partial class YabeMainDialog : Form
     {
         #region Menu File, 5 methods
@@ -909,7 +909,7 @@ namespace Yabe
             foreach (TreeNode t in m_AddressSpaceTree.SelectedNodes)
             {
                 BacnetObjectId object_id = (BacnetObjectId)t.Tag;
-                //create 
+                //create
                 if (CreateSubscription(entry, object_id, false) == false)
                     return;
             }
@@ -1067,7 +1067,7 @@ namespace Yabe
                 }
             }
             if (sub != null)
-                UpdateGrid(sub); // maybe the object is no more displayed, it's not a problem               
+                UpdateGrid(sub); // maybe the object is no more displayed, it's not a problem
 
         }
 
@@ -1599,7 +1599,7 @@ namespace Yabe
                     break;
             }
 
-            // Allows delete menu 
+            // Allows delete menu
             if (objId.type != BacnetObjectTypes.OBJECT_DEVICE)
                 m_AddressSpaceMenuStrip.Items[7].Visible = true;
 

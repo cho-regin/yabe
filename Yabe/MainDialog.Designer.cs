@@ -457,14 +457,14 @@
             // exportEDEFilesSelDeviceToolStripMenuItem
             // 
             this.exportEDEFilesSelDeviceToolStripMenuItem.Name = "exportEDEFilesSelDeviceToolStripMenuItem";
-            this.exportEDEFilesSelDeviceToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
+            this.exportEDEFilesSelDeviceToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.exportEDEFilesSelDeviceToolStripMenuItem.Text = "Export selected device";
             this.exportEDEFilesSelDeviceToolStripMenuItem.Click += new System.EventHandler(this.exportEDEFilesSelDeviceToolStripMenuItem_Click);
             // 
             // exportEDEFilesAllDevicesToolStripMenuItem
             // 
             this.exportEDEFilesAllDevicesToolStripMenuItem.Name = "exportEDEFilesAllDevicesToolStripMenuItem";
-            this.exportEDEFilesAllDevicesToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
+            this.exportEDEFilesAllDevicesToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.exportEDEFilesAllDevicesToolStripMenuItem.Text = "Export all devices";
             this.exportEDEFilesAllDevicesToolStripMenuItem.Click += new System.EventHandler(this.exportEDEFilesAllDevicesToolStripMenuItem_Click);
             // 
@@ -578,7 +578,7 @@
             // 
             this.settingsToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("settingsToolStripMenuItem.Image")));
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(198, 22);
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
             this.settingsToolStripMenuItem.Text = "Settings";
             this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
             // 
@@ -586,7 +586,7 @@
             // 
             this.mstpCaptureToolToolStripMenuItem.Image = global::Yabe.Properties.Resources.wsicon16;
             this.mstpCaptureToolToolStripMenuItem.Name = "mstpCaptureToolToolStripMenuItem";
-            this.mstpCaptureToolToolStripMenuItem.Size = new System.Drawing.Size(198, 22);
+            this.mstpCaptureToolToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
             this.mstpCaptureToolToolStripMenuItem.Text = "Start Mstp Capture Tool";
             this.mstpCaptureToolToolStripMenuItem.Click += new System.EventHandler(this.mstpCaptureToolStripMenuItem_Click);
             // 
@@ -594,14 +594,14 @@
             // 
             this.pluginsToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("pluginsToolStripMenuItem.Image")));
             this.pluginsToolStripMenuItem.Name = "pluginsToolStripMenuItem";
-            this.pluginsToolStripMenuItem.Size = new System.Drawing.Size(198, 22);
+            this.pluginsToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
             this.pluginsToolStripMenuItem.Text = "Plugins";
             // 
             // userCommandToolStripMenuItem
             // 
             this.userCommandToolStripMenuItem.Image = global::Yabe.Properties.Resources.user_gray;
             this.userCommandToolStripMenuItem.Name = "userCommandToolStripMenuItem";
-            this.userCommandToolStripMenuItem.Size = new System.Drawing.Size(198, 22);
+            this.userCommandToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
             this.userCommandToolStripMenuItem.Text = "User Commands";
             // 
             // helpToolStripMenuItem
@@ -1173,7 +1173,7 @@
             // 
             // columnHeader7
             // 
-            this.columnHeader7.Text = "";
+            this.columnHeader7.Text = "Message";
             this.columnHeader7.Width = 4;
             // 
             // m_EventSpaceMenuStrip
